@@ -4,6 +4,7 @@ import type { ServerMessage } from "./lib/types";
 import { randomQuote } from "./lib/constants";
 import { useWebSocket } from "./hooks/useWebSocket";
 import { useNamespace } from "./hooks/useNamespace";
+import { useNamespaceSummaries } from "./hooks/useNamespaceSummaries";
 import { useJobs } from "./hooks/useJobs";
 import { useLogStream } from "./hooks/useLogStream";
 import { useTheme } from "./hooks/useTheme";
@@ -35,6 +36,15 @@ export function App() {
   const [profileAgent, setProfileAgent] = useState<string | null>(null);
   const [cancelTarget, setCancelTarget] = useState<{ sessionId: string; jobTitle: string } | null>(null);
   const { jobs, handleMessage: handleJobsMessage, refreshCached } = useJobs();
+
+  // Namespace tree (issue:2): per-namespace summaries. The live jobs list is
+  // scoped to the active namespace, so a signature of it doubles as the
+  // "activity" signal that refetches that namespace's summary.
+  const jobsActivityKey = useMemo(
+    () => jobs.map((j) => `${j.sessionId}:${j.status}`).join("|"),
+    [jobs],
+  );
+  const namespaceSummaries = useNamespaceSummaries(namespaces, namespace, jobsActivityKey);
   const {
     entries,
     activeSessionId,
@@ -362,6 +372,7 @@ export function App() {
     namespace,
     namespaces,
     setNamespace,
+    namespaceSummaries,
     entries,
     activeJob,
     isFixture,

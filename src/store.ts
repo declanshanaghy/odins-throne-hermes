@@ -9,6 +9,7 @@
 import { useSyncExternalStore } from "react";
 import type { DisplayJob } from "./ui/lib/types";
 import type { NamespaceOption } from "./ui/hooks/useNamespace";
+import type { NamespaceSummaries } from "./ui/hooks/useNamespaceSummaries";
 import type { LogEntry } from "./ui/hooks/useLogStream";
 
 export interface CancelTarget {
@@ -26,6 +27,8 @@ export interface ThroneSnapshot {
   namespace: string;
   namespaces: NamespaceOption[];
   setNamespace: (ns: string) => void;
+  // per-namespace task summaries + status stats for the namespace tree (issue:2)
+  namespaceSummaries: NamespaceSummaries;
 
   // log stream (useLogStream)
   entries: LogEntry[];
