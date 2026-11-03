@@ -10,7 +10,7 @@
 // on an interval and whenever the live feed signals activity.
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { otFetch } from "../../upstream";
+import { otFetch } from "../../targets/plugin/upstream";
 import { normalizeRestJobs } from "../lib/restJobs";
 import type { Job } from "../lib/types";
 import type { NamespaceOption } from "./useNamespace";

@@ -4,15 +4,15 @@
 // card, settings dialog).
 
 import { useMemo, useState, useSyncExternalStore } from "react";
-import { ErrorBoundary } from "./ui/components/ErrorBoundary";
-import { Sidebar } from "./ui/components/Sidebar";
-import { AgentProfileModal } from "./ui/components/AgentProfileModal";
-import { RagnarokDialog } from "./ui/components/RagnarokDialog";
-import { Toast } from "./ui/components/Toast";
-import { ErrorBanner } from "./ui/components/ErrorBanner";
-import { App } from "./ui/App";
-import { useThrone } from "./store";
-import { useTheme } from "./ui/hooks/useTheme";
+import { ErrorBoundary } from "../../ui/components/ErrorBoundary";
+import { Sidebar } from "../../ui/components/Sidebar";
+import { AgentProfileModal } from "../../ui/components/AgentProfileModal";
+import { RagnarokDialog } from "../../ui/components/RagnarokDialog";
+import { Toast } from "../../ui/components/Toast";
+import { ErrorBanner } from "../../ui/components/ErrorBanner";
+import { App } from "../../ui/App";
+import { useThrone } from "../../ui/store";
+import { useTheme } from "../../ui/hooks/useTheme";
 import {
   acceptPairingKey,
   clearSession,

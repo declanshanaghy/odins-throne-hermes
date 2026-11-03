@@ -11,12 +11,12 @@ import {
 } from "@hermes/plugin-sdk";
 // The vendored Norse stylesheet, scoped to .odins-throne-root by the build
 // (build/build.mjs) — never touches the app's own theme.
-import scopedCss from "./ui/styles/index.css";
+import scopedCss from "../../ui/styles/index.css";
 import { ThronePane } from "./pane";
 import { ThronePage } from "./page";
 import { settingsUi } from "./settings";
 import { setCtx, setThroneTabOpener } from "./pluginCtx";
-import { throneStore } from "./store";
+import { throneStore } from "../../ui/store";
 
 const FONTS_HREF =
   "https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Cinzel+Decorative:wght@400;700;900&family=Source+Serif+4:wght@300;400;600&family=JetBrains+Mono:wght@400;500;600&display=swap";
@@ -175,9 +175,9 @@ export default {
 
 // Test seams: the smoke/stream tests import these from the built bundle and
 // exercise the log-parsing pipeline directly. Not used by the desktop host.
-export { HermesLogParser } from "./ui/lib/hermesFormat";
-export { useLogStream } from "./ui/hooks/useLogStream";
-export { parseDecree, isDecreeBlock } from "./ui/components/DecreeBlock";
+export { HermesLogParser } from "../../ui/lib/hermesFormat";
+export { useLogStream } from "../../ui/hooks/useLogStream";
+export { parseDecree, isDecreeBlock } from "../../ui/components/DecreeBlock";
 // Tab-opening seam — lets smoke.mjs assert the openThroneTab→openWorkspace
 // wiring after plugin.register() has run.
 export { openThroneTab } from "./pluginCtx";

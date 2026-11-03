@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { otFetch } from "../../upstream";
+import { otFetch } from "../../targets/plugin/upstream";
 
 export interface NamespaceOption {
   id: string;

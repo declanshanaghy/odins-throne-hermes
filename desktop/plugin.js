@@ -1,4 +1,4 @@
-// src/entry.tsx
+// src/targets/plugin/entry.tsx
 import {
   host as host3,
   PALETTE_AREA,
@@ -3462,7 +3462,7 @@ var styles_default = `.odins-throne-root .odins-throne-root {
 }
 `;
 
-// src/pane.tsx
+// src/targets/plugin/pane.tsx
 import { useMemo as useMemo2, useState as useState15, useSyncExternalStore as useSyncExternalStore4 } from "react";
 
 // src/ui/components/ErrorBoundary.tsx
@@ -3785,7 +3785,7 @@ import { useState as useState6 } from "react";
 // src/ui/hooks/useNamespaceSummaries.ts
 import { useCallback as useCallback2, useEffect as useEffect2, useRef as useRef2, useState as useState2 } from "react";
 
-// src/upstream.ts
+// src/targets/plugin/upstream.ts
 var URL_KEY = "hlidskjalf:upstream-url";
 var SESSION_KEY = "hlidskjalf:session";
 var CLIENT_KEY = "hlidskjalf:client-id";
@@ -6617,7 +6617,7 @@ function useLogStream() {
   };
 }
 
-// src/store.ts
+// src/ui/store.ts
 import { useSyncExternalStore as useSyncExternalStore2 } from "react";
 var snapshot = null;
 var version = 0;
@@ -6969,7 +6969,7 @@ function App() {
   return null;
 }
 
-// src/pluginCtx.ts
+// src/targets/plugin/pluginCtx.ts
 var ctx = null;
 function setCtx(c) {
   ctx = c;
@@ -7000,7 +7000,7 @@ function openThroneTab(sessionId) {
   }
 }
 
-// src/settings.tsx
+// src/targets/plugin/settings.tsx
 import { useState as useState14, useSyncExternalStore as useSyncExternalStore3 } from "react";
 import { host as host2 } from "@hermes/plugin-sdk";
 import { jsx as jsx12, jsxs as jsxs12 } from "react/jsx-runtime";
@@ -7105,7 +7105,7 @@ function ThroneSettings() {
   );
 }
 
-// src/pane.tsx
+// src/targets/plugin/pane.tsx
 import { Fragment as Fragment3, jsx as jsx13, jsxs as jsxs13 } from "react/jsx-runtime";
 function SidebarConnected() {
   const snap = useThrone();
@@ -9161,7 +9161,7 @@ function EntrypointGroup({ entry }) {
   ] });
 }
 
-// src/page.tsx
+// src/targets/plugin/page.tsx
 import { jsx as jsx19 } from "react/jsx-runtime";
 function LogViewerConnected() {
   const snap = useThrone();
@@ -9199,7 +9199,7 @@ function ThronePage() {
   );
 }
 
-// src/entry.tsx
+// src/targets/plugin/entry.tsx
 import { jsx as jsx20 } from "react/jsx-runtime";
 var FONTS_HREF = "https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Cinzel+Decorative:wght@400;700;900&family=Source+Serif+4:wght@300;400;600&family=JetBrains+Mono:wght@400;500;600&display=swap";
 var STYLE_ID = "odins-throne-hermes-style";
@@ -9256,7 +9256,7 @@ var entry_default = {
       throneStore.get()?.onSelectSession(sessionId);
       if (typeof host3.openWorkspace === "function") {
         host3.openWorkspace("throne-log", {
-          render: () => /* @__PURE__ */ jsx19(ThronePage, {}),
+          render: () => /* @__PURE__ */ jsx20(ThronePage, {}),
           title: "Odin's Throne",
           minWidth: 480
         });

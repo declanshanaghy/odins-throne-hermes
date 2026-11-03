@@ -64,7 +64,7 @@ const odinScopeCss = {
 
 // ── Bundle ──────────────────────────────────────────────────────────────────
 const options = {
-  entryPoints: [resolve(ROOT, "src/entry.tsx")],
+  entryPoints: [resolve(ROOT, "src/targets/plugin/entry.tsx")],
   bundle: true,
   format: "esm",
   outfile: resolve(ROOT, "desktop/plugin.js"),

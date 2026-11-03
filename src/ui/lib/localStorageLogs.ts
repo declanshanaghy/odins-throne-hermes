@@ -2,7 +2,7 @@
 // Written as log-lines arrive for live sessions that are NOT pinned.
 // Ephemeral — evicts freely. Pinned sessions skip this buffer entirely.
 
-import { otFetch } from "../../upstream";
+import { otFetch } from "../../targets/plugin/upstream";
 
 const LOG_PREFIX = "odin-throne:log:";
 const LOG_TTL_PREFIX = "odin-throne:log-ttl:";

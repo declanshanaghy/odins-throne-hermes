@@ -8,8 +8,8 @@ import { useNamespaceSummaries } from "./hooks/useNamespaceSummaries";
 import { useJobs } from "./hooks/useJobs";
 import { useLogStream } from "./hooks/useLogStream";
 import { useTheme } from "./hooks/useTheme";
-import { otFetch } from "../upstream";
-import { throneStore, type ThroneSnapshot } from "../store";
+import { otFetch } from "../targets/plugin/upstream";
+import { throneStore, type ThroneSnapshot } from "./store";
 import {
   isPinned as checkIsPinned,
   pinSession,

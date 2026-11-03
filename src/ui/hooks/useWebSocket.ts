@@ -1,6 +1,6 @@
 import { useEffect, useRef, useCallback, useState } from "react";
 import type { ServerMessage, ClientMessage } from "../lib/types";
-import { wsUrl } from "../../upstream";
+import { wsUrl } from "../../targets/plugin/upstream";
 
 type WsState = "connecting" | "open" | "closed" | "error";
 
