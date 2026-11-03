@@ -7,6 +7,9 @@ import { listAgentJobs, deleteAgentJob, findPodForSession, streamPodLogs } from 
 import { attachWebSocketServer } from "./ws.js";
 import { BOT_TOKEN, botCredentialOk } from "./botToken.js";
 import { mintSession } from "./handoff.js";
+import { spaEntryHandler } from "./spaEntry.js";
+import { pathToFileURL } from "node:url";
+import { realpathSync } from "node:fs";
 
 const app = new Hono();
 
@@ -16,6 +19,11 @@ const JOB_LABEL = process.env.JOB_LABEL_SELECTOR ?? "app.kubernetes.io/component
 // Static web bundle directory (Vite output from issue #18, or the interim
 // esbuild bundle). Overridable so local dev / deployments can point elsewhere.
 const WEB_DIST = process.env.WEB_DIST ?? "dist-ui";
+
+// SPA entry route (issue #55): index.html served Cache-Control: no-store —
+// see server/spaEntry.ts. One handler instance for the root, /index.html and
+// the SPA fallback.
+const spaEntry = spaEntryHandler(WEB_DIST);
 
 // ── Namespace configuration ──────────────────────────────────────────────────
 
@@ -235,16 +243,57 @@ app.delete("/bot/api/jobs/:sessionId", deleteJob);
 // ── Static file serving — web bundle output (WEB_DIST, default dist-ui) ──────
 // Serves the web bundle as static assets (production build of the React UI).
 // This runs AFTER API routes so API requests are never intercepted.
-app.use("/*", serveStatic({ root: WEB_DIST }));
+//
+// Cache-bust (issue #55): the SPA ENTRY is served `Cache-Control: no-store`
+// so a heuristically-cached pre-deploy entry can never persist in a
+// webview/browser after a deploy — Odin kept seeing a removed "focus" button
+// on popup job cards because a stale pre-#45 bundle stayed cached (the old
+// hall hit the same stale-page class, fenrir-ledger #2380). The entry
+// references content-hashed asset URLs, so a fresh entry pulls a fresh
+// bundle on every deploy. Content-hashed /assets/* are safe to pin
+// long-cache; non-hashed public files (profiles, favicons) stay heuristic.
 
-// SPA fallback — serve index.html for any unmatched routes
-app.get("/*", serveStatic({ path: `${WEB_DIST}/index.html` }));
+/** Content-hashed asset URLs — immutable, safe to cache for a year. */
+const ASSET_CACHE_CONTROL = "public, max-age=31536000, immutable";
 
-// ── Start server with WebSocket support ──────────────────────────────────────
-const server = serve({ fetch: app.fetch, port: PORT }, (info) => {
-  console.log(`[odin-throne] Listening on http://localhost:${info.port}`);
+// Entry routes BEFORE the static middleware: without these serveStatic
+// would hand out index.html for "/" and "/index.html" with heuristic
+// caching and no no-store.
+app.get("/", spaEntry);
+app.get("/index.html", spaEntry);
+
+app.use("/assets/*", async (c: Context, next: Next): Promise<Response | void> => {
+  c.header("Cache-Control", ASSET_CACHE_CONTROL);
+  await next();
 });
 
-attachWebSocketServer(server, JOB_LABEL, NAMESPACES.map((n) => n.id), DEFAULT_NAMESPACE);
+app.use("/*", serveStatic({ root: WEB_DIST }));
+
+// SPA fallback — any unmatched route serves the entry, same no-store.
+app.get("/*", spaEntry);
+
+// ── Start server with WebSocket support ─────────────────────────────────────
+// Bound ONLY when this module is the entrypoint (`node dist-server/index.mjs`,
+// `npm start`, the Docker CMD). Importing the module — the smoke suite's
+// app.request() integration checks — stays side-effect-free.
+function startServer(): void {
+  const server = serve({ fetch: app.fetch, port: PORT }, (info) => {
+    console.log(`[odin-throne] Listening on http://localhost:${info.port}`);
+  });
+  attachWebSocketServer(server, JOB_LABEL, NAMESPACES.map((n) => n.id), DEFAULT_NAMESPACE);
+}
+
+const isMainEntry = (() => {
+  try {
+    return (
+      process.argv[1] !== undefined &&
+      import.meta.url === pathToFileURL(realpathSync(process.argv[1])).href
+    );
+  } catch {
+    return false;
+  }
+})();
+
+if (isMainEntry) startServer();
 
 export { app };
