@@ -8,6 +8,16 @@
 
 namespace: odins-throne
 
+# Deploy prerequisites (see issue #21):
+#   1. Reserve the global static IP `odins-throne-hall-ip` first — the ingress
+#      annotation `kubernetes.io/ingress.global-static-ip-name` (values.yaml)
+#      references it by name and the load balancer will not provision without it:
+#        gcloud compute addresses create odins-throne-hall-ip \
+#          --global --project=fenrir-ledger-prod
+#   2. After deploy, point DNS at the reserved IP with scripts/dns.sh
+#      (Namecheap API, idempotent). The ManagedCertificate reaches ACTIVE
+#      once the A record resolves.
+
 app:
   replicaCount: 2
 
