@@ -15,7 +15,8 @@ import scopedCss from "./ui/styles/index.css";
 import { ThronePane } from "./pane";
 import { ThronePage } from "./page";
 import { settingsUi } from "./settings";
-import { setCtx } from "./pluginCtx";
+import { setCtx, setThroneTabOpener } from "./pluginCtx";
+import { throneStore } from "./store";
 
 const FONTS_HREF =
   "https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Cinzel+Decorative:wght@400;700;900&family=Source+Serif+4:wght@300;400;600&family=JetBrains+Mono:wght@400;500;600&display=swap";
@@ -75,6 +76,26 @@ export default {
   defaultEnabled: true,
   register(ctx: any) {
     setCtx(ctx);
+
+    // Wire the workspace-tab opener. host.openWorkspace (SDK ≥ [current]) docks
+    // a plugin-rendered tab in the main workspace zone; re-calling with the same
+    // id re-fronts the existing tab. Falls back to host.navigate on older builds.
+    setThroneTabOpener((sessionId: string) => {
+      // Select the session in the shared store first so the page renders the
+      // right log stream the moment the tab becomes visible.
+      throneStore.get()?.onSelectSession(sessionId);
+
+      if (typeof host.openWorkspace === "function") {
+        host.openWorkspace("throne-log", {
+          render: () => <ThronePage />,
+          title: "Odin's Throne",
+          minWidth: 480,
+        });
+      } else {
+        // Older desktop: navigate the current workspace tab to the log page.
+        host.navigate("/odins-throne");
+      }
+    });
 
     // Google Fonts (same families as the SPA's index.html).
     if (!document.getElementById(FONT_ID)) {
@@ -157,3 +178,6 @@ export default {
 export { HermesLogParser } from "./ui/lib/hermesFormat";
 export { useLogStream } from "./ui/hooks/useLogStream";
 export { parseDecree, isDecreeBlock } from "./ui/components/DecreeBlock";
+// Tab-opening seam — lets smoke.mjs assert the openThroneTab→openWorkspace
+// wiring after plugin.register() has run.
+export { openThroneTab } from "./pluginCtx";

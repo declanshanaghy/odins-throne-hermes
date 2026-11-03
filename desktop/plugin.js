@@ -6990,6 +6990,15 @@ async function openExternal(url) {
     return false;
   }
 }
+var throneTabOpener = null;
+function setThroneTabOpener(fn) {
+  throneTabOpener = fn;
+}
+function openThroneTab(sessionId) {
+  if (throneTabOpener) {
+    throneTabOpener(sessionId);
+  }
+}
 
 // src/settings.tsx
 import { useState as useState14, useSyncExternalStore as useSyncExternalStore3 } from "react";
@@ -7107,7 +7116,9 @@ function SidebarConnected() {
       activeSessionId: snap.activeSessionId,
       quote: snap.quote,
       wsState: snap.wsState,
-      onSelectSession: snap.onSelectSession,
+      onSelectSession: (sessionId) => {
+        openThroneTab(sessionId);
+      },
       onAvatarClick: snap.onAvatarClick,
       onOdinClick: snap.onOdinClick,
       onTogglePinSession: snap.onTogglePinSession,
@@ -9241,6 +9252,18 @@ var entry_default = {
   defaultEnabled: true,
   register(ctx2) {
     setCtx(ctx2);
+    setThroneTabOpener((sessionId) => {
+      throneStore.get()?.onSelectSession(sessionId);
+      if (typeof host3.openWorkspace === "function") {
+        host3.openWorkspace("throne-log", {
+          render: () => /* @__PURE__ */ jsx19(ThronePage, {}),
+          title: "Odin's Throne",
+          minWidth: 480
+        });
+      } else {
+        host3.navigate("/odins-throne");
+      }
+    });
     if (!document.getElementById(FONT_ID)) {
       const link = document.createElement("link");
       link.id = FONT_ID;
@@ -9309,6 +9332,7 @@ export {
   HermesLogParser,
   entry_default as default,
   isDecreeBlock,
+  openThroneTab,
   parseDecree,
   useLogStream
 };

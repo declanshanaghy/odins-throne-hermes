@@ -5,7 +5,9 @@ monitor for GKE agent-sandbox Jobs, ported into the Hermes desktop app as a
 first-class plugin:
 
 - **Right pane** — the job list (SessionCards, namespace selector, WSS badge,
-  theme switcher, Odin himself), docked beside the conversation.
+  theme switcher, Odin himself), docked beside the conversation. Clicking a
+  job card opens the log terminal in a new workspace tab (or focuses it if
+  it is already open).
 - **Middle pane** — the log terminal (Claude Code JSONL **and** Hermes
   pretty-format streams, tool blocks, Norse tablets, verdict inscriptions) as
   a workspace page at `/odins-throne`.
@@ -121,7 +123,10 @@ and asserts the structured entries end to end.
 - Odin's light/dark theme scopes to the plugin's own surfaces, not the window.
 - Modals/toasts overlay the app window from the pane (fixed positioning).
 - Path params don't exist in the app router — the selected session travels
-  via shared module state; `/odins-throne` is a single route.
+  via shared module state; `/odins-throne` is a single route. Clicking a job
+  card in the pane calls `host.openWorkspace("throne-log", …)` to open (or
+  re-front) a dedicated workspace tab; on older desktop builds that lack
+  `host.openWorkspace` it falls back to `host.navigate("/odins-throne")`.
 
 ## Source of truth
 

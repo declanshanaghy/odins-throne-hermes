@@ -11,6 +11,12 @@ declare module "@hermes/plugin-sdk" {
     navigate(path: string): void;
     notify(n: { kind: string; message: string }): void;
     request(method: string, params?: unknown): Promise<unknown>;
+    /** Open a plugin-rendered tab in the main workspace zone and reveal it.
+     *  Re-calling with the same id re-fronts the existing tab instead of
+     *  opening a duplicate. Returns a disposer that closes the tab.
+     *  Feature-detect before calling (typeof host.openWorkspace === 'function').
+     */
+    openWorkspace?: (id: string, opts: { render: () => unknown; title?: string; minWidth?: number; onClose?: () => void }) => () => void;
   };
 }
 

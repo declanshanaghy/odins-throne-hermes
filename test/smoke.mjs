@@ -116,6 +116,7 @@ dom.window.fetch = globalThis.fetch;
 
 globalThis.__stubNavigations = [];
 globalThis.__stubNotifications = [];
+globalThis.__stubWorkspaceTabs = [];
 
 // ── load the built plugin through the loader (stub SDK + real React) ───────
 const plugin = (await import("../desktop/plugin.js")).default;
@@ -397,5 +398,88 @@ assert.equal(
 );
 assert.equal(dom.window.document.documentElement.getAttribute("data-theme"), null, "app <html> untouched");
 
-console.log("SMOKE PASS — pane + page render, namespace drilldown tree (top-level roots, job-card task branches, old flat list gone, shanaghy.com icons + fallback, connector lines), CSS scoped, theme plugin-local, overlays wired");
+// ── job-card click → workspace tab open ────────────────────────────────────
+// Verify that the pane's onSelectSession wiring reaches host.openWorkspace.
+// The entry.tsx exports openThroneTab as a test seam; calling it with a session
+// id is exactly what SidebarConnected does when a job card is clicked.
+const { openThroneTab } = await import("../desktop/plugin.js");
+
+assert.equal(typeof openThroneTab, "function", "openThroneTab exported as test seam");
+
+// Before any click the workspace tab list is empty.
+assert.equal(globalThis.__stubWorkspaceTabs.length, 0, "no workspace tabs opened yet");
+
+openThroneTab("test-session-001");
+await flush();
+
+assert.ok(
+  globalThis.__stubWorkspaceTabs.length > 0,
+  "job-card click triggers host.openWorkspace (new workspace tab)",
+);
+assert.equal(
+  globalThis.__stubWorkspaceTabs[0].id,
+  "throne-log",
+  "openWorkspace called with stable tab id 'throne-log'",
+);
+assert.equal(
+  globalThis.__stubWorkspaceTabs[0].title,
+  "Odin's Throne",
+  "workspace tab carries the 'Odin's Throne' title",
+);
+
+// Re-clicking with a different session re-uses the same tab (re-fronts it)
+// rather than opening a second one — stub records every call so we can count.
+openThroneTab("test-session-002");
+await flush();
+assert.equal(
+  globalThis.__stubWorkspaceTabs.length,
+  2,
+  "second click records another openWorkspace call (stub records all; host dedupes by id)",
+);
+assert.equal(
+  globalThis.__stubWorkspaceTabs[1].id,
+  "throne-log",
+  "second click uses the same stable tab id",
+);
+
+// ── fallback: host.openWorkspace unavailable (older desktop builds) ────────
+// On older desktop builds host.openWorkspace may be absent. The opener must
+// fall back to host.navigate('/odins-throne') so the user still reaches the
+// log page. We simulate this by temporarily removing the method from the stub.
+const { host: stubHost } = await import("./sdk-stub.mjs");
+const savedOpenWorkspace = stubHost.openWorkspace;
+stubHost.openWorkspace = undefined; // simulate older build
+
+const navsBefore = globalThis.__stubNavigations.length;
+openThroneTab("test-session-fallback");
+await flush();
+
+assert.ok(
+  globalThis.__stubNavigations.length > navsBefore,
+  "fallback: host.navigate called when host.openWorkspace is unavailable",
+);
+assert.equal(
+  globalThis.__stubNavigations[globalThis.__stubNavigations.length - 1],
+  "/odins-throne",
+  "fallback: navigates to /odins-throne on older desktop builds",
+);
+// Restore so the tab-open path is active for the remainder of the test run.
+stubHost.openWorkspace = savedOpenWorkspace;
+
+// ── multiple rapid clicks all use the stable tab id ───────────────────────
+// Three successive clicks all go through the same 'throne-log' id so the host
+// never opens more than one tab (host dedupes on id; stub just records calls).
+const countBefore = globalThis.__stubWorkspaceTabs.length;
+openThroneTab("rapid-a");
+openThroneTab("rapid-b");
+openThroneTab("rapid-c");
+await flush();
+const rapidCalls = globalThis.__stubWorkspaceTabs.slice(countBefore);
+assert.equal(rapidCalls.length, 3, "three rapid clicks each call openWorkspace once");
+assert.ok(
+  rapidCalls.every((t) => t.id === "throne-log"),
+  "all rapid clicks use the stable 'throne-log' id (host dedupes by id)",
+);
+
+console.log("SMOKE PASS — pane + page render, namespace drilldown tree (top-level roots, job-card task branches, old flat list gone, shanaghy.com icons + fallback, connector lines), CSS scoped, theme plugin-local, overlays wired, job-card click opens workspace tab");
 process.exit(0);
