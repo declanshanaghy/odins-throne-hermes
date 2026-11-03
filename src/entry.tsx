@@ -16,6 +16,7 @@ import { ThronePane } from "./pane";
 import { ThronePage } from "./page";
 import { settingsUi } from "./settings";
 import { setCtx } from "./pluginCtx";
+import { initSessionTabs } from "./sessionTabs";
 
 const FONTS_HREF =
   "https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Cinzel+Decorative:wght@400;700;900&family=Source+Serif+4:wght@300;400;600&family=JetBrains+Mono:wght@400;500;600&display=swap";
@@ -75,6 +76,7 @@ export default {
   defaultEnabled: true,
   register(ctx: any) {
     setCtx(ctx);
+    initSessionTabs(ctx);
 
     // Google Fonts (same families as the SPA's index.html).
     if (!document.getElementById(FONT_ID)) {

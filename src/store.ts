@@ -10,7 +10,6 @@ import { useSyncExternalStore } from "react";
 import type { DisplayJob } from "./ui/lib/types";
 import type { NamespaceOption } from "./ui/hooks/useNamespace";
 import type { NamespaceSummaries } from "./ui/hooks/useNamespaceSummaries";
-import type { LogEntry } from "./ui/hooks/useLogStream";
 
 export interface CancelTarget {
   sessionId: string;
@@ -19,6 +18,8 @@ export interface CancelTarget {
 
 export interface ThroneSnapshot {
   jobs: DisplayJob[];
+  // Most recently opened session — used to highlight the card in the sidebar.
+  // Per-session log streaming lives in each ThronePage tab, not here.
   activeSessionId: string | null;
   quote: string;
   theme: "light" | "dark";
@@ -29,30 +30,17 @@ export interface ThroneSnapshot {
   setNamespace: (ns: string) => void;
   // per-namespace task summaries + status stats for the namespace tree (issue:2)
   namespaceSummaries: NamespaceSummaries;
-  // drilldown tree task click — selects a session, switching worlds if the
-  // task lives in another namespace (issue:4)
+  // drilldown tree task click — opens a dedicated tab for the session,
+  // switching namespace first if the task lives in another world (issue:4)
   onSelectTask: (nsId: string, sessionId: string) => void;
-
-  // log stream (useLogStream)
-  entries: LogEntry[];
-  activeJob: DisplayJob | null;
-  isFixture: boolean;
-  isTtlExpired: boolean;
-  isNodeUnreachable: boolean;
-  streamError: string | null;
-  isPinned: boolean;
-  replayedFromCache: boolean;
-  isConnecting: boolean;
-  isPodStarting: boolean;
 
   // actions
   onSelectSession: (sessionId: string) => void;
   onAvatarClick: (agentKey: string) => void;
   onOdinClick: () => void;
-  onTogglePin: () => void;
+  // Per-session pin toggle — used by both the sidebar and the per-tab page
   onTogglePinSession: (sessionId: string) => void;
   onCancelJob: (sessionId: string) => void;
-  onSetSpeed: (speed: number) => void;
   pinnedSessionIds: Set<string>;
   terminatingSessionIds: Set<string>;
 

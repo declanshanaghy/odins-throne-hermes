@@ -36,22 +36,12 @@ export interface LogEntry {
   complete?: boolean;
 }
 
-let entryCounter = 0;
-function nextId(): string {
-  return `log-${++entryCounter}`;
-}
-
-// Line-oriented parser for Hermes-harness pretty-format sessions (see
-// lib/hermesFormat.ts). Single instance: one session streams at a time, and
-// clearEntries()/the harness header reset its state between sessions.
-const hermesParser = new HermesLogParser(nextId);
-
 /** Strip the kubectl log timestamp prefix (e.g. "2026-03-15T19:58:07Z ") */
 export function stripTimestamp(line: string): string {
   return line.replace(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z\s+/, "");
 }
 
-export function parseEntrypointLine(line: string): LogEntry {
+export function parseEntrypointLine(line: string, nextId: () => string): LogEntry {
   // === Headers === and --- Section Markers ---
   if (/^===.*===$/.test(line)) {
     return { id: nextId(), type: "entrypoint-header", text: line.replace(/^=+\s*|\s*=+$/g, "") };
@@ -90,6 +80,17 @@ export const NODE_UNREACHABLE_PATTERN = /Node unreachable|kubelet timeout/i;
 export const POD_NOT_READY_PATTERN = /HTTP-Code:\s*400|is not running|container.*not running/i;
 
 export function useLogStream() {
+  // Per-instance entry counter and Hermes parser (were module-level singletons;
+  // per-instance refs let multiple simultaneous ThronePage tabs stream independently).
+  const counterRef = useRef(0);
+  const nextIdRef = useRef(() => `log-${++counterRef.current}`);
+  const hermesParserRef = useRef<HermesLogParser | null>(null);
+  if (!hermesParserRef.current) {
+    hermesParserRef.current = new HermesLogParser(nextIdRef.current);
+  }
+  const hermesParser = hermesParserRef.current;
+  const nextId = nextIdRef.current;
+
   const [entries, setEntries] = useState<LogEntry[]>([]);
   const [activeSessionId, _setActiveSessionId] = useState<string | null>(null);
   const activeSessionIdRef = useRef<string | null>(null);
@@ -135,7 +136,7 @@ export function useLogStream() {
 
   const clearEntries = useCallback(() => {
     setEntries([]);
-    entryCounter = 0;
+    counterRef.current = 0;
     liveSkipRef.current = 0;
     taskPromptBuffer.current = [];
     inTaskPrompt.current = false;
@@ -395,7 +396,7 @@ export function useLogStream() {
         // Entrypoint section start marker
         if (/^===\s*Agent Sandbox Entrypoint\s*===/.test(stripped)) {
           inEntrypoint.current = true;
-          setEntries((prev) => [...prev, parseEntrypointLine(stripped)]);
+          setEntries((prev) => [...prev, parseEntrypointLine(stripped, nextId)]);
           return;
         }
 
@@ -420,14 +421,14 @@ export function useLogStream() {
               text: "Agent Sandbox Setup",
               children: epChildren,
             };
-            return [...rest, group, parseEntrypointLine(stripped)];
+            return [...rest, group, parseEntrypointLine(stripped, nextId)];
           });
           return;
         }
 
         // Inside entrypoint section — parse with structured types
         if (inEntrypoint.current) {
-          setEntries((prev) => [...prev, parseEntrypointLine(stripped)]);
+          setEntries((prev) => [...prev, parseEntrypointLine(stripped, nextId)]);
           return;
         }
 

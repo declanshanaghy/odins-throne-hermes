@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Odin's Throne as a Hermes desktop plugin \u2014 right-pane job list, main-pane log viewer (Hlidskjalf ported from fenrir-ledger)",
+  "description": "Odin's Throne as a Hermes desktop plugin — right-pane job list, main-pane log viewer (Hlidskjalf ported from fenrir-ledger)",
   "scripts": {
     "build": "node build/build.mjs",
     "dev": "node build/build.mjs --watch --live",
@@ -14,7 +14,10 @@
   "devDependencies": {
     "@types/react": "^19.3.0",
     "esbuild": "^0.25.0",
+    "jsdom": "^29.1.1",
     "postcss": "^8.5.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
     "typescript": "^7.0.2"
   },
   "pnpm": {

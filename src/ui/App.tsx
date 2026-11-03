@@ -1,12 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { host } from "@hermes/plugin-sdk";
 import type { ServerMessage } from "./lib/types";
 import { randomQuote } from "./lib/constants";
 import { useWebSocket } from "./hooks/useWebSocket";
 import { useNamespace } from "./hooks/useNamespace";
 import { useNamespaceSummaries } from "./hooks/useNamespaceSummaries";
 import { useJobs } from "./hooks/useJobs";
-import { useLogStream } from "./hooks/useLogStream";
 import { useTheme } from "./hooks/useTheme";
 import { otFetch } from "../upstream";
 import { throneStore, type ThroneSnapshot } from "../store";
@@ -15,19 +13,14 @@ import {
   pinSession,
   unpinSession,
   isCacheNearCap,
-  appendLogLine,
-  migrateRemoveDuplicateLogs,
-  evictExpiredLogs,
 } from "./lib/localStorageLogs";
 import type { CachedSessionMeta } from "./lib/localStorageLogs";
+import { openSessionTab } from "../sessionTabs";
 
 /**
- * StoreBridge — the ported App. In the browser SPA this component rendered the
- * whole page; in the desktop plugin it keeps every piece of that logic (the
- * WebSocket, job list state machine, log stream, pin cache, Ragnarök) but
- * publishes a snapshot to the module store instead of rendering JSX. The
- * right-docked pane renders the Sidebar from this snapshot, the workspace
- * page renders the LogViewer, and the pane renders the overlays.
+ * StoreBridge — owns the WebSocket, job list, namespace, pins, and Ragnarök.
+ * Log streaming has moved to each per-session ThronePage tab (issue:6), so
+ * this bridge no longer manages per-session entries or subscriptions.
  */
 export function App() {
   const quote = useMemo(() => randomQuote(), []);
@@ -37,276 +30,60 @@ export function App() {
   const [cancelTarget, setCancelTarget] = useState<{ sessionId: string; jobTitle: string } | null>(null);
   const { jobs, handleMessage: handleJobsMessage, refreshCached } = useJobs();
 
-  // Namespace tree (issue:2): per-namespace summaries. The live jobs list is
-  // scoped to the active namespace, so a signature of it doubles as the
-  // "activity" signal that refetches that namespace's summary.
   const jobsActivityKey = useMemo(
     () => jobs.map((j) => `${j.sessionId}:${j.status}`).join("|"),
     [jobs],
   );
   const namespaceSummaries = useNamespaceSummaries(namespaces, namespace, jobsActivityKey);
-  const {
-    entries,
-    activeSessionId,
-    setActiveSessionId,
-    clearEntries,
-    handleMessage: handleLogMessage,
-    replayFromCache,
-    replayFromTempLog,
-    setLiveSkipCount,
-    isTtlExpired,
-    isNodeUnreachable,
-    streamError,
-    replayedFromCache,
-    isConnecting,
-    isPodStarting,
-    showPodStartTimeout,
-  } = useLogStream();
 
-  // Tracks the sessionId we currently have an active WS subscription for.
-  // Distinct from activeSessionId (display state) — this is the wire-protocol state.
-  const subscribedSessionRef = useRef<string | null>(null);
-  // Sessions we kept subscribed in the background for caching after navigation
-  const backgroundSubsRef = useRef<Set<string>>(new Set());
+  // Most recently opened session — used for sidebar highlighting only.
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
 
-  // Migrate existing duplicate log: entries for pinned sessions on mount
-  // and evict non-pinned temp logs older than the 1-hour TTL
-  useEffect(() => {
-    migrateRemoveDuplicateLogs();
-    evictExpiredLogs();
-  }, []);
-
-  // When namespace changes: clear active session, entries, and subscriptions.
-  // The WebSocket hook reconnects automatically to the new namespace — except
-  // when a cross-world task click (handleSelectTask below) is pending: then
-  // the clicked session stays selected and the reconnect effect subscribes
-  // to it once the new namespace's socket opens.
-  const prevNamespaceRef = useRef(namespace);
-  const pendingSelectRef = useRef<string | null>(null);
-  useEffect(() => {
-    if (prevNamespaceRef.current === namespace) return;
-    prevNamespaceRef.current = namespace;
-    // Clean up existing subscriptions
-    if (subscribedSessionRef.current) {
-      subscribedSessionRef.current = null;
-    }
-    backgroundSubsRef.current.clear();
-    const pending = pendingSelectRef.current;
-    pendingSelectRef.current = null;
-    setActiveSessionId(pending);
-    clearEntries();
-  }, [namespace, setActiveSessionId, clearEntries]);
-
-  const [isFixture, setIsFixture] = useState(false);
-  const [pinnedSessionId, setPinnedSessionId] = useState<string | null>(null);
   const [storageWarning, setStorageWarning] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; id: number } | null>(null);
   const [terminatingSessionIds, setTerminatingSessionIds] = useState<Set<string>>(new Set());
 
-  // Sync pin state when active session changes
-  useEffect(() => {
-    if (activeSessionId) {
-      setPinnedSessionId(checkIsPinned(activeSessionId) ? activeSessionId : null);
-    } else {
-      setPinnedSessionId(null);
-    }
-  }, [activeSessionId]);
-
-  const isPinned = pinnedSessionId === activeSessionId && activeSessionId !== null;
-
-  // Set of all pinned sessionIds (for sidebar display across all jobs)
-  const pinnedSessionIds = useMemo(
-    () => new Set(jobs.filter((j) => checkIsPinned(j.sessionId)).map((j) => j.sessionId)),
-    [jobs]
-  );
-
   const onMessage = useCallback(
     (msg: ServerMessage) => {
       handleJobsMessage(msg);
-      if (msg.type === "fixture-start" && "sessionId" in msg && msg.sessionId === activeSessionId) {
-        setIsFixture(true);
-      }
-      if (msg.type === "stream-end" && "sessionId" in msg && msg.sessionId === activeSessionId) {
-        setIsFixture(false);
-      }
-      if (
-        msg.type === "log-line" ||
-        msg.type === "stream-error" ||
-        msg.type === "stream-end" ||
-        msg.type === "verdict"
-      ) {
-        if ("sessionId" in msg && msg.sessionId === activeSessionId) {
-          handleLogMessage(msg);
-        } else if ("sessionId" in msg && backgroundSubsRef.current.has(msg.sessionId)) {
-          // Background pinned session: persist log lines to cache, clean up on end
-          if (msg.type === "log-line") {
-            appendLogLine(msg.sessionId, msg.line);
-          } else if (msg.type === "stream-end") {
-            backgroundSubsRef.current.delete(msg.sessionId);
-          }
-        }
-      }
     },
-    [handleJobsMessage, handleLogMessage, activeSessionId]
+    [handleJobsMessage],
   );
 
   const { state: wsState, error: wsError, send } = useWebSocket(onMessage, namespace);
 
+  /**
+   * Session click: open (or focus) a dedicated workspace tab for this session.
+   * Each tab manages its own WS connection and log stream (issue:6).
+   */
   const handleSelectSession = useCallback(
     (sessionId: string) => {
-      const currentSub = subscribedSessionRef.current;
-
-      // Unsubscribe / move to background for the current active subscription
-      if (currentSub !== null && currentSub !== sessionId) {
-        if (checkIsPinned(currentSub)) {
-          // Keep subscription alive so background caching continues
-          backgroundSubsRef.current.add(currentSub);
-        } else {
-          send({ type: "unsubscribe", sessionId: currentSub });
-          backgroundSubsRef.current.delete(currentSub);
-        }
-      }
-
       setActiveSessionId(sessionId);
-      setIsFixture(false);
-      clearEntries();
-
-      // Desktop port: bring the Hlidskjalf log terminal forward so the middle
-      // pane shows the selected job (best-effort; the store already carries
-      // the selection, so this only focuses the page).
-      try {
-        if (!window.location.hash.startsWith("#/odins-throne")) {
-          host.navigate("/odins-throne");
-        }
-      } catch {
-        // navigation unavailable — selection still works via the store
-      }
-
-      // Determine if this session is cached-only (pinned, no live pod)
-      const selectedJob = jobs.find((j) => j.sessionId === sessionId);
-      if (selectedJob?.status === "cached") {
-        // Replay from pinned localStorage cache — do NOT subscribe to server
-        subscribedSessionRef.current = null;
-        // Use setTimeout to let clearEntries flush before replay
-        setTimeout(() => replayFromCache(sessionId), 0);
-      } else if (currentSub === sessionId) {
-        // Revisiting the session we're already subscribed to (e.g. user clicks
-        // the same session again). Replay temp log for instant display — the live
-        // stream is still active and will continue from where it left off.
-        const cachedLineCount = replayFromTempLog(sessionId);
-        if (cachedLineCount > 0) {
-          setLiveSkipCount(cachedLineCount);
-        }
-        // subscribedSessionRef stays the same — still subscribed
-      } else {
-        // New session: load from temp log for instant display, then subscribe
-        const cachedLineCount = replayFromTempLog(sessionId);
-        subscribedSessionRef.current = sessionId;
-        if (cachedLineCount > 0) {
-          // Tell handleMessage to skip the first N live lines (server re-streams
-          // from beginning, these are duplicates of what we just showed from cache)
-          setLiveSkipCount(cachedLineCount);
-        }
-        send({ type: "subscribe", sessionId });
-      }
+      openSessionTab(sessionId);
     },
-    [send, setActiveSessionId, clearEntries, replayFromCache, replayFromTempLog, setLiveSkipCount, jobs]
+    [],
   );
 
   /**
-   * Drilldown tree task click (issue:4) — same selection semantics as the job
-   * cards, but the task may live in another namespace. Within the active
-   * world this is exactly handleSelectSession. Across worlds it switches the
-   * namespace first; the pending session survives the namespace-change reset
-   * and the WS reconnect effect subscribes once the new socket opens.
+   * Drilldown tree task click (issue:4) — same as handleSelectSession but may
+   * switch namespace first when the task lives in a different world.
    */
   const handleSelectTask = useCallback(
     (ns: string, sessionId: string) => {
-      if (ns === namespace) {
-        handleSelectSession(sessionId);
-        return;
+      setActiveSessionId(sessionId);
+      if (ns !== namespace) {
+        setNamespace(ns);
       }
-      pendingSelectRef.current = sessionId;
-      setIsFixture(false);
-      setNamespace(ns);
-      // Desktop port: bring the Hlidskjalf log terminal forward (best-effort).
-      try {
-        if (!window.location.hash.startsWith("#/odins-throne")) {
-          host.navigate("/odins-throne");
-        }
-      } catch {
-        // navigation unavailable — selection still works via the store
-      }
+      openSessionTab(sessionId);
     },
-    [namespace, handleSelectSession, setNamespace],
+    [namespace, setNamespace],
   );
 
-  // Send unsubscribe when App unmounts (e.g. the pane is closed).
-  // Also covers backgroundSubsRef sessions so the server cleans up cleanly.
-  useEffect(() => {
-    return () => {
-      if (subscribedSessionRef.current) {
-        send({ type: "unsubscribe", sessionId: subscribedSessionRef.current });
-      }
-      for (const sessionId of backgroundSubsRef.current) {
-        send({ type: "unsubscribe", sessionId });
-      }
-    };
-  }, [send]);
-
-  // Re-subscribe only on actual reconnect (wsState transitions to "open").
-  // Skip re-subscribe if the session ended with a TTL-expired or node-unreachable
-  // error — the pod is gone and retrying would just loop the same error again.
-  // Also skip for cached sessions (no server pod).
-  const isTtlExpiredRef = useRef(isTtlExpired);
-  isTtlExpiredRef.current = isTtlExpired;
-  const isNodeUnreachableRef = useRef(isNodeUnreachable);
-  isNodeUnreachableRef.current = isNodeUnreachable;
-  const prevWsState = useRef(wsState);
-  useEffect(() => {
-    const wasDisconnected = prevWsState.current !== "open";
-    prevWsState.current = wsState;
-    if (wsState === "open" && wasDisconnected && activeSessionId && !isTtlExpiredRef.current && !isNodeUnreachableRef.current) {
-      // Skip re-subscribe for cached-only sessions
-      const activeJob = jobs.find((j) => j.sessionId === activeSessionId);
-      if (activeJob?.status === "cached") return;
-
-      // On reconnect: clear stale entries, replay temp log for instant display,
-      // then re-subscribe. Set skip count so duplicates from re-stream are ignored.
-      clearEntries();
-      const cachedLineCount = replayFromTempLog(activeSessionId);
-      if (cachedLineCount > 0) {
-        setLiveSkipCount(cachedLineCount);
-      }
-      subscribedSessionRef.current = activeSessionId;
-      send({ type: "subscribe", sessionId: activeSessionId });
-    }
-  }, [wsState, activeSessionId, send, clearEntries, replayFromTempLog, setLiveSkipCount, jobs]);
-
-  // Auto-retry subscribe when pod is starting up (HTTP 400 returned by kubectl logs).
-  // Retries every 4 seconds. Clears when logs start flowing or after 2-minute timeout.
-  const podStartBeginRef = useRef<number | null>(null);
-  useEffect(() => {
-    if (!isPodStarting || !activeSessionId) {
-      podStartBeginRef.current = null;
-      return;
-    }
-    if (podStartBeginRef.current === null) {
-      podStartBeginRef.current = Date.now();
-    }
-    const intervalId = setInterval(() => {
-      const elapsed = Date.now() - (podStartBeginRef.current ?? Date.now());
-      if (elapsed >= 120_000) {
-        clearInterval(intervalId);
-        showPodStartTimeout();
-        return;
-      }
-      send({ type: "subscribe", sessionId: activeSessionId });
-    }, 4000);
-    return () => clearInterval(intervalId);
-  }, [isPodStarting, activeSessionId, send, showPodStartTimeout]);
-
-  const activeJob = jobs.find((j) => j.sessionId === activeSessionId) || null;
+  // Set of all pinned sessionIds (for sidebar display across all jobs)
+  const pinnedSessionIds = useMemo(
+    () => new Set(jobs.filter((j) => checkIsPinned(j.sessionId)).map((j) => j.sessionId)),
+    [jobs],
+  );
 
   /** Toggle pin for any session by sessionId. Used by both header and sidebar. */
   const handleTogglePinForSession = useCallback(
@@ -315,17 +92,9 @@ export function App() {
       if (!job) return;
 
       if (checkIsPinned(sessionId)) {
-        // Unpin: remove from cache
         unpinSession(sessionId);
-        if (sessionId === activeSessionId) setPinnedSessionId(null);
-        // If we had a background subscription for this session, clean it up
-        if (backgroundSubsRef.current.has(sessionId)) {
-          send({ type: "unsubscribe", sessionId });
-          backgroundSubsRef.current.delete(sessionId);
-        }
         refreshCached();
       } else {
-        // Pin: save log buffer to cache
         const meta: CachedSessionMeta = {
           sessionId,
           name: job.name,
@@ -340,23 +109,16 @@ export function App() {
         };
         const ok = pinSession(sessionId, meta);
         if (ok) {
-          if (sessionId === activeSessionId) setPinnedSessionId(sessionId);
           refreshCached();
           if (isCacheNearCap()) {
-            setStorageWarning("Odin\u2019s memory is nearly full \u2014 oldest pins will be evicted.");
+            setStorageWarning("Odin’s memory is nearly full — oldest pins will be evicted.");
             setTimeout(() => setStorageWarning(null), 5000);
           }
         }
       }
     },
-    [jobs, activeSessionId, refreshCached, send]
+    [jobs, refreshCached],
   );
-
-  /** Toggle pin for the currently active session (header shortcut). */
-  const handleTogglePin = useCallback(() => {
-    if (!activeSessionId) return;
-    handleTogglePinForSession(activeSessionId);
-  }, [activeSessionId, handleTogglePinForSession]);
 
   /** Open Ragnarök confirmation dialog for a running job. */
   const handleOpenCancelDialog = useCallback(
@@ -364,11 +126,11 @@ export function App() {
       const job = jobs.find((j) => j.sessionId === sessionId);
       if (!job || job.status !== "running") return;
       const jobTitle = job.issueTitle
-        ? `#${job.issue} \u2013 ${job.issueTitle}`
-        : `#${job.issue} \u2013 ${job.agentName} Step ${job.step}`;
+        ? `#${job.issue} – ${job.issueTitle}`
+        : `#${job.issue} – ${job.agentName} Step ${job.step}`;
       setCancelTarget({ sessionId, jobTitle });
     },
-    [jobs]
+    [jobs],
   );
 
   /** Confirmed: call DELETE /api/jobs/:sessionId to kill the K8s job. */
@@ -381,7 +143,6 @@ export function App() {
     }
     const { sessionId } = cancelTarget;
     setCancelTarget(null);
-    // Flash the card as terminating, then clear after 3s
     setTerminatingSessionIds((prev) => new Set(prev).add(sessionId));
     setTimeout(() => {
       setTerminatingSessionIds((prev) => {
@@ -390,12 +151,10 @@ export function App() {
         return next;
       });
     }, 3000);
-    // Show toast confirmation
     setToast({ message: `Ragnarok unleashed — ${sessionId} terminated`, id: Date.now() });
   }, [cancelTarget]);
 
-  // Publish the snapshot both surfaces render from. Runs after commit so
-  // consumer updates never collide with this component's own render.
+  // Publish the snapshot both surfaces render from.
   const snapshot: ThroneSnapshot = {
     jobs,
     activeSessionId,
@@ -407,28 +166,12 @@ export function App() {
     namespaces,
     setNamespace,
     namespaceSummaries,
-    entries,
-    activeJob,
-    isFixture,
-    isTtlExpired,
-    isNodeUnreachable,
-    streamError,
-    isPinned,
-    replayedFromCache,
-    isConnecting,
-    isPodStarting,
     onSelectSession: handleSelectSession,
     onSelectTask: handleSelectTask,
     onAvatarClick: setProfileAgent,
     onOdinClick: () => setProfileAgent("odin"),
-    onTogglePin: handleTogglePin,
     onTogglePinSession: handleTogglePinForSession,
     onCancelJob: handleOpenCancelDialog,
-    onSetSpeed: (speed: number) => {
-      if (activeSessionId) {
-        send({ type: "set-speed", sessionId: activeSessionId, speed });
-      }
-    },
     pinnedSessionIds,
     terminatingSessionIds,
     profileAgent,
@@ -443,6 +186,10 @@ export function App() {
   useEffect(() => {
     throneStore.publish(snapshot);
   });
+
+  // Suppress unused-variable warning: send is held for future use (speed control
+  // is now per-tab, but the WS is still used for job-list updates).
+  void send;
 
   return null;
 }

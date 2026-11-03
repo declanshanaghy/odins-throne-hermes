@@ -11,8 +11,14 @@ import jsdomPkg from "jsdom";
 const { JSDOM } = jsdomPkg;
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
+import { existsSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
 
-const require = createRequire(`${process.env.HOME}/.hermes/hermes-agent/apps/desktop/package.json`);
+const here = dirname(fileURLToPath(import.meta.url));
+const hermesDesktop = `${process.env.HOME}/.hermes/hermes-agent/apps/desktop/package.json`;
+const localPkg = join(here, "..", "node_modules", "react-dom", "package.json");
+const require = createRequire(existsSync(hermesDesktop) ? hermesDesktop : localPkg);
 const { createRoot } = require("react-dom/client");
 
 // ── jsdom global environment ────────────────────────────────────────────────
@@ -284,8 +290,9 @@ assert.equal(
   "every branched task is a full job card",
 );
 
-// Clicking a task's job card selects that session — the same semantics the
-// old list had (aria-selected marks the task node).
+// Clicking a task's job card opens a dedicated per-session tab (issue:6) AND
+// marks the task node selected in the tree (aria-selected for sidebar UX).
+const navsBefore = [...globalThis.__stubNavigations];
 document.querySelector('.ns-tree__task[data-session="issue-1200-step1-firemandecko-1a2b3c4d"] .card').click();
 await flush();
 await flush();
@@ -293,6 +300,27 @@ assert.equal(
   document.querySelector('.ns-tree__task[data-session="issue-1200-step1-firemandecko-1a2b3c4d"]').getAttribute("aria-selected"),
   "true",
   "clicked task node is marked selected",
+);
+const newNavs = globalThis.__stubNavigations.slice(navsBefore.length);
+assert.ok(
+  newNavs.some((p) => p === "/odins-throne/issue-1200-step1-firemandecko-1a2b3c4d"),
+  "session click navigates to a per-session tab path",
+);
+// A dedicated route contribution is registered for the clicked session
+const sessionContrib = contributions.find(
+  (c) => c.area === "routes" && c.data?.path === "/odins-throne/issue-1200-step1-firemandecko-1a2b3c4d",
+);
+assert.ok(sessionContrib, "per-session route registered when session is clicked");
+
+// Clicking the same session again focuses the existing tab (no duplicate registration)
+const contribCountBefore = contributions.filter((c) => c.area === "routes").length;
+document.querySelector('.ns-tree__task[data-session="issue-1200-step1-firemandecko-1a2b3c4d"] .card').click();
+await flush();
+await flush();
+assert.equal(
+  contributions.filter((c) => c.area === "routes").length,
+  contribCountBefore,
+  "clicking the same session twice does not register a duplicate route",
 );
 
 // Icons from shanaghy.com's icon library sit on the namespace rows only —
@@ -397,5 +425,5 @@ assert.equal(
 );
 assert.equal(dom.window.document.documentElement.getAttribute("data-theme"), null, "app <html> untouched");
 
-console.log("SMOKE PASS — pane + page render, namespace drilldown tree (top-level roots, job-card task branches, old flat list gone, shanaghy.com icons + fallback, connector lines), CSS scoped, theme plugin-local, overlays wired");
+console.log("SMOKE PASS — pane + page render, namespace drilldown tree (top-level roots, job-card task branches, old flat list gone, shanaghy.com icons + fallback, connector lines), CSS scoped, theme plugin-local, overlays wired, per-session tabs (issue:6)");
 process.exit(0);
