@@ -1,6 +1,6 @@
 import { useEffect, useRef, useCallback, useState } from "react";
 import type { ServerMessage, ClientMessage } from "../lib/types";
-import { wsUrl } from "../../upstream";
+import { getPlatform } from "../platform";
 
 type WsState = "connecting" | "open" | "closed" | "error";
 
@@ -35,10 +35,10 @@ export function useWebSocket(onMessage: (msg: ServerMessage) => void, namespace 
       connectedNamespaceRef.current = null;
     }
 
-    // Desktop port: the stream dials the monitor's token-gated bot surface
-    // with the pairing session (?token=); the protocol, reconnect and
-    // backoff logic are unchanged from the browser SPA.
-    const ws = new WebSocket(wsUrl(ns));
+    // Seam 2: the platform adapter decides which socket the stream dials
+    // (same-origin /ws on the web, the monitor's token-gated bot surface in
+    // the plugin); the protocol, reconnect and backoff logic are shared.
+    const ws = new WebSocket(getPlatform().wsUrl(ns));
     wsRef.current = ws;
     connectedNamespaceRef.current = ns;
     setState("connecting");
