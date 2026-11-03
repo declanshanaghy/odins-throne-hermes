@@ -9090,7 +9090,7 @@ function getDisplayMode(width) {
   if (width <= 400) return "normal";
   return "extended";
 }
-function Sidebar({ jobs, activeSessionId, quote, wsState, onAvatarClick, onOdinClick, onTogglePinSession, pinnedSessionIds, onCancelJob, terminatingSessionIds, namespace, namespaces, onNamespaceChange, namespaceSummaries, onSelectTask, sizingMode = "host-pane" }) {
+function Sidebar({ jobs, activeSessionId, quote, wsState, onAvatarClick, onOdinClick, onTogglePinSession, pinnedSessionIds, onCancelJob, terminatingSessionIds, namespace, namespaces, onNamespaceChange, namespaceSummaries, onSelectTask, sizingMode = "host-pane", externalWidth, onResizeMouseDown, onResizeDoubleClick }) {
   const { theme, setTheme: setTheme2 } = useTheme();
   const [width, setWidth] = useState12(DEFAULT_WIDTH);
   const navRef = useRef8(null);
@@ -9108,67 +9108,81 @@ function Sidebar({ jobs, activeSessionId, quote, wsState, onAvatarClick, onOdinC
   }, []);
   const displayMode = getDisplayMode(width);
   const isCompact = displayMode === "compact";
-  return /* @__PURE__ */ jsx16(
+  return /* @__PURE__ */ jsxs12(
     "nav",
     {
       ref: navRef,
       className: "sidebar",
       "aria-label": "Agent sessions",
-      style: { width: sizingMode === "fixed" ? DEFAULT_WIDTH : "100%", height: "100%" },
-      children: /* @__PURE__ */ jsxs12("div", { className: "sidebar-header", children: [
-        /* @__PURE__ */ jsxs12("div", { className: "brand", children: [
-          /* @__PURE__ */ jsx16(
-            "button",
-            {
-              className: "odin-avatar-btn",
-              onClick: onOdinClick,
-              "aria-label": "View Odin profile",
-              title: "View Odin profile",
-              children: /* @__PURE__ */ jsx16(
-                "img",
-                {
-                  src: avatarUrl("odin", theme === "light" ? "light" : "dark") ?? "",
-                  alt: "Odin"
-                }
-              )
-            }
-          ),
-          !isCompact && /* @__PURE__ */ jsx16("h1", { children: "Hlidskjalf" }),
-          !isCompact && /* @__PURE__ */ jsx16("span", { className: "brand-wss-badge", children: /* @__PURE__ */ jsx16(StatusBadge, { state: wsState }) })
-        ] }),
-        !isCompact && /* @__PURE__ */ jsxs12(Fragment4, { children: [
-          /* @__PURE__ */ jsxs12("div", { className: "quote", role: "note", children: [
-            "\u201C",
-            quote,
-            "\u201D"
+      style: { width: sizingMode === "fixed" ? externalWidth ?? DEFAULT_WIDTH : "100%", height: "100%" },
+      children: [
+        /* @__PURE__ */ jsxs12("div", { className: "sidebar-header", children: [
+          /* @__PURE__ */ jsxs12("div", { className: "brand", children: [
+            /* @__PURE__ */ jsx16(
+              "button",
+              {
+                className: "odin-avatar-btn",
+                onClick: onOdinClick,
+                "aria-label": "View Odin profile",
+                title: "View Odin profile",
+                children: /* @__PURE__ */ jsx16(
+                  "img",
+                  {
+                    src: avatarUrl("odin", theme === "light" ? "light" : "dark") ?? "",
+                    alt: "Odin"
+                  }
+                )
+              }
+            ),
+            !isCompact && /* @__PURE__ */ jsx16("h1", { children: "Hlidskjalf" }),
+            !isCompact && /* @__PURE__ */ jsx16("span", { className: "brand-wss-badge", children: /* @__PURE__ */ jsx16(StatusBadge, { state: wsState }) })
           ] }),
-          /* @__PURE__ */ jsxs12("div", { className: "count-row", children: [
-            /* @__PURE__ */ jsxs12("div", { className: "count", "aria-live": "polite", children: [
-              jobs.length,
-              " session",
-              jobs.length !== 1 ? "s" : ""
+          !isCompact && /* @__PURE__ */ jsxs12(Fragment4, { children: [
+            /* @__PURE__ */ jsxs12("div", { className: "quote", role: "note", children: [
+              "\u201C",
+              quote,
+              "\u201D"
             ] }),
-            /* @__PURE__ */ jsx16(ThemeSwitcher, { theme, setTheme: setTheme2 })
-          ] })
+            /* @__PURE__ */ jsxs12("div", { className: "count-row", children: [
+              /* @__PURE__ */ jsxs12("div", { className: "count", "aria-live": "polite", children: [
+                jobs.length,
+                " session",
+                jobs.length !== 1 ? "s" : ""
+              ] }),
+              /* @__PURE__ */ jsx16(ThemeSwitcher, { theme, setTheme: setTheme2 })
+            ] })
+          ] }),
+          /* @__PURE__ */ jsx16(
+            NamespaceTree,
+            {
+              namespace,
+              namespaces,
+              summaries: namespaceSummaries,
+              onNamespaceChange,
+              onSelectTask,
+              activeSessionId,
+              displayMode,
+              onAvatarClick,
+              onTogglePinSession,
+              pinnedSessionIds,
+              onCancelJob,
+              terminatingSessionIds
+            }
+          )
         ] }),
-        /* @__PURE__ */ jsx16(
-          NamespaceTree,
+        sizingMode === "fixed" && /* @__PURE__ */ jsx16(
+          "div",
           {
-            namespace,
-            namespaces,
-            summaries: namespaceSummaries,
-            onNamespaceChange,
-            onSelectTask,
-            activeSessionId,
-            displayMode,
-            onAvatarClick,
-            onTogglePinSession,
-            pinnedSessionIds,
-            onCancelJob,
-            terminatingSessionIds
+            className: "sidebar-resize-handle",
+            onMouseDown: onResizeMouseDown,
+            onDoubleClick: onResizeDoubleClick,
+            role: "separator",
+            "aria-orientation": "vertical",
+            "aria-label": "Resize sidebar",
+            title: "Drag to resize \xB7 Double-click to reset"
           }
         )
-      ] })
+      ]
     }
   );
 }
