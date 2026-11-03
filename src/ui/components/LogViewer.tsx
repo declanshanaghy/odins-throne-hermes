@@ -37,8 +37,9 @@ function groupConsecutiveEntries(entries: LogEntry[]): DisplayEntry[] {
   while (i < entries.length) {
     const entry = entries[i]!;
 
-    // Detect startup block: entrypoint-header "Starting Claude Code" + following KV raw lines
-    if (entry.type === "entrypoint-header" && entry.text === "Starting Claude Code") {
+    // Detect startup block: harness header ("Starting Claude Code" /
+    // "Starting Hermes Agent") + following KV raw lines
+    if (entry.type === "entrypoint-header" && /^Starting (Claude Code|Hermes Agent)$/.test(entry.text ?? "")) {
       const metaEntries: LogEntry[] = [];
       let k = i + 1;
       while (k < entries.length) {
@@ -1117,7 +1118,7 @@ function StartupBlock({ group }: { group: StartupGroup }) {
     <div className={`ep-group ${open ? "open" : ""}`}>
       <div className="ep-group-header" onClick={() => setOpen(!open)} role="button" tabIndex={0} aria-expanded={open} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setOpen((o) => !o); } }}>
         <span className="ep-group-chevron">{"\u203A"}</span>
-        <span className="ep-group-title">Starting Claude Code</span>
+        <span className="ep-group-title">{group.headerEntry.text}</span>
         <span className="ep-group-meta">
           {model && <span className="ep-group-meta-item"><span className="ep-group-meta-key">Model:</span> {model}</span>}
           {session && <span className="ep-group-meta-item"><span className="ep-group-meta-key">Session:</span> {session}</span>}

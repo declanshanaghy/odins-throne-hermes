@@ -3,6 +3,7 @@ import type { ServerMessage, JsonEvent, ContentBlock } from "../lib/types";
 import { parseJsonlLine } from "../lib/jsonl";
 import { batchSummary } from "../lib/constants";
 import { appendLogLine, getCachedLog, getLog } from "../lib/localStorageLogs";
+import { HermesLogParser } from "../lib/hermesFormat";
 
 // Ref type for cache-fallback invoke — avoids circular useCallback dependency
 type ReplayFn = (sessionId: string) => void;
@@ -39,6 +40,11 @@ let entryCounter = 0;
 function nextId(): string {
   return `log-${++entryCounter}`;
 }
+
+// Line-oriented parser for Hermes-harness pretty-format sessions (see
+// lib/hermesFormat.ts). Single instance: one session streams at a time, and
+// clearEntries()/the harness header reset its state between sessions.
+const hermesParser = new HermesLogParser(nextId);
 
 /** Strip the kubectl log timestamp prefix (e.g. "2026-03-15T19:58:07Z ") */
 export function stripTimestamp(line: string): string {
@@ -136,6 +142,7 @@ export function useLogStream() {
     inEntrypoint.current = false;
     hasEmittedTaskPrompt.current = false;
     seenAssistantTurn.current = false;
+    hermesParser.reset();
     setStreamError(null);
     setStreamEnded(false);
     setReplayedFromCache(false);
@@ -392,9 +399,13 @@ export function useLogStream() {
           return;
         }
 
-        // Entrypoint section end marker — collapse all pre-Claude entries into a group.
-        if (/^===\s*Starting Claude Code\s*===/.test(stripped)) {
+        // Entrypoint section end marker — collapse all pre-agent entries into a group.
+        // Names the harness: "Claude Code" (JSONL sessions) or "Hermes Agent"
+        // (pretty-format sessions, parsed by lib/hermesFormat.ts).
+        if (/^===\s*Starting (Claude Code|Hermes Agent)\s*===/.test(stripped)) {
           inEntrypoint.current = false;
+          hermesParser.reset();
+          if (/Hermes Agent/.test(stripped)) hermesParser.activate();
           setEntries((prev) => {
             const groupTypes = new Set(["entrypoint-header", "entrypoint-ok", "entrypoint-info", "entrypoint-fatal", "raw"]);
             const epChildren: LogEntry[] = [];
@@ -417,6 +428,25 @@ export function useLogStream() {
         // Inside entrypoint section — parse with structured types
         if (inEntrypoint.current) {
           setEntries((prev) => [...prev, parseEntrypointLine(stripped)]);
+          return;
+        }
+
+        // Hermes pretty-format session lines (active after the harness header,
+        // or self-activated on the first ☤ / Query: marker). Null = not a
+        // Hermes session, fall through to the raw fallback below.
+        const step = hermesParser.processLine(stripped);
+        if (step) {
+          if (step.append?.some((e) => e.type === "assistant-text")) {
+            seenAssistantTurn.current = true;
+          }
+          setEntries((prev) => {
+            let next = prev;
+            const upd = step.update;
+            if (upd) next = next.map((e) => (e.id === upd.id ? upd : e));
+            const add = step.append;
+            if (add && add.length > 0) next = [...next, ...add];
+            return next;
+          });
           return;
         }
 

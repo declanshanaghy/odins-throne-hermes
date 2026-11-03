@@ -6,8 +6,9 @@ first-class plugin:
 
 - **Right pane** — the job list (SessionCards, namespace selector, WSS badge,
   theme switcher, Odin himself), docked beside the conversation.
-- **Middle pane** — the log terminal (streaming JSONL, tool blocks, Norse
-  tablets, verdict inscriptions) as a workspace page at `/odins-throne`.
+- **Middle pane** — the log terminal (Claude Code JSONL **and** Hermes
+  pretty-format streams, tool blocks, Norse tablets, verdict inscriptions) as
+  a workspace page at `/odins-throne`.
 - Same Norse pixels (the full 3,230-line theme, scoped to the plugin's own
   surfaces), same behavior (live jobs push, pin cache, Ragnarök, downloads,
   fixture speed controls, error tablets) — the UI is **vendored, not rewritten**.
@@ -85,6 +86,28 @@ monitor.
 Gates: `npx tsc --noEmit` (type check) and `npm run build` (bundle must
 build). Before committing UI changes, run `npm run build` so the committed
 `desktop/plugin.js` matches `src/`.
+
+## Session log formats
+
+The log terminal parses **both harnesses'** output into the same structured
+entries — agent bubbles, tool batches, warnings, the decree tablet and the
+verdict inscription:
+
+- **Claude Code** — stream-JSONL (`src/ui/lib/jsonl.ts` → `useLogStream`).
+- **Hermes** — pretty-format sessions (`☤ Hermes` turns, `💻 $`/`✗ $`
+  terminal calls, `📖 Read`, `✍️ Write`/`🔧 Patch` with `│` diffs,
+  `🔎 Searching tools`, `📋 Plan`; the duplicated `Query:` prompt echo is
+  suppressed) via the line-oriented state machine in
+  `src/ui/lib/hermesFormat.ts`, activated by the
+  `=== Starting Hermes Agent ===` entrypoint header. Unknown lines fall back
+  to dimmed raw text — a Hermes format change degrades to the old rendering,
+  never to a blank pane. The decree parser also re-inserts the line breaks the
+  Hermes harness sometimes eats, so the glued one-line decree
+  (`…#9VERDICT: DONEPR: …`) still parses canonically.
+
+Regression guard: `test/hermes-stream.mjs` replays a synthetic Hermes session
+through the real hook (from the built bundle, same bytes the desktop loads)
+and asserts the structured entries end to end.
 
 ## Deliberate deviations from the SPA
 

@@ -148,7 +148,15 @@ function parseCanonicalDecree(text: string): ParsedDecree | null {
   if (!startMatch || !endMatch) return null;
 
   const content = text.slice(startMatch.index + startMatch[0].length, endMatch.index).trim();
-  const lines = content.split("\n");
+  // The Hermes harness sometimes strips the newlines that follow the decree
+  // key headers, so the whole block arrives glued on one line
+  // ("…#9VERDICT: DONEPR: …SUMMARY:- …"). Re-insert breaks before the known
+  // keys and the first glued bullet of each list section; well-formed decrees
+  // already have these newlines and are unaffected.
+  const normalized = content
+    .replace(/([^\n])(?=(?:ISSUE|VERDICT|PR|SUMMARY|CHECKS|SEAL|SIGNOFF):)/g, "$1\n")
+    .replace(/^(SUMMARY:|CHECKS:)(?=- )/gm, "$1\n");
+  const lines = normalized.split("\n");
   let issue    = "";
   let verdict  = "";
   let pr: string | null = null;
@@ -202,7 +210,7 @@ function parseCanonicalDecree(text: string): ParsedDecree | null {
   return { issue, verdict, pr, summary, checks, seal, signoff, agentKey, format: "canonical" };
 }
 
-function parseDecree(text: string): ParsedDecree {
+export function parseDecree(text: string): ParsedDecree {
   // Try canonical first (Format 1)
   const canonical = parseCanonicalDecree(text);
   if (canonical) return canonical;

@@ -190,26 +190,29 @@ export function randomQuote(): string {
 
 export function toolBadgeClass(name: string): string {
   const n = name.toLowerCase();
-  if (n === "bash") return "bash";
-  if (n === "read" || n === "grep" || n === "glob") return "read";
-  if (n === "edit" || n === "multiedit") return "edit";
-  if (n === "write") return "write";
+  if (n === "bash" || n === "terminal") return "bash";
+  if (n === "read" || n === "grep" || n === "glob" || n === "read_file" || n === "tool_search") return "read";
+  if (n === "edit" || n === "multiedit" || n === "patch") return "edit";
+  if (n === "write" || n === "write_file") return "write";
   if (n === "agent") return "agent";
   return "";
 }
 
-/** Categorize a tool call by what it's doing for batch summaries */
+/** Categorize a tool call by what it's doing for batch summaries.
+ *  Handles both harnesses' tool names: Claude Code (Bash/Read/Write/Edit…)
+ *  and Hermes (terminal/read_file/write_file/patch/tool_search/plan). */
 export function toolCategory(name: string, input?: Record<string, unknown>): string {
   const cmd = String(input?.command ?? "");
   const path = String(input?.file_path ?? input?.pattern ?? "");
 
-  if (name === "TodoWrite" || name === "TodoUpdate") return "tracking";
-  if (name === "Read" || name === "Grep" || name === "Glob") return "reading";
-  if (name === "Edit" || name === "MultiEdit") return "editing";
-  if (name === "Write") return "writing";
+  if (name === "TodoWrite" || name === "TodoUpdate" || name === "plan") return "tracking";
+  if (name === "Read" || name === "Grep" || name === "Glob" || name === "read_file") return "reading";
+  if (name === "tool_search") return "searching";
+  if (name === "Edit" || name === "MultiEdit" || name === "patch") return "editing";
+  if (name === "Write" || name === "write_file") return "writing";
   if (name === "Agent") return "delegating";
 
-  if (name === "Bash") {
+  if (name === "Bash" || name === "terminal") {
     if (/git\s+(add|commit|push)/.test(cmd)) return "committing";
     if (/git\s+(fetch|rebase|pull|merge)/.test(cmd)) return "syncing";
     if (/git\s+(log|diff|status|branch)/.test(cmd)) return "inspecting";
@@ -244,10 +247,10 @@ export function batchSummary(tools: Array<{ toolName?: string; toolInput?: strin
 
 export function toolPreview(name: string, input?: Record<string, unknown>): string {
   if (!input) return "";
-  if (name === "Bash" && input.command) return String(input.command).slice(0, 120);
-  if ((name === "Read" || name === "Edit" || name === "Write") && input.file_path)
+  if ((name === "Bash" || name === "terminal") && input.command) return String(input.command).slice(0, 120);
+  if ((name === "Read" || name === "Edit" || name === "Write" || name === "read_file" || name === "write_file" || name === "patch") && input.file_path)
     return String(input.file_path);
-  if ((name === "Grep" || name === "Glob") && input.pattern)
+  if ((name === "Grep" || name === "Glob" || name === "tool_search") && input.pattern)
     return String(input.pattern);
   const keys = Object.keys(input);
   const firstKey = keys[0];

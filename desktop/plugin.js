@@ -3525,22 +3525,23 @@ function randomQuote() {
 }
 function toolBadgeClass(name) {
   const n = name.toLowerCase();
-  if (n === "bash") return "bash";
-  if (n === "read" || n === "grep" || n === "glob") return "read";
-  if (n === "edit" || n === "multiedit") return "edit";
-  if (n === "write") return "write";
+  if (n === "bash" || n === "terminal") return "bash";
+  if (n === "read" || n === "grep" || n === "glob" || n === "read_file" || n === "tool_search") return "read";
+  if (n === "edit" || n === "multiedit" || n === "patch") return "edit";
+  if (n === "write" || n === "write_file") return "write";
   if (n === "agent") return "agent";
   return "";
 }
 function toolCategory(name, input) {
   const cmd = String(input?.command ?? "");
   const path = String(input?.file_path ?? input?.pattern ?? "");
-  if (name === "TodoWrite" || name === "TodoUpdate") return "tracking";
-  if (name === "Read" || name === "Grep" || name === "Glob") return "reading";
-  if (name === "Edit" || name === "MultiEdit") return "editing";
-  if (name === "Write") return "writing";
+  if (name === "TodoWrite" || name === "TodoUpdate" || name === "plan") return "tracking";
+  if (name === "Read" || name === "Grep" || name === "Glob" || name === "read_file") return "reading";
+  if (name === "tool_search") return "searching";
+  if (name === "Edit" || name === "MultiEdit" || name === "patch") return "editing";
+  if (name === "Write" || name === "write_file") return "writing";
   if (name === "Agent") return "delegating";
-  if (name === "Bash") {
+  if (name === "Bash" || name === "terminal") {
     if (/git\s+(add|commit|push)/.test(cmd)) return "committing";
     if (/git\s+(fetch|rebase|pull|merge)/.test(cmd)) return "syncing";
     if (/git\s+(log|diff|status|branch)/.test(cmd)) return "inspecting";
@@ -3572,10 +3573,10 @@ function batchSummary(tools) {
 }
 function toolPreview(name, input) {
   if (!input) return "";
-  if (name === "Bash" && input.command) return String(input.command).slice(0, 120);
-  if ((name === "Read" || name === "Edit" || name === "Write") && input.file_path)
+  if ((name === "Bash" || name === "terminal") && input.command) return String(input.command).slice(0, 120);
+  if ((name === "Read" || name === "Edit" || name === "Write" || name === "read_file" || name === "write_file" || name === "patch") && input.file_path)
     return String(input.file_path);
-  if ((name === "Grep" || name === "Glob") && input.pattern)
+  if ((name === "Grep" || name === "Glob" || name === "tool_search") && input.pattern)
     return String(input.pattern);
   const keys = Object.keys(input);
   const firstKey = keys[0];
@@ -5323,11 +5324,260 @@ function parseJsonlLine(rawLine) {
   }
 }
 
+// src/ui/lib/hermesFormat.ts
+var DIVIDER_RE = /^─{10,}$/;
+var ASSISTANT_RE = /^☤/;
+var QUERY_RE = /^Query: /;
+var HERMES_WARN_RE = /^\[hermes\]\s*(?:WARNING|WARN):?\s*/i;
+var TERMINAL_RE = /^[💻✗]\s*\$(.+)$/u;
+var EXIT_RE = /\s*\[exit (\d+)\]\s*$/;
+var DURATION_RE = /\s{2,}(?:\d+m\s*)?\d+(?:\.\d+)?s$/;
+var READ_RE = /^📖\s*Read\s+(\S.*)$/u;
+var TOOL_DETAILS_RE = /^📖\s*Reading tool details\s*·\s*(\S.*)$/u;
+var TOOL_SEARCH_RE = /^🔎\s*Searching tools\s*·\s*(.+)$/u;
+var WRITE_RE = /^✍\uFE0F?\s*Write\s+(\S.*)$/u;
+var PATCH_RE = /^🔧\s*Patch\s+(\S.*)$/u;
+var PLAN_RE = /^📋\s*Plan\s+(\S.*)$/u;
+var DIFF_RE = /^│\s?(.*)$/;
+var KV_RE = /^(Session|Title|Duration|Messages|Model|Branch|Working directory):\s*(.*)$/;
+var RESUME_RE = /^(Resume this session with:|hermes (?:--resume|-c) )/;
+var DECREE_RE = /᛭᛭᛭\s*DECREE COMPLETE/;
+var VERDICT_RE = /VERDICT:\s*\**\s*([A-Za-z]+)/;
+var DIFF_MAX = 1200;
+var INPUT_MAX = 800;
+function mergeSteps(a, b) {
+  return {
+    ...a.update || b.update ? { update: a.update ?? b.update } : {},
+    ...a.append || b.append ? { append: [...a.append ?? [], ...b.append ?? []] } : {}
+  };
+}
+var HermesLogParser = class {
+  constructor(allocId) {
+    this.allocId = allocId;
+  }
+  active = false;
+  inEcho = false;
+  sawDivider = false;
+  assistant = null;
+  batchId = null;
+  batchChildren = [];
+  batchComplete = false;
+  /** the most recent tool accepts │ diff continuation lines (write_file / patch) */
+  lastDiffable = false;
+  reset() {
+    this.active = false;
+    this.inEcho = false;
+    this.sawDivider = false;
+    this.assistant = null;
+    this.batchId = null;
+    this.batchChildren = [];
+    this.batchComplete = false;
+    this.lastDiffable = false;
+  }
+  /** Activate (and reset) for a Hermes-harness session. */
+  activate() {
+    this.reset();
+    this.active = true;
+  }
+  isActive() {
+    return this.active;
+  }
+  /**
+   * Feed one raw (timestamp-stripped) log line.
+   * Returns null when the parser is not active and the line holds no Hermes
+   * activation marker — caller falls back to its own handling.
+   */
+  processLine(line) {
+    if (!this.active) {
+      if (ASSISTANT_RE.test(line) || QUERY_RE.test(line)) this.active = true;
+      else return null;
+    }
+    if (this.inEcho) {
+      if (DIVIDER_RE.test(line)) this.inEcho = false;
+      else return {};
+    }
+    if (DIVIDER_RE.test(line)) {
+      this.sawDivider = true;
+      this.lastDiffable = false;
+      if (this.assistant !== null) return this.flushAssistant();
+      return {};
+    }
+    if (ASSISTANT_RE.test(line)) {
+      const step = this.assistant !== null ? this.flushAssistant() : this.completeBatch();
+      this.assistant = [];
+      return step;
+    }
+    if (this.assistant !== null) {
+      this.assistant.push(line);
+      return {};
+    }
+    if (QUERY_RE.test(line)) {
+      this.inEcho = true;
+      return {};
+    }
+    if (line.trim() === "") return {};
+    if (HERMES_WARN_RE.test(line)) {
+      return { append: [{ id: this.allocId(), type: "warning", message: line }] };
+    }
+    const diff = DIFF_RE.exec(line);
+    if (diff && this.lastDiffable && this.batchChildren.length > 0) {
+      return this.appendDiff(diff[1] ?? "");
+    }
+    const term = TERMINAL_RE.exec(line);
+    if (term) {
+      const failed = line.startsWith("\u2717");
+      let cmd = term[1] ?? "";
+      let toolResult;
+      const em = EXIT_RE.exec(cmd);
+      if (em) {
+        toolResult = `exit ${em[1]}`;
+        cmd = cmd.slice(0, em.index);
+      }
+      cmd = cmd.replace(DURATION_RE, "").trim();
+      return this.pushTool({
+        toolName: "terminal",
+        toolInput: JSON.stringify({ command: cmd }).slice(0, INPUT_MAX),
+        toolIsError: failed,
+        ...toolResult !== void 0 ? { toolResult } : {}
+      });
+    }
+    const read = READ_RE.exec(line);
+    if (read) {
+      return this.pushTool({
+        toolName: "read_file",
+        toolInput: JSON.stringify({ file_path: read[1].trim() }).slice(0, INPUT_MAX)
+      });
+    }
+    const details = TOOL_DETAILS_RE.exec(line);
+    if (details) {
+      return this.pushTool({
+        toolName: "tool_search",
+        toolInput: JSON.stringify({ pattern: `tool details \xB7 ${details[1].trim()}` }).slice(0, INPUT_MAX)
+      });
+    }
+    const search = TOOL_SEARCH_RE.exec(line);
+    if (search) {
+      const q = (search[1] ?? "").replace(DURATION_RE, "").trim();
+      return this.pushTool({
+        toolName: "tool_search",
+        toolInput: JSON.stringify({ pattern: q }).slice(0, INPUT_MAX)
+      });
+    }
+    const write = WRITE_RE.exec(line);
+    if (write) {
+      return this.pushTool({
+        toolName: "write_file",
+        toolInput: JSON.stringify({ file_path: write[1].trim() }).slice(0, INPUT_MAX),
+        diffable: true
+      });
+    }
+    const patch = PATCH_RE.exec(line);
+    if (patch) {
+      return this.pushTool({
+        toolName: "patch",
+        toolInput: JSON.stringify({ file_path: patch[1].trim() }).slice(0, INPUT_MAX),
+        diffable: true
+      });
+    }
+    const plan = PLAN_RE.exec(line);
+    if (plan) {
+      return this.pushTool({
+        toolName: "plan",
+        toolInput: JSON.stringify({ plan: plan[1].trim() }).slice(0, INPUT_MAX)
+      });
+    }
+    if (RESUME_RE.test(line)) {
+      const step = this.assistant !== null ? this.flushAssistant() : {};
+      return mergeSteps(step, { append: [this.raw(line)] });
+    }
+    const kv = KV_RE.exec(line);
+    if (kv) {
+      if (!this.sawDivider) return { append: [this.raw(line)] };
+      return {
+        append: [{ id: this.allocId(), type: "entrypoint-info", detail: kv[1], text: kv[2].trim() }]
+      };
+    }
+    return { append: [this.raw(line)] };
+  }
+  raw(line) {
+    return { id: this.allocId(), type: "raw", text: line };
+  }
+  pushTool(tool) {
+    const entry = {
+      id: this.allocId(),
+      type: "tool-use",
+      toolId: "",
+      toolName: tool.toolName,
+      toolInput: tool.toolInput,
+      ...tool.toolIsError !== void 0 ? { toolIsError: tool.toolIsError } : {},
+      ...tool.toolResult !== void 0 ? { toolResult: tool.toolResult } : {}
+    };
+    this.lastDiffable = tool.diffable === true;
+    if (this.batchId !== null && !this.batchComplete) {
+      this.batchChildren = [...this.batchChildren, entry];
+      return { update: this.batchEntry() };
+    }
+    this.batchId = this.allocId();
+    this.batchChildren = [entry];
+    this.batchComplete = false;
+    return { append: [this.batchEntry()] };
+  }
+  appendDiff(line) {
+    const last = this.batchChildren[this.batchChildren.length - 1];
+    const cur = last.toolResult ?? "";
+    if (cur.length >= DIFF_MAX) return {};
+    let next = cur ? `${cur}
+${line}` : line;
+    if (next.length > DIFF_MAX) next = `${next.slice(0, DIFF_MAX)}
+\u2026(truncated)`;
+    const nextTool = { ...last, toolResult: next };
+    this.batchChildren = [...this.batchChildren.slice(0, -1), nextTool];
+    return { update: this.batchEntry() };
+  }
+  completeBatch() {
+    if (this.batchId === null || this.batchComplete) return {};
+    this.batchComplete = true;
+    this.lastDiffable = false;
+    return { update: this.batchEntry() };
+  }
+  batchEntry() {
+    return {
+      id: this.batchId ?? "",
+      type: "tool-batch",
+      text: batchSummary(this.batchChildren.filter((c) => c.type === "tool-use")),
+      children: this.batchChildren,
+      ...this.batchComplete ? { complete: true } : {}
+    };
+  }
+  /** Close the open assistant turn: complete the open batch, emit the text, and a verdict if it is a decree. */
+  flushAssistant() {
+    const lines = this.assistant ?? [];
+    this.assistant = null;
+    this.lastDiffable = false;
+    const text = lines.join("\n").replace(/^\n+|\n+$/g, "");
+    if (!text) return this.completeBatch();
+    const append = [{ id: this.allocId(), type: "assistant-text", text }];
+    if (DECREE_RE.test(text)) {
+      const vm = VERDICT_RE.exec(text);
+      if (vm) {
+        const v = vm[1].toUpperCase();
+        append.push({
+          id: this.allocId(),
+          type: "verdict",
+          verdictResult: /^FAIL|^FINDINGS/.test(v) ? "FAIL" : "PASS"
+        });
+      }
+    }
+    return mergeSteps(this.completeBatch(), { append });
+  }
+};
+
 // src/ui/hooks/useLogStream.ts
 var entryCounter = 0;
 function nextId() {
   return `log-${++entryCounter}`;
 }
+var hermesParser = new HermesLogParser(nextId);
 function stripTimestamp(line) {
   return line.replace(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z\s+/, "");
 }
@@ -5395,6 +5645,7 @@ function useLogStream() {
     inEntrypoint.current = false;
     hasEmittedTaskPrompt.current = false;
     seenAssistantTurn.current = false;
+    hermesParser.reset();
     setStreamError(null);
     setStreamEnded(false);
     setReplayedFromCache(false);
@@ -5608,8 +5859,10 @@ function useLogStream() {
           setEntries((prev) => [...prev, parseEntrypointLine(stripped)]);
           return;
         }
-        if (/^===\s*Starting Claude Code\s*===/.test(stripped)) {
+        if (/^===\s*Starting (Claude Code|Hermes Agent)\s*===/.test(stripped)) {
           inEntrypoint.current = false;
+          hermesParser.reset();
+          if (/Hermes Agent/.test(stripped)) hermesParser.activate();
           setEntries((prev) => {
             const groupTypes = /* @__PURE__ */ new Set(["entrypoint-header", "entrypoint-ok", "entrypoint-info", "entrypoint-fatal", "raw"]);
             const epChildren = [];
@@ -5630,6 +5883,21 @@ function useLogStream() {
         }
         if (inEntrypoint.current) {
           setEntries((prev) => [...prev, parseEntrypointLine(stripped)]);
+          return;
+        }
+        const step = hermesParser.processLine(stripped);
+        if (step) {
+          if (step.append?.some((e) => e.type === "assistant-text")) {
+            seenAssistantTurn.current = true;
+          }
+          setEntries((prev) => {
+            let next = prev;
+            const upd = step.update;
+            if (upd) next = next.map((e) => e.id === upd.id ? upd : e);
+            const add = step.append;
+            if (add && add.length > 0) next = [...next, ...add];
+            return next;
+          });
           return;
         }
         setEntries((prev) => [...prev, { id: nextId(), type: "raw", text: stripped }]);
@@ -6845,7 +7113,8 @@ function parseCanonicalDecree(text) {
   const endMatch = DECREE_END_RE.exec(text);
   if (!startMatch || !endMatch) return null;
   const content = text.slice(startMatch.index + startMatch[0].length, endMatch.index).trim();
-  const lines = content.split("\n");
+  const normalized = content.replace(/([^\n])(?=(?:ISSUE|VERDICT|PR|SUMMARY|CHECKS|SEAL|SIGNOFF):)/g, "$1\n").replace(/^(SUMMARY:|CHECKS:)(?=- )/gm, "$1\n");
+  const lines = normalized.split("\n");
   let issue = "";
   let verdict = "";
   let pr = null;
@@ -7214,7 +7483,7 @@ function groupConsecutiveEntries(entries) {
   let i = 0;
   while (i < entries.length) {
     const entry = entries[i];
-    if (entry.type === "entrypoint-header" && entry.text === "Starting Claude Code") {
+    if (entry.type === "entrypoint-header" && /^Starting (Claude Code|Hermes Agent)$/.test(entry.text ?? "")) {
       const metaEntries = [];
       let k = i + 1;
       while (k < entries.length) {
@@ -8178,7 +8447,7 @@ function StartupBlock({ group }) {
       }
     }, children: [
       /* @__PURE__ */ jsx17("span", { className: "ep-group-chevron", children: "\u203A" }),
-      /* @__PURE__ */ jsx17("span", { className: "ep-group-title", children: "Starting Claude Code" }),
+      /* @__PURE__ */ jsx17("span", { className: "ep-group-title", children: group.headerEntry.text }),
       /* @__PURE__ */ jsxs18("span", { className: "ep-group-meta", children: [
         model && /* @__PURE__ */ jsxs18("span", { className: "ep-group-meta-item", children: [
           /* @__PURE__ */ jsx17("span", { className: "ep-group-meta-key", children: "Model:" }),
@@ -8413,5 +8682,9 @@ var entry_default = {
   }
 };
 export {
-  entry_default as default
+  HermesLogParser,
+  entry_default as default,
+  isDecreeBlock,
+  parseDecree,
+  useLogStream
 };
