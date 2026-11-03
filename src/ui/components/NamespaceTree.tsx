@@ -1,10 +1,14 @@
-// Namespace lantern tree (issues #11 + #12) — the garden pattern's tree
-// display: each namespace (a "world") renders as a LANTERN seated on the
-// painted backdrop at its runtime-assigned seat (lib/treeSeats.ts — curated
+// Namespace lantern tree (issues #11, #12 + #39) — the garden pattern's tree
+// display: each namespace (a "world") is seated on one of the backdrop's
+// PAINTED lanterns at its runtime-assigned seat (lib/treeSeats.ts — curated
 // painted lanterns first, djb2-hash fallback, terrace stack beyond the
-// pool), with its curated shanaghy.com icon inside (inline glyph fallback
-// offline via TreeIcon), a hover/focus label showing the world name + full
-// summary line, and stats berries beside the seat.
+// pool). No UI disc covers the painting: the lantern button is a
+// transparent hit area holding the world's curated shanaghy.com icon
+// (inline glyph fallback offline via TreeIcon); the ACTIVE world's painted
+// lantern brightens with a screen-blended glow. Beneath each lantern a row
+// of small task icons counts the world's tasks — one per task, capped with
+// a "+N" chip (lib/taskPips.ts) — and a hover/focus label shows the world
+// name + full summary line.
 //
 // The OPEN world's work hangs from its lantern as a VINE STRAND (issue #12,
 // per the approved prototype): a curved bezier cascade that extends from
@@ -15,8 +19,8 @@
 // its cards scroll (the .ns-tree__scroller/.ns-tree__canvas structure) —
 // so a strand that outgrows the panel scrolls beneath the scene.
 //
-//   ◖o◗  Fenrir Ledger Agents        ← lantern button (role=treeitem)
-//   ●●●  12 tasks · 2 running · …    ← berries + hover label
+//    o   Fenrir Ledger Agents        ← icon in the painted lantern (role=treeitem)
+//  ⚒⚒✖⏳ 12 tasks · 2 running · …    ← task pips (+N) + hover label
 //   ╰─⌒─⌒─⌒─⌒─╮                      ← the vine (SVG bezier, from the seat)
 //      [jcard s-run-1 RUNNING]       ← full cards on the strand
 //      [jcard s-fail-1 FAILED]       ← each: sigil · title · meta · actions
@@ -34,8 +38,8 @@
 // tree renders a falling ghost) and is purged from the strand; its tab
 // closed with the pod.
 //
-// Display modes mirror the sidebar: extended seats bigger lanterns + berry
-// counts + wider card pitch, normal shrinks both, compact collapses the
+// Display modes mirror the sidebar: extended seats bigger icons + roomier
+// pips + wider card pitch, normal shrinks them, compact collapses the
 // scene to an initials chip that opens a minimal icon + initials list.
 
 import { useEffect, useMemo, useRef, useState, useLayoutEffect } from "react";
@@ -44,8 +48,14 @@ import type { DisplayJob, Job } from "../lib/types";
 import type { NamespaceOption } from "../hooks/useNamespace";
 import { summaryLine, type NamespaceSummaries } from "../hooks/useNamespaceSummaries";
 import { parseJob, sortJobs } from "../hooks/useJobs";
-import { namespaceIcon, NAMESPACE_ICON_FALLBACK } from "../lib/namespaceIcons";
+import {
+  namespaceIcon,
+  NAMESPACE_ICON_FALLBACK,
+  taskIcon,
+  taskIconFallback,
+} from "../lib/namespaceIcons";
 import { assignSeats } from "../lib/treeSeats";
+import { TASK_PIPS, taskPips, pipSlots, pipRowWidth, pipRowOffset } from "../lib/taskPips";
 import {
   vineFor,
   vineCardBox,
@@ -458,6 +468,13 @@ export function NamespaceTree({
             ]
               .filter(Boolean)
               .join(" ");
+            // task pips: one small status icon per task beneath the lantern
+            // (hang order, purged excluded), capped with a "+N" chip
+            const pipRow =
+              summary && !summary.error ? taskPips(isOpen ? openTasks : tasksOf(summary.jobs)) : null;
+            const pipOffset = pipRow
+              ? pipRowOffset(seat, sceneSize.w, pipRowWidth(pipSlots(pipRow)))
+              : 0;
             return (
               <li
                 key={ns.id}
@@ -465,9 +482,12 @@ export function NamespaceTree({
                 data-seat-x={seat.x}
                 data-seat-y={seat.y}
                 data-seat-dir={seat.dir}
-                className="ns-tree__item"
+                className={isActive ? "ns-tree__item ns-tree__item--active" : "ns-tree__item"}
                 style={{ left: `${seat.x}%`, top: `${seat.y}%` }}
               >
+                {/* no glass disc: the button is a transparent hit area over
+                    the PAINTED lantern — the icon seats in it, and the active
+                    world's lantern brightens via a screen-blended glow */}
                 <button
                   type="button"
                   className={lanternClass}
@@ -484,23 +504,35 @@ export function NamespaceTree({
                 >
                   <TreeIcon src={namespaceIcon(ns.id)} fallback={NAMESPACE_ICON_FALLBACK} size="lantern" />
                 </button>
-                {/* stats berries — the summary counts beside each seat */}
-                <div className="ns-tree__fruit" aria-hidden="true">
-                  <b className="ns-tree__berry ns-tree__berry--succeeded" data-on={summary ? (summary.counts.succeeded > 0 ? "1" : "0") : "0"} />
-                  <b className="ns-tree__berry ns-tree__berry--running" data-on={summary ? (summary.counts.running > 0 ? "1" : "0") : "0"} />
-                  <b className="ns-tree__berry ns-tree__berry--failed" data-on={failed > 0 ? "1" : "0"} />
-                  <span className="ns-tree__fruit-counts">
-                    {summary && summary.counts.succeeded > 0 && (
-                      <i className="ns-tree__fruit-count ns-tree__fruit-count--succeeded">{summary.counts.succeeded}</i>
+                {/* task pips — icon count = task count, beneath the lantern on
+                    the side away from the vine (the label carries the counts
+                    for screen readers) */}
+                {pipRow && pipRow.count > 0 && (
+                  <div
+                    className="ns-tree__tasks"
+                    aria-hidden="true"
+                    data-count={pipRow.count}
+                    style={
+                      {
+                        left: `calc(50% + ${pipOffset.toFixed(1)}px)`,
+                        "--pip-cols": Math.min(pipSlots(pipRow), TASK_PIPS.columns),
+                      } as CSSProperties
+                    }
+                  >
+                    {pipRow.pips.map((pip) => (
+                      <span
+                        key={pip.sessionId}
+                        className={`ns-tree__pip ns-tree__pip--${pip.status}`}
+                        data-status={pip.status}
+                      >
+                        <TreeIcon src={taskIcon(pip.status)} fallback={taskIconFallback(pip.status)} size="pip" />
+                      </span>
+                    ))}
+                    {pipRow.overflow > 0 && (
+                      <span className="ns-tree__tasks-more">+{pipRow.overflow}</span>
                     )}
-                    {summary && summary.counts.running > 0 && (
-                      <i className="ns-tree__fruit-count ns-tree__fruit-count--running">{summary.counts.running}</i>
-                    )}
-                    {summary && failed > 0 && (
-                      <i className="ns-tree__fruit-count ns-tree__fruit-count--failed">{failed}</i>
-                    )}
-                  </span>
-                </div>
+                  </div>
+                )}
                 {/* hover/focus label — garden's .g-label pattern */}
                 <div className={glabelClass} aria-hidden="true">
                   <b className="ns-tree__glabel-name">{ns.label}</b>

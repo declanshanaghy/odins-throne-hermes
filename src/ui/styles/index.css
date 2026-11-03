@@ -321,11 +321,13 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .theme-btn { transition: none; }
 }
-/* ── Namespace lantern tree (issues #11 + #12, garden pattern) ─── */
-/* Each namespace is a LANTERN seated on the painted backdrop at its
- * runtime-assigned seat (lib/treeSeats.ts): frost-glass node, curated
- * shanaghy.com icon inside (inline glyph fallback offline via TreeIcon),
- * status-tinted glow, stats berries beside the seat, hover label with the
+/* ── Namespace lantern tree (issues #11, #12 + #39, garden pattern) ─── */
+/* Each namespace is seated on one of the backdrop's PAINTED lanterns at its
+ * runtime-assigned seat (lib/treeSeats.ts): no UI disc over the painting —
+ * a transparent hit area holds the curated shanaghy.com icon (inline glyph
+ * fallback offline via TreeIcon), the active world's painted lantern
+ * brightens with a screen-blended glow, a row of small task icons beneath
+ * counts the world's tasks (lib/taskPips.ts), and a hover label carries the
  * world name + full summary line. Strict accordion: one world's VINE is
  * open at a time — its job cards hang along a curved strand that extends
  * from the lantern (issue #12), scrolling beneath the rooted painting. The
@@ -388,19 +390,25 @@ body {
   pointer-events: none;
 }
 
-/* ── the lantern — a namespace node seated on the painting ── */
-/* night-garden palette, scoped to the tree (the painting is dark in both
- * themes): moon glow default, teal ring when selected, ember tint when the
- * world holds a failed job, moss tint when all-clear. */
+/* ── the lantern — a namespace seated on a painted lantern ── */
+/* No glass disc, ring, or stem: the painting's own lantern carries the
+ * display. The button is a transparent hit area centred on the painted
+ * lantern; the world's icon seats in it. Night-garden palette, scoped to the
+ * tree (the painting is dark in both themes): moon glow by default, teal
+ * when selected, ember when the world holds a failed job, moss when
+ * all-clear — tinting the icon's halo, and (active only) the screen-blended
+ * light that brightens the painted lantern itself. */
 .ns-tree--lanterns {
   --lg-moon: rgba(176, 196, 201, 0.30);
   --lg-teal: rgba(21, 184, 166, 0.55);
   --lg-ember: rgba(224, 122, 63, 0.42);
   --lg-moss: rgba(121, 179, 86, 0.36);
   --lg: var(--lg-moon);
-  --berry-succeeded: #79b356;
-  --berry-running: #6fb7d8;
-  --berry-failed: #e07a3f;
+  --lantern-light: rgba(255, 226, 168, 0.62); /* the painted flame, lit */
+  --pip-succeeded: #79b356;
+  --pip-running: #6fb7d8;
+  --pip-failed: #e07a3f;
+  --pip-pending: #d9c27a;
   --glabel-bg: rgba(5, 7, 10, 0.88);
   --glabel-border: rgba(176, 196, 201, 0.14);
   --glabel-frost: #d9e6ea;
@@ -411,136 +419,141 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
+  width: 32px;
+  height: 32px;
   padding: 0;
-  border-radius: 50% 50% 50% 7px;
-  rotate: 40deg;
-  border: 1px solid rgba(214, 236, 240, 0.42);
-  background: radial-gradient(circle at 32% 26%, rgba(226, 240, 244, 0.34), rgba(10, 16, 20, 0.84));
-  backdrop-filter: blur(1.5px);
-  font-size: 19px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
   cursor: pointer;
-  box-shadow: 0 0 18px 4px var(--lg),
-              0 4px 12px rgba(0, 0, 0, 0.5),
-              inset 0 1px 2px rgba(255, 255, 255, 0.18);
-  transition: box-shadow 0.2s, border-color 0.2s, scale 0.2s;
+  transition: scale 0.2s;
 }
-/* the stem it hangs by */
+/* the painted lantern's light — invisible until hovered/selected; a
+ * screen blend only BRIGHTENS the painting beneath (never covers it) */
 .ns-tree__lantern::before {
   content: "";
   position: absolute;
-  left: 50%;
-  top: -16px;
-  width: 1.5px;
-  height: 16px;
-  background: linear-gradient(180deg, transparent, rgba(176, 196, 201, 0.6));
+  inset: -12px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--lantern-light) 0%, var(--lg) 40%, transparent 70%);
+  mix-blend-mode: screen;
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
 }
-.ns-tree__lantern:hover {
-  scale: 1.1;
-  border-color: var(--teal-asgard);
-}
+.ns-tree__lantern:hover::before { opacity: 0.55; }
 .ns-tree__lantern:focus-visible {
   outline: 2px solid var(--teal-asgard);
   outline-offset: 2px;
 }
-/* selected — the teal ring */
-.ns-tree__lantern--active {
-  border-color: var(--teal-asgard);
-  --lg: var(--lg-teal);
-  box-shadow: 0 0 0 3px rgba(21, 184, 166, 0.45),
-              0 0 30px 6px var(--lg-teal),
-              0 4px 12px rgba(0, 0, 0, 0.5);
+.ns-tree__lantern:focus-visible::before { opacity: 0.55; }
+/* selected — the painted lantern lights up teal-warm, its icon brightens */
+.ns-tree__lantern--active { --lg: var(--lg-teal); }
+.ns-tree__lantern--active::before,
+.ns-tree__lantern--active:hover::before { opacity: 1; }
+/* glow tints — ember for a failed job in the world, moss when all-clear
+ * (the selected world keeps its teal light) */
+.ns-tree__lantern--failed:not(.ns-tree__lantern--active) { --lg: var(--lg-ember); }
+.ns-tree__lantern--ok:not(.ns-tree__lantern--active)     { --lg: var(--lg-moss); }
+/* the curated icon, seated in the painted lantern: a dark outline + tinted
+ * halo keep it legible on the painting without any disc behind it */
+.ns-tree__icon--lantern {
+  position: relative; /* above the ::before light */
+  width: 20px;
+  height: 20px;
+  border-radius: 0;
+  opacity: 0.85;
+  filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.95)) drop-shadow(0 0 4px var(--lg));
+  transition: opacity 0.2s, scale 0.2s, filter 0.2s;
+}
+.ns-tree__lantern:hover .ns-tree__icon--lantern,
+.ns-tree__lantern:focus-visible .ns-tree__icon--lantern { opacity: 1; }
+.ns-tree__lantern--active .ns-tree__icon--lantern {
+  opacity: 1;
+  scale: 1.15;
+  filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.95)) drop-shadow(0 0 7px var(--lg-teal));
 }
 /* summary unavailable — the dimmed seat */
-.ns-tree__lantern--dim {
-  opacity: 0.55;
-  filter: saturate(0.6);
-}
-/* glow tints — ember for a failed job in the world, moss when all-clear */
-.ns-tree__lantern--failed { --lg: var(--lg-ember); }
-.ns-tree__lantern--ok     { --lg: var(--lg-moss); }
-/* the curated icon sits upright inside the tilted lantern */
-.ns-tree__icon--lantern {
-  width: 26px;
-  height: 26px;
-  rotate: -40deg;
-  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.7));
-  border-radius: 0;
+.ns-tree__lantern--dim .ns-tree__icon--lantern {
+  opacity: 0.5;
+  filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.95)) saturate(0.5);
 }
 .ns-tree__icon--lantern.ns-tree__icon--fallback {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.1rem;
+  font-size: 1rem;
   line-height: 1;
 }
-/* Extended sidebar seats bigger lanterns with roomier glyphs. */
+/* Extended sidebar seats bigger icons. */
 .ns-tree--extended .ns-tree__lantern {
-  width: 52px;
-  height: 52px;
-  font-size: 23px;
+  width: 38px;
+  height: 38px;
 }
 .ns-tree--extended .ns-tree__icon--lantern {
-  width: 30px;
-  height: 30px;
+  width: 24px;
+  height: 24px;
 }
 .ns-tree--extended .ns-tree__icon--lantern.ns-tree__icon--fallback {
-  font-size: 1.3rem;
+  font-size: 1.2rem;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ns-tree__lantern,
+  .ns-tree__lantern::before,
+  .ns-tree__icon--lantern { transition: none; }
 }
 
-/* ── stats berries — the summary counts beside each seat ── */
-.ns-tree__fruit {
+/* ── task pips — one small task icon per task beneath the lantern ── */
+/* lib/taskPips.ts owns the geometry (TASK_PIPS: 9px pips, 2px gap, 4 per
+ * line, 8 slots max with a "+N" chip); the inline `left` puts the row on
+ * the side away from the vine, clamped into the scene. */
+.ns-tree__tasks {
   position: absolute;
-  top: calc(50% + 28px);
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 4px;
-  align-items: center;
+  top: calc(50% + 14px);
+  display: grid;
+  grid-template-columns: repeat(var(--pip-cols, 4), 9px);
+  gap: 2px;
+  pointer-events: none;
 }
-.ns-tree__berry {
-  width: 11px;
-  height: 11px;
-  border-radius: 50% 50% 50% 4px;
-  display: inline-block;
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.35), 0 0 6px currentColor;
-  rotate: 45deg;
-  background: currentColor;
-}
-.ns-tree__berry[data-on="0"] { opacity: 0.28; }
-.ns-tree__berry--succeeded { color: var(--berry-succeeded); }
-.ns-tree__berry--running   { color: var(--berry-running); }
-.ns-tree__berry--failed    { color: var(--berry-failed); }
-/* counts appear only in extended mode */
-.ns-tree__fruit-counts {
-  display: none;
-  gap: 5px;
-  font-size: 10.5px;
-  font-family: 'JetBrains Mono', monospace;
-}
-.ns-tree--extended .ns-tree__fruit-counts { display: flex; }
-.ns-tree__fruit-count {
-  font-style: normal;
+.ns-tree--extended .ns-tree__tasks { top: calc(50% + 17px); }
+.ns-tree__pip {
   display: inline-flex;
-  gap: 3px;
   align-items: center;
+  justify-content: center;
+  width: 9px;
+  height: 9px;
+  color: var(--pip-succeeded);
+  filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.95)) drop-shadow(0 0 2px currentColor);
 }
-.ns-tree__fruit-count::before {
-  content: "";
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: currentColor;
+.ns-tree__pip--running   { color: var(--pip-running); }
+.ns-tree__pip--failed    { color: var(--pip-failed); }
+.ns-tree__pip--pending   { color: var(--pip-pending); }
+.ns-tree__icon--pip {
+  width: 9px;
+  height: 9px;
+  border-radius: 0;
 }
-.ns-tree__fruit-count--succeeded { color: var(--berry-succeeded); }
-.ns-tree__fruit-count--running   { color: var(--berry-running); }
-.ns-tree__fruit-count--failed    { color: var(--berry-failed); }
+.ns-tree__icon--pip.ns-tree__icon--fallback {
+  font-size: 7px;
+  color: currentColor;
+}
+.ns-tree__tasks-more {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  height: 9px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 7.5px;
+  line-height: 1;
+  white-space: nowrap;
+  color: var(--glabel-frost);
+  text-shadow: 0 0 2px #000, 0 0 2px #000;
+}
 
 /* ── hover label — the garden's .g-label pattern ─────── */
 .ns-tree__glabel {
   position: absolute;
-  bottom: calc(50% + 30px);
+  bottom: calc(50% + 24px);
   left: 50%;
   transform: translateX(-50%);
   pointer-events: none;
