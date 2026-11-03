@@ -10,5 +10,10 @@
     "skipLibCheck": true,
     "isolatedModules": true
   },
+<<<<<<< HEAD
   "include": ["src", "server"]
+=======
+  "include": ["src"],
+  "exclude": ["src/targets/web/vite.config.ts"]
+>>>>>>> fe233ee (wip: web target Vite scaffolding (index.html, vite.config, tsconfig.ui, vite-env) — issue:18)
 }

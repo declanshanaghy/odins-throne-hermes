@@ -1,11 +1,12 @@
 // Web target entry — installs the web platform adapter and mounts the
-// full-page AppShell into #root. The deployed monitor (fenrir-ledger's
-// development/odins-throne) serves the production page; this target is the
-// same ui core with the web seams, buildable for local dev:
+// full-page AppShell into #root. Vite builds this (build:web) into the
+// dist-ui/ bundle the deployed monitor serves; the ui core is consumed
+// unscoped because on the web the page owns the whole document.
 //
 //   <div id="root"></div>
-//   <script type="module" src="/app.js"></script>  (react/react-dom via the page)
+//   <script type="module" src="./main.tsx"></script>  (Vite resolves it)
 
+import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { setPlatform } from "../../ui/platform";
 import { currentTheme } from "../../ui/hooks/useTheme";
@@ -20,5 +21,9 @@ webPlatform.applyTheme(currentTheme());
 
 const rootEl = document.getElementById("root");
 if (rootEl) {
-  createRoot(rootEl).render(<AppShell />);
+  createRoot(rootEl).render(
+    <StrictMode>
+      <AppShell />
+    </StrictMode>
+  );
 }

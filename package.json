@@ -17,9 +17,11 @@
     "@types/node": "^26.6.6",
     "@types/react": "^19.3.0",
     "@types/ws": "^8.18.2",
+    "@vitejs/plugin-react": "^4.7.0",
     "esbuild": "^0.25.0",
     "postcss": "^8.5.0",
-    "typescript": "^7.0.2"
+    "typescript": "^7.0.2",
+    "vite": "^6.4.5"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
@@ -30,6 +32,8 @@
     "@hono/node-server": "^2.1.5",
     "@kubernetes/client-node": "^1.4.0",
     "hono": "^4.13.16",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
     "ws": "^8.22.1"
   }
 }

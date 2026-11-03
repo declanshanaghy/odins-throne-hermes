@@ -41,7 +41,10 @@ interface Props {
   onSelectTask: (nsId: string, sessionId: string) => void;
 }
 
-export function Sidebar({ jobs, activeSessionId, quote, wsState, onSelectSession, onAvatarClick, onOdinClick, onTogglePinSession, pinnedSessionIds, onCancelJob, terminatingSessionIds, namespace, namespaces, onNamespaceChange, namespaceSummaries, onSelectTask }: Props) {
+// onSelectSession stays in the Props contract (both shells pass the
+// snapshot's seam through) but the drilldown tree routes all selection
+// through onSelectTask — the component itself no longer reads it.
+export function Sidebar({ jobs, activeSessionId, quote, wsState, onAvatarClick, onOdinClick, onTogglePinSession, pinnedSessionIds, onCancelJob, terminatingSessionIds, namespace, namespaces, onNamespaceChange, namespaceSummaries, onSelectTask }: Props) {
   const { theme, setTheme } = useTheme();
   const [width, setWidth] = useState<number>(DEFAULT_WIDTH);
   const navRef = useRef<HTMLElement | null>(null);
