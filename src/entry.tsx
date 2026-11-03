@@ -23,6 +23,50 @@ const FONTS_HREF =
 const STYLE_ID = "odins-throne-hermes-style";
 const FONT_ID = "odins-throne-hermes-fonts";
 
+// Plugin chrome (not part of the vendored SPA): connect card, settings
+// dialog, boot state — same Norse tokens, every selector pre-scoped.
+const PLUGIN_CHROME_CSS = `
+.odins-throne-root .throne-connect-card {
+  position: absolute; inset: 0; z-index: 50;
+  display: flex; flex-direction: column; gap: 14px;
+  align-items: center; justify-content: center; text-align: center;
+  padding: 24px; background: rgba(7, 7, 13, 0.93);
+  color: var(--text-saga); font-family: "Source Serif 4", serif; font-size: 0.85rem;
+  line-height: 1.55;
+}
+.odins-throne-root .throne-connect-card p { max-width: 30ch; margin: 0; }
+.odins-throne-root .throne-boot {
+  position: absolute; inset: 0; z-index: 50;
+  display: flex; align-items: center; justify-content: center;
+  padding: 1rem; color: var(--text-rune); font-style: italic; font-size: 0.8rem;
+}
+.odins-throne-root .throne-settings {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  z-index: 60; display: flex; flex-direction: column; gap: 0.85rem;
+  background: var(--forge); border: 1px solid var(--rune-border); border-radius: 10px;
+  padding: 1.25rem; width: min(92%, 460px);
+  box-shadow: 0 14px 44px rgba(0, 0, 0, 0.65);
+}
+.odins-throne-root .throne-settings h2 {
+  margin: 0; font-family: "Cinzel", serif; font-weight: 700;
+  color: var(--gold-bright); font-size: 1.05rem;
+}
+.odins-throne-root .throne-settings-hint { font-size: 0.76rem; color: var(--text-rune); line-height: 1.55; margin: 0; }
+.odins-throne-root .throne-settings label { display: flex; flex-direction: column; gap: 5px; font-size: 0.74rem; color: var(--text-rune); }
+.odins-throne-root .throne-settings-row { display: flex; gap: 8px; justify-content: flex-end; }
+.odins-throne-root .throne-settings-btn {
+  padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer;
+  border: 1px solid rgba(201, 146, 10, 0.35);
+  background: rgba(201, 146, 10, 0.08); color: var(--gold);
+  font-family: "Cinzel", serif; font-size: 0.8rem; font-weight: 600;
+}
+.odins-throne-root .throne-settings-btn:hover { background: rgba(201, 146, 10, 0.16); }
+.odins-throne-root .throne-settings-btn.primary {
+  border-color: var(--gold); background: rgba(201, 146, 10, 0.22); color: var(--gold-bright);
+}
+.odins-throne-root .throne-settings-btn:disabled { opacity: 0.55; cursor: wait; }
+`;
+
 export default {
   id: "odins-throne-hermes",
   name: "Odin's Throne",
@@ -47,7 +91,7 @@ export default {
     if (!document.getElementById(STYLE_ID)) {
       const style = document.createElement("style");
       style.id = STYLE_ID;
-      style.textContent = scopedCss;
+      style.textContent = scopedCss + "\n" + PLUGIN_CHROME_CSS;
       document.head.append(style);
       ctx.onDispose(() => style.remove());
     }

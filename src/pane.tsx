@@ -82,7 +82,8 @@ function useGuestStatus() {
 }
 
 function ConnectCard() {
-  const status = useGuestStatus();
+  // Overlay (not in-flow): the Sidebar fills the pane, so anything after it
+  // is invisible. This centers the sign-in affordance over the whole pane.
   return (
     <div className="throne-connect-card">
       <p>
@@ -92,9 +93,6 @@ function ConnectCard() {
       <button className="throne-settings-btn primary" onClick={() => reauth()}>
         Sign in with Google
       </button>
-      {status === "signing-in" && (
-        <p>Complete the sign-in inside the frame below…</p>
-      )}
       <button className="throne-settings-btn" onClick={() => settingsUi.open()}>
         Advanced: bot token / URL
       </button>
@@ -132,6 +130,7 @@ function ThroneGuest() {
 export function ThronePane() {
   const snap = useThrone();
   const settingsOpen = useSettingsOpen();
+  const status = useGuestStatus();
   const { theme } = useTheme();
   // The bridge must NOT re-render when this pane re-renders: every store
   // publish re-renders ThronePane, a fresh <App/> element would re-render the
@@ -153,7 +152,10 @@ export function ThronePane() {
       ) : (
         <div className="throne-boot">Awakening the Allfather…</div>
       )}
-      {!isConfigured() && <ConnectCard />}
+      {/* Sign-in overlay: shown whenever there is no session; hidden while the
+          guest itself is showing the Google login (it sits at z-40, the
+          settings dialog at z-60). */}
+      {!isConfigured() && status !== "signing-in" && <ConnectCard />}
       <ThroneGuest />
       <ThroneOverlays />
       {settingsOpen && <ThroneSettings />}

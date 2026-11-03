@@ -6408,11 +6408,9 @@ function useGuestStatus() {
   return useSyncExternalStore4(subscribeGuestStatus, guestStatus, guestStatus);
 }
 function ConnectCard() {
-  const status2 = useGuestStatus();
   return /* @__PURE__ */ jsxs13("div", { className: "throne-connect-card", children: [
     /* @__PURE__ */ jsx12("p", { children: "The Throne is sealed \u2014 sign in with Google to open the Bifr\xF6st (the same login the web version uses)." }),
     /* @__PURE__ */ jsx12("button", { className: "throne-settings-btn primary", onClick: () => reauth(), children: "Sign in with Google" }),
-    status2 === "signing-in" && /* @__PURE__ */ jsx12("p", { children: "Complete the sign-in inside the frame below\u2026" }),
     /* @__PURE__ */ jsx12("button", { className: "throne-settings-btn", onClick: () => settingsUi.open(), children: "Advanced: bot token / URL" })
   ] });
 }
@@ -6442,6 +6440,7 @@ function ThroneGuest() {
 function ThronePane() {
   const snap = useThrone();
   const settingsOpen = useSettingsOpen();
+  const status2 = useGuestStatus();
   const { theme } = useTheme();
   const bridge = useMemo2(() => /* @__PURE__ */ jsx12(App, {}), []);
   return /* @__PURE__ */ jsxs13(
@@ -6453,7 +6452,7 @@ function ThronePane() {
       children: [
         bridge,
         snap ? /* @__PURE__ */ jsx12(ErrorBoundary, { children: /* @__PURE__ */ jsx12(SidebarConnected, {}) }) : /* @__PURE__ */ jsx12("div", { className: "throne-boot", children: "Awakening the Allfather\u2026" }),
-        !isConfigured() && /* @__PURE__ */ jsx12(ConnectCard, {}),
+        !isConfigured() && status2 !== "signing-in" && /* @__PURE__ */ jsx12(ConnectCard, {}),
         /* @__PURE__ */ jsx12(ThroneGuest, {}),
         /* @__PURE__ */ jsx12(ThroneOverlays, {}),
         settingsOpen && /* @__PURE__ */ jsx12(ThroneSettings, {})
@@ -8411,6 +8410,47 @@ import { jsx as jsx19 } from "react/jsx-runtime";
 var FONTS_HREF = "https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Cinzel+Decorative:wght@400;700;900&family=Source+Serif+4:wght@300;400;600&family=JetBrains+Mono:wght@400;500;600&display=swap";
 var STYLE_ID = "odins-throne-hermes-style";
 var FONT_ID = "odins-throne-hermes-fonts";
+var PLUGIN_CHROME_CSS = `
+.odins-throne-root .throne-connect-card {
+  position: absolute; inset: 0; z-index: 50;
+  display: flex; flex-direction: column; gap: 14px;
+  align-items: center; justify-content: center; text-align: center;
+  padding: 24px; background: rgba(7, 7, 13, 0.93);
+  color: var(--text-saga); font-family: "Source Serif 4", serif; font-size: 0.85rem;
+  line-height: 1.55;
+}
+.odins-throne-root .throne-connect-card p { max-width: 30ch; margin: 0; }
+.odins-throne-root .throne-boot {
+  position: absolute; inset: 0; z-index: 50;
+  display: flex; align-items: center; justify-content: center;
+  padding: 1rem; color: var(--text-rune); font-style: italic; font-size: 0.8rem;
+}
+.odins-throne-root .throne-settings {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  z-index: 60; display: flex; flex-direction: column; gap: 0.85rem;
+  background: var(--forge); border: 1px solid var(--rune-border); border-radius: 10px;
+  padding: 1.25rem; width: min(92%, 460px);
+  box-shadow: 0 14px 44px rgba(0, 0, 0, 0.65);
+}
+.odins-throne-root .throne-settings h2 {
+  margin: 0; font-family: "Cinzel", serif; font-weight: 700;
+  color: var(--gold-bright); font-size: 1.05rem;
+}
+.odins-throne-root .throne-settings-hint { font-size: 0.76rem; color: var(--text-rune); line-height: 1.55; margin: 0; }
+.odins-throne-root .throne-settings label { display: flex; flex-direction: column; gap: 5px; font-size: 0.74rem; color: var(--text-rune); }
+.odins-throne-root .throne-settings-row { display: flex; gap: 8px; justify-content: flex-end; }
+.odins-throne-root .throne-settings-btn {
+  padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer;
+  border: 1px solid rgba(201, 146, 10, 0.35);
+  background: rgba(201, 146, 10, 0.08); color: var(--gold);
+  font-family: "Cinzel", serif; font-size: 0.8rem; font-weight: 600;
+}
+.odins-throne-root .throne-settings-btn:hover { background: rgba(201, 146, 10, 0.16); }
+.odins-throne-root .throne-settings-btn.primary {
+  border-color: var(--gold); background: rgba(201, 146, 10, 0.22); color: var(--gold-bright);
+}
+.odins-throne-root .throne-settings-btn:disabled { opacity: 0.55; cursor: wait; }
+`;
 var entry_default = {
   id: "odins-throne-hermes",
   name: "Odin's Throne",
@@ -8429,7 +8469,7 @@ var entry_default = {
     if (!document.getElementById(STYLE_ID)) {
       const style = document.createElement("style");
       style.id = STYLE_ID;
-      style.textContent = styles_default;
+      style.textContent = styles_default + "\n" + PLUGIN_CHROME_CSS;
       document.head.append(style);
       ctx2.onDispose(() => style.remove());
     }
