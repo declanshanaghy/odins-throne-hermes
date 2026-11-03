@@ -7,7 +7,7 @@
   "scripts": {
     "build": "node build/build.mjs",
     "dev": "node build/build.mjs --watch --live",
-    "test": "node --import ./test/register.mjs test/platform.mjs && node --import ./test/register.mjs test/hermes-stream.mjs && node --import ./test/register.mjs test/smoke.mjs",
+    "test": "node --import ./test/register.mjs test/platform.mjs && node --import ./test/register.mjs test/pairing.mjs && node --import ./test/register.mjs test/hermes-stream.mjs && node --import ./test/register.mjs test/smoke.mjs",
     "verify": "tsc --noEmit && npm run build && npm test",
     "postinstall": "node build/build.mjs || true"
   },
