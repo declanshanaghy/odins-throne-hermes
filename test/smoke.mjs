@@ -442,5 +442,44 @@ assert.equal(
   "second click uses the same stable tab id",
 );
 
+// ── fallback: host.openWorkspace unavailable (older desktop builds) ────────
+// On older desktop builds host.openWorkspace may be absent. The opener must
+// fall back to host.navigate('/odins-throne') so the user still reaches the
+// log page. We simulate this by temporarily removing the method from the stub.
+const { host: stubHost } = await import("./sdk-stub.mjs");
+const savedOpenWorkspace = stubHost.openWorkspace;
+stubHost.openWorkspace = undefined; // simulate older build
+
+const navsBefore = globalThis.__stubNavigations.length;
+openThroneTab("test-session-fallback");
+await flush();
+
+assert.ok(
+  globalThis.__stubNavigations.length > navsBefore,
+  "fallback: host.navigate called when host.openWorkspace is unavailable",
+);
+assert.equal(
+  globalThis.__stubNavigations[globalThis.__stubNavigations.length - 1],
+  "/odins-throne",
+  "fallback: navigates to /odins-throne on older desktop builds",
+);
+// Restore so the tab-open path is active for the remainder of the test run.
+stubHost.openWorkspace = savedOpenWorkspace;
+
+// ── multiple rapid clicks all use the stable tab id ───────────────────────
+// Three successive clicks all go through the same 'throne-log' id so the host
+// never opens more than one tab (host dedupes on id; stub just records calls).
+const countBefore = globalThis.__stubWorkspaceTabs.length;
+openThroneTab("rapid-a");
+openThroneTab("rapid-b");
+openThroneTab("rapid-c");
+await flush();
+const rapidCalls = globalThis.__stubWorkspaceTabs.slice(countBefore);
+assert.equal(rapidCalls.length, 3, "three rapid clicks each call openWorkspace once");
+assert.ok(
+  rapidCalls.every((t) => t.id === "throne-log"),
+  "all rapid clicks use the stable 'throne-log' id (host dedupes by id)",
+);
+
 console.log("SMOKE PASS — pane + page render, namespace drilldown tree (top-level roots, job-card task branches, old flat list gone, shanaghy.com icons + fallback, connector lines), CSS scoped, theme plugin-local, overlays wired, job-card click opens workspace tab");
 process.exit(0);
