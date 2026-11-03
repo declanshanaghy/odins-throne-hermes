@@ -202,6 +202,33 @@ assert.ok(document.querySelector('.ns-tree[aria-label="Namespace tree"]'), "name
 assert.ok(!paneHtml.includes("All namespaces"), "no wrapper root — namespaces are the top-level roots");
 assert.equal(document.querySelectorAll(".ns-tree__item[data-namespace]").length, 5, "all five namespaces are top-level root nodes");
 assert.ok(document.querySelector('.ns-tree__item[data-namespace="fenrir-agents"]'), "fenrir-agents root node present");
+
+// ── tree scene assets (issue:10) ─────────────────────────────────────────────
+// The painted backdrop lands as --tree-backdrop on the tree root, and each
+// namespace node carries its lantern seat (percent-of-scene, typed data from
+// src/ui/lib/treeSeats.ts — matching the prototype's WORLDS mapping).
+const treeRootEl = document.querySelector('.ns-tree[aria-label="Namespace tree"]');
+const treeStyle = treeRootEl.getAttribute("style") ?? "";
+assert.ok(treeStyle.includes("--tree-backdrop"), "tree root exposes the --tree-backdrop custom property");
+assert.ok(
+  treeStyle.includes("data:image/jpeg;base64,"),
+  "the painted backdrop (inlined JPEG) is the --tree-backdrop value",
+);
+const fenrirRoot = document.querySelector('.ns-tree__item[data-namespace="fenrir-agents"]');
+assert.equal(fenrirRoot.getAttribute("data-seat-x"), "17", "fenrir lantern seat x matches the prototype mapping");
+assert.equal(fenrirRoot.getAttribute("data-seat-y"), "28", "fenrir lantern seat y matches the prototype mapping");
+assert.equal(fenrirRoot.getAttribute("data-seat-dir"), "1", "fenrir vine hangs rightward (dir 1)");
+const saysoRoot = document.querySelector('.ns-tree__item[data-namespace="say-so-agents"]');
+assert.equal(saysoRoot.getAttribute("data-seat-x"), "59", "say-so lantern seat x matches the prototype mapping");
+assert.equal(saysoRoot.getAttribute("data-seat-y"), "19", "say-so lantern seat y matches the prototype mapping");
+for (const item of document.querySelectorAll(".ns-tree__item[data-namespace]")) {
+  const x = Number(item.getAttribute("data-seat-x"));
+  const y = Number(item.getAttribute("data-seat-y"));
+  const dir = item.getAttribute("data-seat-dir");
+  assert.ok(x > 0 && x <= 100, `namespace ${item.dataset.namespace} has an in-scene seat x (got ${x})`);
+  assert.ok(y > 0 && y <= 100, `namespace ${item.dataset.namespace} has an in-scene seat y (got ${y})`);
+  assert.ok(dir === "1" || dir === "-1", `namespace ${item.dataset.namespace} has a valid hang dir`);
+}
 assert.ok(
   paneHtml.includes("12 tasks · 2 running · 1 pending · 1 failed · 8 succeeded"),
   "fenrir-agents node keeps its task summary with status counts",
