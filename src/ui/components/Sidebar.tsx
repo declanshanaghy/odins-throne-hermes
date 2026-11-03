@@ -39,9 +39,11 @@ interface Props {
   namespaces: NamespaceOption[];
   onNamespaceChange: (ns: string) => void;
   namespaceSummaries: NamespaceSummaries;
+  /** Drilldown tree task click — same selection semantics as the job cards. */
+  onSelectTask: (nsId: string, sessionId: string) => void;
 }
 
-export function Sidebar({ jobs, activeSessionId, quote, wsState, onSelectSession, onAvatarClick, onOdinClick, onTogglePinSession, pinnedSessionIds, onCancelJob, terminatingSessionIds, namespace, namespaces, onNamespaceChange, namespaceSummaries }: Props) {
+export function Sidebar({ jobs, activeSessionId, quote, wsState, onSelectSession, onAvatarClick, onOdinClick, onTogglePinSession, pinnedSessionIds, onCancelJob, terminatingSessionIds, namespace, namespaces, onNamespaceChange, namespaceSummaries, onSelectTask }: Props) {
   const { theme, setTheme } = useTheme();
   const [width, setWidth] = useState<number>(DEFAULT_WIDTH);
   const navRef = useRef<HTMLElement | null>(null);
@@ -107,6 +109,8 @@ export function Sidebar({ jobs, activeSessionId, quote, wsState, onSelectSession
           namespaces={namespaces}
           summaries={namespaceSummaries}
           onNamespaceChange={onNamespaceChange}
+          onSelectTask={onSelectTask}
+          activeSessionId={activeSessionId}
           displayMode={displayMode}
         />
       </div>

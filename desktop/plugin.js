@@ -322,47 +322,25 @@ var styles_default = `.odins-throne-root .odins-throne-root {
 @media (prefers-reduced-motion: reduce) {
   .odins-throne-root .theme-btn { transition: none; }
 }
-/* \u2500\u2500 Namespace tree (issue:2) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
-/* Browseable tree of all namespaces: root node toggles the namespace list,
- * each namespace row shows a one-line task summary + status counts, and a
- * chevron expands a per-status breakdown. */
+/* \u2500\u2500 Namespace drilldown tree (issue:4) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+/* Each namespace is a top-level root node; its tasks branch directly beneath
+ * it with drawn connector rails + elbow connectors, so the two levels read
+ * apart at a glance. Nodes carry icons from shanaghy.com with inline emoji
+ * fallbacks (TreeIcon). Scroll-capped so a fully drilled tree can't push the
+ * job cards out of the sidebar. */
 .odins-throne-root .ns-tree {
   margin-top: 0.5rem;
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.7rem;
   min-width: 0;
+  max-height: 42vh;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
-.odins-throne-root .ns-tree__root {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  width: 100%;
-  padding: 0.2rem 0.3rem;
-  background: var(--chain);
-  color: var(--text-rune);
-  border: 1px solid var(--rune-border);
-  border-radius: 3px;
-  cursor: pointer;
-  text-align: left;
-  min-width: 0;
-}
-.odins-throne-root .ns-tree__root:hover,
-.odins-throne-root .ns-tree__root:focus {
-  border-color: var(--gold);
-  color: var(--text-saga);
-}
-.odins-throne-root .ns-tree__root-label {
-  color: var(--text-saga);
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-.odins-throne-root .ns-tree__root-stats {
-  color: var(--text-void);
-  font-size: 0.6rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  min-width: 0;
+.odins-throne-root .ns-tree__roots {
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 .odins-throne-root .ns-tree__chevron {
   color: var(--gold);
@@ -376,10 +354,9 @@ var styles_default = `.odins-throne-root .odins-throne-root {
   margin: 0.15rem 0 0;
   padding: 0;
 }
+/* Namespace root nodes sit at the top level \u2014 no rail above them. */
 .odins-throne-root .ns-tree__item {
-  border-left: 1px solid var(--rune-border);
-  margin-left: 0.55rem;
-  padding-left: 0.25rem;
+  min-width: 0;
 }
 .odins-throne-root .ns-tree__row {
   display: flex;
@@ -405,8 +382,9 @@ var styles_default = `.odins-throne-root .odins-throne-root {
   flex: 1;
   min-width: 0;
   display: flex;
-  flex-direction: column;
-  gap: 0.05rem;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.35rem;
   padding: 0.2rem 0.3rem;
   background: none;
   border: none;
@@ -416,6 +394,13 @@ var styles_default = `.odins-throne-root .odins-throne-root {
   text-align: left;
   font-size: inherit;
   font-family: inherit;
+}
+.odins-throne-root .ns-tree__labels {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+  min-width: 0;
+  flex: 1;
 }
 .odins-throne-root .ns-tree__select:hover,
 .odins-throne-root .ns-tree__select:focus {
@@ -447,28 +432,122 @@ var styles_default = `.odins-throne-root .odins-throne-root {
 /* Extended sidebar: summary text gets a bit more room and color. */
 .odins-throne-root .ns-tree--extended .ns-tree__summary { color: var(--text-rune); }
 
-/* Per-status breakdown children (expanded namespace node) */
-.odins-throne-root .ns-tree__statuses {
+/* \u2500\u2500 Task children: drawn connector lines \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+/* Each task li draws a vertical rail (::before) and an elbow (::after) so
+ * the two tree levels are unmistakable:
+ *
+ *   \u25BE Fenrir Ledger Agents     \u2190 namespace root (no rail)
+ *   \u2502
+ *   \u251C\u2500 \u2692 s-run-1               \u2190 rail + elbow
+ *   \u2514\u2500 \u{1F426} s-fail-1              \u2190 last child's rail stops at its elbow
+ */
+.odins-throne-root .ns-tree__tasks {
   list-style: none;
-  margin: 0.1rem 0 0.2rem;
-  padding: 0 0 0 1.4rem;
+  margin: 0.05rem 0 0.25rem;
+  padding: 0;
 }
-.odins-throne-root .ns-tree__status {
+.odins-throne-root .ns-tree__task {
+  position: relative;
+  padding-left: 1.1rem;
+  min-width: 0;
+}
+/* vertical rail \u2014 runs the full height of every task but the last */
+.odins-throne-root .ns-tree__task::before {
+  content: "";
+  position: absolute;
+  left: 0.45rem;
+  top: -0.2rem; /* reach up toward the namespace row */
+  bottom: 0;
+  border-left: 1px solid var(--rune-border);
+}
+/* elbow connector \u2014 a short horizontal tee at the task row's centerline */
+.odins-throne-root .ns-tree__task::after {
+  content: "";
+  position: absolute;
+  left: 0.45rem;
+  top: 50%;
+  width: 0.45rem;
+  border-top: 1px solid var(--rune-border);
+}
+/* last task's rail stops at its own elbow */
+.odins-throne-root .ns-tree__task:last-child::before {
+  bottom: 50%;
+}
+.odins-throne-root .ns-tree__task-btn {
   display: flex;
-  justify-content: space-between;
-  gap: 0.5rem;
-  font-size: 0.6rem;
-  color: var(--text-void);
-  padding: 0.05rem 0.3rem;
+  align-items: center;
+  gap: 0.3rem;
+  width: 100%;
+  min-width: 0;
+  padding: 0.12rem 0.3rem;
+  background: none;
+  border: none;
+  border-radius: 3px;
+  color: var(--text-rune);
+  cursor: pointer;
+  text-align: left;
+  font-size: inherit;
+  font-family: inherit;
 }
-.odins-throne-root .ns-tree__status-name { text-transform: uppercase; letter-spacing: 0.05em; }
-.odins-throne-root .ns-tree__status-name--running   { color: var(--teal-asgard); }
-.odins-throne-root .ns-tree__status-name--pending   { color: var(--gold-bright); }
-.odins-throne-root .ns-tree__status-name--failed    { color: var(--error-text); }
-.odins-throne-root .ns-tree__status-name--succeeded { color: var(--success-strong); }
-.odins-throne-root .ns-tree__status-name--cached    { color: var(--kildare-blue-bright); }
-.odins-throne-root .ns-tree__status-name--purged    { color: var(--text-void); }
-.odins-throne-root .ns-tree__status-count { color: var(--text-rune); }
+.odins-throne-root .ns-tree__task-btn:hover,
+.odins-throne-root .ns-tree__task-btn:focus {
+  background: var(--chain);
+  color: var(--text-saga);
+}
+.odins-throne-root .ns-tree__task--active > .ns-tree__task-btn {
+  background: var(--chain);
+  color: var(--gold-bright);
+  box-shadow: inset 2px 0 0 var(--gold);
+}
+.odins-throne-root .ns-tree__task-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.62rem;
+  color: var(--text-saga);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.odins-throne-root .ns-tree__task-status {
+  flex-shrink: 0;
+  font-size: 0.55rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.odins-throne-root .ns-tree__task-status--running   { color: var(--teal-asgard); }
+.odins-throne-root .ns-tree__task-status--pending   { color: var(--gold-bright); }
+.odins-throne-root .ns-tree__task-status--failed    { color: var(--error-text); }
+.odins-throne-root .ns-tree__task-status--succeeded { color: var(--success-strong); }
+.odins-throne-root .ns-tree__task-status--cached    { color: var(--kildare-blue-bright); }
+.odins-throne-root .ns-tree__task-status--purged    { color: var(--text-void); }
+.odins-throne-root .ns-tree__task--empty {
+  padding: 0.05rem 0.3rem 0.1rem 1.1rem;
+  font-size: 0.58rem;
+  font-style: italic;
+  color: var(--text-void);
+}
+
+/* \u2500\u2500 Node icons (shanaghy.com, emoji fallback offline) \u2500\u2500 */
+.odins-throne-root .ns-tree__icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  object-fit: contain;
+  border-radius: 2px;
+}
+.odins-throne-root .ns-tree__icon--task {
+  width: 12px;
+  height: 12px;
+  opacity: 0.9;
+}
+.odins-throne-root .ns-tree__icon--fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  line-height: 1;
+}
+.odins-throne-root .ns-tree__icon--task.ns-tree__icon--fallback { font-size: 0.55rem; }
 
 /* Compact sidebar: collapse to an initials chip + on-demand mini-tree */
 .odins-throne-root .ns-tree--compact {
@@ -499,20 +578,18 @@ var styles_default = `.odins-throne-root .odins-throne-root {
 .odins-throne-root .ns-tree--compact .ns-tree__list {
   width: 100%;
   margin-top: 0.3rem;
+  max-height: 30vh;
+  overflow-y: auto;
 }
 .odins-throne-root .ns-tree--compact .ns-tree__item {
-  border-left: none;
-  margin-left: 0;
-  padding-left: 0;
+  min-width: 0;
 }
 .odins-throne-root .ns-tree--compact .ns-tree__row {
-  width: 100%;
-}
-.odins-throne-root .ns-tree--compact .ns-tree__select,
-.odins-throne-root .ns-tree--compact .ns-tree__row > button {
+  display: flex;
   flex-direction: row;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
+  gap: 0.25rem;
   width: 100%;
   padding: 0.15rem 0.25rem;
   background: none;
@@ -524,8 +601,14 @@ var styles_default = `.odins-throne-root .odins-throne-root {
   font-size: inherit;
   font-family: inherit;
 }
+.odins-throne-root .ns-tree--compact .ns-tree__row:hover,
+.odins-throne-root .ns-tree--compact .ns-tree__row:focus {
+  background: var(--chain);
+  color: var(--text-saga);
+}
+.odins-throne-root .ns-tree--compact .ns-tree__icon--task { width: 13px; height: 13px; }
 .odins-throne-root .ns-tree__compact-initials { color: var(--gold); letter-spacing: 0.04em; }
-.odins-throne-root .ns-tree__compact-count { color: var(--text-void); font-size: 0.55rem; }
+.odins-throne-root .ns-tree__compact-count { color: var(--text-void); font-size: 0.55rem; margin-left: auto; }
 
 .odins-throne-root .card-list { flex: 1; overflow-y: auto; padding: 0.5rem; }
 
@@ -3398,7 +3481,7 @@ var styles_default = `.odins-throne-root .odins-throne-root {
 `;
 
 // src/pane.tsx
-import { useMemo as useMemo2, useState as useState14, useSyncExternalStore as useSyncExternalStore4 } from "react";
+import { useMemo as useMemo2, useState as useState15, useSyncExternalStore as useSyncExternalStore4 } from "react";
 
 // src/ui/components/ErrorBoundary.tsx
 import { Component } from "react";
@@ -3464,7 +3547,7 @@ var ErrorBoundary = class extends Component {
 };
 
 // src/ui/components/Sidebar.tsx
-import { useState as useState5, useRef as useRef3, useEffect as useEffect4 } from "react";
+import { useState as useState7, useRef as useRef3, useEffect as useEffect4 } from "react";
 
 // src/ui/hooks/useTheme.ts
 import { useSyncExternalStore } from "react";
@@ -4850,7 +4933,7 @@ function StatusBadge({ state }) {
 }
 
 // src/ui/components/NamespaceTree.tsx
-import { useState as useState4 } from "react";
+import { useState as useState6 } from "react";
 
 // src/ui/hooks/useNamespaceSummaries.ts
 import { useCallback as useCallback2, useEffect as useEffect3, useRef as useRef2, useState as useState3 } from "react";
@@ -4872,7 +4955,7 @@ function summarizeJobs(jobs) {
   for (const job of jobs) {
     if (job.status in counts) counts[job.status] += 1;
   }
-  return { total: jobs.length, counts, error: null };
+  return { total: jobs.length, counts, jobs, error: null };
 }
 function summaryLine(summary) {
   const parts = [`${summary.total} task${summary.total !== 1 ? "s" : ""}`];
@@ -4901,7 +4984,7 @@ function useNamespaceSummaries(namespaces, activeNamespace, activityKey) {
       if (!res.ok) {
         setSummaries((prev) => ({
           ...prev,
-          [nsId]: { total: 0, counts: emptyCounts(), error: `HTTP ${res.status}` }
+          [nsId]: { total: 0, counts: emptyCounts(), jobs: [], error: `HTTP ${res.status}` }
         }));
         return;
       }
@@ -4913,7 +4996,7 @@ function useNamespaceSummaries(namespaces, activeNamespace, activityKey) {
       if (!mountedRef.current) return;
       setSummaries((prev) => ({
         ...prev,
-        [nsId]: { total: 0, counts: emptyCounts(), error: "unreachable" }
+        [nsId]: { total: 0, counts: emptyCounts(), jobs: [], error: "unreachable" }
       }));
     } finally {
       inflightRef.current.delete(nsId);
@@ -4939,652 +5022,8 @@ function useNamespaceSummaries(namespaces, activeNamespace, activityKey) {
   return summaries;
 }
 
-// src/ui/components/NamespaceTree.tsx
-import { jsx as jsx6, jsxs as jsxs6 } from "react/jsx-runtime";
-function initialsOf(label) {
-  return label.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
-}
-function NamespaceTree({ namespace, namespaces, summaries, onNamespaceChange, displayMode }) {
-  const isCompact = displayMode === "compact";
-  const [expanded, setExpanded] = useState4(!isCompact);
-  const [expandedNs, setExpandedNs] = useState4(null);
-  const [compactOpen, setCompactOpen] = useState4(false);
-  const grandTotal = namespaces.reduce(
-    (sum, ns) => sum + (summaries[ns.id]?.total ?? 0),
-    0
-  );
-  const loadedCount = namespaces.filter((ns) => summaries[ns.id] && !summaries[ns.id].error).length;
-  if (isCompact) {
-    const active = namespaces.find((n) => n.id === namespace);
-    const activeSummary = summaries[namespace];
-    return /* @__PURE__ */ jsxs6("div", { className: "ns-tree ns-tree--compact", children: [
-      /* @__PURE__ */ jsxs6(
-        "button",
-        {
-          type: "button",
-          className: "ns-tree__chip",
-          onClick: () => setCompactOpen((v) => !v),
-          "aria-expanded": compactOpen,
-          title: active ? `${active.label}${activeSummary ? ` \u2014 ${summaryLine(activeSummary)}` : ""}` : namespace,
-          children: [
-            active ? initialsOf(active.label) : "NS",
-            activeSummary ? /* @__PURE__ */ jsx6("span", { className: "ns-tree__chip-count", children: activeSummary.total }) : null
-          ]
-        }
-      ),
-      compactOpen && /* @__PURE__ */ jsx6("ul", { className: "ns-tree__list", role: "tree", "aria-label": "All namespaces", children: namespaces.map((ns) => {
-        const summary = summaries[ns.id];
-        return /* @__PURE__ */ jsx6(
-          "li",
-          {
-            role: "treeitem",
-            "aria-selected": ns.id === namespace,
-            "data-namespace": ns.id,
-            className: ns.id === namespace ? "ns-tree__item ns-tree__item--active" : "ns-tree__item",
-            children: /* @__PURE__ */ jsxs6(
-              "button",
-              {
-                type: "button",
-                className: "ns-tree__row",
-                title: ns.label,
-                onClick: () => {
-                  onNamespaceChange(ns.id);
-                  setCompactOpen(false);
-                },
-                children: [
-                  /* @__PURE__ */ jsx6("span", { className: "ns-tree__compact-initials", children: initialsOf(ns.label) }),
-                  /* @__PURE__ */ jsx6("span", { className: "ns-tree__compact-count", children: summary?.total ?? "\u2026" })
-                ]
-              }
-            )
-          },
-          ns.id
-        );
-      }) })
-    ] });
-  }
-  const rootClass = isCompact ? "ns-tree ns-tree--compact" : displayMode === "extended" ? "ns-tree ns-tree--extended" : "ns-tree";
-  return /* @__PURE__ */ jsxs6("div", { className: rootClass, role: "tree", "aria-label": "Namespace tree", children: [
-    /* @__PURE__ */ jsxs6(
-      "button",
-      {
-        type: "button",
-        className: "ns-tree__root",
-        "aria-expanded": expanded,
-        onClick: () => setExpanded((v) => !v),
-        children: [
-          /* @__PURE__ */ jsx6("span", { className: expanded ? "ns-tree__chevron ns-tree__chevron--open" : "ns-tree__chevron", "aria-hidden": "true", children: expanded ? "\u25BE" : "\u25B8" }),
-          /* @__PURE__ */ jsx6("span", { className: "ns-tree__root-label", children: "All namespaces" }),
-          /* @__PURE__ */ jsx6("span", { className: "ns-tree__root-stats", children: loadedCount > 0 ? `${namespaces.length} worlds \xB7 ${grandTotal} tasks` : `${namespaces.length} worlds \xB7 \u2026` })
-        ]
-      }
-    ),
-    expanded && /* @__PURE__ */ jsx6("ul", { className: "ns-tree__list", children: namespaces.map((ns) => {
-      const summary = summaries[ns.id];
-      const isActive = ns.id === namespace;
-      const nsExpanded = expandedNs === ns.id;
-      const line = summary ? summary.error ? "summary unavailable" : summaryLine(summary) : "\u2026";
-      return /* @__PURE__ */ jsxs6(
-        "li",
-        {
-          role: "treeitem",
-          "aria-expanded": nsExpanded,
-          "aria-selected": isActive,
-          "data-namespace": ns.id,
-          className: isActive ? "ns-tree__item ns-tree__item--active" : "ns-tree__item",
-          children: [
-            /* @__PURE__ */ jsxs6("div", { className: "ns-tree__row", children: [
-              /* @__PURE__ */ jsx6(
-                "button",
-                {
-                  type: "button",
-                  className: "ns-tree__chevron-btn",
-                  "aria-label": nsExpanded ? `Collapse ${ns.label} stats` : `Expand ${ns.label} stats`,
-                  onClick: () => setExpandedNs(nsExpanded ? null : ns.id),
-                  tabIndex: -1,
-                  children: /* @__PURE__ */ jsx6(
-                    "span",
-                    {
-                      className: nsExpanded ? "ns-tree__chevron ns-tree__chevron--open" : "ns-tree__chevron",
-                      "aria-hidden": "true",
-                      children: nsExpanded ? "\u25BE" : "\u25B8"
-                    }
-                  )
-                }
-              ),
-              /* @__PURE__ */ jsxs6(
-                "button",
-                {
-                  type: "button",
-                  className: "ns-tree__select",
-                  title: `${ns.label} \u2014 ${line}`,
-                  onClick: () => onNamespaceChange(ns.id),
-                  children: [
-                    /* @__PURE__ */ jsx6("span", { className: "ns-tree__label", children: ns.label }),
-                    /* @__PURE__ */ jsx6("span", { className: summary?.error ? "ns-tree__summary ns-tree__summary--error" : "ns-tree__summary", children: line })
-                  ]
-                }
-              )
-            ] }),
-            nsExpanded && /* @__PURE__ */ jsx6("ul", { className: "ns-tree__statuses", role: "group", "aria-label": `${ns.label} status breakdown`, children: summary && !summary.error ? JOB_STATUSES.map((status) => /* @__PURE__ */ jsxs6("li", { className: "ns-tree__status", children: [
-              /* @__PURE__ */ jsx6("span", { className: `ns-tree__status-name ns-tree__status-name--${status}`, children: status }),
-              /* @__PURE__ */ jsx6("span", { className: "ns-tree__status-count", children: summary.counts[status] })
-            ] }, status)) : /* @__PURE__ */ jsx6("li", { className: "ns-tree__status ns-tree__status--empty", children: summary ? "summary unavailable" : "loading\u2026" }) })
-          ]
-        },
-        ns.id
-      );
-    }) })
-  ] });
-}
-
-// src/ui/components/Sidebar.tsx
-import { Fragment as Fragment2, jsx as jsx7, jsxs as jsxs7 } from "react/jsx-runtime";
-var DEFAULT_WIDTH = 300;
-function getDisplayMode(width) {
-  if (width < 240) return "compact";
-  if (width <= 400) return "normal";
-  return "extended";
-}
-function Sidebar({ jobs, activeSessionId, quote, wsState, onSelectSession, onAvatarClick, onOdinClick, onTogglePinSession, pinnedSessionIds, onCancelJob, terminatingSessionIds, namespace, namespaces, onNamespaceChange, namespaceSummaries }) {
-  const { theme, setTheme: setTheme2 } = useTheme();
-  const [width, setWidth] = useState5(DEFAULT_WIDTH);
-  const navRef = useRef3(null);
-  useEffect4(() => {
-    const nav = navRef.current;
-    if (!nav) return;
-    const ro = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        const w = entry.contentRect.width;
-        if (w > 0) setWidth(w);
-      }
-    });
-    ro.observe(nav);
-    return () => ro.disconnect();
-  }, []);
-  const displayMode = getDisplayMode(width);
-  const isCompact = displayMode === "compact";
-  return /* @__PURE__ */ jsxs7(
-    "nav",
-    {
-      ref: navRef,
-      className: "sidebar",
-      "aria-label": "Agent sessions",
-      style: { width: "100%", height: "100%" },
-      children: [
-        /* @__PURE__ */ jsxs7("div", { className: "sidebar-header", children: [
-          /* @__PURE__ */ jsxs7("div", { className: "brand", children: [
-            /* @__PURE__ */ jsx7(
-              "button",
-              {
-                className: "odin-avatar-btn",
-                onClick: onOdinClick,
-                "aria-label": "View Odin profile",
-                title: "View Odin profile",
-                children: /* @__PURE__ */ jsx7(
-                  "img",
-                  {
-                    src: theme === "light" ? odin_light_default : odin_dark_default,
-                    alt: "Odin"
-                  }
-                )
-              }
-            ),
-            !isCompact && /* @__PURE__ */ jsx7("h1", { children: "Hlidskjalf" }),
-            !isCompact && /* @__PURE__ */ jsx7("span", { className: "brand-wss-badge", children: /* @__PURE__ */ jsx7(StatusBadge, { state: wsState }) })
-          ] }),
-          !isCompact && /* @__PURE__ */ jsxs7(Fragment2, { children: [
-            /* @__PURE__ */ jsxs7("div", { className: "quote", role: "note", children: [
-              "\u201C",
-              quote,
-              "\u201D"
-            ] }),
-            /* @__PURE__ */ jsxs7("div", { className: "count-row", children: [
-              /* @__PURE__ */ jsxs7("div", { className: "count", "aria-live": "polite", children: [
-                jobs.length,
-                " session",
-                jobs.length !== 1 ? "s" : ""
-              ] }),
-              /* @__PURE__ */ jsx7(ThemeSwitcher, { theme, setTheme: setTheme2 })
-            ] })
-          ] }),
-          /* @__PURE__ */ jsx7(
-            NamespaceTree,
-            {
-              namespace,
-              namespaces,
-              summaries: namespaceSummaries,
-              onNamespaceChange,
-              displayMode
-            }
-          )
-        ] }),
-        /* @__PURE__ */ jsx7("div", { className: "card-list", role: "list", "aria-label": "Job sessions", children: jobs.length === 0 ? !isCompact && /* @__PURE__ */ jsx7(
-          "div",
-          {
-            style: {
-              padding: "1rem",
-              fontSize: "0.8rem",
-              color: "var(--text-void)",
-              fontStyle: "italic"
-            },
-            children: "No agent jobs found"
-          }
-        ) : jobs.map((job) => /* @__PURE__ */ jsx7(
-          JobCard,
-          {
-            job,
-            isActive: job.sessionId === activeSessionId,
-            onClick: () => onSelectSession(job.sessionId),
-            onAvatarClick,
-            isPinned: pinnedSessionIds?.has(job.sessionId) ?? false,
-            onTogglePin: onTogglePinSession ? () => onTogglePinSession(job.sessionId) : void 0,
-            onCancelJob,
-            displayMode,
-            isTerminating: terminatingSessionIds?.has(job.sessionId) ?? false
-          },
-          job.sessionId
-        )) })
-      ]
-    }
-  );
-}
-
-// src/ui/components/AgentProfileModal.tsx
-import { useEffect as useEffect5, useRef as useRef4 } from "react";
-import { jsx as jsx8, jsxs as jsxs8 } from "react/jsx-runtime";
-var ELDER_FUTHARK = "\u16A0 \u16A2 \u16A6 \u16A8 \u16B1 \u16B2 \u16B7 \u16B9 \u16BA \u16BE \u16C1 \u16C3 \u16C7 \u16C8 \u16C9 \u16CA \u16CF \u16D2 \u16D6 \u16D7 \u16DA \u16DC \u16DE \u16DF";
-function AgentProfileModal({ agentKey, theme, onClose }) {
-  const closeButtonRef = useRef4(null);
-  const backdropRef = useRef4(null);
-  const name = AGENT_NAMES[agentKey] ?? agentKey;
-  const title = AGENT_TITLES[agentKey] ?? "";
-  const runes = AGENT_RUNE_NAMES[agentKey] ?? AGENT_RUNE_NAMES._fallback ?? "";
-  const quote = AGENT_QUOTES[agentKey] ?? AGENT_QUOTES._fallback ?? "";
-  const description = AGENT_DESCRIPTIONS[agentKey] ?? "";
-  const accent = AGENT_COLORS[agentKey] ?? "var(--gold)";
-  const portrait = theme === "light" ? AGENT_LIGHT_AVATARS[agentKey] ?? AGENT_AVATARS[agentKey] : AGENT_AVATARS[agentKey] ?? AGENT_LIGHT_AVATARS[agentKey];
-  useEffect5(() => {
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, []);
-  useEffect5(() => {
-    closeButtonRef.current?.focus();
-  }, []);
-  useEffect5(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onClose]);
-  function handleBackdropClick(e) {
-    if (e.target === backdropRef.current) onClose();
-  }
-  function handleModalKeyDown(e) {
-    if (e.key === "Tab") {
-      e.preventDefault();
-      closeButtonRef.current?.focus();
-    }
-  }
-  return /* @__PURE__ */ jsx8(
-    "div",
-    {
-      className: "apm-backdrop",
-      ref: backdropRef,
-      onClick: handleBackdropClick,
-      "aria-label": "Agent profile backdrop",
-      children: /* @__PURE__ */ jsxs8(
-        "div",
-        {
-          className: "apm-shell",
-          role: "dialog",
-          "aria-modal": "true",
-          "aria-labelledby": "apm-agent-name",
-          onKeyDown: handleModalKeyDown,
-          style: { "--agent-accent": accent },
-          children: [
-            /* @__PURE__ */ jsx8(
-              "button",
-              {
-                ref: closeButtonRef,
-                className: "apm-close",
-                "aria-label": "Close agent profile",
-                onClick: onClose,
-                children: "\u2715"
-              }
-            ),
-            /* @__PURE__ */ jsxs8("div", { className: "apm-body", children: [
-              /* @__PURE__ */ jsx8("div", { className: "apm-rune-band", "aria-hidden": "true", children: ELDER_FUTHARK }),
-              /* @__PURE__ */ jsx8("div", { className: "apm-portrait-zone", children: portrait ? /* @__PURE__ */ jsx8(
-                "img",
-                {
-                  className: "apm-portrait",
-                  src: portrait,
-                  alt: name
-                }
-              ) : /* @__PURE__ */ jsx8("div", { className: "apm-portrait apm-portrait-placeholder", "aria-label": name, children: name.charAt(0) }) }),
-              /* @__PURE__ */ jsxs8("div", { className: "apm-identity", children: [
-                /* @__PURE__ */ jsx8(
-                  "div",
-                  {
-                    className: "apm-agent-name",
-                    id: "apm-agent-name",
-                    style: { color: accent },
-                    children: name
-                  }
-                ),
-                /* @__PURE__ */ jsx8("div", { className: "apm-agent-title", children: title }),
-                runes && /* @__PURE__ */ jsx8(
-                  "div",
-                  {
-                    className: "apm-rune-sig",
-                    "aria-label": `Rune signature: ${name}`,
-                    children: runes
-                  }
-                )
-              ] }),
-              quote && /* @__PURE__ */ jsx8("div", { className: "apm-quote", children: /* @__PURE__ */ jsxs8("p", { children: [
-                "\u201C",
-                quote,
-                "\u201D"
-              ] }) }),
-              description && /* @__PURE__ */ jsx8("div", { className: "apm-description", children: /* @__PURE__ */ jsx8("p", { children: description }) }),
-              /* @__PURE__ */ jsx8("div", { className: "apm-rune-band apm-rune-band--bottom", "aria-hidden": "true", children: ELDER_FUTHARK })
-            ] })
-          ]
-        }
-      )
-    }
-  );
-}
-
-// src/ui/components/RagnarokDialog.tsx
-import { useEffect as useEffect6, useRef as useRef5, useState as useState6 } from "react";
-import { jsx as jsx9, jsxs as jsxs9 } from "react/jsx-runtime";
-function RagnarokDialog({ sessionId, jobTitle, onConfirm, onCancel }) {
-  const [isLoading, setIsLoading] = useState6(false);
-  const [error, setError] = useState6(null);
-  const confirmRef = useRef5(null);
-  const cancelRef = useRef5(null);
-  useEffect6(() => {
-    cancelRef.current?.focus();
-  }, []);
-  useEffect6(() => {
-    const onKey = (e) => {
-      if (e.key === "Escape" && !isLoading) onCancel();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [isLoading, onCancel]);
-  const handleConfirm = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      await onConfirm();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An unknown error occurred.");
-      setIsLoading(false);
-    }
-  };
-  return /* @__PURE__ */ jsx9(
-    "div",
-    {
-      className: "rdk-backdrop",
-      role: "dialog",
-      "aria-modal": "true",
-      "aria-labelledby": "rdk-title",
-      "aria-describedby": "rdk-body",
-      onClick: (e) => {
-        if (e.target === e.currentTarget && !isLoading) onCancel();
-      },
-      children: /* @__PURE__ */ jsxs9("div", { className: "rdk-shell", children: [
-        /* @__PURE__ */ jsx9("div", { className: "rdk-rune-band", "aria-hidden": "true", children: "\u16B1\u16A8\u16B7\u16BE\u16A8\u16B1\u16DF\u16B2 \u16CA\u16A2\u16D7\u16D7\u16A2\u16BE\u16CA \u16C1\u16CA \u16BE\u16C1\u16B7\u16BA" }),
-        /* @__PURE__ */ jsxs9("div", { className: "rdk-header", children: [
-          /* @__PURE__ */ jsx9("span", { className: "rdk-sword-icon", "aria-hidden": "true", children: "\u2694\uFE0F" }),
-          /* @__PURE__ */ jsx9("h2", { id: "rdk-title", className: "rdk-title", children: "Invoke Ragnar\xF6k?" })
-        ] }),
-        /* @__PURE__ */ jsxs9("div", { className: "rdk-body", id: "rdk-body", children: [
-          /* @__PURE__ */ jsx9("p", { className: "rdk-body-text", children: "You are about to sever this thread from the Nornir's loom. This agent's saga will end \u2014 no Valhalla awaits a cancelled job. This cannot be undone." }),
-          /* @__PURE__ */ jsxs9("div", { className: "rdk-job-label", "aria-label": "Job to be cancelled", children: [
-            /* @__PURE__ */ jsx9("span", { className: "rdk-job-label-icon", "aria-hidden": "true", children: "\u263D" }),
-            /* @__PURE__ */ jsx9("span", { className: "rdk-job-label-text", children: jobTitle })
-          ] }),
-          /* @__PURE__ */ jsx9("div", { className: "rdk-session-id", "aria-label": "Session ID", children: sessionId })
-        ] }),
-        error && /* @__PURE__ */ jsxs9("div", { className: "rdk-error", role: "alert", children: [
-          /* @__PURE__ */ jsx9("span", { "aria-hidden": "true", children: "\u2715" }),
-          " ",
-          error
-        ] }),
-        /* @__PURE__ */ jsxs9("div", { className: "rdk-actions", children: [
-          /* @__PURE__ */ jsx9(
-            "button",
-            {
-              ref: cancelRef,
-              className: "rdk-btn rdk-btn--cancel",
-              onClick: onCancel,
-              disabled: isLoading,
-              "aria-label": "Stay the Hand of Fate \u2014 keep job running",
-              children: "Stay the Hand of Fate"
-            }
-          ),
-          /* @__PURE__ */ jsx9(
-            "button",
-            {
-              ref: confirmRef,
-              className: "rdk-btn rdk-btn--confirm",
-              onClick: handleConfirm,
-              disabled: isLoading,
-              "aria-label": "Unleash Ragnar\xF6k \u2014 permanently cancel this job",
-              children: isLoading ? /* @__PURE__ */ jsxs9("span", { className: "rdk-loading-text", children: [
-                /* @__PURE__ */ jsx9("span", { className: "rdk-spinner", "aria-hidden": "true" }),
-                "Severing the thread\u2026"
-              ] }) : "Unleash Ragnar\xF6k"
-            }
-          )
-        ] }),
-        /* @__PURE__ */ jsx9("div", { className: "rdk-rune-band rdk-rune-band--bottom", "aria-hidden": "true", children: "\u16A0\u16D6\u16BE\u16B1\u16C1\u16B1 \u16B9\u16A8\u16CF\u16B2\u16BA\u16D6\u16CA \u16A6\u16D6 \u16B9\u16DF\u16DA\u16A0 \u16B9\u16A8\u16CF\u16B2\u16BA\u16D6\u16CA" })
-      ] })
-    }
-  );
-}
-
-// src/ui/components/Toast.tsx
-import { useEffect as useEffect7, useState as useState7 } from "react";
-import { jsx as jsx10, jsxs as jsxs10 } from "react/jsx-runtime";
-function Toast({ message, onDismiss, duration = 4e3 }) {
-  const [exiting, setExiting] = useState7(false);
-  useEffect7(() => {
-    const exitTimer = setTimeout(() => setExiting(true), duration - 400);
-    const dismissTimer = setTimeout(onDismiss, duration);
-    return () => {
-      clearTimeout(exitTimer);
-      clearTimeout(dismissTimer);
-    };
-  }, [duration, onDismiss]);
-  return /* @__PURE__ */ jsxs10(
-    "div",
-    {
-      className: `toast${exiting ? " toast--exit" : ""}`,
-      role: "status",
-      "aria-live": "polite",
-      "aria-atomic": "true",
-      children: [
-        /* @__PURE__ */ jsx10("span", { className: "toast-rune", "aria-hidden": "true", children: "\u2694\uFE0F" }),
-        /* @__PURE__ */ jsx10("span", { className: "toast-message", children: message }),
-        /* @__PURE__ */ jsx10(
-          "button",
-          {
-            className: "toast-close",
-            onClick: () => {
-              setExiting(true);
-              setTimeout(onDismiss, 400);
-            },
-            "aria-label": "Dismiss notification",
-            children: "\u2715"
-          }
-        )
-      ]
-    }
-  );
-}
-
-// src/ui/components/ErrorBanner.tsx
-import { jsxs as jsxs11 } from "react/jsx-runtime";
-function ErrorBanner({ message }) {
-  if (!message) return null;
-  return /* @__PURE__ */ jsxs11("div", { className: `error-banner visible`, role: "alert", "aria-live": "assertive", children: [
-    "\u26A0",
-    " ",
-    message
-  ] });
-}
-
-// src/ui/App.tsx
-import { useCallback as useCallback7, useEffect as useEffect10, useMemo, useRef as useRef8, useState as useState12 } from "react";
-import { host } from "@hermes/plugin-sdk";
-
-// src/ui/hooks/useWebSocket.ts
-import { useEffect as useEffect8, useRef as useRef6, useCallback as useCallback3, useState as useState8 } from "react";
-var MAX_RECONNECT = 10;
-var BASE_DELAY_MS = 1e3;
-function useWebSocket(onMessage, namespace = "fenrir-agents") {
-  const wsRef = useRef6(null);
-  const reconnectCount = useRef6(0);
-  const reconnectTimer = useRef6(null);
-  const onMessageRef = useRef6(onMessage);
-  onMessageRef.current = onMessage;
-  const connectedNamespaceRef = useRef6(null);
-  const [state, setState] = useState8("connecting");
-  const [error, setError] = useState8(null);
-  const connect = useCallback3((ns) => {
-    if (connectedNamespaceRef.current === ns && (wsRef.current?.readyState === WebSocket.OPEN || wsRef.current?.readyState === WebSocket.CONNECTING)) return;
-    if (wsRef.current) {
-      wsRef.current.onclose = null;
-      wsRef.current.close();
-      wsRef.current = null;
-      connectedNamespaceRef.current = null;
-    }
-    const ws = new WebSocket(wsUrl(ns));
-    wsRef.current = ws;
-    connectedNamespaceRef.current = ns;
-    setState("connecting");
-    ws.addEventListener("open", () => {
-      setError(null);
-      reconnectCount.current = 0;
-      setState("open");
-    });
-    ws.addEventListener("message", (ev) => {
-      try {
-        const msg = JSON.parse(ev.data);
-        onMessageRef.current(msg);
-      } catch {
-      }
-    });
-    ws.addEventListener("close", () => {
-      if (wsRef.current === ws) {
-        wsRef.current = null;
-        connectedNamespaceRef.current = null;
-      }
-      setState("closed");
-      scheduleReconnect();
-    });
-    ws.addEventListener("error", () => {
-      setState("error");
-      setError("WebSocket connection lost \u2014 reconnecting\u2026");
-    });
-  }, []);
-  const namespaceRef = useRef6(namespace);
-  namespaceRef.current = namespace;
-  const scheduleReconnect = useCallback3(() => {
-    if (reconnectCount.current >= MAX_RECONNECT) {
-      setError(`WebSocket failed after ${MAX_RECONNECT} attempts. Reload to retry.`);
-      return;
-    }
-    const delay = Math.min(BASE_DELAY_MS * 2 ** reconnectCount.current, 3e4);
-    reconnectCount.current++;
-    reconnectTimer.current = setTimeout(() => {
-      reconnectTimer.current = null;
-      connect(namespaceRef.current);
-    }, delay);
-  }, [connect]);
-  const send = useCallback3((msg) => {
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify(msg));
-    }
-  }, []);
-  useEffect8(() => {
-    reconnectCount.current = 0;
-    connect(namespace);
-    return () => {
-      if (reconnectTimer.current) clearTimeout(reconnectTimer.current);
-      if (wsRef.current) {
-        wsRef.current.onclose = null;
-        wsRef.current.close();
-        wsRef.current = null;
-        connectedNamespaceRef.current = null;
-      }
-    };
-  }, [connect, namespace]);
-  return { state, error, send };
-}
-
-// src/ui/hooks/useNamespace.ts
-import { useState as useState9, useCallback as useCallback4, useEffect as useEffect9 } from "react";
-var STORAGE_KEY2 = "hlidskjalf:namespace";
-var DEFAULT_NAMESPACE = "fenrir-agents";
-function loadNamespace() {
-  try {
-    const v = localStorage.getItem(STORAGE_KEY2);
-    if (v) return v;
-  } catch {
-  }
-  return DEFAULT_NAMESPACE;
-}
-function saveNamespace(ns) {
-  try {
-    localStorage.setItem(STORAGE_KEY2, ns);
-  } catch {
-  }
-}
-function useNamespace() {
-  const [namespace, setNamespaceState] = useState9(loadNamespace);
-  const [namespaces, setNamespaces] = useState9([
-    { id: "fenrir-agents", label: "Fenrir Ledger Agents" },
-    { id: "say-so-agents", label: "SaySo Agents" },
-    { id: "mytruthfinder-agents", label: "MyTruthFinder Agents" },
-    { id: "shanaghy-com-agents", label: "Shanaghy.com Agents" },
-    { id: "re-goatmower-agents", label: "Re-Goatmower Agents" }
-  ]);
-  useEffect9(() => {
-    otFetch("/api/namespaces").then((res) => res.json()).then((data) => {
-      if (Array.isArray(data.namespaces) && data.namespaces.length > 0) {
-        setNamespaces(data.namespaces);
-        const ids = data.namespaces.map((n) => n.id);
-        setNamespaceState((prev) => {
-          if (!ids.includes(prev)) {
-            const fallback = data.namespaces[0].id;
-            saveNamespace(fallback);
-            return fallback;
-          }
-          return prev;
-        });
-      }
-    }).catch(() => {
-    });
-  }, []);
-  const setNamespace = useCallback4((ns) => {
-    saveNamespace(ns);
-    setNamespaceState(ns);
-  }, []);
-  return { namespace, namespaces, setNamespace };
-}
-
 // src/ui/hooks/useJobs.ts
-import { useState as useState10, useCallback as useCallback5 } from "react";
+import { useState as useState4, useCallback as useCallback3 } from "react";
 var STATUS_PRIORITY = {
   running: 0,
   pending: 1,
@@ -5644,10 +5083,10 @@ function buildCachedJobs(liveIds) {
   return result;
 }
 function useJobs() {
-  const [jobs, setJobs] = useState10(() => {
+  const [jobs, setJobs] = useState4(() => {
     return buildCachedJobs(/* @__PURE__ */ new Set());
   });
-  const handleMessage = useCallback5((msg) => {
+  const handleMessage = useCallback3((msg) => {
     if (msg.type === "jobs-snapshot" || msg.type === "jobs-updated") {
       const live = (msg.jobs || []).filter((j) => j.status !== "purged").map(parseJob);
       const liveIds = new Set(live.map((j) => j.sessionId));
@@ -5656,7 +5095,7 @@ function useJobs() {
       setJobs(all);
     }
   }, []);
-  const refreshCached = useCallback5(() => {
+  const refreshCached = useCallback3(() => {
     setJobs((prev) => {
       const liveIds = new Set(
         prev.filter((j) => j.status !== "cached").map((j) => j.sessionId)
@@ -5669,8 +5108,828 @@ function useJobs() {
   return { jobs, handleMessage, refreshCached };
 }
 
+// src/ui/lib/namespaceIcons.ts
+var ICON_BASE = "https://www.shanaghy.com/assets/icons/";
+var ICON_POOL = [
+  "raven.png",
+  "scroll.png",
+  "horn.png",
+  "moon.png",
+  "ring.png",
+  "hammer.png",
+  "cauldron.png",
+  "dice.png",
+  "octopi.png",
+  "wolf-coins.png",
+  "fianna-watch.png",
+  "fionn-salmon.png",
+  "gleipnir.png",
+  "moss-quiet.png",
+  "mossiah.png",
+  "moinin.png",
+  "sean-chai.png",
+  "hal9005.png",
+  "the-daykeeper.png",
+  "candle.png",
+  "smith-odin.png",
+  "forge-logo.png",
+  "webknot.png",
+  "backup-keeper.png",
+  "deco.png",
+  "zigbee2mqtt.png",
+  "cyclone-vacuum.png",
+  "front-doorbell.png"
+];
+var NAMESPACE_CURATED = {
+  // Fenrir the wolf, guarder of the ledger
+  "fenrir-agents": "wolf-coins.png",
+  // Gjallarhorn — every say-so proclaimed aloud
+  "say-so-agents": "horn.png",
+  // Fionn's Salmon of Knowledge — the truth finder
+  "mytruthfinder-agents": "fionn-salmon.png",
+  // the knot of sites the web hands are tied with
+  "shanaghy-com-agents": "webknot.png",
+  // the mown moss of the goatmower's rounds
+  "re-goatmower-agents": "mossiah.png"
+};
+function hashKey(key) {
+  let h = 5381;
+  for (let i = 0; i < key.length; i++) {
+    h = (h << 5) + h + key.charCodeAt(i) | 0;
+  }
+  return Math.abs(h);
+}
+function namespaceIcon(nsId) {
+  const curated = NAMESPACE_CURATED[nsId];
+  if (curated) return ICON_BASE + curated;
+  return ICON_BASE + ICON_POOL[hashKey(nsId) % ICON_POOL.length];
+}
+var TASK_STATUS_ICONS = {
+  running: "hammer.png",
+  // at the forge
+  pending: "dice.png",
+  // fate not yet cast
+  succeeded: "ring.png",
+  // the oath-ring of a deed done
+  failed: "raven.png",
+  // ill omen over the field
+  cached: "moon.png",
+  // memory kept under the moon
+  purged: "candle.png"
+  // burnt out and swept away
+};
+function taskIcon(status) {
+  const file = TASK_STATUS_ICONS[status];
+  return ICON_BASE + (file ?? "scroll.png");
+}
+var NAMESPACE_ICON_FALLBACK = "\u{1F310}";
+function taskIconFallback(status) {
+  switch (status) {
+    case "running":
+      return "\u2692";
+    // ⚒
+    case "pending":
+      return "\u23F3";
+    // ⏳
+    case "succeeded":
+      return "\u2714";
+    // ✔
+    case "failed":
+      return "\u2716";
+    // ✖
+    case "cached":
+      return "\u{1F319}";
+    // 🌙
+    case "purged":
+      return "\u{1F56F}";
+    // 🕯
+    default:
+      return "\u25AA";
+  }
+}
+
+// src/ui/components/TreeIcon.tsx
+import { useState as useState5 } from "react";
+import { jsx as jsx6 } from "react/jsx-runtime";
+function TreeIcon({ src, fallback, size = "ns" }) {
+  const [failed, setFailed] = useState5(false);
+  if (failed) {
+    return /* @__PURE__ */ jsx6(
+      "span",
+      {
+        className: size === "task" ? "ns-tree__icon ns-tree__icon--task ns-tree__icon--fallback" : "ns-tree__icon ns-tree__icon--fallback",
+        "aria-hidden": "true",
+        "data-icon-fallback": fallback,
+        children: fallback
+      }
+    );
+  }
+  return /* @__PURE__ */ jsx6(
+    "img",
+    {
+      className: size === "task" ? "ns-tree__icon ns-tree__icon--task" : "ns-tree__icon",
+      src,
+      alt: "",
+      "aria-hidden": "true",
+      loading: "lazy",
+      onError: () => setFailed(true)
+    }
+  );
+}
+
+// src/ui/components/NamespaceTree.tsx
+import { jsx as jsx7, jsxs as jsxs6 } from "react/jsx-runtime";
+function initialsOf(label) {
+  return label.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
+}
+function tasksOf(summaryJobs) {
+  if (!summaryJobs) return [];
+  return summaryJobs.filter((job) => job.status !== "purged").map(parseJob).sort(sortJobs);
+}
+function NamespaceTree({
+  namespace,
+  namespaces,
+  summaries,
+  onNamespaceChange,
+  onSelectTask,
+  activeSessionId,
+  displayMode
+}) {
+  const isCompact = displayMode === "compact";
+  const [expandedNs, setExpandedNs] = useState6(() => /* @__PURE__ */ new Set([namespace]));
+  const [compactOpen, setCompactOpen] = useState6(false);
+  const toggleExpanded = (nsId) => {
+    setExpandedNs((prev) => {
+      const next = new Set(prev);
+      if (next.has(nsId)) next.delete(nsId);
+      else next.add(nsId);
+      return next;
+    });
+  };
+  if (isCompact) {
+    const active = namespaces.find((n) => n.id === namespace);
+    const activeSummary = summaries[namespace];
+    return /* @__PURE__ */ jsxs6("div", { className: "ns-tree ns-tree--compact", children: [
+      /* @__PURE__ */ jsxs6(
+        "button",
+        {
+          type: "button",
+          className: "ns-tree__chip",
+          onClick: () => setCompactOpen((v) => !v),
+          "aria-expanded": compactOpen,
+          title: active ? `${active.label}${activeSummary ? ` \u2014 ${summaryLine(activeSummary)}` : ""}` : namespace,
+          children: [
+            active ? initialsOf(active.label) : "NS",
+            activeSummary ? /* @__PURE__ */ jsx7("span", { className: "ns-tree__chip-count", children: activeSummary.total }) : null
+          ]
+        }
+      ),
+      compactOpen && /* @__PURE__ */ jsx7("ul", { className: "ns-tree__list", role: "tree", "aria-label": "All namespaces", children: namespaces.map((ns) => {
+        const summary = summaries[ns.id];
+        return /* @__PURE__ */ jsx7(
+          "li",
+          {
+            role: "treeitem",
+            "aria-selected": ns.id === namespace,
+            "data-namespace": ns.id,
+            className: ns.id === namespace ? "ns-tree__item ns-tree__item--active" : "ns-tree__item",
+            children: /* @__PURE__ */ jsxs6(
+              "button",
+              {
+                type: "button",
+                className: "ns-tree__row",
+                title: ns.label,
+                onClick: () => {
+                  onNamespaceChange(ns.id);
+                  setCompactOpen(false);
+                },
+                children: [
+                  /* @__PURE__ */ jsx7(
+                    TreeIcon,
+                    {
+                      src: namespaceIcon(ns.id),
+                      fallback: NAMESPACE_ICON_FALLBACK,
+                      size: "task"
+                    }
+                  ),
+                  /* @__PURE__ */ jsx7("span", { className: "ns-tree__compact-initials", children: initialsOf(ns.label) }),
+                  /* @__PURE__ */ jsx7("span", { className: "ns-tree__compact-count", children: summary?.total ?? "\u2026" })
+                ]
+              }
+            )
+          },
+          ns.id
+        );
+      }) })
+    ] });
+  }
+  const rootClass = displayMode === "extended" ? "ns-tree ns-tree--extended" : "ns-tree";
+  return /* @__PURE__ */ jsx7("div", { className: rootClass, role: "tree", "aria-label": "Namespace tree", children: /* @__PURE__ */ jsx7("ul", { className: "ns-tree__roots", children: namespaces.map((ns) => {
+    const summary = summaries[ns.id];
+    const isActive = ns.id === namespace;
+    const nsExpanded = expandedNs.has(ns.id);
+    const line = summary ? summary.error ? "summary unavailable" : summaryLine(summary) : "\u2026";
+    const tasks = nsExpanded ? tasksOf(summary?.jobs) : [];
+    return /* @__PURE__ */ jsxs6(
+      "li",
+      {
+        role: "treeitem",
+        "aria-expanded": nsExpanded,
+        "aria-selected": isActive,
+        "data-namespace": ns.id,
+        className: isActive ? "ns-tree__item ns-tree__item--active" : "ns-tree__item",
+        children: [
+          /* @__PURE__ */ jsxs6("div", { className: "ns-tree__row", children: [
+            /* @__PURE__ */ jsx7(
+              "button",
+              {
+                type: "button",
+                className: "ns-tree__chevron-btn",
+                "aria-label": nsExpanded ? `Collapse ${ns.label} tasks` : `Expand ${ns.label} tasks`,
+                onClick: () => toggleExpanded(ns.id),
+                tabIndex: -1,
+                children: /* @__PURE__ */ jsx7(
+                  "span",
+                  {
+                    className: nsExpanded ? "ns-tree__chevron ns-tree__chevron--open" : "ns-tree__chevron",
+                    "aria-hidden": "true",
+                    children: nsExpanded ? "\u25BE" : "\u25B8"
+                  }
+                )
+              }
+            ),
+            /* @__PURE__ */ jsxs6(
+              "button",
+              {
+                type: "button",
+                className: "ns-tree__select",
+                title: `${ns.label} \u2014 ${line}`,
+                onClick: () => {
+                  onNamespaceChange(ns.id);
+                  setExpandedNs((prev) => new Set(prev).add(ns.id));
+                },
+                children: [
+                  /* @__PURE__ */ jsx7(TreeIcon, { src: namespaceIcon(ns.id), fallback: NAMESPACE_ICON_FALLBACK }),
+                  /* @__PURE__ */ jsxs6("span", { className: "ns-tree__labels", children: [
+                    /* @__PURE__ */ jsx7("span", { className: "ns-tree__label", children: ns.label }),
+                    /* @__PURE__ */ jsx7("span", { className: summary?.error ? "ns-tree__summary ns-tree__summary--error" : "ns-tree__summary", children: line })
+                  ] })
+                ]
+              }
+            )
+          ] }),
+          nsExpanded && /* @__PURE__ */ jsx7("ul", { className: "ns-tree__tasks", role: "group", "aria-label": `${ns.label} tasks`, children: summary && !summary.error ? tasks.length > 0 ? tasks.map((job) => {
+            const isTaskActive = job.sessionId === activeSessionId;
+            const title = resolveSessionTitle(job);
+            const taskTitle = `${title} \u2014 Issue #${job.issue} \xB7 ${job.agentName} \xB7 Step ${job.step} \xB7 ${job.status}`;
+            return /* @__PURE__ */ jsx7(
+              "li",
+              {
+                role: "treeitem",
+                "aria-selected": isTaskActive,
+                "data-session": job.sessionId,
+                className: isTaskActive ? "ns-tree__task ns-tree__task--active" : "ns-tree__task",
+                children: /* @__PURE__ */ jsxs6(
+                  "button",
+                  {
+                    type: "button",
+                    className: "ns-tree__task-btn",
+                    title: taskTitle,
+                    onClick: () => onSelectTask(ns.id, job.sessionId),
+                    children: [
+                      /* @__PURE__ */ jsx7(
+                        TreeIcon,
+                        {
+                          src: taskIcon(job.status),
+                          fallback: taskIconFallback(job.status),
+                          size: "task"
+                        }
+                      ),
+                      /* @__PURE__ */ jsx7("span", { className: "ns-tree__task-title", children: title }),
+                      /* @__PURE__ */ jsx7("span", { className: `ns-tree__task-status ns-tree__task-status--${job.status}`, children: job.status })
+                    ]
+                  }
+                )
+              },
+              job.sessionId
+            );
+          }) : /* @__PURE__ */ jsx7("li", { className: "ns-tree__task ns-tree__task--empty", children: "no tasks in this world" }) : /* @__PURE__ */ jsx7("li", { className: "ns-tree__task ns-tree__task--empty", children: summary ? "summary unavailable" : "loading\u2026" }) })
+        ]
+      },
+      ns.id
+    );
+  }) }) });
+}
+
+// src/ui/components/Sidebar.tsx
+import { Fragment as Fragment2, jsx as jsx8, jsxs as jsxs7 } from "react/jsx-runtime";
+var DEFAULT_WIDTH = 300;
+function getDisplayMode(width) {
+  if (width < 240) return "compact";
+  if (width <= 400) return "normal";
+  return "extended";
+}
+function Sidebar({ jobs, activeSessionId, quote, wsState, onSelectSession, onAvatarClick, onOdinClick, onTogglePinSession, pinnedSessionIds, onCancelJob, terminatingSessionIds, namespace, namespaces, onNamespaceChange, namespaceSummaries, onSelectTask }) {
+  const { theme, setTheme: setTheme2 } = useTheme();
+  const [width, setWidth] = useState7(DEFAULT_WIDTH);
+  const navRef = useRef3(null);
+  useEffect4(() => {
+    const nav = navRef.current;
+    if (!nav) return;
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const w = entry.contentRect.width;
+        if (w > 0) setWidth(w);
+      }
+    });
+    ro.observe(nav);
+    return () => ro.disconnect();
+  }, []);
+  const displayMode = getDisplayMode(width);
+  const isCompact = displayMode === "compact";
+  return /* @__PURE__ */ jsxs7(
+    "nav",
+    {
+      ref: navRef,
+      className: "sidebar",
+      "aria-label": "Agent sessions",
+      style: { width: "100%", height: "100%" },
+      children: [
+        /* @__PURE__ */ jsxs7("div", { className: "sidebar-header", children: [
+          /* @__PURE__ */ jsxs7("div", { className: "brand", children: [
+            /* @__PURE__ */ jsx8(
+              "button",
+              {
+                className: "odin-avatar-btn",
+                onClick: onOdinClick,
+                "aria-label": "View Odin profile",
+                title: "View Odin profile",
+                children: /* @__PURE__ */ jsx8(
+                  "img",
+                  {
+                    src: theme === "light" ? odin_light_default : odin_dark_default,
+                    alt: "Odin"
+                  }
+                )
+              }
+            ),
+            !isCompact && /* @__PURE__ */ jsx8("h1", { children: "Hlidskjalf" }),
+            !isCompact && /* @__PURE__ */ jsx8("span", { className: "brand-wss-badge", children: /* @__PURE__ */ jsx8(StatusBadge, { state: wsState }) })
+          ] }),
+          !isCompact && /* @__PURE__ */ jsxs7(Fragment2, { children: [
+            /* @__PURE__ */ jsxs7("div", { className: "quote", role: "note", children: [
+              "\u201C",
+              quote,
+              "\u201D"
+            ] }),
+            /* @__PURE__ */ jsxs7("div", { className: "count-row", children: [
+              /* @__PURE__ */ jsxs7("div", { className: "count", "aria-live": "polite", children: [
+                jobs.length,
+                " session",
+                jobs.length !== 1 ? "s" : ""
+              ] }),
+              /* @__PURE__ */ jsx8(ThemeSwitcher, { theme, setTheme: setTheme2 })
+            ] })
+          ] }),
+          /* @__PURE__ */ jsx8(
+            NamespaceTree,
+            {
+              namespace,
+              namespaces,
+              summaries: namespaceSummaries,
+              onNamespaceChange,
+              onSelectTask,
+              activeSessionId,
+              displayMode
+            }
+          )
+        ] }),
+        /* @__PURE__ */ jsx8("div", { className: "card-list", role: "list", "aria-label": "Job sessions", children: jobs.length === 0 ? !isCompact && /* @__PURE__ */ jsx8(
+          "div",
+          {
+            style: {
+              padding: "1rem",
+              fontSize: "0.8rem",
+              color: "var(--text-void)",
+              fontStyle: "italic"
+            },
+            children: "No agent jobs found"
+          }
+        ) : jobs.map((job) => /* @__PURE__ */ jsx8(
+          JobCard,
+          {
+            job,
+            isActive: job.sessionId === activeSessionId,
+            onClick: () => onSelectSession(job.sessionId),
+            onAvatarClick,
+            isPinned: pinnedSessionIds?.has(job.sessionId) ?? false,
+            onTogglePin: onTogglePinSession ? () => onTogglePinSession(job.sessionId) : void 0,
+            onCancelJob,
+            displayMode,
+            isTerminating: terminatingSessionIds?.has(job.sessionId) ?? false
+          },
+          job.sessionId
+        )) })
+      ]
+    }
+  );
+}
+
+// src/ui/components/AgentProfileModal.tsx
+import { useEffect as useEffect5, useRef as useRef4 } from "react";
+import { jsx as jsx9, jsxs as jsxs8 } from "react/jsx-runtime";
+var ELDER_FUTHARK = "\u16A0 \u16A2 \u16A6 \u16A8 \u16B1 \u16B2 \u16B7 \u16B9 \u16BA \u16BE \u16C1 \u16C3 \u16C7 \u16C8 \u16C9 \u16CA \u16CF \u16D2 \u16D6 \u16D7 \u16DA \u16DC \u16DE \u16DF";
+function AgentProfileModal({ agentKey, theme, onClose }) {
+  const closeButtonRef = useRef4(null);
+  const backdropRef = useRef4(null);
+  const name = AGENT_NAMES[agentKey] ?? agentKey;
+  const title = AGENT_TITLES[agentKey] ?? "";
+  const runes = AGENT_RUNE_NAMES[agentKey] ?? AGENT_RUNE_NAMES._fallback ?? "";
+  const quote = AGENT_QUOTES[agentKey] ?? AGENT_QUOTES._fallback ?? "";
+  const description = AGENT_DESCRIPTIONS[agentKey] ?? "";
+  const accent = AGENT_COLORS[agentKey] ?? "var(--gold)";
+  const portrait = theme === "light" ? AGENT_LIGHT_AVATARS[agentKey] ?? AGENT_AVATARS[agentKey] : AGENT_AVATARS[agentKey] ?? AGENT_LIGHT_AVATARS[agentKey];
+  useEffect5(() => {
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, []);
+  useEffect5(() => {
+    closeButtonRef.current?.focus();
+  }, []);
+  useEffect5(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+  function handleBackdropClick(e) {
+    if (e.target === backdropRef.current) onClose();
+  }
+  function handleModalKeyDown(e) {
+    if (e.key === "Tab") {
+      e.preventDefault();
+      closeButtonRef.current?.focus();
+    }
+  }
+  return /* @__PURE__ */ jsx9(
+    "div",
+    {
+      className: "apm-backdrop",
+      ref: backdropRef,
+      onClick: handleBackdropClick,
+      "aria-label": "Agent profile backdrop",
+      children: /* @__PURE__ */ jsxs8(
+        "div",
+        {
+          className: "apm-shell",
+          role: "dialog",
+          "aria-modal": "true",
+          "aria-labelledby": "apm-agent-name",
+          onKeyDown: handleModalKeyDown,
+          style: { "--agent-accent": accent },
+          children: [
+            /* @__PURE__ */ jsx9(
+              "button",
+              {
+                ref: closeButtonRef,
+                className: "apm-close",
+                "aria-label": "Close agent profile",
+                onClick: onClose,
+                children: "\u2715"
+              }
+            ),
+            /* @__PURE__ */ jsxs8("div", { className: "apm-body", children: [
+              /* @__PURE__ */ jsx9("div", { className: "apm-rune-band", "aria-hidden": "true", children: ELDER_FUTHARK }),
+              /* @__PURE__ */ jsx9("div", { className: "apm-portrait-zone", children: portrait ? /* @__PURE__ */ jsx9(
+                "img",
+                {
+                  className: "apm-portrait",
+                  src: portrait,
+                  alt: name
+                }
+              ) : /* @__PURE__ */ jsx9("div", { className: "apm-portrait apm-portrait-placeholder", "aria-label": name, children: name.charAt(0) }) }),
+              /* @__PURE__ */ jsxs8("div", { className: "apm-identity", children: [
+                /* @__PURE__ */ jsx9(
+                  "div",
+                  {
+                    className: "apm-agent-name",
+                    id: "apm-agent-name",
+                    style: { color: accent },
+                    children: name
+                  }
+                ),
+                /* @__PURE__ */ jsx9("div", { className: "apm-agent-title", children: title }),
+                runes && /* @__PURE__ */ jsx9(
+                  "div",
+                  {
+                    className: "apm-rune-sig",
+                    "aria-label": `Rune signature: ${name}`,
+                    children: runes
+                  }
+                )
+              ] }),
+              quote && /* @__PURE__ */ jsx9("div", { className: "apm-quote", children: /* @__PURE__ */ jsxs8("p", { children: [
+                "\u201C",
+                quote,
+                "\u201D"
+              ] }) }),
+              description && /* @__PURE__ */ jsx9("div", { className: "apm-description", children: /* @__PURE__ */ jsx9("p", { children: description }) }),
+              /* @__PURE__ */ jsx9("div", { className: "apm-rune-band apm-rune-band--bottom", "aria-hidden": "true", children: ELDER_FUTHARK })
+            ] })
+          ]
+        }
+      )
+    }
+  );
+}
+
+// src/ui/components/RagnarokDialog.tsx
+import { useEffect as useEffect6, useRef as useRef5, useState as useState8 } from "react";
+import { jsx as jsx10, jsxs as jsxs9 } from "react/jsx-runtime";
+function RagnarokDialog({ sessionId, jobTitle, onConfirm, onCancel }) {
+  const [isLoading, setIsLoading] = useState8(false);
+  const [error, setError] = useState8(null);
+  const confirmRef = useRef5(null);
+  const cancelRef = useRef5(null);
+  useEffect6(() => {
+    cancelRef.current?.focus();
+  }, []);
+  useEffect6(() => {
+    const onKey = (e) => {
+      if (e.key === "Escape" && !isLoading) onCancel();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [isLoading, onCancel]);
+  const handleConfirm = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      await onConfirm();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An unknown error occurred.");
+      setIsLoading(false);
+    }
+  };
+  return /* @__PURE__ */ jsx10(
+    "div",
+    {
+      className: "rdk-backdrop",
+      role: "dialog",
+      "aria-modal": "true",
+      "aria-labelledby": "rdk-title",
+      "aria-describedby": "rdk-body",
+      onClick: (e) => {
+        if (e.target === e.currentTarget && !isLoading) onCancel();
+      },
+      children: /* @__PURE__ */ jsxs9("div", { className: "rdk-shell", children: [
+        /* @__PURE__ */ jsx10("div", { className: "rdk-rune-band", "aria-hidden": "true", children: "\u16B1\u16A8\u16B7\u16BE\u16A8\u16B1\u16DF\u16B2 \u16CA\u16A2\u16D7\u16D7\u16A2\u16BE\u16CA \u16C1\u16CA \u16BE\u16C1\u16B7\u16BA" }),
+        /* @__PURE__ */ jsxs9("div", { className: "rdk-header", children: [
+          /* @__PURE__ */ jsx10("span", { className: "rdk-sword-icon", "aria-hidden": "true", children: "\u2694\uFE0F" }),
+          /* @__PURE__ */ jsx10("h2", { id: "rdk-title", className: "rdk-title", children: "Invoke Ragnar\xF6k?" })
+        ] }),
+        /* @__PURE__ */ jsxs9("div", { className: "rdk-body", id: "rdk-body", children: [
+          /* @__PURE__ */ jsx10("p", { className: "rdk-body-text", children: "You are about to sever this thread from the Nornir's loom. This agent's saga will end \u2014 no Valhalla awaits a cancelled job. This cannot be undone." }),
+          /* @__PURE__ */ jsxs9("div", { className: "rdk-job-label", "aria-label": "Job to be cancelled", children: [
+            /* @__PURE__ */ jsx10("span", { className: "rdk-job-label-icon", "aria-hidden": "true", children: "\u263D" }),
+            /* @__PURE__ */ jsx10("span", { className: "rdk-job-label-text", children: jobTitle })
+          ] }),
+          /* @__PURE__ */ jsx10("div", { className: "rdk-session-id", "aria-label": "Session ID", children: sessionId })
+        ] }),
+        error && /* @__PURE__ */ jsxs9("div", { className: "rdk-error", role: "alert", children: [
+          /* @__PURE__ */ jsx10("span", { "aria-hidden": "true", children: "\u2715" }),
+          " ",
+          error
+        ] }),
+        /* @__PURE__ */ jsxs9("div", { className: "rdk-actions", children: [
+          /* @__PURE__ */ jsx10(
+            "button",
+            {
+              ref: cancelRef,
+              className: "rdk-btn rdk-btn--cancel",
+              onClick: onCancel,
+              disabled: isLoading,
+              "aria-label": "Stay the Hand of Fate \u2014 keep job running",
+              children: "Stay the Hand of Fate"
+            }
+          ),
+          /* @__PURE__ */ jsx10(
+            "button",
+            {
+              ref: confirmRef,
+              className: "rdk-btn rdk-btn--confirm",
+              onClick: handleConfirm,
+              disabled: isLoading,
+              "aria-label": "Unleash Ragnar\xF6k \u2014 permanently cancel this job",
+              children: isLoading ? /* @__PURE__ */ jsxs9("span", { className: "rdk-loading-text", children: [
+                /* @__PURE__ */ jsx10("span", { className: "rdk-spinner", "aria-hidden": "true" }),
+                "Severing the thread\u2026"
+              ] }) : "Unleash Ragnar\xF6k"
+            }
+          )
+        ] }),
+        /* @__PURE__ */ jsx10("div", { className: "rdk-rune-band rdk-rune-band--bottom", "aria-hidden": "true", children: "\u16A0\u16D6\u16BE\u16B1\u16C1\u16B1 \u16B9\u16A8\u16CF\u16B2\u16BA\u16D6\u16CA \u16A6\u16D6 \u16B9\u16DF\u16DA\u16A0 \u16B9\u16A8\u16CF\u16B2\u16BA\u16D6\u16CA" })
+      ] })
+    }
+  );
+}
+
+// src/ui/components/Toast.tsx
+import { useEffect as useEffect7, useState as useState9 } from "react";
+import { jsx as jsx11, jsxs as jsxs10 } from "react/jsx-runtime";
+function Toast({ message, onDismiss, duration = 4e3 }) {
+  const [exiting, setExiting] = useState9(false);
+  useEffect7(() => {
+    const exitTimer = setTimeout(() => setExiting(true), duration - 400);
+    const dismissTimer = setTimeout(onDismiss, duration);
+    return () => {
+      clearTimeout(exitTimer);
+      clearTimeout(dismissTimer);
+    };
+  }, [duration, onDismiss]);
+  return /* @__PURE__ */ jsxs10(
+    "div",
+    {
+      className: `toast${exiting ? " toast--exit" : ""}`,
+      role: "status",
+      "aria-live": "polite",
+      "aria-atomic": "true",
+      children: [
+        /* @__PURE__ */ jsx11("span", { className: "toast-rune", "aria-hidden": "true", children: "\u2694\uFE0F" }),
+        /* @__PURE__ */ jsx11("span", { className: "toast-message", children: message }),
+        /* @__PURE__ */ jsx11(
+          "button",
+          {
+            className: "toast-close",
+            onClick: () => {
+              setExiting(true);
+              setTimeout(onDismiss, 400);
+            },
+            "aria-label": "Dismiss notification",
+            children: "\u2715"
+          }
+        )
+      ]
+    }
+  );
+}
+
+// src/ui/components/ErrorBanner.tsx
+import { jsxs as jsxs11 } from "react/jsx-runtime";
+function ErrorBanner({ message }) {
+  if (!message) return null;
+  return /* @__PURE__ */ jsxs11("div", { className: `error-banner visible`, role: "alert", "aria-live": "assertive", children: [
+    "\u26A0",
+    " ",
+    message
+  ] });
+}
+
+// src/ui/App.tsx
+import { useCallback as useCallback7, useEffect as useEffect10, useMemo, useRef as useRef8, useState as useState13 } from "react";
+import { host } from "@hermes/plugin-sdk";
+
+// src/ui/hooks/useWebSocket.ts
+import { useEffect as useEffect8, useRef as useRef6, useCallback as useCallback4, useState as useState10 } from "react";
+var MAX_RECONNECT = 10;
+var BASE_DELAY_MS = 1e3;
+function useWebSocket(onMessage, namespace = "fenrir-agents") {
+  const wsRef = useRef6(null);
+  const reconnectCount = useRef6(0);
+  const reconnectTimer = useRef6(null);
+  const onMessageRef = useRef6(onMessage);
+  onMessageRef.current = onMessage;
+  const connectedNamespaceRef = useRef6(null);
+  const [state, setState] = useState10("connecting");
+  const [error, setError] = useState10(null);
+  const connect = useCallback4((ns) => {
+    if (connectedNamespaceRef.current === ns && (wsRef.current?.readyState === WebSocket.OPEN || wsRef.current?.readyState === WebSocket.CONNECTING)) return;
+    if (wsRef.current) {
+      wsRef.current.onclose = null;
+      wsRef.current.close();
+      wsRef.current = null;
+      connectedNamespaceRef.current = null;
+    }
+    const ws = new WebSocket(wsUrl(ns));
+    wsRef.current = ws;
+    connectedNamespaceRef.current = ns;
+    setState("connecting");
+    ws.addEventListener("open", () => {
+      setError(null);
+      reconnectCount.current = 0;
+      setState("open");
+    });
+    ws.addEventListener("message", (ev) => {
+      try {
+        const msg = JSON.parse(ev.data);
+        onMessageRef.current(msg);
+      } catch {
+      }
+    });
+    ws.addEventListener("close", () => {
+      if (wsRef.current === ws) {
+        wsRef.current = null;
+        connectedNamespaceRef.current = null;
+      }
+      setState("closed");
+      scheduleReconnect();
+    });
+    ws.addEventListener("error", () => {
+      setState("error");
+      setError("WebSocket connection lost \u2014 reconnecting\u2026");
+    });
+  }, []);
+  const namespaceRef = useRef6(namespace);
+  namespaceRef.current = namespace;
+  const scheduleReconnect = useCallback4(() => {
+    if (reconnectCount.current >= MAX_RECONNECT) {
+      setError(`WebSocket failed after ${MAX_RECONNECT} attempts. Reload to retry.`);
+      return;
+    }
+    const delay = Math.min(BASE_DELAY_MS * 2 ** reconnectCount.current, 3e4);
+    reconnectCount.current++;
+    reconnectTimer.current = setTimeout(() => {
+      reconnectTimer.current = null;
+      connect(namespaceRef.current);
+    }, delay);
+  }, [connect]);
+  const send = useCallback4((msg) => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify(msg));
+    }
+  }, []);
+  useEffect8(() => {
+    reconnectCount.current = 0;
+    connect(namespace);
+    return () => {
+      if (reconnectTimer.current) clearTimeout(reconnectTimer.current);
+      if (wsRef.current) {
+        wsRef.current.onclose = null;
+        wsRef.current.close();
+        wsRef.current = null;
+        connectedNamespaceRef.current = null;
+      }
+    };
+  }, [connect, namespace]);
+  return { state, error, send };
+}
+
+// src/ui/hooks/useNamespace.ts
+import { useState as useState11, useCallback as useCallback5, useEffect as useEffect9 } from "react";
+var STORAGE_KEY2 = "hlidskjalf:namespace";
+var DEFAULT_NAMESPACE = "fenrir-agents";
+function loadNamespace() {
+  try {
+    const v = localStorage.getItem(STORAGE_KEY2);
+    if (v) return v;
+  } catch {
+  }
+  return DEFAULT_NAMESPACE;
+}
+function saveNamespace(ns) {
+  try {
+    localStorage.setItem(STORAGE_KEY2, ns);
+  } catch {
+  }
+}
+function useNamespace() {
+  const [namespace, setNamespaceState] = useState11(loadNamespace);
+  const [namespaces, setNamespaces] = useState11([
+    { id: "fenrir-agents", label: "Fenrir Ledger Agents" },
+    { id: "say-so-agents", label: "SaySo Agents" },
+    { id: "mytruthfinder-agents", label: "MyTruthFinder Agents" },
+    { id: "shanaghy-com-agents", label: "Shanaghy.com Agents" },
+    { id: "re-goatmower-agents", label: "Re-Goatmower Agents" }
+  ]);
+  useEffect9(() => {
+    otFetch("/api/namespaces").then((res) => res.json()).then((data) => {
+      if (Array.isArray(data.namespaces) && data.namespaces.length > 0) {
+        setNamespaces(data.namespaces);
+        const ids = data.namespaces.map((n) => n.id);
+        setNamespaceState((prev) => {
+          if (!ids.includes(prev)) {
+            const fallback = data.namespaces[0].id;
+            saveNamespace(fallback);
+            return fallback;
+          }
+          return prev;
+        });
+      }
+    }).catch(() => {
+    });
+  }, []);
+  const setNamespace = useCallback5((ns) => {
+    saveNamespace(ns);
+    setNamespaceState(ns);
+  }, []);
+  return { namespace, namespaces, setNamespace };
+}
+
 // src/ui/hooks/useLogStream.ts
-import { useState as useState11, useCallback as useCallback6, useRef as useRef7 } from "react";
+import { useState as useState12, useCallback as useCallback6, useRef as useRef7 } from "react";
 
 // src/ui/lib/jsonl.ts
 function stripK8sTimestamp(line) {
@@ -5970,15 +6229,15 @@ var TTL_ERROR_PATTERN = /TTL expired|cleaned up/i;
 var NODE_UNREACHABLE_PATTERN = /Node unreachable|kubelet timeout/i;
 var POD_NOT_READY_PATTERN = /HTTP-Code:\s*400|is not running|container.*not running/i;
 function useLogStream() {
-  const [entries, setEntries] = useState11([]);
-  const [activeSessionId, _setActiveSessionId] = useState11(null);
+  const [entries, setEntries] = useState12([]);
+  const [activeSessionId, _setActiveSessionId] = useState12(null);
   const activeSessionIdRef = useRef7(null);
-  const [streamError, setStreamError] = useState11(null);
-  const [streamEnded, setStreamEnded] = useState11(false);
-  const [replayedFromCache, setReplayedFromCache] = useState11(false);
-  const [isConnecting, _setIsConnecting] = useState11(false);
+  const [streamError, setStreamError] = useState12(null);
+  const [streamEnded, setStreamEnded] = useState12(false);
+  const [replayedFromCache, setReplayedFromCache] = useState12(false);
+  const [isConnecting, _setIsConnecting] = useState12(false);
   const isConnectingRef = useRef7(false);
-  const [isPodStarting, _setIsPodStarting] = useState11(false);
+  const [isPodStarting, _setIsPodStarting] = useState12(false);
   const isPodStartingRef = useRef7(false);
   const replayFromCacheRef = useRef7(null);
   const taskPromptBuffer = useRef7([]);
@@ -6423,8 +6682,8 @@ function App() {
   const quote = useMemo(() => randomQuote(), []);
   const { theme } = useTheme();
   const { namespace, namespaces, setNamespace } = useNamespace();
-  const [profileAgent, setProfileAgent] = useState12(null);
-  const [cancelTarget, setCancelTarget] = useState12(null);
+  const [profileAgent, setProfileAgent] = useState13(null);
+  const [cancelTarget, setCancelTarget] = useState13(null);
   const { jobs, handleMessage: handleJobsMessage, refreshCached } = useJobs();
   const jobsActivityKey = useMemo(
     () => jobs.map((j) => `${j.sessionId}:${j.status}`).join("|"),
@@ -6455,6 +6714,7 @@ function App() {
     evictExpiredLogs();
   }, []);
   const prevNamespaceRef = useRef8(namespace);
+  const pendingSelectRef = useRef8(null);
   useEffect10(() => {
     if (prevNamespaceRef.current === namespace) return;
     prevNamespaceRef.current = namespace;
@@ -6462,14 +6722,16 @@ function App() {
       subscribedSessionRef.current = null;
     }
     backgroundSubsRef.current.clear();
-    setActiveSessionId(null);
+    const pending = pendingSelectRef.current;
+    pendingSelectRef.current = null;
+    setActiveSessionId(pending);
     clearEntries();
   }, [namespace, setActiveSessionId, clearEntries]);
-  const [isFixture, setIsFixture] = useState12(false);
-  const [pinnedSessionId, setPinnedSessionId] = useState12(null);
-  const [storageWarning, setStorageWarning] = useState12(null);
-  const [toast, setToast] = useState12(null);
-  const [terminatingSessionIds, setTerminatingSessionIds] = useState12(/* @__PURE__ */ new Set());
+  const [isFixture, setIsFixture] = useState13(false);
+  const [pinnedSessionId, setPinnedSessionId] = useState13(null);
+  const [storageWarning, setStorageWarning] = useState13(null);
+  const [toast, setToast] = useState13(null);
+  const [terminatingSessionIds, setTerminatingSessionIds] = useState13(/* @__PURE__ */ new Set());
   useEffect10(() => {
     if (activeSessionId) {
       setPinnedSessionId(isPinned(activeSessionId) ? activeSessionId : null);
@@ -6545,6 +6807,24 @@ function App() {
       }
     },
     [send, setActiveSessionId, clearEntries, replayFromCache, replayFromTempLog, setLiveSkipCount, jobs]
+  );
+  const handleSelectTask = useCallback7(
+    (ns, sessionId) => {
+      if (ns === namespace) {
+        handleSelectSession(sessionId);
+        return;
+      }
+      pendingSelectRef.current = sessionId;
+      setIsFixture(false);
+      setNamespace(ns);
+      try {
+        if (!window.location.hash.startsWith("#/odins-throne")) {
+          host.navigate("/odins-throne");
+        }
+      } catch {
+      }
+    },
+    [namespace, handleSelectSession, setNamespace]
   );
   useEffect10(() => {
     return () => {
@@ -6689,6 +6969,7 @@ function App() {
     isConnecting,
     isPodStarting,
     onSelectSession: handleSelectSession,
+    onSelectTask: handleSelectTask,
     onAvatarClick: setProfileAgent,
     onOdinClick: () => setProfileAgent("odin"),
     onTogglePin: handleTogglePin,
@@ -6739,9 +7020,9 @@ async function openExternal(url) {
 }
 
 // src/settings.tsx
-import { useState as useState13, useSyncExternalStore as useSyncExternalStore3 } from "react";
+import { useState as useState14, useSyncExternalStore as useSyncExternalStore3 } from "react";
 import { host as host2 } from "@hermes/plugin-sdk";
-import { jsx as jsx11, jsxs as jsxs12 } from "react/jsx-runtime";
+import { jsx as jsx12, jsxs as jsxs12 } from "react/jsx-runtime";
 var open = false;
 var listeners3 = /* @__PURE__ */ new Set();
 var settingsUi = {
@@ -6778,8 +7059,8 @@ var inputStyle = {
   fontSize: "0.78rem"
 };
 function ThroneSettings() {
-  const [url, setUrl] = useState13(getUpstreamUrl());
-  const [saving, setSaving] = useState13(false);
+  const [url, setUrl] = useState14(getUpstreamUrl());
+  const [saving, setSaving] = useState14(false);
   const paired = isConfigured();
   async function save() {
     setSaving(true);
@@ -6794,7 +7075,7 @@ function ThroneSettings() {
     settingsUi.close();
     setSaving(false);
   }
-  return /* @__PURE__ */ jsx11(
+  return /* @__PURE__ */ jsx12(
     "div",
     {
       className: "apm-backdrop",
@@ -6805,18 +7086,18 @@ function ThroneSettings() {
         if (e.target === e.currentTarget) settingsUi.close();
       },
       children: /* @__PURE__ */ jsxs12("div", { className: "throne-settings", style: { maxWidth: 440 }, children: [
-        /* @__PURE__ */ jsx11("h2", { children: "Bind the Bifr\xF6st" }),
+        /* @__PURE__ */ jsx12("h2", { children: "Bind the Bifr\xF6st" }),
         /* @__PURE__ */ jsxs12("p", { className: "throne-settings-hint", children: [
-          /* @__PURE__ */ jsx11("strong", { children: "Google OAuth is the only way in" }),
+          /* @__PURE__ */ jsx12("strong", { children: "Google OAuth is the only way in" }),
           " \u2014 the same login the web version uses, completed in your browser via a one-time pairing code. No session, no data. The only setting is the upstream URL, overridden for a local dev monitor (which runs without oauth2-proxy)."
         ] }),
         /* @__PURE__ */ jsxs12("p", { className: "throne-settings-hint", children: [
           "Session: ",
-          /* @__PURE__ */ jsx11("strong", { children: paired ? "paired \u2713" : "not paired" })
+          /* @__PURE__ */ jsx12("strong", { children: paired ? "paired \u2713" : "not paired" })
         ] }),
         /* @__PURE__ */ jsxs12("label", { children: [
           "Upstream URL",
-          /* @__PURE__ */ jsx11(
+          /* @__PURE__ */ jsx12(
             "input",
             {
               style: inputStyle,
@@ -6827,8 +7108,8 @@ function ThroneSettings() {
           )
         ] }),
         /* @__PURE__ */ jsxs12("div", { className: "throne-settings-row", children: [
-          /* @__PURE__ */ jsx11("button", { className: "throne-settings-btn", onClick: () => settingsUi.close(), children: "Cancel" }),
-          /* @__PURE__ */ jsx11(
+          /* @__PURE__ */ jsx12("button", { className: "throne-settings-btn", onClick: () => settingsUi.close(), children: "Cancel" }),
+          /* @__PURE__ */ jsx12(
             "button",
             {
               className: "throne-settings-btn primary",
@@ -6844,10 +7125,10 @@ function ThroneSettings() {
 }
 
 // src/pane.tsx
-import { Fragment as Fragment3, jsx as jsx12, jsxs as jsxs13 } from "react/jsx-runtime";
+import { Fragment as Fragment3, jsx as jsx13, jsxs as jsxs13 } from "react/jsx-runtime";
 function SidebarConnected() {
   const snap = useThrone();
-  return /* @__PURE__ */ jsx12(
+  return /* @__PURE__ */ jsx13(
     Sidebar,
     {
       jobs: snap.jobs,
@@ -6864,7 +7145,8 @@ function SidebarConnected() {
       namespace: snap.namespace,
       namespaces: snap.namespaces,
       onNamespaceChange: snap.setNamespace,
-      namespaceSummaries: snap.namespaceSummaries
+      namespaceSummaries: snap.namespaceSummaries,
+      onSelectTask: snap.onSelectTask
     }
   );
 }
@@ -6872,9 +7154,9 @@ function ThroneOverlays() {
   const snap = useThrone();
   if (!snap) return null;
   return /* @__PURE__ */ jsxs13(Fragment3, { children: [
-    /* @__PURE__ */ jsx12(ErrorBanner, { message: snap.wsError }),
-    snap.storageWarning && /* @__PURE__ */ jsx12(ErrorBanner, { message: snap.storageWarning }),
-    snap.profileAgent && /* @__PURE__ */ jsx12(
+    /* @__PURE__ */ jsx13(ErrorBanner, { message: snap.wsError }),
+    snap.storageWarning && /* @__PURE__ */ jsx13(ErrorBanner, { message: snap.storageWarning }),
+    snap.profileAgent && /* @__PURE__ */ jsx13(
       AgentProfileModal,
       {
         agentKey: snap.profileAgent,
@@ -6882,7 +7164,7 @@ function ThroneOverlays() {
         onClose: () => snap.setProfileAgent(null)
       }
     ),
-    snap.cancelTarget && /* @__PURE__ */ jsx12(
+    snap.cancelTarget && /* @__PURE__ */ jsx13(
       RagnarokDialog,
       {
         sessionId: snap.cancelTarget.sessionId,
@@ -6891,7 +7173,7 @@ function ThroneOverlays() {
         onCancel: () => snap.setCancelTarget(null)
       }
     ),
-    snap.toast && /* @__PURE__ */ jsx12(
+    snap.toast && /* @__PURE__ */ jsx13(
       Toast,
       {
         message: snap.toast.message,
@@ -6902,10 +7184,10 @@ function ThroneOverlays() {
   ] });
 }
 function PairingCard() {
-  const [code, setCode] = useState14("");
-  const [error, setError] = useState14(null);
-  const [busy, setBusy] = useState14(false);
-  const [opened, setOpened] = useState14(false);
+  const [code, setCode] = useState15("");
+  const [error, setError] = useState15(null);
+  const [busy, setBusy] = useState15(false);
+  const [opened, setOpened] = useState15(false);
   async function openBrowser() {
     setError(null);
     const ok = await openExternal(pairingUrl());
@@ -6920,11 +7202,11 @@ function PairingCard() {
     setBusy(false);
   }
   return /* @__PURE__ */ jsxs13("div", { className: "throne-connect-card", children: [
-    /* @__PURE__ */ jsx12("p", { children: "The Throne is sealed \u2014 sign in with Google to open the Bifr\xF6st (the same login the web version uses)." }),
-    /* @__PURE__ */ jsx12("button", { className: "throne-settings-btn primary", onClick: () => void openBrowser(), children: "Sign in with Google" }),
+    /* @__PURE__ */ jsx13("p", { children: "The Throne is sealed \u2014 sign in with Google to open the Bifr\xF6st (the same login the web version uses)." }),
+    /* @__PURE__ */ jsx13("button", { className: "throne-settings-btn primary", onClick: () => void openBrowser(), children: "Sign in with Google" }),
     opened && /* @__PURE__ */ jsxs13(Fragment3, { children: [
-      /* @__PURE__ */ jsx12("p", { children: "The pairing page is open in your browser \u2014 click the key to copy it, then paste it here:" }),
-      /* @__PURE__ */ jsx12(
+      /* @__PURE__ */ jsx13("p", { children: "The pairing page is open in your browser \u2014 click the key to copy it, then paste it here:" }),
+      /* @__PURE__ */ jsx13(
         "input",
         {
           className: "throne-code-input",
@@ -6949,10 +7231,10 @@ function PairingCard() {
           }
         }
       ),
-      /* @__PURE__ */ jsx12("button", { className: "throne-settings-btn", disabled: busy, onClick: () => void pair(), children: busy ? "Binding\u2026" : "Pair" })
+      /* @__PURE__ */ jsx13("button", { className: "throne-settings-btn", disabled: busy, onClick: () => void pair(), children: busy ? "Binding\u2026" : "Pair" })
     ] }),
-    error && /* @__PURE__ */ jsx12("p", { style: { color: "var(--error-text)" }, children: error }),
-    /* @__PURE__ */ jsx12(
+    error && /* @__PURE__ */ jsx13("p", { style: { color: "var(--error-text)" }, children: error }),
+    /* @__PURE__ */ jsx13(
       "button",
       {
         className: "throne-settings-btn",
@@ -6971,7 +7253,7 @@ function ThronePane() {
   const settingsOpen = useSettingsOpen();
   useSyncExternalStore4(subscribeSession, sessionSnapshot, sessionSnapshot);
   const { theme } = useTheme();
-  const bridge = useMemo2(() => /* @__PURE__ */ jsx12(App, {}), []);
+  const bridge = useMemo2(() => /* @__PURE__ */ jsx13(App, {}), []);
   return /* @__PURE__ */ jsxs13(
     "div",
     {
@@ -6980,23 +7262,23 @@ function ThronePane() {
       style: { width: "100%", height: "100%", position: "relative", overflow: "hidden" },
       children: [
         bridge,
-        snap ? /* @__PURE__ */ jsx12(ErrorBoundary, { children: /* @__PURE__ */ jsx12(SidebarConnected, {}) }) : /* @__PURE__ */ jsx12("div", { className: "throne-boot", children: "Awakening the Allfather\u2026" }),
-        !isConfigured() && /* @__PURE__ */ jsx12(PairingCard, {}),
-        /* @__PURE__ */ jsx12(ThroneOverlays, {}),
-        settingsOpen && /* @__PURE__ */ jsx12(ThroneSettings, {})
+        snap ? /* @__PURE__ */ jsx13(ErrorBoundary, { children: /* @__PURE__ */ jsx13(SidebarConnected, {}) }) : /* @__PURE__ */ jsx13("div", { className: "throne-boot", children: "Awakening the Allfather\u2026" }),
+        !isConfigured() && /* @__PURE__ */ jsx13(PairingCard, {}),
+        /* @__PURE__ */ jsx13(ThroneOverlays, {}),
+        settingsOpen && /* @__PURE__ */ jsx13(ThroneSettings, {})
       ]
     }
   );
 }
 
 // src/ui/components/LogViewer.tsx
-import { useEffect as useEffect11, useRef as useRef9, useState as useState17, useCallback as useCallback8, useMemo as useMemo3 } from "react";
+import { useEffect as useEffect11, useRef as useRef9, useState as useState18, useCallback as useCallback8, useMemo as useMemo3 } from "react";
 
 // src/ui/components/ToolBlock.tsx
-import { useState as useState15 } from "react";
-import { jsx as jsx13, jsxs as jsxs14 } from "react/jsx-runtime";
+import { useState as useState16 } from "react";
+import { jsx as jsx14, jsxs as jsxs14 } from "react/jsx-runtime";
 function ToolBlock({ entry, collapseCount }) {
-  const [open2, setOpen] = useState15(false);
+  const [open2, setOpen] = useState16(false);
   const cls = toolBadgeClass(entry.toolName || "");
   let parsedInput;
   try {
@@ -7006,23 +7288,23 @@ function ToolBlock({ entry, collapseCount }) {
   const preview = entry.toolName ? toolPreview(entry.toolName, parsedInput) : "";
   return /* @__PURE__ */ jsxs14("div", { className: `ev-tool${open2 ? " open" : ""}${entry.toolIsError ? " ev-tool-error" : ""}`, children: [
     /* @__PURE__ */ jsxs14("div", { className: "ev-tool-header", onClick: () => setOpen(!open2), children: [
-      /* @__PURE__ */ jsx13("span", { className: `ev-tool-badge ${cls}`, children: entry.toolName }),
+      /* @__PURE__ */ jsx14("span", { className: `ev-tool-badge ${cls}`, children: entry.toolName }),
       collapseCount != null && collapseCount > 1 && /* @__PURE__ */ jsxs14("span", { className: "ev-collapse-count", title: `${collapseCount} consecutive identical calls collapsed`, children: [
         "\xD7",
         collapseCount
       ] }),
-      /* @__PURE__ */ jsx13("span", { className: "ev-tool-preview", children: preview }),
-      /* @__PURE__ */ jsx13("span", { className: "ev-tool-chevron", children: "\u203A" })
+      /* @__PURE__ */ jsx14("span", { className: "ev-tool-preview", children: preview }),
+      /* @__PURE__ */ jsx14("span", { className: "ev-tool-chevron", children: "\u203A" })
     ] }),
-    /* @__PURE__ */ jsx13("div", { className: "ev-tool-body-wrap", children: /* @__PURE__ */ jsxs14("div", { className: "ev-tool-body", children: [
-      /* @__PURE__ */ jsx13("div", { className: "ev-tool-input", children: entry.toolInput }),
-      entry.toolResult != null && /* @__PURE__ */ jsx13("div", { className: "ev-tool-result", children: entry.toolResult })
+    /* @__PURE__ */ jsx14("div", { className: "ev-tool-body-wrap", children: /* @__PURE__ */ jsxs14("div", { className: "ev-tool-body", children: [
+      /* @__PURE__ */ jsx14("div", { className: "ev-tool-input", children: entry.toolInput }),
+      entry.toolResult != null && /* @__PURE__ */ jsx14("div", { className: "ev-tool-result", children: entry.toolResult })
     ] }) })
   ] });
 }
 
 // src/ui/components/NorseErrorTablet.tsx
-import { Fragment as Fragment4, jsx as jsx14, jsxs as jsxs15 } from "react/jsx-runtime";
+import { Fragment as Fragment4, jsx as jsx15, jsxs as jsxs15 } from "react/jsx-runtime";
 var RUNE_ROW_TOP = "\u16A0 \u16A2 \u16A6 \u16A8 \u16B1 \u16B2 \u16B7 \u16B9 \u16BA \u16BE \u16C1 \u16C3 \u16C7 \u16C8 \u16C9 \u16CA \u16CF \u16D2 \u16D6 \u16D7 \u16DA \u16DC \u16DE \u16DF";
 var RUNE_ROW_BTM = "\u16DF \u16DE \u16DC \u16DA \u16D7 \u16D6 \u16D2 \u16CF \u16CA \u16C9 \u16C8 \u16C7 \u16C3 \u16C1 \u16BE \u16BA \u16B9 \u16B7 \u16B2 \u16B1 \u16A8 \u16A6 \u16A2 \u16A0";
 var RUNE_GLYPH = "\u16A6";
@@ -7033,7 +7315,7 @@ var VARIANT_CONTENT = {
     subheading: /* @__PURE__ */ jsxs15(Fragment4, { children: [
       "This vessel has departed",
       " ",
-      /* @__PURE__ */ jsx14(
+      /* @__PURE__ */ jsx15(
         "a",
         {
           className: "wiki-link",
@@ -7052,7 +7334,7 @@ var VARIANT_CONTENT = {
     subheading: /* @__PURE__ */ jsxs15(Fragment4, { children: [
       "The node that bore this vessel is beyond reach \u2014 the",
       " ",
-      /* @__PURE__ */ jsx14(
+      /* @__PURE__ */ jsx15(
         "a",
         {
           className: "wiki-link",
@@ -7079,29 +7361,29 @@ function NorseErrorTablet({ sessionId, message, variant = "ttl-expired" }) {
       "aria-label": ariaLabel,
       "aria-live": "assertive",
       children: [
-        /* @__PURE__ */ jsx14("div", { className: "net-rune-border", "aria-hidden": "true", children: RUNE_ROW_TOP }),
-        /* @__PURE__ */ jsx14("div", { className: "net-glyph", "aria-hidden": "true", children: RUNE_GLYPH }),
-        /* @__PURE__ */ jsx14("h1", { className: "net-heading", children: heading }),
-        /* @__PURE__ */ jsx14("p", { className: "net-subheading", children: subheading }),
-        /* @__PURE__ */ jsx14("div", { className: "net-divider", "aria-hidden": "true", children: "\u16A0 \u16A2 \u16A6 \u16DF \u16DE \u16DC \u16DA \u16DF \u16A6 \u16A2 \u16A0" }),
-        /* @__PURE__ */ jsx14("p", { className: "net-body", children: message }),
+        /* @__PURE__ */ jsx15("div", { className: "net-rune-border", "aria-hidden": "true", children: RUNE_ROW_TOP }),
+        /* @__PURE__ */ jsx15("div", { className: "net-glyph", "aria-hidden": "true", children: RUNE_GLYPH }),
+        /* @__PURE__ */ jsx15("h1", { className: "net-heading", children: heading }),
+        /* @__PURE__ */ jsx15("p", { className: "net-subheading", children: subheading }),
+        /* @__PURE__ */ jsx15("div", { className: "net-divider", "aria-hidden": "true", children: "\u16A0 \u16A2 \u16A6 \u16DF \u16DE \u16DC \u16DA \u16DF \u16A6 \u16A2 \u16A0" }),
+        /* @__PURE__ */ jsx15("p", { className: "net-body", children: message }),
         /* @__PURE__ */ jsxs15("div", { className: "net-session", "aria-label": `Session ID: ${sessionId}`, children: [
-          /* @__PURE__ */ jsx14("span", { className: "net-session-label", children: "Session" }),
-          /* @__PURE__ */ jsx14("span", { className: "net-session-value", children: sessionId })
+          /* @__PURE__ */ jsx15("span", { className: "net-session-label", children: "Session" }),
+          /* @__PURE__ */ jsx15("span", { className: "net-session-value", children: sessionId })
         ] }),
         /* @__PURE__ */ jsxs15("div", { className: "net-seal-epic", "aria-hidden": "true", children: [
-          /* @__PURE__ */ jsx14("div", { className: "net-seal-rune-row", children: seal.runes }),
-          /* @__PURE__ */ jsx14("div", { className: "net-seal-inscription", children: seal.inscription }),
-          /* @__PURE__ */ jsx14("div", { className: "net-seal-sub", children: seal.sub })
+          /* @__PURE__ */ jsx15("div", { className: "net-seal-rune-row", children: seal.runes }),
+          /* @__PURE__ */ jsx15("div", { className: "net-seal-inscription", children: seal.inscription }),
+          /* @__PURE__ */ jsx15("div", { className: "net-seal-sub", children: seal.sub })
         ] }),
-        /* @__PURE__ */ jsx14("div", { className: "net-rune-border", "aria-hidden": "true", children: RUNE_ROW_BTM })
+        /* @__PURE__ */ jsx15("div", { className: "net-rune-border", "aria-hidden": "true", children: RUNE_ROW_BTM })
       ]
     }
   );
 }
 
 // src/ui/components/NorseVerdictInscription.tsx
-import { jsx as jsx15, jsxs as jsxs16 } from "react/jsx-runtime";
+import { jsx as jsx16, jsxs as jsxs16 } from "react/jsx-runtime";
 var RUNE_ROW_TOP2 = "\u16A0 \u16A2 \u16A6 \u16A8 \u16B1 \u16B2 \u16B7 \u16B9 \u16BA \u16BE \u16C1 \u16C3 \u16C7 \u16C8 \u16C9 \u16CA \u16CF \u16D2 \u16D6 \u16D7 \u16DA \u16DC \u16DE \u16DF";
 var RUNE_ROW_BTM2 = "\u16DF \u16DE \u16DC \u16DA \u16D7 \u16D6 \u16D2 \u16CF \u16CA \u16C9 \u16C8 \u16C7 \u16C3 \u16C1 \u16BE \u16BA \u16B9 \u16B7 \u16B2 \u16B1 \u16A8 \u16A6 \u16A2 \u16A0";
 var AGENT_VERDICT_CONFIG = {
@@ -7216,7 +7498,7 @@ function renderPledgeWithLinks(pledge, links) {
   const regex = new RegExp(`(${escaped.join("|")})`, "g");
   const parts = pledge.split(regex);
   return parts.map(
-    (part, i) => links[part] ? /* @__PURE__ */ jsx15(
+    (part, i) => links[part] ? /* @__PURE__ */ jsx16(
       "a",
       {
         href: links[part],
@@ -7235,10 +7517,10 @@ function renderInline(text) {
   if (parts.length === 1) return text;
   return parts.map((part, i) => {
     if (part.startsWith("**") && part.endsWith("**")) {
-      return /* @__PURE__ */ jsx15("strong", { children: part.slice(2, -2) }, i);
+      return /* @__PURE__ */ jsx16("strong", { children: part.slice(2, -2) }, i);
     }
     if (part.startsWith("`") && part.endsWith("`")) {
-      return /* @__PURE__ */ jsx15("code", { className: "nvi-md-inline-code", children: part.slice(1, -1) }, i);
+      return /* @__PURE__ */ jsx16("code", { className: "nvi-md-inline-code", children: part.slice(1, -1) }, i);
     }
     return part;
   });
@@ -7257,34 +7539,34 @@ function renderMarkdown(text) {
         i++;
       }
       nodes.push(
-        /* @__PURE__ */ jsx15("pre", { className: "nvi-md-code", children: /* @__PURE__ */ jsx15("code", { children: codeLines.join("\n") }) }, `code-${i}`)
+        /* @__PURE__ */ jsx16("pre", { className: "nvi-md-code", children: /* @__PURE__ */ jsx16("code", { children: codeLines.join("\n") }) }, `code-${i}`)
       );
       i++;
       continue;
     }
     if (/^# /.test(line)) {
       nodes.push(
-        /* @__PURE__ */ jsx15("h1", { className: "nvi-md-h1", children: renderInline(line.slice(2)) }, `h1-${i}`)
+        /* @__PURE__ */ jsx16("h1", { className: "nvi-md-h1", children: renderInline(line.slice(2)) }, `h1-${i}`)
       );
       i++;
       continue;
     }
     if (/^## /.test(line)) {
       nodes.push(
-        /* @__PURE__ */ jsx15("h2", { className: "nvi-md-h2", children: renderInline(line.slice(3)) }, `h2-${i}`)
+        /* @__PURE__ */ jsx16("h2", { className: "nvi-md-h2", children: renderInline(line.slice(3)) }, `h2-${i}`)
       );
       i++;
       continue;
     }
     if (/^### /.test(line)) {
       nodes.push(
-        /* @__PURE__ */ jsx15("h3", { className: "nvi-md-h3", children: renderInline(line.slice(4)) }, `h3-${i}`)
+        /* @__PURE__ */ jsx16("h3", { className: "nvi-md-h3", children: renderInline(line.slice(4)) }, `h3-${i}`)
       );
       i++;
       continue;
     }
     if (/^---+$/.test(line.trim())) {
-      nodes.push(/* @__PURE__ */ jsx15("hr", { className: "nvi-md-hr", "aria-hidden": "true" }, `hr-${i}`));
+      nodes.push(/* @__PURE__ */ jsx16("hr", { className: "nvi-md-hr", "aria-hidden": "true" }, `hr-${i}`));
       i++;
       continue;
     }
@@ -7297,7 +7579,7 @@ function renderMarkdown(text) {
         i++;
       }
       nodes.push(
-        /* @__PURE__ */ jsx15("ul", { className: "nvi-md-ul nvi-md-checklist", children: items.map(({ checked, text: text2 }, j) => /* @__PURE__ */ jsx15("li", { className: checked ? "nvi-md-checked" : "nvi-md-unchecked", children: renderInline(text2) }, j)) }, `check-${i}`)
+        /* @__PURE__ */ jsx16("ul", { className: "nvi-md-ul nvi-md-checklist", children: items.map(({ checked, text: text2 }, j) => /* @__PURE__ */ jsx16("li", { className: checked ? "nvi-md-checked" : "nvi-md-unchecked", children: renderInline(text2) }, j)) }, `check-${i}`)
       );
       continue;
     }
@@ -7308,7 +7590,7 @@ function renderMarkdown(text) {
         i++;
       }
       nodes.push(
-        /* @__PURE__ */ jsx15("ul", { className: "nvi-md-ul", children: items.map((item, j) => /* @__PURE__ */ jsx15("li", { children: renderInline(item) }, j)) }, `ul-${i}`)
+        /* @__PURE__ */ jsx16("ul", { className: "nvi-md-ul", children: items.map((item, j) => /* @__PURE__ */ jsx16("li", { children: renderInline(item) }, j)) }, `ul-${i}`)
       );
       continue;
     }
@@ -7319,7 +7601,7 @@ function renderMarkdown(text) {
         i++;
       }
       nodes.push(
-        /* @__PURE__ */ jsx15("ol", { className: "nvi-md-ol", children: items.map((item, j) => /* @__PURE__ */ jsx15("li", { children: renderInline(item) }, j)) }, `ol-${i}`)
+        /* @__PURE__ */ jsx16("ol", { className: "nvi-md-ol", children: items.map((item, j) => /* @__PURE__ */ jsx16("li", { children: renderInline(item) }, j)) }, `ol-${i}`)
       );
       continue;
     }
@@ -7334,7 +7616,7 @@ function renderMarkdown(text) {
     }
     if (paraLines.length > 0) {
       nodes.push(
-        /* @__PURE__ */ jsx15("p", { className: "nvi-md-p", children: renderInline(paraLines.join(" ")) }, `p-${i}`)
+        /* @__PURE__ */ jsx16("p", { className: "nvi-md-p", children: renderInline(paraLines.join(" ")) }, `p-${i}`)
       );
     }
   }
@@ -7356,11 +7638,11 @@ function NorseVerdictInscription({ text, agentKey, agentName }) {
       style: { "--agent-accent": config.accentToken },
       children: [
         /* @__PURE__ */ jsxs16("div", { className: "nvi-rune-band-top", "aria-hidden": "true", children: [
-          /* @__PURE__ */ jsx15("div", { className: "nvi-rune-row", children: RUNE_ROW_TOP2 }),
-          /* @__PURE__ */ jsx15("div", { className: "nvi-rune-row", children: RUNE_ROW_BTM2 })
+          /* @__PURE__ */ jsx16("div", { className: "nvi-rune-row", children: RUNE_ROW_TOP2 }),
+          /* @__PURE__ */ jsx16("div", { className: "nvi-rune-row", children: RUNE_ROW_BTM2 })
         ] }),
         /* @__PURE__ */ jsxs16("div", { className: "nvi-agent-header", children: [
-          /* @__PURE__ */ jsx15(
+          /* @__PURE__ */ jsx16(
             "div",
             {
               className: "nvi-glyph",
@@ -7370,13 +7652,13 @@ function NorseVerdictInscription({ text, agentKey, agentName }) {
             }
           ),
           /* @__PURE__ */ jsxs16("div", { className: "nvi-agent-identity", children: [
-            /* @__PURE__ */ jsx15("span", { className: "nvi-agent-name", children: config.runeName }),
-            /* @__PURE__ */ jsx15("span", { className: "nvi-arch-title", children: config.archTitle }),
-            /* @__PURE__ */ jsx15("span", { className: "nvi-arch-subtitle", children: subtitle })
+            /* @__PURE__ */ jsx16("span", { className: "nvi-agent-name", children: config.runeName }),
+            /* @__PURE__ */ jsx16("span", { className: "nvi-arch-title", children: config.archTitle }),
+            /* @__PURE__ */ jsx16("span", { className: "nvi-arch-subtitle", children: subtitle })
           ] })
         ] }),
-        /* @__PURE__ */ jsx15("div", { className: "nvi-divider", "aria-hidden": "true", children: "\u16A0 \u16A2 \u16A6 \u16DF \u16DE \u16DC \u16DA \u16DF \u16A6 \u16A2 \u16A0" }),
-        /* @__PURE__ */ jsx15("div", { className: "nvi-body", children: bodyNodes }),
+        /* @__PURE__ */ jsx16("div", { className: "nvi-divider", "aria-hidden": "true", children: "\u16A0 \u16A2 \u16A6 \u16DF \u16DE \u16DC \u16DA \u16DF \u16A6 \u16A2 \u16A0" }),
+        /* @__PURE__ */ jsx16("div", { className: "nvi-body", children: bodyNodes }),
         /* @__PURE__ */ jsxs16("div", { className: "nvi-seal", children: [
           /* @__PURE__ */ jsxs16("p", { className: "nvi-seal-pledge", "aria-label": "Agent pledge", children: [
             "\u201C",
@@ -7390,8 +7672,8 @@ function NorseVerdictInscription({ text, agentKey, agentName }) {
           ] })
         ] }),
         /* @__PURE__ */ jsxs16("div", { className: "nvi-rune-band-bottom", "aria-hidden": "true", children: [
-          /* @__PURE__ */ jsx15("div", { className: "nvi-rune-row", children: RUNE_ROW_BTM2 }),
-          /* @__PURE__ */ jsx15("div", { className: "nvi-rune-row", children: RUNE_ROW_TOP2 })
+          /* @__PURE__ */ jsx16("div", { className: "nvi-rune-row", children: RUNE_ROW_BTM2 }),
+          /* @__PURE__ */ jsx16("div", { className: "nvi-rune-row", children: RUNE_ROW_TOP2 })
         ] })
       ]
     }
@@ -7399,8 +7681,8 @@ function NorseVerdictInscription({ text, agentKey, agentName }) {
 }
 
 // src/ui/components/DecreeBlock.tsx
-import { useState as useState16 } from "react";
-import { Fragment as Fragment5, jsx as jsx16, jsxs as jsxs17 } from "react/jsx-runtime";
+import { useState as useState17 } from "react";
+import { Fragment as Fragment5, jsx as jsx17, jsxs as jsxs17 } from "react/jsx-runtime";
 var DECREE_START_RE = /᛭᛭᛭\s*DECREE COMPLETE\s*᛭᛭᛭/;
 var DECREE_END_RE = /᛭᛭᛭\s*END DECREE\s*᛭᛭᛭/;
 function isDecreeBlock(text) {
@@ -7570,8 +7852,8 @@ function DecreeBlock({ text, agentKey: jobAgentKey, onAvatarClick }) {
   const agentColor = AGENT_COLORS[agentKey] ?? "#c9920a";
   const avatarMap = theme === "light" ? AGENT_LIGHT_AVATARS : AGENT_AVATARS;
   const avatar = avatarMap[agentKey];
-  const [summaryOpen, setSummaryOpen] = useState16(true);
-  const [checksOpen, setChecksOpen] = useState16(true);
+  const [summaryOpen, setSummaryOpen] = useState17(true);
+  const [checksOpen, setChecksOpen] = useState17(true);
   const isPass = /^(PASS|DONE|DELIVERED|APPROVED|SECURED)$/i.test(decree.verdict);
   const isFail = /^FAIL$/i.test(decree.verdict);
   const verdictColor = isFail ? "var(--error-strong)" : isPass ? "var(--gold-bright)" : "var(--text-rune)";
@@ -7580,7 +7862,7 @@ function DecreeBlock({ text, agentKey: jobAgentKey, onAvatarClick }) {
   const borderColor = isFail ? "var(--error-strong)" : agentColor;
   const isFallback = decree.format !== "canonical";
   return /* @__PURE__ */ jsxs17(Fragment5, { children: [
-    /* @__PURE__ */ jsx16("style", { children: keyframes }),
+    /* @__PURE__ */ jsx17("style", { children: keyframes }),
     /* @__PURE__ */ jsxs17(
       "div",
       {
@@ -7593,7 +7875,7 @@ function DecreeBlock({ text, agentKey: jobAgentKey, onAvatarClick }) {
         },
         "aria-label": `Decree from ${agentName}: verdict ${decree.verdict}`,
         children: [
-          isFallback && /* @__PURE__ */ jsx16(
+          isFallback && /* @__PURE__ */ jsx17(
             "div",
             {
               style: {
@@ -7614,14 +7896,14 @@ function DecreeBlock({ text, agentKey: jobAgentKey, onAvatarClick }) {
           ),
           /* @__PURE__ */ jsxs17("div", { className: "decree-card-header", children: [
             /* @__PURE__ */ jsxs17("div", { className: "decree-card-identity", children: [
-              avatar && /* @__PURE__ */ jsx16(
+              avatar && /* @__PURE__ */ jsx17(
                 "button",
                 {
                   className: "decree-card-avatar-btn",
                   onClick: () => onAvatarClick?.(agentKey),
                   "aria-label": `View ${agentName} profile`,
                   title: `View ${agentName} profile`,
-                  children: /* @__PURE__ */ jsx16(
+                  children: /* @__PURE__ */ jsx17(
                     "img",
                     {
                       className: "decree-card-avatar",
@@ -7633,9 +7915,9 @@ function DecreeBlock({ text, agentKey: jobAgentKey, onAvatarClick }) {
                 }
               ),
               /* @__PURE__ */ jsxs17("div", { className: "decree-card-agent-info", children: [
-                /* @__PURE__ */ jsx16("span", { className: "decree-card-agent-name", style: { color: agentColor }, children: agentName }),
-                agentTitle && /* @__PURE__ */ jsx16("span", { className: "decree-card-agent-title", children: agentTitle }),
-                agentRunes && /* @__PURE__ */ jsx16(
+                /* @__PURE__ */ jsx17("span", { className: "decree-card-agent-name", style: { color: agentColor }, children: agentName }),
+                agentTitle && /* @__PURE__ */ jsx17("span", { className: "decree-card-agent-title", children: agentTitle }),
+                agentRunes && /* @__PURE__ */ jsx17(
                   "span",
                   {
                     className: "decree-card-agent-runes",
@@ -7653,11 +7935,11 @@ function DecreeBlock({ text, agentKey: jobAgentKey, onAvatarClick }) {
             ] }),
             /* @__PURE__ */ jsxs17("div", { className: "decree-card-meta", children: [
               /* @__PURE__ */ jsxs17("div", { className: "decree-card-title", children: [
-                /* @__PURE__ */ jsx16("span", { className: "decree-card-rune-delim", "aria-hidden": "true", children: "\u16ED\u16ED\u16ED" }),
+                /* @__PURE__ */ jsx17("span", { className: "decree-card-rune-delim", "aria-hidden": "true", children: "\u16ED\u16ED\u16ED" }),
                 " ",
                 "DECREE COMPLETE",
                 " ",
-                /* @__PURE__ */ jsx16("span", { className: "decree-card-rune-delim", "aria-hidden": "true", children: "\u16ED\u16ED\u16ED" })
+                /* @__PURE__ */ jsx17("span", { className: "decree-card-rune-delim", "aria-hidden": "true", children: "\u16ED\u16ED\u16ED" })
               ] }),
               decree.issue && /* @__PURE__ */ jsxs17("span", { className: "decree-card-issue", "aria-label": `Issue ${decree.issue}`, children: [
                 "Issue ",
@@ -7680,8 +7962,8 @@ function DecreeBlock({ text, agentKey: jobAgentKey, onAvatarClick }) {
                 background: isFail ? "rgba(239,68,68,0.06)" : "rgba(201,146,10,0.04)"
               },
               children: [
-                /* @__PURE__ */ jsx16("span", { className: "decree-card-verdict-label", style: { fontSize: "10px", letterSpacing: "1.5px", color: "var(--text-void)", textTransform: "uppercase" }, children: "VERDICT" }),
-                /* @__PURE__ */ jsx16(
+                /* @__PURE__ */ jsx17("span", { className: "decree-card-verdict-label", style: { fontSize: "10px", letterSpacing: "1.5px", color: "var(--text-void)", textTransform: "uppercase" }, children: "VERDICT" }),
+                /* @__PURE__ */ jsx17(
                   "span",
                   {
                     className: "decree-card-verdict-value",
@@ -7695,7 +7977,7 @@ function DecreeBlock({ text, agentKey: jobAgentKey, onAvatarClick }) {
                     children: decree.verdict
                   }
                 ),
-                decree.pr && /* @__PURE__ */ jsx16(
+                decree.pr && /* @__PURE__ */ jsx17(
                   "a",
                   {
                     className: "decree-card-pr-link",
@@ -7718,13 +8000,13 @@ function DecreeBlock({ text, agentKey: jobAgentKey, onAvatarClick }) {
                 onClick: () => setSummaryOpen((o) => !o),
                 "aria-expanded": summaryOpen,
                 children: [
-                  /* @__PURE__ */ jsx16("span", { className: "decree-card-section-glyph", "aria-hidden": "true", children: "\u16CA" }),
-                  /* @__PURE__ */ jsx16("span", { className: "decree-card-section-title", children: "SUMMARY" }),
-                  /* @__PURE__ */ jsx16("span", { className: "ep-group-chevron", "aria-hidden": "true", children: "\u203A" })
+                  /* @__PURE__ */ jsx17("span", { className: "decree-card-section-glyph", "aria-hidden": "true", children: "\u16CA" }),
+                  /* @__PURE__ */ jsx17("span", { className: "decree-card-section-title", children: "SUMMARY" }),
+                  /* @__PURE__ */ jsx17("span", { className: "ep-group-chevron", "aria-hidden": "true", children: "\u203A" })
                 ]
               }
             ),
-            summaryOpen && /* @__PURE__ */ jsx16("ul", { className: "decree-card-list", "aria-label": "Decree summary", children: decree.summary.map((item, i) => /* @__PURE__ */ jsx16("li", { className: "decree-card-list-item", children: item }, i)) })
+            summaryOpen && /* @__PURE__ */ jsx17("ul", { className: "decree-card-list", "aria-label": "Decree summary", children: decree.summary.map((item, i) => /* @__PURE__ */ jsx17("li", { className: "decree-card-list-item", children: item }, i)) })
           ] }),
           decree.checks.length > 0 && /* @__PURE__ */ jsxs17("div", { className: `decree-card-section${checksOpen ? " open" : ""}`, children: [
             /* @__PURE__ */ jsxs17(
@@ -7734,20 +8016,20 @@ function DecreeBlock({ text, agentKey: jobAgentKey, onAvatarClick }) {
                 onClick: () => setChecksOpen((o) => !o),
                 "aria-expanded": checksOpen,
                 children: [
-                  /* @__PURE__ */ jsx16("span", { className: "decree-card-section-glyph", "aria-hidden": "true", children: "\u16CF" }),
-                  /* @__PURE__ */ jsx16("span", { className: "decree-card-section-title", children: "CHECKS" }),
-                  /* @__PURE__ */ jsx16("span", { className: "ep-group-chevron", "aria-hidden": "true", children: "\u203A" })
+                  /* @__PURE__ */ jsx17("span", { className: "decree-card-section-glyph", "aria-hidden": "true", children: "\u16CF" }),
+                  /* @__PURE__ */ jsx17("span", { className: "decree-card-section-title", children: "CHECKS" }),
+                  /* @__PURE__ */ jsx17("span", { className: "ep-group-chevron", "aria-hidden": "true", children: "\u203A" })
                 ]
               }
             ),
-            checksOpen && /* @__PURE__ */ jsx16("ul", { className: "decree-card-list decree-card-checks", "aria-label": "Decree checks", children: decree.checks.map((check, i) => {
+            checksOpen && /* @__PURE__ */ jsx17("ul", { className: "decree-card-list decree-card-checks", "aria-label": "Decree checks", children: decree.checks.map((check, i) => {
               const isCheckPass = /^(PASS|COMPLETE|SECURED|DELIVERED|APPROVED|DONE)/i.test(check.value);
               const isCheckFail = /^(FAIL|FINDINGS)/i.test(check.value);
               const checkColor = isCheckFail ? "var(--error-strong)" : isCheckPass ? "var(--success-strong)" : "var(--text-rune)";
               const badgeBg = isCheckFail ? "rgba(239,68,68,0.15)" : isCheckPass ? "rgba(34,197,94,0.12)" : "rgba(96,96,112,0.15)";
               return /* @__PURE__ */ jsxs17("li", { className: "decree-card-check-item", children: [
-                /* @__PURE__ */ jsx16("span", { className: "decree-card-check-name", style: { fontFamily: "monospace", fontSize: "12px" }, children: check.name }),
-                /* @__PURE__ */ jsx16(
+                /* @__PURE__ */ jsx17("span", { className: "decree-card-check-name", style: { fontFamily: "monospace", fontSize: "12px" }, children: check.name }),
+                /* @__PURE__ */ jsx17(
                   "span",
                   {
                     className: "decree-card-check-value",
@@ -7777,7 +8059,7 @@ function DecreeBlock({ text, agentKey: jobAgentKey, onAvatarClick }) {
                 paddingTop: "10px"
               },
               children: [
-                /* @__PURE__ */ jsx16(
+                /* @__PURE__ */ jsx17(
                   "div",
                   {
                     className: "decree-card-seal-band",
@@ -7786,7 +8068,7 @@ function DecreeBlock({ text, agentKey: jobAgentKey, onAvatarClick }) {
                     children: "\u16ED \xB7 \u16ED \xB7 \u16ED"
                   }
                 ),
-                decree.seal && /* @__PURE__ */ jsx16(
+                decree.seal && /* @__PURE__ */ jsx17(
                   "div",
                   {
                     className: "decree-card-seal",
@@ -7819,7 +8101,7 @@ function DecreeBlock({ text, agentKey: jobAgentKey, onAvatarClick }) {
                     ]
                   }
                 ),
-                /* @__PURE__ */ jsx16(
+                /* @__PURE__ */ jsx17(
                   "div",
                   {
                     className: "decree-card-seal-band",
@@ -7838,7 +8120,7 @@ function DecreeBlock({ text, agentKey: jobAgentKey, onAvatarClick }) {
 }
 
 // src/ui/components/LogViewer.tsx
-import { Fragment as Fragment6, jsx as jsx17, jsxs as jsxs18 } from "react/jsx-runtime";
+import { Fragment as Fragment6, jsx as jsx18, jsxs as jsxs18 } from "react/jsx-runtime";
 function collapseKey(entry) {
   if (entry.type === "tool-use" && entry.toolName) {
     return `tool-use:${entry.toolName}`;
@@ -7891,7 +8173,7 @@ function groupConsecutiveEntries(entries) {
 }
 function SessionHeader({ job, isPinned: isPinned2 = false, onTogglePin, showPin = true, replayedFromCache = false, onCancelJob }) {
   const displayTitle = resolveSessionTitle(job);
-  const [confirmingUnpin, setConfirmingUnpin] = useState17(false);
+  const [confirmingUnpin, setConfirmingUnpin] = useState18(false);
   const { theme } = useTheme();
   const statusColorMap = theme === "light" ? STATUS_COLORS_LIGHT : STATUS_COLORS;
   useEffect11(() => {
@@ -7904,7 +8186,7 @@ function SessionHeader({ job, isPinned: isPinned2 = false, onTogglePin, showPin 
       "aria-label": `Active session: ${displayTitle}`,
       children: [
         /* @__PURE__ */ jsxs18("div", { className: "session-title-block", children: [
-          /* @__PURE__ */ jsx17(
+          /* @__PURE__ */ jsx18(
             "span",
             {
               className: "session-title-primary",
@@ -7913,7 +8195,7 @@ function SessionHeader({ job, isPinned: isPinned2 = false, onTogglePin, showPin 
             }
           ),
           /* @__PURE__ */ jsxs18("div", { className: "session-meta-row", children: [
-            /* @__PURE__ */ jsx17(
+            /* @__PURE__ */ jsx18(
               "span",
               {
                 className: "session-agent-badge",
@@ -7933,7 +8215,7 @@ function SessionHeader({ job, isPinned: isPinned2 = false, onTogglePin, showPin 
                 role: "text",
                 "aria-label": `Session ID: ${job.sessionId}`,
                 children: [
-                  /* @__PURE__ */ jsx17("span", { className: "session-id-label", children: "Session:" }),
+                  /* @__PURE__ */ jsx18("span", { className: "session-id-label", children: "Session:" }),
                   " ",
                   job.sessionId
                 ]
@@ -7950,21 +8232,21 @@ function SessionHeader({ job, isPinned: isPinned2 = false, onTogglePin, showPin 
               "aria-label": "Cancel running job",
               onClick: () => onCancelJob(job.sessionId),
               children: [
-                /* @__PURE__ */ jsx17(StatusIconSvg, { status: job.status }),
-                /* @__PURE__ */ jsx17("span", { children: "Cancel" })
+                /* @__PURE__ */ jsx18(StatusIconSvg, { status: job.status }),
+                /* @__PURE__ */ jsx18("span", { children: "Cancel" })
               ]
             }
-          ) : /* @__PURE__ */ jsx17(
+          ) : /* @__PURE__ */ jsx18(
             "span",
             {
               className: `job-status-icon-btn${job.status === "running" ? " pulse" : ""}`,
               style: { color: statusColorMap[job.status] },
               title: `Job status: ${STATUS_LABELS[job.status]}`,
               "aria-label": `Job status: ${STATUS_LABELS[job.status]}`,
-              children: /* @__PURE__ */ jsx17(StatusIconSvg, { status: job.status })
+              children: /* @__PURE__ */ jsx18(StatusIconSvg, { status: job.status })
             }
           ),
-          replayedFromCache && /* @__PURE__ */ jsx17(
+          replayedFromCache && /* @__PURE__ */ jsx18(
             "span",
             {
               className: "header-action-btn replayed-cache",
@@ -7973,7 +8255,7 @@ function SessionHeader({ job, isPinned: isPinned2 = false, onTogglePin, showPin 
               children: "\u16D7 Cached"
             }
           ),
-          /* @__PURE__ */ jsx17(CopySessionIdButton, { sessionId: job.sessionId }),
+          /* @__PURE__ */ jsx18(CopySessionIdButton, { sessionId: job.sessionId }),
           showPin && onTogglePin && (confirmingUnpin ? /* @__PURE__ */ jsxs18(
             "button",
             {
@@ -7986,8 +8268,8 @@ function SessionHeader({ job, isPinned: isPinned2 = false, onTogglePin, showPin 
               title: "Confirm: remove from Odin\\u2019s memory",
               "aria-label": "Confirm unpin",
               children: [
-                /* @__PURE__ */ jsx17("span", { children: "\u2715" }),
-                /* @__PURE__ */ jsx17("span", { children: "Unpin" })
+                /* @__PURE__ */ jsx18("span", { children: "\u2715" }),
+                /* @__PURE__ */ jsx18("span", { children: "Unpin" })
               ]
             }
           ) : /* @__PURE__ */ jsxs18(
@@ -8005,12 +8287,12 @@ function SessionHeader({ job, isPinned: isPinned2 = false, onTogglePin, showPin 
               "aria-label": isPinned2 ? "Unpin from Odin\u2019s memory" : "Pin to Odin\u2019s memory",
               "aria-pressed": isPinned2,
               children: [
-                /* @__PURE__ */ jsx17(PinIcon, { filled: isPinned2 }),
-                /* @__PURE__ */ jsx17("span", { children: isPinned2 ? "Pinned" : "Pin" })
+                /* @__PURE__ */ jsx18(PinIcon, { filled: isPinned2 }),
+                /* @__PURE__ */ jsx18("span", { children: isPinned2 ? "Pinned" : "Pin" })
               ]
             }
           )),
-          job.status === "succeeded" && /* @__PURE__ */ jsx17(DownloadSessionButton, { sessionId: job.sessionId })
+          job.status === "succeeded" && /* @__PURE__ */ jsx18(DownloadSessionButton, { sessionId: job.sessionId })
         ] })
       ]
     }
@@ -8018,9 +8300,9 @@ function SessionHeader({ job, isPinned: isPinned2 = false, onTogglePin, showPin 
 }
 function LogViewer({ entries, activeJob, isFixture, isTtlExpired, isNodeUnreachable, streamError, onSetSpeed, isPinned: isPinned2, onTogglePin, onAvatarClick, replayedFromCache, isConnecting, isPodStarting, onCancelJob }) {
   const termRef = useRef9(null);
-  const [fixtureSpeed, setFixtureSpeed] = useState17(1);
-  const [fixturePaused, setFixturePaused] = useState17(false);
-  const [autoScroll, setAutoScroll] = useState17(true);
+  const [fixtureSpeed, setFixtureSpeed] = useState18(1);
+  const [fixturePaused, setFixturePaused] = useState18(false);
+  const [autoScroll, setAutoScroll] = useState18(true);
   const programmaticScrollRef = useRef9(false);
   const lastEntryId = entries[entries.length - 1]?.id;
   useEffect11(() => {
@@ -8077,14 +8359,14 @@ function LogViewer({ entries, activeJob, isFixture, isTtlExpired, isNodeUnreacha
   }, [entries]);
   const displayEntries = useMemo3(() => groupConsecutiveEntries(entries), [entries]);
   if (!activeJob) {
-    return /* @__PURE__ */ jsx17("main", { className: "content", "aria-label": "Log viewer", children: /* @__PURE__ */ jsxs18("div", { className: "empty-state", "aria-label": "No session selected", children: [
-      /* @__PURE__ */ jsx17("div", { className: "empty-title", children: "All Nine Worlds await" }),
-      /* @__PURE__ */ jsx17("div", { className: "empty-sub", children: "Select an agent session to stream its logs" })
+    return /* @__PURE__ */ jsx18("main", { className: "content", "aria-label": "Log viewer", children: /* @__PURE__ */ jsxs18("div", { className: "empty-state", "aria-label": "No session selected", children: [
+      /* @__PURE__ */ jsx18("div", { className: "empty-title", children: "All Nine Worlds await" }),
+      /* @__PURE__ */ jsx18("div", { className: "empty-sub", children: "Select an agent session to stream its logs" })
     ] }) });
   }
   if (isTtlExpired && streamError && !replayedFromCache && !isConnecting) {
     return /* @__PURE__ */ jsxs18("main", { className: "content", "aria-label": "Log viewer", children: [
-      /* @__PURE__ */ jsx17(
+      /* @__PURE__ */ jsx18(
         SessionHeader,
         {
           job: activeJob,
@@ -8093,12 +8375,12 @@ function LogViewer({ entries, activeJob, isFixture, isTtlExpired, isNodeUnreacha
           onCancelJob
         }
       ),
-      /* @__PURE__ */ jsx17(NorseErrorTablet, { sessionId: activeJob.sessionId, message: streamError })
+      /* @__PURE__ */ jsx18(NorseErrorTablet, { sessionId: activeJob.sessionId, message: streamError })
     ] });
   }
   if (isNodeUnreachable && streamError && !replayedFromCache && !isConnecting) {
     return /* @__PURE__ */ jsxs18("main", { className: "content", "aria-label": "Log viewer", children: [
-      /* @__PURE__ */ jsx17(
+      /* @__PURE__ */ jsx18(
         SessionHeader,
         {
           job: activeJob,
@@ -8108,11 +8390,11 @@ function LogViewer({ entries, activeJob, isFixture, isTtlExpired, isNodeUnreacha
           onCancelJob
         }
       ),
-      /* @__PURE__ */ jsx17(NorseErrorTablet, { sessionId: activeJob.sessionId, message: streamError, variant: "node-unreachable" })
+      /* @__PURE__ */ jsx18(NorseErrorTablet, { sessionId: activeJob.sessionId, message: streamError, variant: "node-unreachable" })
     ] });
   }
   return /* @__PURE__ */ jsxs18("main", { className: "content", "aria-label": "Log viewer", style: { position: "relative" }, children: [
-    /* @__PURE__ */ jsx17(
+    /* @__PURE__ */ jsx18(
       SessionHeader,
       {
         job: activeJob,
@@ -8139,17 +8421,17 @@ function LogViewer({ entries, activeJob, isFixture, isTtlExpired, isNodeUnreacha
               "aria-label": isPodStarting ? "Agent is starting up" : "Connecting to session",
               "aria-live": "polite",
               children: [
-                /* @__PURE__ */ jsx17("span", { className: isPodStarting ? "pod-starting-rune" : "connecting-spinner", "aria-hidden": "true", children: isPodStarting ? "\u16C8" : "" }),
-                /* @__PURE__ */ jsx17("span", { children: isPodStarting ? "\u23F3 Agent is starting up \u2014 logs will appear shortly\u2026" : "Awaiting the Norns\u2026" })
+                /* @__PURE__ */ jsx18("span", { className: isPodStarting ? "pod-starting-rune" : "connecting-spinner", "aria-hidden": "true", children: isPodStarting ? "\u16C8" : "" }),
+                /* @__PURE__ */ jsx18("span", { children: isPodStarting ? "\u23F3 Agent is starting up \u2014 logs will appear shortly\u2026" : "Awaiting the Norns\u2026" })
               ]
             }
           ),
           displayEntries.map((item) => {
             if ("_startup" in item) {
-              return /* @__PURE__ */ jsx17(StartupBlock, { group: item }, item.key);
+              return /* @__PURE__ */ jsx18(StartupBlock, { group: item }, item.key);
             }
             if ("_collapsed" in item) {
-              return /* @__PURE__ */ jsx17(
+              return /* @__PURE__ */ jsx18(
                 LogLine,
                 {
                   entry: item.representative,
@@ -8164,7 +8446,7 @@ function LogViewer({ entries, activeJob, isFixture, isTtlExpired, isNodeUnreacha
                 item.representative.id
               );
             }
-            return /* @__PURE__ */ jsx17(
+            return /* @__PURE__ */ jsx18(
               LogLine,
               {
                 entry: item,
@@ -8183,7 +8465,7 @@ function LogViewer({ entries, activeJob, isFixture, isTtlExpired, isNodeUnreacha
     ),
     /* @__PURE__ */ jsxs18("div", { className: "log-controls", children: [
       isFixture && /* @__PURE__ */ jsxs18("div", { className: "speed-controls", children: [
-        /* @__PURE__ */ jsx17(
+        /* @__PURE__ */ jsx18(
           "button",
           {
             className: `speed-btn ${fixturePaused ? "active" : ""}`,
@@ -8214,7 +8496,7 @@ function LogViewer({ entries, activeJob, isFixture, isTtlExpired, isNodeUnreacha
           s
         ))
       ] }),
-      /* @__PURE__ */ jsx17(
+      /* @__PURE__ */ jsx18(
         "button",
         {
           className: `autoscroll-fab ${autoScroll ? "active" : ""}`,
@@ -8231,7 +8513,7 @@ function LogLine({ entry, agentKey, agentName, isLastAssistantText, autoScroll, 
   switch (entry.type) {
     case "system":
       return /* @__PURE__ */ jsxs18("div", { className: "ev-system", children: [
-        /* @__PURE__ */ jsx17("span", { className: "ev-label", children: "system" }),
+        /* @__PURE__ */ jsx18("span", { className: "ev-label", children: "system" }),
         collapseCount != null && collapseCount > 1 && /* @__PURE__ */ jsxs18("span", { className: "ev-collapse-count", title: `${collapseCount} consecutive identical entries collapsed`, children: [
           "\xD7",
           collapseCount
@@ -8243,12 +8525,12 @@ function LogLine({ entry, agentKey, agentName, isLastAssistantText, autoScroll, 
       return null;
     // legacy, unused
     case "tool-batch":
-      return /* @__PURE__ */ jsx17(ToolBatchGroup, { entry, ...autoScroll !== void 0 ? { autoScroll } : {}, ...isLatestBatch !== void 0 ? { isLatestBatch } : {} });
+      return /* @__PURE__ */ jsx18(ToolBatchGroup, { entry, ...autoScroll !== void 0 ? { autoScroll } : {}, ...isLatestBatch !== void 0 ? { isLatestBatch } : {} });
     case "assistant-text":
       if (entry.detail === "thinking") {
-        return /* @__PURE__ */ jsx17("div", { className: "ev-thinking", children: entry.text });
+        return /* @__PURE__ */ jsx18("div", { className: "ev-thinking", children: entry.text });
       }
-      return /* @__PURE__ */ jsx17(
+      return /* @__PURE__ */ jsx18(
         AgentBubble,
         {
           text: entry.text ?? "",
@@ -8259,14 +8541,14 @@ function LogLine({ entry, agentKey, agentName, isLastAssistantText, autoScroll, 
         }
       );
     case "tool-use":
-      return /* @__PURE__ */ jsx17(ToolBlock, { entry, ...collapseCount != null && collapseCount > 1 ? { collapseCount } : {} });
+      return /* @__PURE__ */ jsx18(ToolBlock, { entry, ...collapseCount != null && collapseCount > 1 ? { collapseCount } : {} });
     case "entrypoint-group":
-      return /* @__PURE__ */ jsx17(EntrypointGroup, { entry });
+      return /* @__PURE__ */ jsx18(EntrypointGroup, { entry });
     case "entrypoint-header":
-      return /* @__PURE__ */ jsx17("div", { className: "ep-header", children: entry.text });
+      return /* @__PURE__ */ jsx18("div", { className: "ep-header", children: entry.text });
     case "entrypoint-ok":
       return /* @__PURE__ */ jsxs18("div", { className: "ep-ok", children: [
-        /* @__PURE__ */ jsx17("span", { className: "ep-ok-badge", children: "\u2713" }),
+        /* @__PURE__ */ jsx18("span", { className: "ep-ok-badge", children: "\u2713" }),
         " ",
         entry.text
       ] });
@@ -8281,12 +8563,12 @@ function LogLine({ entry, agentKey, agentName, isLastAssistantText, autoScroll, 
       ] });
     case "entrypoint-fatal":
       return /* @__PURE__ */ jsxs18("div", { className: "ep-fatal", role: "alert", children: [
-        /* @__PURE__ */ jsx17("span", { className: "ep-fatal-badge", children: "\u2717" }),
+        /* @__PURE__ */ jsx18("span", { className: "ep-fatal-badge", children: "\u2717" }),
         " ",
         entry.text
       ] });
     case "entrypoint-task":
-      return /* @__PURE__ */ jsx17(NorseTablet, { text: entry.text ?? "", ...autoScroll !== void 0 ? { autoScroll } : {} });
+      return /* @__PURE__ */ jsx18(NorseTablet, { text: entry.text ?? "", ...autoScroll !== void 0 ? { autoScroll } : {} });
     case "warning":
       return /* @__PURE__ */ jsxs18("span", { className: "log-warning", children: [
         "\u26A0",
@@ -8295,8 +8577,8 @@ function LogLine({ entry, agentKey, agentName, isLastAssistantText, autoScroll, 
       ] });
     case "error":
       return /* @__PURE__ */ jsxs18("div", { className: "log-error-box", role: "alert", "aria-label": "Log stream error", children: [
-        /* @__PURE__ */ jsx17("span", { className: "log-error-icon", children: "\u26A0" }),
-        /* @__PURE__ */ jsx17("span", { className: "log-error-text", children: entry.message })
+        /* @__PURE__ */ jsx18("span", { className: "log-error-icon", children: "\u26A0" }),
+        /* @__PURE__ */ jsx18("span", { className: "log-error-text", children: entry.message })
       ] });
     case "stream-end":
       return /* @__PURE__ */ jsxs18("div", { className: "log-end", children: [
@@ -8313,7 +8595,7 @@ function LogLine({ entry, agentKey, agentName, isLastAssistantText, autoScroll, 
       ] });
     }
     case "raw":
-      return /* @__PURE__ */ jsx17("div", { className: "log-line", style: { color: "var(--text-void)" }, children: entry.text });
+      return /* @__PURE__ */ jsx18("div", { className: "log-line", style: { color: "var(--text-void)" }, children: entry.text });
     default:
       return null;
   }
@@ -8334,7 +8616,7 @@ function AgentBubble({
 }) {
   if (isTemplateBoilerplate(text)) return null;
   if (isDecreeBlock(text)) {
-    return /* @__PURE__ */ jsx17(
+    return /* @__PURE__ */ jsx18(
       DecreeBlock,
       {
         text,
@@ -8345,7 +8627,7 @@ function AgentBubble({
     );
   }
   if (isLastAssistantText && isVerdictMessage(text)) {
-    return /* @__PURE__ */ jsx17(
+    return /* @__PURE__ */ jsx18(
       NorseVerdictInscription,
       {
         text,
@@ -8362,26 +8644,26 @@ function AgentBubble({
   const color = AGENT_COLORS[agentKey ?? ""] ?? "var(--gold)";
   return /* @__PURE__ */ jsxs18("div", { className: "agent-bubble", style: { "--agent-accent": color, borderLeftColor: color }, children: [
     /* @__PURE__ */ jsxs18("div", { className: "agent-bubble-header", children: [
-      avatar && /* @__PURE__ */ jsx17(
+      avatar && /* @__PURE__ */ jsx18(
         "button",
         {
           className: "agent-bubble-avatar-btn",
           onClick: () => onAvatarClick?.(agentKey ?? ""),
           "aria-label": `View ${name} profile`,
           title: `View ${name} profile`,
-          children: /* @__PURE__ */ jsx17("img", { className: "agent-bubble-avatar", src: avatar, alt: name, style: { borderColor: color } })
+          children: /* @__PURE__ */ jsx18("img", { className: "agent-bubble-avatar", src: avatar, alt: name, style: { borderColor: color } })
         }
       ),
       /* @__PURE__ */ jsxs18("div", { className: "agent-bubble-identity", children: [
-        /* @__PURE__ */ jsx17("span", { className: "agent-bubble-name", style: { color }, children: name }),
-        title && /* @__PURE__ */ jsx17("span", { className: "agent-bubble-title", children: title })
+        /* @__PURE__ */ jsx18("span", { className: "agent-bubble-name", style: { color }, children: name }),
+        title && /* @__PURE__ */ jsx18("span", { className: "agent-bubble-title", children: title })
       ] })
     ] }),
-    /* @__PURE__ */ jsx17("div", { className: "agent-bubble-text", children: text })
+    /* @__PURE__ */ jsx18("div", { className: "agent-bubble-text", children: text })
   ] });
 }
 function ToolBatchGroup({ entry, autoScroll, isLatestBatch }) {
-  const [open2, setOpen] = useState17(() => !autoScroll || !!isLatestBatch);
+  const [open2, setOpen] = useState18(() => !autoScroll || !!isLatestBatch);
   const hasError = entry.children?.some((c) => c.toolIsError) ?? false;
   const prevCompleteRef = useRef9(entry.complete);
   const prevIsLatestRef = useRef9(isLatestBatch);
@@ -8408,12 +8690,12 @@ function ToolBatchGroup({ entry, autoScroll, isLatestBatch }) {
   }, [autoScroll, isLatestBatch]);
   return /* @__PURE__ */ jsxs18("div", { className: `ev-tool-batch ${open2 ? "open" : ""}${hasError ? " batch-error" : ""}${entry.complete ? " complete" : ""}`, children: [
     /* @__PURE__ */ jsxs18("div", { className: "ev-tool-batch-header", onClick: () => setOpen(!open2), children: [
-      /* @__PURE__ */ jsx17("span", { className: "ev-tool-batch-chevron", children: "\u203A" }),
-      /* @__PURE__ */ jsx17("span", { className: "ev-tool-batch-label", children: entry.text }),
-      !entry.complete && /* @__PURE__ */ jsx17("span", { className: "ev-tool-batch-spinner" }),
-      entry.complete && /* @__PURE__ */ jsx17("span", { className: "ev-tool-batch-done", children: "\u2713" })
+      /* @__PURE__ */ jsx18("span", { className: "ev-tool-batch-chevron", children: "\u203A" }),
+      /* @__PURE__ */ jsx18("span", { className: "ev-tool-batch-label", children: entry.text }),
+      !entry.complete && /* @__PURE__ */ jsx18("span", { className: "ev-tool-batch-spinner" }),
+      entry.complete && /* @__PURE__ */ jsx18("span", { className: "ev-tool-batch-done", children: "\u2713" })
     ] }),
-    /* @__PURE__ */ jsx17("div", { className: "ev-tool-batch-body-wrap", children: /* @__PURE__ */ jsx17("div", { className: "ev-tool-batch-body", children: entry.children?.map((child) => /* @__PURE__ */ jsx17(LogLine, { entry: child }, child.id)) }) })
+    /* @__PURE__ */ jsx18("div", { className: "ev-tool-batch-body-wrap", children: /* @__PURE__ */ jsx18("div", { className: "ev-tool-batch-body", children: entry.children?.map((child) => /* @__PURE__ */ jsx18(LogLine, { entry: child }, child.id)) }) })
   ] });
 }
 function parseDecreeSections(text) {
@@ -8473,7 +8755,7 @@ function applyWikiLinksToNodes(nodes) {
       for (const part of parts) {
         if (part === term) {
           next.push(
-            /* @__PURE__ */ jsx17(
+            /* @__PURE__ */ jsx18(
               "a",
               {
                 className: "decree-body-link",
@@ -8501,7 +8783,7 @@ function processInline(text) {
   for (let i = 0; i < btParts.length; i++) {
     const part = btParts[i] ?? "";
     if (i % 2 === 1) {
-      nodes.push(/* @__PURE__ */ jsx17("code", { className: "decree-body-code", children: part }, `bc-${i}`));
+      nodes.push(/* @__PURE__ */ jsx18("code", { className: "decree-body-code", children: part }, `bc-${i}`));
     } else if (part) {
       nodes.push(part);
     }
@@ -8524,9 +8806,9 @@ function DecreeSectionBody({ body }) {
   const flushList = () => {
     if (listBuffer.length === 0) return;
     elements.push(
-      /* @__PURE__ */ jsx17("ul", { children: listBuffer.map((item, i) => {
+      /* @__PURE__ */ jsx18("ul", { children: listBuffer.map((item, i) => {
         const content = item.trimStart().replace(/^[-*]\s+/, "");
-        return /* @__PURE__ */ jsx17("li", { children: processInline(content) }, i);
+        return /* @__PURE__ */ jsx18("li", { children: processInline(content) }, i);
       }) }, `ul-${keyIdx++}`)
     );
     listBuffer.length = 0;
@@ -8534,14 +8816,14 @@ function DecreeSectionBody({ body }) {
   const flushCode = () => {
     if (codeBuffer.length === 0) return;
     elements.push(
-      /* @__PURE__ */ jsx17("code", { className: "decree-body-block", children: codeBuffer.join("\n") }, `blk-${keyIdx++}`)
+      /* @__PURE__ */ jsx18("code", { className: "decree-body-block", children: codeBuffer.join("\n") }, `blk-${keyIdx++}`)
     );
     codeBuffer.length = 0;
   };
   const flushFence = () => {
     if (fenceBuffer.length === 0 && !inFence) return;
     elements.push(
-      /* @__PURE__ */ jsx17("pre", { className: "decree-body-fence", children: /* @__PURE__ */ jsx17("code", { className: fenceLang ? `language-${fenceLang}` : void 0, children: fenceBuffer.join("\n") }) }, `fence-${keyIdx++}`)
+      /* @__PURE__ */ jsx18("pre", { className: "decree-body-fence", children: /* @__PURE__ */ jsx18("code", { className: fenceLang ? `language-${fenceLang}` : void 0, children: fenceBuffer.join("\n") }) }, `fence-${keyIdx++}`)
     );
     fenceBuffer.length = 0;
     inFence = false;
@@ -8576,19 +8858,19 @@ function DecreeSectionBody({ body }) {
       if (!trimmed) continue;
       if (isHeadingLine(line)) {
         const content = trimmed.replace(/^##\s+/, "").replace(/^\*\*/, "").replace(/\*\*$/, "");
-        elements.push(/* @__PURE__ */ jsx17("strong", { children: processInline(content) }, `h-${keyIdx++}`));
+        elements.push(/* @__PURE__ */ jsx18("strong", { children: processInline(content) }, `h-${keyIdx++}`));
       } else {
-        elements.push(/* @__PURE__ */ jsx17("p", { children: processInline(trimmed) }, `p-${keyIdx++}`));
+        elements.push(/* @__PURE__ */ jsx18("p", { children: processInline(trimmed) }, `p-${keyIdx++}`));
       }
     }
   }
   flushCode();
   flushList();
   if (inFence) flushFence();
-  return /* @__PURE__ */ jsx17(Fragment6, { children: elements });
+  return /* @__PURE__ */ jsx18(Fragment6, { children: elements });
 }
 function DecreeSection({ glyph, title, body, defaultOpen, wide }) {
-  const [open2, setOpen] = useState17(defaultOpen);
+  const [open2, setOpen] = useState18(defaultOpen);
   return /* @__PURE__ */ jsxs18("div", { className: `decree-section ${open2 ? "open" : ""}${wide ? " decree-wide" : ""}`, children: [
     /* @__PURE__ */ jsxs18(
       "div",
@@ -8605,18 +8887,18 @@ function DecreeSection({ glyph, title, body, defaultOpen, wide }) {
           }
         },
         children: [
-          /* @__PURE__ */ jsx17("span", { className: "decree-section-glyph", "aria-hidden": "true", children: glyph }),
-          /* @__PURE__ */ jsx17("span", { className: "decree-section-title", children: title }),
-          /* @__PURE__ */ jsx17("span", { className: "ep-group-chevron", style: { marginLeft: "auto" }, children: "\u203A" })
+          /* @__PURE__ */ jsx18("span", { className: "decree-section-glyph", "aria-hidden": "true", children: glyph }),
+          /* @__PURE__ */ jsx18("span", { className: "decree-section-title", children: title }),
+          /* @__PURE__ */ jsx18("span", { className: "ep-group-chevron", style: { marginLeft: "auto" }, children: "\u203A" })
         ]
       }
     ),
-    open2 && /* @__PURE__ */ jsx17("div", { className: "decree-section-body", children: /* @__PURE__ */ jsx17(DecreeSectionBody, { body }) })
+    open2 && /* @__PURE__ */ jsx18("div", { className: "decree-section-body", children: /* @__PURE__ */ jsx18(DecreeSectionBody, { body }) })
   ] });
 }
 function NorseTablet({ text, autoScroll }) {
-  const [open2, setOpen] = useState17(true);
-  const [hasBeenCollapsed, setHasBeenCollapsed] = useState17(false);
+  const [open2, setOpen] = useState18(true);
+  const [hasBeenCollapsed, setHasBeenCollapsed] = useState18(false);
   const agentMatch = /^You are (\w+)/m.exec(text);
   const agent = agentMatch?.[1] ?? "Agent";
   const agentKey = agent.toLowerCase();
@@ -8657,7 +8939,7 @@ function NorseTablet({ text, autoScroll }) {
               }
             },
             children: [
-              /* @__PURE__ */ jsx17("span", { className: "norse-tablet-rune", "aria-hidden": "true", children: firstRune }),
+              /* @__PURE__ */ jsx18("span", { className: "norse-tablet-rune", "aria-hidden": "true", children: firstRune }),
               /* @__PURE__ */ jsxs18("div", { className: "norse-tablet-title-block", children: [
                 /* @__PURE__ */ jsxs18("div", { className: "norse-tablet-title", children: [
                   "THE ALL-FATHER'S DECREE UNTO ",
@@ -8672,13 +8954,13 @@ function NorseTablet({ text, autoScroll }) {
                   ] })
                 ] })
               ] }),
-              /* @__PURE__ */ jsx17("span", { className: "norse-tablet-rune", "aria-hidden": "true", children: firstRune }),
-              /* @__PURE__ */ jsx17("span", { className: "ep-group-chevron", style: { marginLeft: "auto" }, children: "\u203A" })
+              /* @__PURE__ */ jsx18("span", { className: "norse-tablet-rune", "aria-hidden": "true", children: firstRune }),
+              /* @__PURE__ */ jsx18("span", { className: "ep-group-chevron", style: { marginLeft: "auto" }, children: "\u203A" })
             ]
           }
         ),
-        /* @__PURE__ */ jsx17("div", { className: "norse-tablet-body-wrap", children: /* @__PURE__ */ jsxs18("div", { className: "norse-tablet-body", children: [
-          /* @__PURE__ */ jsx17("div", { className: "decree-grid", children: sections.map((sec, i) => /* @__PURE__ */ jsx17(
+        /* @__PURE__ */ jsx18("div", { className: "norse-tablet-body-wrap", children: /* @__PURE__ */ jsxs18("div", { className: "norse-tablet-body", children: [
+          /* @__PURE__ */ jsx18("div", { className: "decree-grid", children: sections.map((sec, i) => /* @__PURE__ */ jsx18(
             DecreeSection,
             {
               glyph: sec.glyph,
@@ -8690,13 +8972,13 @@ function NorseTablet({ text, autoScroll }) {
             i
           )) }),
           /* @__PURE__ */ jsxs18("div", { className: "decree-seal", role: "complementary", "aria-label": "Odin's royal seal", children: [
-            /* @__PURE__ */ jsx17("div", { className: "decree-seal-runic-band", "aria-hidden": "true", children: "\u16DF \u16DE \u16C1 \u16BE \xB7 \u16A8 \u16DA \u16DA \u16A0 \u16A8 \u16A6 \u16D6 \u16B1 \xB7 \u16A2 \u16CF \u16B7 \u16A8 \u16B1 \u16DE" }),
-            /* @__PURE__ */ jsx17("div", { className: "decree-seal-medallion", role: "img", "aria-label": "Odin's rune \u2014 Othalan", children: "\u16DF" }),
-            /* @__PURE__ */ jsx17("div", { className: "decree-seal-divider", "aria-hidden": "true", children: "\u2014 \u16A8 \u2014" }),
+            /* @__PURE__ */ jsx18("div", { className: "decree-seal-runic-band", "aria-hidden": "true", children: "\u16DF \u16DE \u16C1 \u16BE \xB7 \u16A8 \u16DA \u16DA \u16A0 \u16A8 \u16A6 \u16D6 \u16B1 \xB7 \u16A2 \u16CF \u16B7 \u16A8 \u16B1 \u16DE" }),
+            /* @__PURE__ */ jsx18("div", { className: "decree-seal-medallion", role: "img", "aria-label": "Odin's rune \u2014 Othalan", children: "\u16DF" }),
+            /* @__PURE__ */ jsx18("div", { className: "decree-seal-divider", "aria-hidden": "true", children: "\u2014 \u16A8 \u2014" }),
             /* @__PURE__ */ jsxs18("div", { className: "decree-seal-command", children: [
               "\u201CBy mine eye that sees all",
               " ",
-              /* @__PURE__ */ jsx17(
+              /* @__PURE__ */ jsx18(
                 "a",
                 {
                   className: "wiki-link decree-body-link",
@@ -8711,7 +8993,7 @@ function NorseTablet({ text, autoScroll }) {
               " ",
               "\u2014 I command thee to this task. Fail not.",
               " ",
-              /* @__PURE__ */ jsx17(
+              /* @__PURE__ */ jsx18(
                 "a",
                 {
                   className: "wiki-link decree-body-link",
@@ -8726,8 +9008,8 @@ function NorseTablet({ text, autoScroll }) {
               " ",
               "hungers.\u201D"
             ] }),
-            /* @__PURE__ */ jsx17("div", { className: "decree-seal-attribution", children: "Odin \xB7 All-Father" }),
-            /* @__PURE__ */ jsx17("div", { className: "decree-seal-title-runes", "aria-hidden": "true", children: "\u16DF\u16DE\u16C1\u16BE \u16A8\u16DA\u16DA\u16A0\u16A8\u16A6\u16D6\u16B1" })
+            /* @__PURE__ */ jsx18("div", { className: "decree-seal-attribution", children: "Odin \xB7 All-Father" }),
+            /* @__PURE__ */ jsx18("div", { className: "decree-seal-title-runes", "aria-hidden": "true", children: "\u16DF\u16DE\u16C1\u16BE \u16A8\u16DA\u16DA\u16A0\u16A8\u16A6\u16D6\u16B1" })
           ] })
         ] }) })
       ]
@@ -8735,32 +9017,32 @@ function NorseTablet({ text, autoScroll }) {
   );
 }
 function PinIcon({ filled }) {
-  return /* @__PURE__ */ jsx17("svg", { width: "16", height: "16", viewBox: "0 0 16 16", fill: "none", "aria-hidden": "true", children: filled ? (
+  return /* @__PURE__ */ jsx18("svg", { width: "16", height: "16", viewBox: "0 0 16 16", fill: "none", "aria-hidden": "true", children: filled ? (
     // Filled tack (pinned state — gold)
     /* @__PURE__ */ jsxs18(Fragment6, { children: [
-      /* @__PURE__ */ jsx17("path", { d: "M10 2L14 6L10.5 9.5L8.5 14L7 12.5L9 8.5L5.5 5L2 3.5L6.5 1.5L10 2Z", fill: "currentColor" }),
-      /* @__PURE__ */ jsx17("line", { x1: "5", y1: "11", x2: "2", y2: "14", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round" })
+      /* @__PURE__ */ jsx18("path", { d: "M10 2L14 6L10.5 9.5L8.5 14L7 12.5L9 8.5L5.5 5L2 3.5L6.5 1.5L10 2Z", fill: "currentColor" }),
+      /* @__PURE__ */ jsx18("line", { x1: "5", y1: "11", x2: "2", y2: "14", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round" })
     ] })
   ) : (
     // Hollow tack (unpinned state — dim)
     /* @__PURE__ */ jsxs18(Fragment6, { children: [
-      /* @__PURE__ */ jsx17("path", { d: "M10 2L14 6L10.5 9.5L8.5 14L7 12.5L9 8.5L5.5 5L2 3.5L6.5 1.5L10 2Z", stroke: "currentColor", strokeWidth: "1.5", strokeLinejoin: "round" }),
-      /* @__PURE__ */ jsx17("line", { x1: "5", y1: "11", x2: "2", y2: "14", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round" })
+      /* @__PURE__ */ jsx18("path", { d: "M10 2L14 6L10.5 9.5L8.5 14L7 12.5L9 8.5L5.5 5L2 3.5L6.5 1.5L10 2Z", stroke: "currentColor", strokeWidth: "1.5", strokeLinejoin: "round" }),
+      /* @__PURE__ */ jsx18("line", { x1: "5", y1: "11", x2: "2", y2: "14", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round" })
     ] })
   ) });
 }
 function ClipboardIcon() {
   return /* @__PURE__ */ jsxs18("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "none", "aria-hidden": "true", children: [
-    /* @__PURE__ */ jsx17("rect", { x: "4", y: "3", width: "7", height: "9", rx: "1", stroke: "currentColor", strokeWidth: "1.5" }),
-    /* @__PURE__ */ jsx17("path", { d: "M4 4H3a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-1", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round" }),
-    /* @__PURE__ */ jsx17("path", { d: "M6 3V2h3v1", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" })
+    /* @__PURE__ */ jsx18("rect", { x: "4", y: "3", width: "7", height: "9", rx: "1", stroke: "currentColor", strokeWidth: "1.5" }),
+    /* @__PURE__ */ jsx18("path", { d: "M4 4H3a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-1", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round" }),
+    /* @__PURE__ */ jsx18("path", { d: "M6 3V2h3v1", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" })
   ] });
 }
 function CheckIcon() {
-  return /* @__PURE__ */ jsx17("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "none", "aria-hidden": "true", children: /* @__PURE__ */ jsx17("path", { d: "M2 7l4 4 6-6", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" }) });
+  return /* @__PURE__ */ jsx18("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "none", "aria-hidden": "true", children: /* @__PURE__ */ jsx18("path", { d: "M2 7l4 4 6-6", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" }) });
 }
 function CopySessionIdButton({ sessionId }) {
-  const [copied, setCopied] = useState17(false);
+  const [copied, setCopied] = useState18(false);
   async function handleCopy() {
     try {
       await navigator.clipboard.writeText(sessionId);
@@ -8779,32 +9061,32 @@ function CopySessionIdButton({ sessionId }) {
       title: copied ? "Copied!" : "Copy session ID",
       "aria-label": copied ? "Session ID copied" : "Copy session ID",
       children: [
-        copied ? /* @__PURE__ */ jsx17(CheckIcon, {}) : /* @__PURE__ */ jsx17(ClipboardIcon, {}),
-        /* @__PURE__ */ jsx17("span", { children: copied ? "Copied" : "Copy" })
+        copied ? /* @__PURE__ */ jsx18(CheckIcon, {}) : /* @__PURE__ */ jsx18(ClipboardIcon, {}),
+        /* @__PURE__ */ jsx18("span", { children: copied ? "Copied" : "Copy" })
       ]
     }
   );
 }
 function DownloadIcon() {
   return /* @__PURE__ */ jsxs18("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "none", "aria-hidden": "true", children: [
-    /* @__PURE__ */ jsx17("path", { d: "M7 2v7M4 6l3 3 3-3", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" }),
-    /* @__PURE__ */ jsx17("path", { d: "M2 11h10", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round" })
+    /* @__PURE__ */ jsx18("path", { d: "M7 2v7M4 6l3 3 3-3", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" }),
+    /* @__PURE__ */ jsx18("path", { d: "M2 11h10", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round" })
   ] });
 }
 function DownloadSessionButton({ sessionId }) {
-  return /* @__PURE__ */ jsx17(
+  return /* @__PURE__ */ jsx18(
     "button",
     {
       className: "copy-session-btn",
       onClick: () => void downloadLogFile(sessionId),
       title: "Download session log",
       "aria-label": "Download session log",
-      children: /* @__PURE__ */ jsx17(DownloadIcon, {})
+      children: /* @__PURE__ */ jsx18(DownloadIcon, {})
     }
   );
 }
 function StartupBlock({ group }) {
-  const [open2, setOpen] = useState17(false);
+  const [open2, setOpen] = useState18(false);
   const modelEntry = group.metaEntries.find((e) => /^Model:\s*/.test(e.text ?? ""));
   const sessionEntry = group.metaEntries.find((e) => /^Session:\s*/.test(e.text ?? ""));
   const model = modelEntry?.text?.replace(/^Model:\s*/, "").trim() ?? "";
@@ -8816,24 +9098,24 @@ function StartupBlock({ group }) {
         setOpen((o) => !o);
       }
     }, children: [
-      /* @__PURE__ */ jsx17("span", { className: "ep-group-chevron", children: "\u203A" }),
-      /* @__PURE__ */ jsx17("span", { className: "ep-group-title", children: group.headerEntry.text }),
+      /* @__PURE__ */ jsx18("span", { className: "ep-group-chevron", children: "\u203A" }),
+      /* @__PURE__ */ jsx18("span", { className: "ep-group-title", children: group.headerEntry.text }),
       /* @__PURE__ */ jsxs18("span", { className: "ep-group-meta", children: [
         model && /* @__PURE__ */ jsxs18("span", { className: "ep-group-meta-item", children: [
-          /* @__PURE__ */ jsx17("span", { className: "ep-group-meta-key", children: "Model:" }),
+          /* @__PURE__ */ jsx18("span", { className: "ep-group-meta-key", children: "Model:" }),
           " ",
           model
         ] }),
         session && /* @__PURE__ */ jsxs18("span", { className: "ep-group-meta-item", children: [
-          /* @__PURE__ */ jsx17("span", { className: "ep-group-meta-key", children: "Session:" }),
+          /* @__PURE__ */ jsx18("span", { className: "ep-group-meta-key", children: "Session:" }),
           " ",
           session
         ] })
       ] })
     ] }),
-    /* @__PURE__ */ jsx17("div", { className: "ep-group-body-wrap", children: /* @__PURE__ */ jsx17("div", { className: "ep-group-body", children: /* @__PURE__ */ jsx17("div", { className: "ep-info-card", children: group.metaEntries.map((e) => {
+    /* @__PURE__ */ jsx18("div", { className: "ep-group-body-wrap", children: /* @__PURE__ */ jsx18("div", { className: "ep-group-body", children: /* @__PURE__ */ jsx18("div", { className: "ep-info-card", children: group.metaEntries.map((e) => {
       const kvMatch = /^([^:]+):\s*(.+)$/.exec(e.text ?? "");
-      return /* @__PURE__ */ jsx17("div", { className: "ep-info", children: kvMatch ? /* @__PURE__ */ jsxs18(Fragment6, { children: [
+      return /* @__PURE__ */ jsx18("div", { className: "ep-info", children: kvMatch ? /* @__PURE__ */ jsxs18(Fragment6, { children: [
         /* @__PURE__ */ jsxs18("span", { className: "ep-info-key", children: [
           kvMatch[1],
           ":"
@@ -8845,8 +9127,8 @@ function StartupBlock({ group }) {
   ] });
 }
 function EntrypointGroup({ entry }) {
-  const [open2, setOpen] = useState17(false);
-  const [noiseOpen, setNoiseOpen] = useState17(false);
+  const [open2, setOpen] = useState18(false);
+  const [noiseOpen, setNoiseOpen] = useState18(false);
   const children = entry.children ?? [];
   const infoItems = children.filter((c) => c.type === "entrypoint-info");
   const okItems = children.filter((c) => c.type === "entrypoint-ok");
@@ -8855,9 +9137,9 @@ function EntrypointGroup({ entry }) {
   const hasFatal = fatalItems.length > 0;
   return /* @__PURE__ */ jsxs18("div", { className: `ep-group ${open2 ? "open" : ""}${hasFatal ? " ep-group-error" : ""}`, children: [
     /* @__PURE__ */ jsxs18("div", { className: "ep-group-header", onClick: () => setOpen(!open2), children: [
-      /* @__PURE__ */ jsx17("span", { className: "ep-group-chevron", children: "\u203A" }),
-      /* @__PURE__ */ jsx17("span", { className: "ep-group-title", children: entry.text }),
-      infoItems.length > 0 && /* @__PURE__ */ jsx17("span", { className: "ep-group-meta", children: infoItems.map((i) => /* @__PURE__ */ jsxs18("span", { className: "ep-group-meta-item", children: [
+      /* @__PURE__ */ jsx18("span", { className: "ep-group-chevron", children: "\u203A" }),
+      /* @__PURE__ */ jsx18("span", { className: "ep-group-title", children: entry.text }),
+      infoItems.length > 0 && /* @__PURE__ */ jsx18("span", { className: "ep-group-meta", children: infoItems.map((i) => /* @__PURE__ */ jsxs18("span", { className: "ep-group-meta-item", children: [
         /* @__PURE__ */ jsxs18("span", { className: "ep-group-meta-key", children: [
           i.detail,
           ":"
@@ -8865,10 +9147,10 @@ function EntrypointGroup({ entry }) {
         " ",
         i.text
       ] }, i.id)) }),
-      /* @__PURE__ */ jsx17("span", { className: "ep-group-summary", children: hasFatal ? "\u26A0 setup failed" : `${okItems.length} steps \u2713` })
+      /* @__PURE__ */ jsx18("span", { className: "ep-group-summary", children: hasFatal ? "\u26A0 setup failed" : `${okItems.length} steps \u2713` })
     ] }),
-    /* @__PURE__ */ jsx17("div", { className: "ep-group-body-wrap", children: /* @__PURE__ */ jsxs18("div", { className: "ep-group-body", children: [
-      infoItems.length > 0 && /* @__PURE__ */ jsx17("div", { className: "ep-info-card", children: infoItems.map((i) => /* @__PURE__ */ jsxs18("div", { className: "ep-info", children: [
+    /* @__PURE__ */ jsx18("div", { className: "ep-group-body-wrap", children: /* @__PURE__ */ jsxs18("div", { className: "ep-group-body", children: [
+      infoItems.length > 0 && /* @__PURE__ */ jsx18("div", { className: "ep-info-card", children: infoItems.map((i) => /* @__PURE__ */ jsxs18("div", { className: "ep-info", children: [
         /* @__PURE__ */ jsxs18("span", { className: "ep-info-key", children: [
           i.detail,
           ":"
@@ -8876,31 +9158,31 @@ function EntrypointGroup({ entry }) {
         " ",
         i.text
       ] }, i.id)) }),
-      fatalItems.map((c) => /* @__PURE__ */ jsx17(LogLine, { entry: c }, c.id)),
-      okItems.map((c) => /* @__PURE__ */ jsx17(LogLine, { entry: c }, c.id)),
+      fatalItems.map((c) => /* @__PURE__ */ jsx18(LogLine, { entry: c }, c.id)),
+      okItems.map((c) => /* @__PURE__ */ jsx18(LogLine, { entry: c }, c.id)),
       noiseItems.length > 0 && /* @__PURE__ */ jsxs18("div", { className: `ep-noise-group ${noiseOpen ? "open" : ""}`, children: [
         /* @__PURE__ */ jsxs18("div", { className: "ep-noise-header", onClick: (e) => {
           e.stopPropagation();
           setNoiseOpen((v) => !v);
         }, children: [
-          /* @__PURE__ */ jsx17("span", { className: "ep-group-chevron", children: "\u203A" }),
-          /* @__PURE__ */ jsx17("span", { className: "ep-noise-title", children: "Setup details" }),
+          /* @__PURE__ */ jsx18("span", { className: "ep-group-chevron", children: "\u203A" }),
+          /* @__PURE__ */ jsx18("span", { className: "ep-noise-title", children: "Setup details" }),
           /* @__PURE__ */ jsxs18("span", { className: "ep-group-summary", children: [
             noiseItems.length,
             " lines"
           ] })
         ] }),
-        /* @__PURE__ */ jsx17("div", { className: "ep-group-body-wrap", children: /* @__PURE__ */ jsx17("div", { className: "ep-group-body", children: noiseItems.map((c) => /* @__PURE__ */ jsx17(LogLine, { entry: c }, c.id)) }) })
+        /* @__PURE__ */ jsx18("div", { className: "ep-group-body-wrap", children: /* @__PURE__ */ jsx18("div", { className: "ep-group-body", children: noiseItems.map((c) => /* @__PURE__ */ jsx18(LogLine, { entry: c }, c.id)) }) })
       ] })
     ] }) })
   ] });
 }
 
 // src/page.tsx
-import { jsx as jsx18 } from "react/jsx-runtime";
+import { jsx as jsx19 } from "react/jsx-runtime";
 function LogViewerConnected() {
   const snap = useThrone();
-  return /* @__PURE__ */ jsx18(
+  return /* @__PURE__ */ jsx19(
     LogViewer,
     {
       entries: snap.entries,
@@ -8923,19 +9205,19 @@ function LogViewerConnected() {
 function ThronePage() {
   const snap = useThrone();
   const { theme } = useTheme();
-  return /* @__PURE__ */ jsx18(
+  return /* @__PURE__ */ jsx19(
     "div",
     {
       className: "odins-throne-root",
       "data-theme": theme === "light" ? "light" : void 0,
       style: { width: "100%", height: "100%" },
-      children: snap ? /* @__PURE__ */ jsx18(ErrorBoundary, { children: /* @__PURE__ */ jsx18(LogViewerConnected, {}) }) : /* @__PURE__ */ jsx18("div", { className: "throne-boot", children: "The Allfather is not seated \u2014 open the Odin's Throne pane (right edge) to wake him. \u2318K \u2192 \u201COdin's Throne: Open Hlidskjalf\u201D also works." })
+      children: snap ? /* @__PURE__ */ jsx19(ErrorBoundary, { children: /* @__PURE__ */ jsx19(LogViewerConnected, {}) }) : /* @__PURE__ */ jsx19("div", { className: "throne-boot", children: "The Allfather is not seated \u2014 open the Odin's Throne pane (right edge) to wake him. \u2318K \u2192 \u201COdin's Throne: Open Hlidskjalf\u201D also works." })
     }
   );
 }
 
 // src/entry.tsx
-import { jsx as jsx19 } from "react/jsx-runtime";
+import { jsx as jsx20 } from "react/jsx-runtime";
 var FONTS_HREF = "https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Cinzel+Decorative:wght@400;700;900&family=Source+Serif+4:wght@300;400;600&family=JetBrains+Mono:wght@400;500;600&display=swap";
 var STYLE_ID = "odins-throne-hermes-style";
 var FONT_ID = "odins-throne-hermes-fonts";
@@ -9011,13 +9293,13 @@ var entry_default = {
         dock: { pane: "workspace", pos: "right", enforce: true },
         width: "300px"
       },
-      render: () => /* @__PURE__ */ jsx19(ThronePane, {})
+      render: () => /* @__PURE__ */ jsx20(ThronePane, {})
     });
     ctx2.register({
       id: "page",
       area: ROUTES_AREA,
       data: { path: "/odins-throne" },
-      render: () => /* @__PURE__ */ jsx19(ThronePage, {})
+      render: () => /* @__PURE__ */ jsx20(ThronePage, {})
     });
     ctx2.register({
       id: "nav",

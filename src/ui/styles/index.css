@@ -312,47 +312,25 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .theme-btn { transition: none; }
 }
-/* ── Namespace tree (issue:2) ────────────────────── */
-/* Browseable tree of all namespaces: root node toggles the namespace list,
- * each namespace row shows a one-line task summary + status counts, and a
- * chevron expands a per-status breakdown. */
+/* ── Namespace drilldown tree (issue:4) ──────────── */
+/* Each namespace is a top-level root node; its tasks branch directly beneath
+ * it with drawn connector rails + elbow connectors, so the two levels read
+ * apart at a glance. Nodes carry icons from shanaghy.com with inline emoji
+ * fallbacks (TreeIcon). Scroll-capped so a fully drilled tree can't push the
+ * job cards out of the sidebar. */
 .ns-tree {
   margin-top: 0.5rem;
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.7rem;
   min-width: 0;
+  max-height: 42vh;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
-.ns-tree__root {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  width: 100%;
-  padding: 0.2rem 0.3rem;
-  background: var(--chain);
-  color: var(--text-rune);
-  border: 1px solid var(--rune-border);
-  border-radius: 3px;
-  cursor: pointer;
-  text-align: left;
-  min-width: 0;
-}
-.ns-tree__root:hover,
-.ns-tree__root:focus {
-  border-color: var(--gold);
-  color: var(--text-saga);
-}
-.ns-tree__root-label {
-  color: var(--text-saga);
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-.ns-tree__root-stats {
-  color: var(--text-void);
-  font-size: 0.6rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  min-width: 0;
+.ns-tree__roots {
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 .ns-tree__chevron {
   color: var(--gold);
@@ -366,10 +344,9 @@ body {
   margin: 0.15rem 0 0;
   padding: 0;
 }
+/* Namespace root nodes sit at the top level — no rail above them. */
 .ns-tree__item {
-  border-left: 1px solid var(--rune-border);
-  margin-left: 0.55rem;
-  padding-left: 0.25rem;
+  min-width: 0;
 }
 .ns-tree__row {
   display: flex;
@@ -395,8 +372,9 @@ body {
   flex: 1;
   min-width: 0;
   display: flex;
-  flex-direction: column;
-  gap: 0.05rem;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.35rem;
   padding: 0.2rem 0.3rem;
   background: none;
   border: none;
@@ -406,6 +384,13 @@ body {
   text-align: left;
   font-size: inherit;
   font-family: inherit;
+}
+.ns-tree__labels {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+  min-width: 0;
+  flex: 1;
 }
 .ns-tree__select:hover,
 .ns-tree__select:focus {
@@ -437,28 +422,122 @@ body {
 /* Extended sidebar: summary text gets a bit more room and color. */
 .ns-tree--extended .ns-tree__summary { color: var(--text-rune); }
 
-/* Per-status breakdown children (expanded namespace node) */
-.ns-tree__statuses {
+/* ── Task children: drawn connector lines ───────── */
+/* Each task li draws a vertical rail (::before) and an elbow (::after) so
+ * the two tree levels are unmistakable:
+ *
+ *   ▾ Fenrir Ledger Agents     ← namespace root (no rail)
+ *   │
+ *   ├─ ⚒ s-run-1               ← rail + elbow
+ *   └─ 🐦 s-fail-1              ← last child's rail stops at its elbow
+ */
+.ns-tree__tasks {
   list-style: none;
-  margin: 0.1rem 0 0.2rem;
-  padding: 0 0 0 1.4rem;
+  margin: 0.05rem 0 0.25rem;
+  padding: 0;
 }
-.ns-tree__status {
+.ns-tree__task {
+  position: relative;
+  padding-left: 1.1rem;
+  min-width: 0;
+}
+/* vertical rail — runs the full height of every task but the last */
+.ns-tree__task::before {
+  content: "";
+  position: absolute;
+  left: 0.45rem;
+  top: -0.2rem; /* reach up toward the namespace row */
+  bottom: 0;
+  border-left: 1px solid var(--rune-border);
+}
+/* elbow connector — a short horizontal tee at the task row's centerline */
+.ns-tree__task::after {
+  content: "";
+  position: absolute;
+  left: 0.45rem;
+  top: 50%;
+  width: 0.45rem;
+  border-top: 1px solid var(--rune-border);
+}
+/* last task's rail stops at its own elbow */
+.ns-tree__task:last-child::before {
+  bottom: 50%;
+}
+.ns-tree__task-btn {
   display: flex;
-  justify-content: space-between;
-  gap: 0.5rem;
-  font-size: 0.6rem;
-  color: var(--text-void);
-  padding: 0.05rem 0.3rem;
+  align-items: center;
+  gap: 0.3rem;
+  width: 100%;
+  min-width: 0;
+  padding: 0.12rem 0.3rem;
+  background: none;
+  border: none;
+  border-radius: 3px;
+  color: var(--text-rune);
+  cursor: pointer;
+  text-align: left;
+  font-size: inherit;
+  font-family: inherit;
 }
-.ns-tree__status-name { text-transform: uppercase; letter-spacing: 0.05em; }
-.ns-tree__status-name--running   { color: var(--teal-asgard); }
-.ns-tree__status-name--pending   { color: var(--gold-bright); }
-.ns-tree__status-name--failed    { color: var(--error-text); }
-.ns-tree__status-name--succeeded { color: var(--success-strong); }
-.ns-tree__status-name--cached    { color: var(--kildare-blue-bright); }
-.ns-tree__status-name--purged    { color: var(--text-void); }
-.ns-tree__status-count { color: var(--text-rune); }
+.ns-tree__task-btn:hover,
+.ns-tree__task-btn:focus {
+  background: var(--chain);
+  color: var(--text-saga);
+}
+.ns-tree__task--active > .ns-tree__task-btn {
+  background: var(--chain);
+  color: var(--gold-bright);
+  box-shadow: inset 2px 0 0 var(--gold);
+}
+.ns-tree__task-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.62rem;
+  color: var(--text-saga);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ns-tree__task-status {
+  flex-shrink: 0;
+  font-size: 0.55rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.ns-tree__task-status--running   { color: var(--teal-asgard); }
+.ns-tree__task-status--pending   { color: var(--gold-bright); }
+.ns-tree__task-status--failed    { color: var(--error-text); }
+.ns-tree__task-status--succeeded { color: var(--success-strong); }
+.ns-tree__task-status--cached    { color: var(--kildare-blue-bright); }
+.ns-tree__task-status--purged    { color: var(--text-void); }
+.ns-tree__task--empty {
+  padding: 0.05rem 0.3rem 0.1rem 1.1rem;
+  font-size: 0.58rem;
+  font-style: italic;
+  color: var(--text-void);
+}
+
+/* ── Node icons (shanaghy.com, emoji fallback offline) ── */
+.ns-tree__icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  object-fit: contain;
+  border-radius: 2px;
+}
+.ns-tree__icon--task {
+  width: 12px;
+  height: 12px;
+  opacity: 0.9;
+}
+.ns-tree__icon--fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  line-height: 1;
+}
+.ns-tree__icon--task.ns-tree__icon--fallback { font-size: 0.55rem; }
 
 /* Compact sidebar: collapse to an initials chip + on-demand mini-tree */
 .ns-tree--compact {
@@ -489,20 +568,18 @@ body {
 .ns-tree--compact .ns-tree__list {
   width: 100%;
   margin-top: 0.3rem;
+  max-height: 30vh;
+  overflow-y: auto;
 }
 .ns-tree--compact .ns-tree__item {
-  border-left: none;
-  margin-left: 0;
-  padding-left: 0;
+  min-width: 0;
 }
 .ns-tree--compact .ns-tree__row {
-  width: 100%;
-}
-.ns-tree--compact .ns-tree__select,
-.ns-tree--compact .ns-tree__row > button {
+  display: flex;
   flex-direction: row;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
+  gap: 0.25rem;
   width: 100%;
   padding: 0.15rem 0.25rem;
   background: none;
@@ -514,8 +591,14 @@ body {
   font-size: inherit;
   font-family: inherit;
 }
+.ns-tree--compact .ns-tree__row:hover,
+.ns-tree--compact .ns-tree__row:focus {
+  background: var(--chain);
+  color: var(--text-saga);
+}
+.ns-tree--compact .ns-tree__icon--task { width: 13px; height: 13px; }
 .ns-tree__compact-initials { color: var(--gold); letter-spacing: 0.04em; }
-.ns-tree__compact-count { color: var(--text-void); font-size: 0.55rem; }
+.ns-tree__compact-count { color: var(--text-void); font-size: 0.55rem; margin-left: auto; }
 
 .card-list { flex: 1; overflow-y: auto; padding: 0.5rem; }
 

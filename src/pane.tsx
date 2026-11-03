@@ -43,6 +43,7 @@ function SidebarConnected() {
       namespaces={snap.namespaces}
       onNamespaceChange={snap.setNamespace}
       namespaceSummaries={snap.namespaceSummaries}
+      onSelectTask={snap.onSelectTask}
     />
   );
 }

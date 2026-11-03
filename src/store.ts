@@ -29,6 +29,9 @@ export interface ThroneSnapshot {
   setNamespace: (ns: string) => void;
   // per-namespace task summaries + status stats for the namespace tree (issue:2)
   namespaceSummaries: NamespaceSummaries;
+  // drilldown tree task click — selects a session, switching worlds if the
+  // task lives in another namespace (issue:4)
+  onSelectTask: (nsId: string, sessionId: string) => void;
 
   // log stream (useLogStream)
   entries: LogEntry[];

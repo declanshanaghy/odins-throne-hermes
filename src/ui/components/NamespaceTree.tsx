@@ -1,28 +1,41 @@
-// Namespace tree browser (issue:2) — replaces the flat NamespaceSelector
-// dropdown. A browseable tree of ALL namespaces with per-namespace task
-// summaries and job-status stats:
+// Namespace drilldown tree (issue:4) — restructures the issue:2 tree so each
+// namespace is a TOP-LEVEL root node (no "All namespaces" wrapper) with its
+// tasks branched directly beneath it:
 //
-//   ▾ All namespaces (5 worlds · 42 tasks)
-//       ▸ Fenrir Ledger Agents      12 tasks · 2 running · 1 failed
-//       ▾ SaySo Agents              8 tasks · all succeeded
-//           · 8 succeeded
-//       ▸ ...
+//   ▾ ⚖ Fenrir Ledger Agents      12 tasks · 2 running · 1 failed
+//     │ ┌────────────────────────── drawn connector rails + elbows
+//     ├─ ⚒ s-run-1                 RUNNING
+//     ├─ ⚀ s-pend-1                 PENDING
+//     └─ 🐦 s-fail-1                 FAILED
+//   ▸ ⌛ SaySo Agents               8 tasks · all succeeded
 //
-// Clicking a namespace row selects it (same behavior as the old dropdown:
-// sets the active namespace, which reconnects the live WS feed and filters
-// the job list). The chevron expands status-breakdown children instead.
+// Clicking a namespace row sets the active namespace (same as the old
+// dropdown: reconnects the live WS feed and filters the job cards). Clicking
+// a TASK node selects that session through the same handler the job cards
+// use — including a cross-world click, which first switches the namespace
+// and re-subscribes once the new socket opens.
 //
-// Display modes mirror the sidebar: extended shows full labels and the whole
-// summary, normal ellipsizes, compact collapses to an initials chip that
-// expands a minimal initials-only tree on click.
+// Every node carries an icon from https://www.shanaghy.com/assets/icons/
+// (curated per known namespace, deterministic hash for unknown ones; tasks
+// get a per-status sigil) with an inline emoji fallback when offline.
+//
+// Display modes mirror the sidebar: extended shows full labels + summaries,
+// normal ellipsizes, compact collapses to an initials chip that opens a
+// minimal icon + initials list (task drilldown needs the wider modes).
 
 import { useState } from "react";
+import type { Job } from "../lib/types";
 import type { NamespaceOption } from "../hooks/useNamespace";
+import { summaryLine, type NamespaceSummaries } from "../hooks/useNamespaceSummaries";
+import { parseJob, sortJobs } from "../hooks/useJobs";
+import { resolveSessionTitle } from "../lib/resolveSessionTitle";
 import {
-  JOB_STATUSES,
-  summaryLine,
-  type NamespaceSummaries,
-} from "../hooks/useNamespaceSummaries";
+  namespaceIcon,
+  taskIcon,
+  NAMESPACE_ICON_FALLBACK,
+  taskIconFallback,
+} from "../lib/namespaceIcons";
+import { TreeIcon } from "./TreeIcon";
 import type { DisplayMode } from "./Sidebar";
 
 interface Props {
@@ -30,6 +43,9 @@ interface Props {
   namespaces: NamespaceOption[];
   summaries: NamespaceSummaries;
   onNamespaceChange: (ns: string) => void;
+  /** Drilldown task click — same selection semantics as the job cards. */
+  onSelectTask: (nsId: string, sessionId: string) => void;
+  activeSessionId: string | null;
   displayMode: DisplayMode;
 }
 
@@ -43,18 +59,43 @@ function initialsOf(label: string): string {
     .toUpperCase();
 }
 
-export function NamespaceTree({ namespace, namespaces, summaries, onNamespaceChange, displayMode }: Props) {
+/**
+ * Task children for a namespace node: the summary fetch's raw job list,
+ * parsed to DisplayJobs and ordered like the sidebar cards. Purged jobs are
+ * excluded — their pod is gone, so there is nothing to drill into.
+ */
+function tasksOf(summaryJobs: Job[] | undefined) {
+  if (!summaryJobs) return [];
+  return summaryJobs
+    .filter((job) => job.status !== "purged")
+    .map(parseJob)
+    .sort(sortJobs);
+}
+
+export function NamespaceTree({
+  namespace,
+  namespaces,
+  summaries,
+  onNamespaceChange,
+  onSelectTask,
+  activeSessionId,
+  displayMode,
+}: Props) {
   const isCompact = displayMode === "compact";
-  const [expanded, setExpanded] = useState(!isCompact);
-  const [expandedNs, setExpandedNs] = useState<string | null>(null);
-  // In compact mode the tree starts hidden behind the initials chip.
+  // Drilldown: any number of namespaces can be expanded; the active one
+  // starts pre-drilled.
+  const [expandedNs, setExpandedNs] = useState<Set<string>>(() => new Set([namespace]));
+  // In compact mode the tree hides behind the initials chip.
   const [compactOpen, setCompactOpen] = useState(false);
 
-  const grandTotal = namespaces.reduce(
-    (sum, ns) => sum + (summaries[ns.id]?.total ?? 0),
-    0,
-  );
-  const loadedCount = namespaces.filter((ns) => summaries[ns.id] && !summaries[ns.id].error).length;
+  const toggleExpanded = (nsId: string) => {
+    setExpandedNs((prev) => {
+      const next = new Set(prev);
+      if (next.has(nsId)) next.delete(nsId);
+      else next.add(nsId);
+      return next;
+    });
+  };
 
   if (isCompact) {
     const active = namespaces.find((n) => n.id === namespace);
@@ -96,6 +137,11 @@ export function NamespaceTree({ namespace, namespaces, summaries, onNamespaceCha
                       setCompactOpen(false);
                     }}
                   >
+                    <TreeIcon
+                      src={namespaceIcon(ns.id)}
+                      fallback={NAMESPACE_ICON_FALLBACK}
+                      size="task"
+                    />
                     <span className="ns-tree__compact-initials">{initialsOf(ns.label)}</span>
                     <span className="ns-tree__compact-count">{summary?.total ?? "…"}</span>
                   </button>
@@ -108,102 +154,124 @@ export function NamespaceTree({ namespace, namespaces, summaries, onNamespaceCha
     );
   }
 
-  const rootClass = isCompact
-    ? "ns-tree ns-tree--compact"
-    : displayMode === "extended"
+  const rootClass =
+    displayMode === "extended"
       ? "ns-tree ns-tree--extended"
       : "ns-tree";
 
   return (
     <div className={rootClass} role="tree" aria-label="Namespace tree">
-      <button
-        type="button"
-        className="ns-tree__root"
-        aria-expanded={expanded}
-        onClick={() => setExpanded((v) => !v)}
-      >
-        <span className={expanded ? "ns-tree__chevron ns-tree__chevron--open" : "ns-tree__chevron"} aria-hidden="true">
-          {expanded ? "▾" : "▸"}
-        </span>
-        <span className="ns-tree__root-label">All namespaces</span>
-        <span className="ns-tree__root-stats">
-          {loadedCount > 0
-            ? `${namespaces.length} worlds · ${grandTotal} tasks`
-            : `${namespaces.length} worlds · …`}
-        </span>
-      </button>
-      {expanded && (
-        <ul className="ns-tree__list">
-          {namespaces.map((ns) => {
-            const summary = summaries[ns.id];
-            const isActive = ns.id === namespace;
-            const nsExpanded = expandedNs === ns.id;
-            const line = summary
-              ? summary.error
-                ? "summary unavailable"
-                : summaryLine(summary)
-              : "…";
-            return (
-              <li
-                key={ns.id}
-                role="treeitem"
-                aria-expanded={nsExpanded}
-                aria-selected={isActive}
-                data-namespace={ns.id}
-                className={
-                  isActive
-                    ? "ns-tree__item ns-tree__item--active"
-                    : "ns-tree__item"
-                }
-              >
-                <div className="ns-tree__row">
-                  <button
-                    type="button"
-                    className="ns-tree__chevron-btn"
-                    aria-label={nsExpanded ? `Collapse ${ns.label} stats` : `Expand ${ns.label} stats`}
-                    onClick={() => setExpandedNs(nsExpanded ? null : ns.id)}
-                    tabIndex={-1}
+      <ul className="ns-tree__roots">
+        {namespaces.map((ns) => {
+          const summary = summaries[ns.id];
+          const isActive = ns.id === namespace;
+          const nsExpanded = expandedNs.has(ns.id);
+          const line = summary
+            ? summary.error
+              ? "summary unavailable"
+              : summaryLine(summary)
+            : "…";
+          const tasks = nsExpanded ? tasksOf(summary?.jobs) : [];
+          return (
+            <li
+              key={ns.id}
+              role="treeitem"
+              aria-expanded={nsExpanded}
+              aria-selected={isActive}
+              data-namespace={ns.id}
+              className={
+                isActive
+                  ? "ns-tree__item ns-tree__item--active"
+                  : "ns-tree__item"
+              }
+            >
+              <div className="ns-tree__row">
+                <button
+                  type="button"
+                  className="ns-tree__chevron-btn"
+                  aria-label={nsExpanded ? `Collapse ${ns.label} tasks` : `Expand ${ns.label} tasks`}
+                  onClick={() => toggleExpanded(ns.id)}
+                  tabIndex={-1}
+                >
+                  <span
+                    className={nsExpanded ? "ns-tree__chevron ns-tree__chevron--open" : "ns-tree__chevron"}
+                    aria-hidden="true"
                   >
-                    <span
-                      className={nsExpanded ? "ns-tree__chevron ns-tree__chevron--open" : "ns-tree__chevron"}
-                      aria-hidden="true"
-                    >
-                      {nsExpanded ? "▾" : "▸"}
-                    </span>
-                  </button>
-                  <button
-                    type="button"
-                    className="ns-tree__select"
-                    title={`${ns.label} — ${line}`}
-                    onClick={() => onNamespaceChange(ns.id)}
-                  >
+                    {nsExpanded ? "▾" : "▸"}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  className="ns-tree__select"
+                  title={`${ns.label} — ${line}`}
+                  onClick={() => {
+                    onNamespaceChange(ns.id);
+                    // Selecting a world drills into it.
+                    setExpandedNs((prev) => new Set(prev).add(ns.id));
+                  }}
+                >
+                  <TreeIcon src={namespaceIcon(ns.id)} fallback={NAMESPACE_ICON_FALLBACK} />
+                  <span className="ns-tree__labels">
                     <span className="ns-tree__label">{ns.label}</span>
                     <span className={summary?.error ? "ns-tree__summary ns-tree__summary--error" : "ns-tree__summary"}>
                       {line}
                     </span>
-                  </button>
-                </div>
-                {nsExpanded && (
-                  <ul className="ns-tree__statuses" role="group" aria-label={`${ns.label} status breakdown`}>
-                    {summary && !summary.error ? (
-                      JOB_STATUSES.map((status) => (
-                        <li key={status} className="ns-tree__status">
-                          <span className={`ns-tree__status-name ns-tree__status-name--${status}`}>{status}</span>
-                          <span className="ns-tree__status-count">{summary.counts[status]}</span>
-                        </li>
-                      ))
+                  </span>
+                </button>
+              </div>
+              {nsExpanded && (
+                <ul className="ns-tree__tasks" role="group" aria-label={`${ns.label} tasks`}>
+                  {summary && !summary.error ? (
+                    tasks.length > 0 ? (
+                      tasks.map((job) => {
+                        const isTaskActive = job.sessionId === activeSessionId;
+                        const title = resolveSessionTitle(job);
+                        const taskTitle = `${title} — Issue #${job.issue} · ${job.agentName} · Step ${job.step} · ${job.status}`;
+                        return (
+                          <li
+                            key={job.sessionId}
+                            role="treeitem"
+                            aria-selected={isTaskActive}
+                            data-session={job.sessionId}
+                            className={
+                              isTaskActive
+                                ? "ns-tree__task ns-tree__task--active"
+                                : "ns-tree__task"
+                            }
+                          >
+                            <button
+                              type="button"
+                              className="ns-tree__task-btn"
+                              title={taskTitle}
+                              onClick={() => onSelectTask(ns.id, job.sessionId)}
+                            >
+                              <TreeIcon
+                                src={taskIcon(job.status)}
+                                fallback={taskIconFallback(job.status)}
+                                size="task"
+                              />
+                              <span className="ns-tree__task-title">{title}</span>
+                              <span className={`ns-tree__task-status ns-tree__task-status--${job.status}`}>
+                                {job.status}
+                              </span>
+                            </button>
+                          </li>
+                        );
+                      })
                     ) : (
-                      <li className="ns-tree__status ns-tree__status--empty">
-                        {summary ? "summary unavailable" : "loading…"}
-                      </li>
-                    )}
-                  </ul>
-                )}
-              </li>
-            );
-          })}
-        </ul>
-      )}
+                      <li className="ns-tree__task ns-tree__task--empty">no tasks in this world</li>
+                    )
+                  ) : (
+                    <li className="ns-tree__task ns-tree__task--empty">
+                      {summary ? "summary unavailable" : "loading…"}
+                    </li>
+                  )}
+                </ul>
+              )}
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }

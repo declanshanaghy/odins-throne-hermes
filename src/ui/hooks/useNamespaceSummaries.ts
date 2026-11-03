@@ -27,6 +27,11 @@ export const JOB_STATUSES: readonly JobStatus[] = [
 export interface NamespaceSummary {
   total: number;
   counts: Record<JobStatus, number>;
+  /**
+   * The raw fetched job list (purged included) — the drilldown tree branches
+   * these under their namespace node. Empty when the fetch failed.
+   */
+  jobs: Job[];
   /** Non-null when the summary fetch for this namespace failed. */
   error: string | null;
 }
@@ -46,7 +51,7 @@ export function summarizeJobs(jobs: Job[]): NamespaceSummary {
   for (const job of jobs) {
     if (job.status in counts) counts[job.status] += 1;
   }
-  return { total: jobs.length, counts, error: null };
+  return { total: jobs.length, counts, jobs, error: null };
 }
 
 /** "12 tasks · 2 running · 1 failed" — non-zero statuses only, actionable first. */
@@ -93,7 +98,7 @@ export function useNamespaceSummaries(
       if (!res.ok) {
         setSummaries((prev) => ({
           ...prev,
-          [nsId]: { total: 0, counts: emptyCounts(), error: `HTTP ${res.status}` },
+          [nsId]: { total: 0, counts: emptyCounts(), jobs: [], error: `HTTP ${res.status}` },
         }));
         return;
       }
@@ -105,7 +110,7 @@ export function useNamespaceSummaries(
       if (!mountedRef.current) return;
       setSummaries((prev) => ({
         ...prev,
-        [nsId]: { total: 0, counts: emptyCounts(), error: "unreachable" },
+        [nsId]: { total: 0, counts: emptyCounts(), jobs: [], error: "unreachable" },
       }));
     } finally {
       inflightRef.current.delete(nsId);
