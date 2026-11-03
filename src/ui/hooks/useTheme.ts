@@ -24,7 +24,8 @@ function emit(): void {
   for (const l of listeners) l();
 }
 
-function setTheme(t: Theme): void {
+/** Shared setter — also exported for non-React call sites (targets, tests). */
+export function setTheme(t: Theme): void {
   current = t;
   try {
     localStorage.setItem(STORAGE_KEY, t);
