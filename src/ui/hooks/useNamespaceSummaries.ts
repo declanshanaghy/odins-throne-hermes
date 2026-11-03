@@ -2,13 +2,16 @@
 //
 // The WebSocket feed is scoped to the ACTIVE namespace only, and the upstream
 // monitor has no cross-namespace summary endpoint — but it does expose
-// `GET /api/jobs?namespace=<id>` (same Job[] the WS pushes, purged included),
-// which is exactly the per-namespace data the tree needs. So the tree
+// `GET /api/jobs?namespace=<id>`, which returns that namespace's raw K8s
+// AgentJobs (purged included). Those get normalized into the wire Job shape
+// (lib/restJobs.ts — the endpoint does NOT apply the mapping the WS feed
+// uses) and are exactly the per-namespace data the tree needs. So the tree
 // aggregates client-side: one lightweight REST call per namespace, refreshed
 // on an interval and whenever the live feed signals activity.
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { otFetch } from "../../upstream";
+import { normalizeRestJobs } from "../lib/restJobs";
 import type { Job } from "../lib/types";
 import type { NamespaceOption } from "./useNamespace";
 
@@ -102,9 +105,14 @@ export function useNamespaceSummaries(
         }));
         return;
       }
-      const data = (await res.json()) as { jobs?: Job[] };
+      const data = (await res.json()) as { jobs?: unknown[] };
       if (!mountedRef.current) return;
-      const summary = summarizeJobs(Array.isArray(data.jobs) ? data.jobs : []);
+      // The REST endpoint returns raw K8s AgentJobs, not the wire Jobs the WS
+      // feed pushes — normalize first (see lib/restJobs.ts) or every job in
+      // the tree renders "Issue #? · unknown · Step ?" and clicks subscribe
+      // to session `undefined`.
+      const jobs = normalizeRestJobs(Array.isArray(data.jobs) ? data.jobs : []);
+      const summary = summarizeJobs(jobs);
       setSummaries((prev) => ({ ...prev, [nsId]: summary }));
     } catch {
       if (!mountedRef.current) return;

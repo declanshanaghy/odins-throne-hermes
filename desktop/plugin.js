@@ -200,10 +200,16 @@ var styles_default = `.odins-throne-root .odins-throne-root {
   position: relative; /* required for resize handle absolute positioning */
   flex-shrink: 0;
 }
+/* Flex column filling the sidebar's full height: brand/quote/count keep
+ * their natural size, the namespace tree (flex: 1) stretches beneath them
+ * to the bottom of the pane and scrolls internally. */
 .odins-throne-root .sidebar-header {
   padding: 1rem;
   border-bottom: 1px solid var(--rune-border);
-  flex-shrink: 0;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 .odins-throne-root .sidebar-header .brand {
   display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;
@@ -326,14 +332,16 @@ var styles_default = `.odins-throne-root .odins-throne-root {
 /* Each namespace is a top-level root node; its tasks branch directly beneath
  * it with drawn connector rails + elbow connectors, so the two levels read
  * apart at a glance. Nodes carry icons from shanaghy.com with inline emoji
- * fallbacks (TreeIcon). Scroll-capped so a fully drilled tree can't push the
- * job cards out of the sidebar. */
+ * fallbacks (TreeIcon). The tree IS the panel body now (the old flat job
+ * list is gone): it stretches to fill the sidebar's full vertical height
+ * and scrolls internally, so every namespace is reachable. */
 .odins-throne-root .ns-tree {
   margin-top: 0.5rem;
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.7rem;
   min-width: 0;
-  max-height: 42vh;
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
 }
@@ -3877,6 +3885,38 @@ async function otFetch(path, init) {
   return fetch(restUrl(path), authInit(init));
 }
 
+// src/ui/lib/restJobs.ts
+function isWireJob(raw) {
+  return typeof raw === "object" && raw !== null && typeof raw.sessionId === "string";
+}
+function normalizeRestJob(raw) {
+  const labels = raw.labels ?? {};
+  const annotations = raw.annotations ?? {};
+  const sessionId = labels["fenrir.dev/session-id"] || raw.name.replace(/^agent-/, "");
+  const m = /issue-(\d+)-step(\d+)-([a-z]+)/i.exec(sessionId);
+  const prTitle = annotations["fenrir/pr-title"] || null;
+  const issueAnnotation = annotations["fenrir/issue-title"] || annotations["pack/issue-title"] || null;
+  return {
+    sessionId,
+    name: raw.name,
+    issueNumber: m ? parseInt(m[1] ?? "0", 10) : 0,
+    agent: m ? (m[3] ?? "unknown").toLowerCase() : "unknown",
+    step: m ? parseInt(m[2] ?? "0", 10) : 0,
+    // REST can't see pod phases: the K8s job controller's "active" means the
+    // pod exists but may still be pulling/scheduling — that's "pending" on
+    // the wire (the WS watch upgrades it to "running" later).
+    status: raw.status === "active" ? "pending" : raw.status,
+    startedAt: raw.startTime ?? null,
+    completedAt: raw.completionTime ?? null,
+    podName: null,
+    issueTitle: prTitle ?? issueAnnotation,
+    branchName: annotations["fenrir/branch"] || null
+  };
+}
+function normalizeRestJobs(raw) {
+  return raw.map((j) => isWireJob(j) ? j : normalizeRestJob(j));
+}
+
 // src/ui/hooks/useNamespaceSummaries.ts
 var JOB_STATUSES = [
   "running",
@@ -3931,7 +3971,8 @@ function useNamespaceSummaries(namespaces, activeNamespace, activityKey) {
       }
       const data = await res.json();
       if (!mountedRef.current) return;
-      const summary = summarizeJobs(Array.isArray(data.jobs) ? data.jobs : []);
+      const jobs = normalizeRestJobs(Array.isArray(data.jobs) ? data.jobs : []);
+      const summary = summarizeJobs(jobs);
       setSummaries((prev) => ({ ...prev, [nsId]: summary }));
     } catch {
       if (!mountedRef.current) return;

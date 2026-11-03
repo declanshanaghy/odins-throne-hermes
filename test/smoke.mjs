@@ -60,31 +60,43 @@ const NS_FIXTURES = [
   { id: "shanaghy-com-agents", label: "Shanaghy.com Agents" },
   { id: "re-goatmower-agents", label: "Re-Goatmower Agents" },
 ];
-const fixtureJob = (sessionId, status) => ({
-  sessionId,
-  name: `job-${sessionId}`,
-  issueNumber: 1,
-  agent: "fireman",
-  step: 1,
+// REST fixtures mirror the REAL endpoint payload: raw K8s AgentJobs
+// ({ name, status, startTime, completionTime, labels, annotations }) — NOT
+// the wire Jobs the WS feed pushes. The "unknown step ?" / broken-stream bug
+// shipped precisely because an earlier fixture was wire-shaped while prod
+// returns AgentJobs; this is the regression lock for the client-side
+// mapping in src/ui/lib/restJobs.ts (labels → sessionId, session-id pattern
+// → issue/step/agent, annotations → titles, "active" → "pending").
+const agentJob = (name, status, annotations = {}) => ({
+  name,
+  namespace: "fenrir-agents",
   status,
-  startedAt: null,
-  completedAt: null,
-  podName: null,
-  issueTitle: null,
-  branchName: null,
+  startTime: null,
+  completionTime: null,
+  labels: { "fenrir.dev/session-id": name.replace(/^agent-/, "") },
+  annotations,
 });
 const JOBS_BY_NS = {
   "fenrir-agents": [
-    fixtureJob("s-run-1", "running"),
-    fixtureJob("s-run-2", "running"),
-    fixtureJob("s-pend-1", "pending"),
-    fixtureJob("s-fail-1", "failed"),
-    ...Array.from({ length: 8 }, (_, i) => fixtureJob(`s-ok-${i}`, "succeeded")),
+    agentJob("agent-issue-1200-step1-firemandecko-1a2b3c4d", "running", {
+      "fenrir/pr-title": "wire the namespace drilldown tree",
+    }),
+    agentJob("agent-issue-1201-step2-loki-2b3c4d5e", "running"),
+    agentJob("agent-issue-1202-step1-luna-3c4d5e6f", "active"),
+    agentJob("agent-issue-1203-step1-heimdall-4d5e6f7a", "failed"),
+    ...Array.from({ length: 8 }, (_, i) =>
+      agentJob(`agent-issue-${1204 + i}-step1-freya-${(5 + i).toString(16).repeat(8)}`, "succeeded"),
+    ),
   ],
-  "say-so-agents": Array.from({ length: 8 }, (_, i) => fixtureJob(`ss-ok-${i}`, "succeeded")),
-  "mytruthfinder-agents": [fixtureJob("mt-run-1", "running")],
+  "say-so-agents": Array.from({ length: 8 }, (_, i) =>
+    agentJob(`agent-issue-${2010 + i}-step1-freya-${(10 + i).toString(16).repeat(8)}`, "succeeded"),
+  ),
+  "mytruthfinder-agents": [agentJob("agent-issue-3300-step1-luna-0f1e2d3c", "running")],
   "shanaghy-com-agents": [],
-  "re-goatmower-agents": [fixtureJob("rg-fail-1", "failed"), fixtureJob("rg-ok-1", "succeeded")],
+  "re-goatmower-agents": [
+    agentJob("agent-issue-4400-step1-firemandecko-5e6f7a8b", "failed"),
+    agentJob("agent-issue-4401-step1-loki-6f7a8b9c", "succeeded"),
+  ],
 };
 function jsonResponse(body, status = 200) {
   return { ok: status >= 200 && status < 300, status, json: async () => body };
@@ -221,12 +233,21 @@ const fenrirTasks = document.querySelectorAll(
   '.ns-tree__item[data-namespace="fenrir-agents"] .ns-tree__task[data-session]',
 );
 assert.equal(fenrirTasks.length, 12, "fenrir-agents node branches its 12 tasks");
-assert.ok(document.querySelector('.ns-tree__task[data-session="s-run-1"]'), "task node present under its namespace root");
-assert.ok(paneHtml.includes("s-fail-1"), "failed task branched beneath its namespace");
+assert.ok(document.querySelector('.ns-tree__task[data-session="issue-1200-step1-firemandecko-1a2b3c4d"]'), "task node present under its namespace root (sessionId derived from labels)");
+assert.ok(paneHtml.includes("issue-1203-step1-heimdall-4d5e6f7a"), "failed task branched beneath its namespace");
+
+// REST AgentJob → wire Job mapping (lib/restJobs.ts) must fully resolve job
+// metadata — the exact fields that used to render "Issue #? · unknown · Step ?".
+assert.ok(paneHtml.includes("Issue #1200"), "issue number parsed from the session-id pattern");
+assert.ok(paneHtml.includes("FiremanDecko"), "agent name resolved from the session-id pattern");
+assert.ok(paneHtml.includes("Step 1"), "step number parsed from the session-id pattern");
+assert.ok(paneHtml.includes("wire the namespace drilldown tree"), "fenrir/pr-title annotation surfaces as the card title");
+assert.ok(!paneHtml.includes("Issue #?"), "no unresolved issue fallbacks");
+assert.ok(!paneHtml.includes("Step ?"), "no unresolved step fallbacks");
 
 // Task children are the SAME JobCard components the old flat list rendered.
 assert.ok(
-  document.querySelector('.ns-tree__task[data-session="s-run-1"] .card'),
+  document.querySelector('.ns-tree__task[data-session="issue-1200-step1-firemandecko-1a2b3c4d"] .card'),
   "task child renders as a job card",
 );
 assert.equal(
@@ -237,11 +258,11 @@ assert.equal(
 
 // Clicking a task's job card selects that session — the same semantics the
 // old list had (aria-selected marks the task node).
-document.querySelector('.ns-tree__task[data-session="s-run-1"] .card').click();
+document.querySelector('.ns-tree__task[data-session="issue-1200-step1-firemandecko-1a2b3c4d"] .card').click();
 await flush();
 await flush();
 assert.equal(
-  document.querySelector('.ns-tree__task[data-session="s-run-1"]').getAttribute("aria-selected"),
+  document.querySelector('.ns-tree__task[data-session="issue-1200-step1-firemandecko-1a2b3c4d"]').getAttribute("aria-selected"),
   "true",
   "clicked task node is marked selected",
 );
@@ -303,7 +324,7 @@ assert.equal(
 // namespace AND keeps that session selected (pending-select flow in App).
 document.querySelector('.ns-tree__item[data-namespace="re-goatmower-agents"] .ns-tree__chevron-btn').click();
 await flush();
-document.querySelector('.ns-tree__task[data-session="rg-fail-1"] .card').click();
+document.querySelector('.ns-tree__task[data-session="issue-4400-step1-firemandecko-5e6f7a8b"] .card').click();
 await flush();
 await flush();
 assert.equal(
@@ -312,7 +333,7 @@ assert.equal(
   "cross-world task click switches the active namespace",
 );
 assert.equal(
-  document.querySelector('.ns-tree__task[data-session="rg-fail-1"]').getAttribute("aria-selected"),
+  document.querySelector('.ns-tree__task[data-session="issue-4400-step1-firemandecko-5e6f7a8b"]').getAttribute("aria-selected"),
   "true",
   "cross-world task click selects the session in its world",
 );

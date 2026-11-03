@@ -190,10 +190,16 @@ body {
   position: relative; /* required for resize handle absolute positioning */
   flex-shrink: 0;
 }
+/* Flex column filling the sidebar's full height: brand/quote/count keep
+ * their natural size, the namespace tree (flex: 1) stretches beneath them
+ * to the bottom of the pane and scrolls internally. */
 .sidebar-header {
   padding: 1rem;
   border-bottom: 1px solid var(--rune-border);
-  flex-shrink: 0;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 .sidebar-header .brand {
   display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;
@@ -316,14 +322,16 @@ body {
 /* Each namespace is a top-level root node; its tasks branch directly beneath
  * it with drawn connector rails + elbow connectors, so the two levels read
  * apart at a glance. Nodes carry icons from shanaghy.com with inline emoji
- * fallbacks (TreeIcon). Scroll-capped so a fully drilled tree can't push the
- * job cards out of the sidebar. */
+ * fallbacks (TreeIcon). The tree IS the panel body now (the old flat job
+ * list is gone): it stretches to fill the sidebar's full vertical height
+ * and scrolls internally, so every namespace is reachable. */
 .ns-tree {
   margin-top: 0.5rem;
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.7rem;
   min-width: 0;
-  max-height: 42vh;
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
 }
