@@ -12,6 +12,8 @@
      ANCHOR alongside the card — out of the title box — and the collapsed
      lantern's pip row becomes those anchor icons on expand; card actions
      are icon-only, overlapping the bottom border, flush right.
+     v3.1: the frosted-glass lantern bubbles are struck (#39 parity) —
+     transparent hit areas over the painted lanterns, screen-blended glow.
      Nocturnal garden house palette:
      night #05070a–#0f1419, moss #4a5d23, canopy #0f2e0f, moon #b0c4c9,
      spore gold #ffcc66, teal selection.
@@ -161,38 +163,56 @@
   }
   .vine--bare { stroke: var(--moon-dim); stroke-dasharray: 2 5; opacity: .4; filter: none; }
 
-  /* lanterns — namespace nodes, seated on the painted lanterns */
+  /* lanterns — namespace nodes, seated on the PAINTED lanterns. v3: the
+     frosted-glass BUBBLES are struck (as #39 struck them from the shipped
+     tree): a transparent hit area carrying the world's icon, no disc, no
+     stem — the painted lantern itself is the node; the active world's
+     lantern brightens with a screen-blended glow that only adds light. */
   .lantern {
     position: absolute; transform: translate(-50%, -50%);
     z-index: 6;
     width: 52px; height: 52px;
-    border-radius: 50% 50% 50% 7px;
-    rotate: 40deg;
-    border: 1px solid rgba(214, 236, 240, 0.42);
-    background: radial-gradient(circle at 32% 26%, rgba(226, 240, 244, 0.34), rgba(10, 16, 20, 0.84));
-    backdrop-filter: blur(1.5px);
+    border: 0; border-radius: 50%;
+    background: transparent;
     display: flex; align-items: center; justify-content: center;
     font-size: 23px;
-    box-shadow: 0 0 18px 4px var(--lg, rgba(176, 196, 201, 0.30)),
-                0 4px 12px rgba(0, 0, 0, 0.5),
-                inset 0 1px 2px rgba(255, 255, 255, 0.18);
-    transition: box-shadow .2s, border-color .2s, scale .2s;
+    cursor: pointer;
+    --lg: rgba(176, 196, 201, 0.30);       /* moon — an empty world */
+    --lg-light: rgba(255, 226, 168, 0.62); /* the painted flame, lit */
+    transition: scale .2s;
   }
-  .lantern > span { rotate: -40deg; filter: drop-shadow(0 1px 3px rgba(0,0,0,.7)); }
-  .lantern::before {  /* the stem it hangs by */
-    content: ""; position: absolute; left: 50%; top: -16px; width: 1.5px; height: 16px;
-    background: linear-gradient(180deg, transparent, rgba(176,196,201,0.6));
+  /* the painted lantern's light — a screen blend BRIGHTENS the painting
+     beneath (never covers it); invisible until hovered/selected */
+  .lantern::before {
+    content: ""; position: absolute; inset: -12px; border-radius: 50%;
+    background: radial-gradient(circle, var(--lg-light) 0%, var(--lg) 40%, transparent 70%);
+    mix-blend-mode: screen;
+    opacity: 0; transition: opacity .2s;
+    pointer-events: none;
   }
-  .lantern:hover { scale: 1.1; border-color: var(--teal); }
-  .lantern.is-active {
-    border-color: var(--teal);
-    --lg: rgba(21, 184, 166, 0.5);
-    box-shadow: 0 0 0 3px var(--teal-glow), 0 0 30px 6px rgba(21,184,166,0.45),
-                0 4px 12px rgba(0, 0, 0, 0.5);
+  .lantern:hover::before, .lantern:focus-visible::before { opacity: .55; }
+  .lantern.is-active { --lg: rgba(21, 184, 166, 0.55); }
+  .lantern.is-active::before, .lantern.is-active:hover::before { opacity: 1; }
+  .lantern--failed:not(.is-active) { --lg: rgba(224, 122, 63, 0.42); }
+  .lantern--ok:not(.is-active)     { --lg: rgba(121, 179, 86, 0.36); }
+  /* the curated icon, seated in the painted lantern: a dark outline +
+     tinted halo keep it legible on the painting without any disc behind it */
+  .lantern__ic {
+    position: relative; /* above the ::before light */
+    width: 30px; height: 30px;
+    opacity: .85;
+    filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.95)) drop-shadow(0 0 4px var(--lg));
+    transition: opacity .2s, scale .2s, filter .2s;
+    pointer-events: none;
   }
-  .lantern.is-dim { opacity: 0.55; filter: saturate(0.6); }
-  .lantern--failed { --lg: rgba(224, 122, 63, 0.4); }
-  .lantern--ok     { --lg: rgba(121, 179, 86, 0.35); }
+  .lantern__ic-fb { font-size: 23px; line-height: 1; }
+  .lantern:hover .lantern__ic,
+  .lantern:focus-visible .lantern__ic { opacity: 1; }
+  .lantern.is-active .lantern__ic {
+    opacity: 1; scale: 1.15;
+    filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.95)) drop-shadow(0 0 7px rgba(21, 184, 166, 0.55));
+  }
+  .lantern.is-dim .lantern__ic { opacity: .5; filter: drop-shadow(0 0 1px rgba(0,0,0,.95)) saturate(.5); }
 
   /* job cards — full info on the vine, no popup needed */
   .jcard {
@@ -287,10 +307,9 @@
   body[data-mode="normal"] .jcard { width: 188px; padding: 4px 7px; }
   body[data-mode="normal"] .jcard__title { font-size: 10.5px; }
   body[data-mode="normal"] .jcard__meta { font-size: 8.5px; }
-  body[data-mode="normal"] .lantern { width: 44px; height: 44px; font-size: 19px; }
-  .lantern__ic { width: 30px; height: 30px; rotate: -40deg; filter: drop-shadow(0 2px 3px rgba(0,0,0,.7)); pointer-events: none; }
-  .lantern__ic-fb { font-size: 23px; rotate: -40deg; }
+  body[data-mode="normal"] .lantern { width: 44px; height: 44px; }
   body[data-mode="normal"] .lantern__ic { width: 26px; height: 26px; }
+  body[data-mode="normal"] .lantern__ic-fb { font-size: 19px; }
 
   @keyframes pulse     { 50% { transform: scale(1.35); } }
   @keyframes flicker   { 50% { opacity: .55; } }
