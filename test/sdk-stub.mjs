@@ -37,17 +37,20 @@ export const host = {
         existing.onClose?.();
       };
     }
-    globalThis.__stubWorkspaceTabs.set(id, {
+    const tab = {
       title: options?.title,
       onClose: options?.onClose,
-    });
+      close: null,
+    };
+    globalThis.__stubWorkspaceTabs.set(id, tab);
     globalThis.__stubWorkspaceOpens.push(id);
-    return () => {
-      const tab = globalThis.__stubWorkspaceTabs.get(id);
-      if (tab) {
+    const disposer = () => {
+      if (globalThis.__stubWorkspaceTabs.get(id) === tab) {
         globalThis.__stubWorkspaceTabs.delete(id);
         tab.onClose?.();
       }
     };
+    tab.close = disposer;
+    return disposer;
   },
 };

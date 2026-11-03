@@ -4949,7 +4949,7 @@ function JobCard({ job, isActive, onClick, onAvatarClick, isPinned: isPinned2 = 
               "aria-label": "Cancel running job",
               onClick: (e) => {
                 e.stopPropagation();
-                onCancelJob(job.sessionId);
+                onCancelJob(job.sessionId, job);
               },
               children: [
                 /* @__PURE__ */ jsx6(StatusIconSvg, { status: job.status }),
@@ -5004,7 +5004,7 @@ function JobCard({ job, isActive, onClick, onAvatarClick, isPinned: isPinned2 = 
               "aria-label": "Cancel running job",
               onClick: (e) => {
                 e.stopPropagation();
-                onCancelJob(job.sessionId);
+                onCancelJob(job.sessionId, job);
               },
               children: /* @__PURE__ */ jsx6(StatusIconSvg, { status: job.status })
             }
@@ -5396,7 +5396,7 @@ function NamespaceTree({
                   {
                     job,
                     isActive: isTaskActive,
-                    onClick: () => onSelectTask(ns.id, job.sessionId),
+                    onClick: () => onSelectTask(ns.id, job.sessionId, job),
                     onAvatarClick,
                     isPinned: pinnedSessionIds?.has(job.sessionId) ?? false,
                     onTogglePin: onTogglePinSession ? () => onTogglePinSession(job.sessionId) : void 0,
@@ -5900,6 +5900,1954 @@ function useNamespace() {
   return { namespace, namespaces, setNamespace };
 }
 
+<<<<<<< HEAD
+=======
+// src/store.ts
+import { useSyncExternalStore as useSyncExternalStore2 } from "react";
+var snapshot = null;
+var version = 0;
+var listeners2 = /* @__PURE__ */ new Set();
+function emit2() {
+  version += 1;
+  for (const l of listeners2) l();
+}
+var throneStore = {
+  publish(next) {
+    snapshot = next;
+    emit2();
+  },
+  get() {
+    return snapshot;
+  }
+};
+function useThrone() {
+  useSyncExternalStore2(
+    (cb) => {
+      listeners2.add(cb);
+      return () => {
+        listeners2.delete(cb);
+      };
+    },
+    () => version,
+    () => version
+  );
+  return snapshot;
+}
+
+// src/sessionTabs.tsx
+import { host, ROUTES_AREA } from "@hermes/plugin-sdk";
+
+// src/page.tsx
+import { useCallback as useCallback8, useEffect as useEffect11, useRef as useRef9, useState as useState16 } from "react";
+
+// src/ui/components/LogViewer.tsx
+import { useEffect as useEffect10, useRef as useRef7, useState as useState14, useCallback as useCallback6, useMemo } from "react";
+
+// src/ui/components/ToolBlock.tsx
+import { useState as useState12 } from "react";
+import { jsx as jsx12, jsxs as jsxs12 } from "react/jsx-runtime";
+function ToolBlock({ entry, collapseCount }) {
+  const [open2, setOpen] = useState12(false);
+  const cls = toolBadgeClass(entry.toolName || "");
+  let parsedInput;
+  try {
+    parsedInput = entry.toolInput ? JSON.parse(entry.toolInput) : void 0;
+  } catch {
+  }
+  const preview = entry.toolName ? toolPreview(entry.toolName, parsedInput) : "";
+  return /* @__PURE__ */ jsxs12("div", { className: `ev-tool${open2 ? " open" : ""}${entry.toolIsError ? " ev-tool-error" : ""}`, children: [
+    /* @__PURE__ */ jsxs12("div", { className: "ev-tool-header", onClick: () => setOpen(!open2), children: [
+      /* @__PURE__ */ jsx12("span", { className: `ev-tool-badge ${cls}`, children: entry.toolName }),
+      collapseCount != null && collapseCount > 1 && /* @__PURE__ */ jsxs12("span", { className: "ev-collapse-count", title: `${collapseCount} consecutive identical calls collapsed`, children: [
+        "\xD7",
+        collapseCount
+      ] }),
+      /* @__PURE__ */ jsx12("span", { className: "ev-tool-preview", children: preview }),
+      /* @__PURE__ */ jsx12("span", { className: "ev-tool-chevron", children: "\u203A" })
+    ] }),
+    /* @__PURE__ */ jsx12("div", { className: "ev-tool-body-wrap", children: /* @__PURE__ */ jsxs12("div", { className: "ev-tool-body", children: [
+      /* @__PURE__ */ jsx12("div", { className: "ev-tool-input", children: entry.toolInput }),
+      entry.toolResult != null && /* @__PURE__ */ jsx12("div", { className: "ev-tool-result", children: entry.toolResult })
+    ] }) })
+  ] });
+}
+
+// src/ui/components/NorseErrorTablet.tsx
+import { Fragment as Fragment3, jsx as jsx13, jsxs as jsxs13 } from "react/jsx-runtime";
+var RUNE_ROW_TOP = "\u16A0 \u16A2 \u16A6 \u16A8 \u16B1 \u16B2 \u16B7 \u16B9 \u16BA \u16BE \u16C1 \u16C3 \u16C7 \u16C8 \u16C9 \u16CA \u16CF \u16D2 \u16D6 \u16D7 \u16DA \u16DC \u16DE \u16DF";
+var RUNE_ROW_BTM = "\u16DF \u16DE \u16DC \u16DA \u16D7 \u16D6 \u16D2 \u16CF \u16CA \u16C9 \u16C8 \u16C7 \u16C3 \u16C1 \u16BE \u16BA \u16B9 \u16B7 \u16B2 \u16B1 \u16A8 \u16A6 \u16A2 \u16A0";
+var RUNE_GLYPH = "\u16A6";
+var VARIANT_CONTENT = {
+  "ttl-expired": {
+    ariaLabel: "Session error: pod TTL expired",
+    heading: "The Eternal Halls Are Sealed",
+    subheading: /* @__PURE__ */ jsxs13(Fragment3, { children: [
+      "This vessel has departed",
+      " ",
+      /* @__PURE__ */ jsx13(
+        "a",
+        {
+          className: "wiki-link",
+          href: WIKI_LINKS["Yggdrasil"],
+          target: "_blank",
+          rel: "noopener noreferrer",
+          "aria-label": "Yggdrasil on Wikipedia, opens in new tab",
+          children: "Yggdrasil"
+        }
+      )
+    ] })
+  },
+  "node-unreachable": {
+    ariaLabel: "Session error: node unreachable",
+    heading: "The Bifr\xF6st Has Fallen",
+    subheading: /* @__PURE__ */ jsxs13(Fragment3, { children: [
+      "The node that bore this vessel is beyond reach \u2014 the",
+      " ",
+      /* @__PURE__ */ jsx13(
+        "a",
+        {
+          className: "wiki-link",
+          href: WIKI_LINKS["Bifr\xF6st"],
+          target: "_blank",
+          rel: "noopener noreferrer",
+          "aria-label": "Bifr\xF6st on Wikipedia, opens in new tab",
+          children: "Bifr\xF6st"
+        }
+      ),
+      " ",
+      "bridge is severed"
+    ] })
+  }
+};
+function NorseErrorTablet({ sessionId, message, variant = "ttl-expired" }) {
+  const { ariaLabel, heading, subheading } = VARIANT_CONTENT[variant];
+  const seal = ERROR_TABLET_SEALS[variant];
+  return /* @__PURE__ */ jsxs13(
+    "div",
+    {
+      className: "norse-error-tablet",
+      role: "alert",
+      "aria-label": ariaLabel,
+      "aria-live": "assertive",
+      children: [
+        /* @__PURE__ */ jsx13("div", { className: "net-rune-border", "aria-hidden": "true", children: RUNE_ROW_TOP }),
+        /* @__PURE__ */ jsx13("div", { className: "net-glyph", "aria-hidden": "true", children: RUNE_GLYPH }),
+        /* @__PURE__ */ jsx13("h1", { className: "net-heading", children: heading }),
+        /* @__PURE__ */ jsx13("p", { className: "net-subheading", children: subheading }),
+        /* @__PURE__ */ jsx13("div", { className: "net-divider", "aria-hidden": "true", children: "\u16A0 \u16A2 \u16A6 \u16DF \u16DE \u16DC \u16DA \u16DF \u16A6 \u16A2 \u16A0" }),
+        /* @__PURE__ */ jsx13("p", { className: "net-body", children: message }),
+        /* @__PURE__ */ jsxs13("div", { className: "net-session", "aria-label": `Session ID: ${sessionId}`, children: [
+          /* @__PURE__ */ jsx13("span", { className: "net-session-label", children: "Session" }),
+          /* @__PURE__ */ jsx13("span", { className: "net-session-value", children: sessionId })
+        ] }),
+        /* @__PURE__ */ jsxs13("div", { className: "net-seal-epic", "aria-hidden": "true", children: [
+          /* @__PURE__ */ jsx13("div", { className: "net-seal-rune-row", children: seal.runes }),
+          /* @__PURE__ */ jsx13("div", { className: "net-seal-inscription", children: seal.inscription }),
+          /* @__PURE__ */ jsx13("div", { className: "net-seal-sub", children: seal.sub })
+        ] }),
+        /* @__PURE__ */ jsx13("div", { className: "net-rune-border", "aria-hidden": "true", children: RUNE_ROW_BTM })
+      ]
+    }
+  );
+}
+
+// src/ui/components/NorseVerdictInscription.tsx
+import { jsx as jsx14, jsxs as jsxs14 } from "react/jsx-runtime";
+var RUNE_ROW_TOP2 = "\u16A0 \u16A2 \u16A6 \u16A8 \u16B1 \u16B2 \u16B7 \u16B9 \u16BA \u16BE \u16C1 \u16C3 \u16C7 \u16C8 \u16C9 \u16CA \u16CF \u16D2 \u16D6 \u16D7 \u16DA \u16DC \u16DE \u16DF";
+var RUNE_ROW_BTM2 = "\u16DF \u16DE \u16DC \u16DA \u16D7 \u16D6 \u16D2 \u16CF \u16CA \u16C9 \u16C8 \u16C7 \u16C3 \u16C1 \u16BE \u16BA \u16B9 \u16B7 \u16B2 \u16B1 \u16A8 \u16A6 \u16A2 \u16A0";
+var AGENT_VERDICT_CONFIG = {
+  "fireman-decko": {
+    rune: "\u16B2",
+    runeName: "Kenaz",
+    runeMeaning: "The Forge",
+    accentToken: "var(--agent-accent-fireman)",
+    archTitle: "The Forge Has Spoken",
+    roleLabel: "Principal Engineer",
+    pledge: "The forge cools. What was broken is reforged. I lay this work before the All-Father\u2019s throne upon Hli\xF0skj\xE1lf.",
+    pledgeLinks: {
+      "Hli\xF0skj\xE1lf": "https://en.wikipedia.org/wiki/Hli%C3%B0skj%C3%A1lf"
+    }
+  },
+  loki: {
+    rune: "\u16BE",
+    runeName: "Naudhiz",
+    runeMeaning: "Need / Trickery",
+    accentToken: "var(--agent-accent-loki)",
+    archTitle: "The Trickster Finds No Flaw",
+    roleLabel: "QA Tester",
+    pledge: "Every thread tested, every seam inspected. The Trickster finds no flaw worthy of Ragnar\xF6k. I present this verdict to Odin, Lord of Asgard.",
+    pledgeLinks: {
+      "Ragnar\xF6k": "https://en.wikipedia.org/wiki/Ragnar%C3%B6k",
+      Asgard: "https://en.wikipedia.org/wiki/Asgard"
+    }
+  },
+  luna: {
+    rune: "\u16DA",
+    runeName: "Laguz",
+    runeMeaning: "Water / Moon",
+    accentToken: "var(--agent-accent-luna)",
+    archTitle: "The Moonpath Is Drawn",
+    roleLabel: "UX Designer",
+    pledge: "By moonlight I have drawn the path through the branches of Yggdrasil. These wireframes carry the vision of Freyja\u2019s hall. Odin, receive this design.",
+    pledgeLinks: {
+      Yggdrasil: "https://en.wikipedia.org/wiki/Yggdrasil",
+      Freyja: "https://en.wikipedia.org/wiki/Freyja"
+    }
+  },
+  heimdall: {
+    rune: "\u16CF",
+    runeName: "Tiwaz",
+    runeMeaning: "Justice / Watchman",
+    accentToken: "var(--agent-accent-heimdall)",
+    archTitle: "The Bifr\xF6st Stands Unwavering",
+    roleLabel: "Security Specialist",
+    pledge: "From the Bifr\xF6st I have watched. No shadow passes unchallenged. This audit is sworn before Odin\u2019s one remaining eye.",
+    pledgeLinks: {
+      "Bifr\xF6st": "https://en.wikipedia.org/wiki/Bifr%C3%B6st"
+    }
+  },
+  freya: {
+    rune: "\u16A0",
+    runeName: "Fehu",
+    runeMeaning: "Abundance / Wisdom",
+    accentToken: "var(--agent-accent-freya)",
+    archTitle: "The V\xF6lva Has Spoken",
+    roleLabel: "Product Owner",
+    pledge: "The V\xF6lva has spoken. What was foretold is now revealed. I deliver this wisdom to the throne of Valhalla.",
+    pledgeLinks: {
+      "V\xF6lva": "https://en.wikipedia.org/wiki/V%C3%B6lva",
+      Valhalla: "https://en.wikipedia.org/wiki/Valhalla"
+    }
+  },
+  generic: {
+    rune: "\u16DF",
+    runeName: "Othalan",
+    runeMeaning: "Heritage / Estate",
+    accentToken: "var(--gold)",
+    archTitle: "The Inscription Is Complete",
+    roleLabel: "Agent",
+    pledge: "What was tasked is now complete. This work is laid before the All-Father. Let the runes bear witness.",
+    pledgeLinks: {}
+  }
+};
+var VERDICT_HEADING_RE = /^#{1,2}\s+[^\n]*(Handoff|QA Verdict)/m;
+var AGENT_NAME_RE = /(FiremanDecko|Loki|Luna|Heimdall|Freya)/i;
+function isVerdictMessage(text) {
+  return VERDICT_HEADING_RE.test(text);
+}
+function normaliseAgentKey(raw) {
+  const k = raw.toLowerCase().replace(/[-_\s]/g, "");
+  if (k === "firemandecko" || k === "fireman") return "fireman-decko";
+  if (k === "loki") return "loki";
+  if (k === "luna") return "luna";
+  if (k === "heimdall") return "heimdall";
+  if (k === "freya") return "freya";
+  return "generic";
+}
+function detectAgent(sessionAgentKey, headingText) {
+  if (sessionAgentKey) return normaliseAgentKey(sessionAgentKey);
+  const match = AGENT_NAME_RE.exec(headingText);
+  if (match?.[1]) return normaliseAgentKey(match[1]);
+  return "generic";
+}
+function detectVerdictType(headingText) {
+  return headingText.toLowerCase().includes("qa verdict") ? "qa-verdict" : "handoff";
+}
+function extractHeadingText(text) {
+  const match = VERDICT_HEADING_RE.exec(text);
+  if (!match) return "";
+  const lineStart = text.lastIndexOf("\n", match.index) + 1;
+  const lineEnd = text.indexOf("\n", match.index);
+  return text.slice(lineStart, lineEnd === -1 ? void 0 : lineEnd).replace(/^#+\s*/, "");
+}
+function renderPledgeWithLinks(pledge, links) {
+  if (Object.keys(links).length === 0) return pledge;
+  const terms = Object.keys(links).sort((a, b) => b.length - a.length);
+  const escaped = terms.map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+  const regex = new RegExp(`(${escaped.join("|")})`, "g");
+  const parts = pledge.split(regex);
+  return parts.map(
+    (part, i) => links[part] ? /* @__PURE__ */ jsx14(
+      "a",
+      {
+        href: links[part],
+        target: "_blank",
+        rel: "noopener noreferrer",
+        className: "nvi-norse-link",
+        "aria-label": `${part} (opens Wikipedia in new tab)`,
+        children: part
+      },
+      i
+    ) : part
+  );
+}
+function renderInline(text) {
+  const parts = text.split(/(\*\*[^*]+\*\*|`[^`]+`)/);
+  if (parts.length === 1) return text;
+  return parts.map((part, i) => {
+    if (part.startsWith("**") && part.endsWith("**")) {
+      return /* @__PURE__ */ jsx14("strong", { children: part.slice(2, -2) }, i);
+    }
+    if (part.startsWith("`") && part.endsWith("`")) {
+      return /* @__PURE__ */ jsx14("code", { className: "nvi-md-inline-code", children: part.slice(1, -1) }, i);
+    }
+    return part;
+  });
+}
+function renderMarkdown(text) {
+  const lines = text.split("\n");
+  const nodes = [];
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i] ?? "";
+    if (line.startsWith("```")) {
+      const codeLines = [];
+      i++;
+      while (i < lines.length && !(lines[i] ?? "").startsWith("```")) {
+        codeLines.push(lines[i] ?? "");
+        i++;
+      }
+      nodes.push(
+        /* @__PURE__ */ jsx14("pre", { className: "nvi-md-code", children: /* @__PURE__ */ jsx14("code", { children: codeLines.join("\n") }) }, `code-${i}`)
+      );
+      i++;
+      continue;
+    }
+    if (/^# /.test(line)) {
+      nodes.push(
+        /* @__PURE__ */ jsx14("h1", { className: "nvi-md-h1", children: renderInline(line.slice(2)) }, `h1-${i}`)
+      );
+      i++;
+      continue;
+    }
+    if (/^## /.test(line)) {
+      nodes.push(
+        /* @__PURE__ */ jsx14("h2", { className: "nvi-md-h2", children: renderInline(line.slice(3)) }, `h2-${i}`)
+      );
+      i++;
+      continue;
+    }
+    if (/^### /.test(line)) {
+      nodes.push(
+        /* @__PURE__ */ jsx14("h3", { className: "nvi-md-h3", children: renderInline(line.slice(4)) }, `h3-${i}`)
+      );
+      i++;
+      continue;
+    }
+    if (/^---+$/.test(line.trim())) {
+      nodes.push(/* @__PURE__ */ jsx14("hr", { className: "nvi-md-hr", "aria-hidden": "true" }, `hr-${i}`));
+      i++;
+      continue;
+    }
+    if (/^- \[[ xX]\] /.test(line)) {
+      const items = [];
+      while (i < lines.length && /^- \[[ xX]\] /.test(lines[i] ?? "")) {
+        const l = lines[i] ?? "";
+        const checked = /^- \[[xX]\] /.test(l);
+        items.push({ checked, text: l.replace(/^- \[[ xX]\] /, "") });
+        i++;
+      }
+      nodes.push(
+        /* @__PURE__ */ jsx14("ul", { className: "nvi-md-ul nvi-md-checklist", children: items.map(({ checked, text: text2 }, j) => /* @__PURE__ */ jsx14("li", { className: checked ? "nvi-md-checked" : "nvi-md-unchecked", children: renderInline(text2) }, j)) }, `check-${i}`)
+      );
+      continue;
+    }
+    if (/^[-*+] /.test(line)) {
+      const items = [];
+      while (i < lines.length && /^[-*+] /.test(lines[i] ?? "") && !/^- \[[ xX]\] /.test(lines[i] ?? "")) {
+        items.push((lines[i] ?? "").replace(/^[-*+] /, ""));
+        i++;
+      }
+      nodes.push(
+        /* @__PURE__ */ jsx14("ul", { className: "nvi-md-ul", children: items.map((item, j) => /* @__PURE__ */ jsx14("li", { children: renderInline(item) }, j)) }, `ul-${i}`)
+      );
+      continue;
+    }
+    if (/^\d+\. /.test(line)) {
+      const items = [];
+      while (i < lines.length && /^\d+\. /.test(lines[i] ?? "")) {
+        items.push((lines[i] ?? "").replace(/^\d+\. /, ""));
+        i++;
+      }
+      nodes.push(
+        /* @__PURE__ */ jsx14("ol", { className: "nvi-md-ol", children: items.map((item, j) => /* @__PURE__ */ jsx14("li", { children: renderInline(item) }, j)) }, `ol-${i}`)
+      );
+      continue;
+    }
+    if (!line.trim()) {
+      i++;
+      continue;
+    }
+    const paraLines = [];
+    while (i < lines.length && (lines[i] ?? "").trim() && !/^#{1,3} /.test(lines[i] ?? "") && !(lines[i] ?? "").startsWith("```") && !/^[-*+] /.test(lines[i] ?? "") && !/^\d+\. /.test(lines[i] ?? "") && !/^---+$/.test((lines[i] ?? "").trim())) {
+      paraLines.push(lines[i] ?? "");
+      i++;
+    }
+    if (paraLines.length > 0) {
+      nodes.push(
+        /* @__PURE__ */ jsx14("p", { className: "nvi-md-p", children: renderInline(paraLines.join(" ")) }, `p-${i}`)
+      );
+    }
+  }
+  return nodes;
+}
+function NorseVerdictInscription({ text, agentKey, agentName }) {
+  const headingText = extractHeadingText(text);
+  const resolvedAgentKey = detectAgent(agentKey ?? agentName, headingText);
+  const verdictType = detectVerdictType(headingText);
+  const config = AGENT_VERDICT_CONFIG[resolvedAgentKey];
+  const subtitle = verdictType === "qa-verdict" ? `${config.roleLabel} \u2014 QA Verdict Delivered` : `${config.roleLabel} \u2014 Handoff Complete`;
+  const bodyNodes = renderMarkdown(text);
+  return /* @__PURE__ */ jsxs14(
+    "article",
+    {
+      className: "nvi-shell",
+      role: "article",
+      "aria-label": `Agent verdict: ${headingText}`,
+      style: { "--agent-accent": config.accentToken },
+      children: [
+        /* @__PURE__ */ jsxs14("div", { className: "nvi-rune-band-top", "aria-hidden": "true", children: [
+          /* @__PURE__ */ jsx14("div", { className: "nvi-rune-row", children: RUNE_ROW_TOP2 }),
+          /* @__PURE__ */ jsx14("div", { className: "nvi-rune-row", children: RUNE_ROW_BTM2 })
+        ] }),
+        /* @__PURE__ */ jsxs14("div", { className: "nvi-agent-header", children: [
+          /* @__PURE__ */ jsx14(
+            "div",
+            {
+              className: "nvi-glyph",
+              role: "img",
+              "aria-label": `${config.runeName} rune \u2014 ${config.runeMeaning}`,
+              children: config.rune
+            }
+          ),
+          /* @__PURE__ */ jsxs14("div", { className: "nvi-agent-identity", children: [
+            /* @__PURE__ */ jsx14("span", { className: "nvi-agent-name", children: config.runeName }),
+            /* @__PURE__ */ jsx14("span", { className: "nvi-arch-title", children: config.archTitle }),
+            /* @__PURE__ */ jsx14("span", { className: "nvi-arch-subtitle", children: subtitle })
+          ] })
+        ] }),
+        /* @__PURE__ */ jsx14("div", { className: "nvi-divider", "aria-hidden": "true", children: "\u16A0 \u16A2 \u16A6 \u16DF \u16DE \u16DC \u16DA \u16DF \u16A6 \u16A2 \u16A0" }),
+        /* @__PURE__ */ jsx14("div", { className: "nvi-body", children: bodyNodes }),
+        /* @__PURE__ */ jsxs14("div", { className: "nvi-seal", children: [
+          /* @__PURE__ */ jsxs14("p", { className: "nvi-seal-pledge", "aria-label": "Agent pledge", children: [
+            "\u201C",
+            renderPledgeWithLinks(config.pledge, config.pledgeLinks),
+            "\u201D"
+          ] }),
+          /* @__PURE__ */ jsxs14("p", { className: "nvi-seal-futhark", "aria-hidden": "true", children: [
+            "\u16A0\u16A2\u16A6 \u2014 ",
+            config.runeMeaning,
+            " \u2014 \u16A6\u16A2\u16A0"
+          ] })
+        ] }),
+        /* @__PURE__ */ jsxs14("div", { className: "nvi-rune-band-bottom", "aria-hidden": "true", children: [
+          /* @__PURE__ */ jsx14("div", { className: "nvi-rune-row", children: RUNE_ROW_BTM2 }),
+          /* @__PURE__ */ jsx14("div", { className: "nvi-rune-row", children: RUNE_ROW_TOP2 })
+        ] })
+      ]
+    }
+  );
+}
+
+// src/ui/components/DecreeBlock.tsx
+import { useState as useState13 } from "react";
+import { Fragment as Fragment4, jsx as jsx15, jsxs as jsxs15 } from "react/jsx-runtime";
+var DECREE_START_RE = /᛭᛭᛭\s*DECREE COMPLETE\s*᛭᛭᛭/;
+var DECREE_END_RE = /᛭᛭᛭\s*END DECREE\s*᛭᛭᛭/;
+function isDecreeBlock(text) {
+  if (DECREE_START_RE.test(text) && DECREE_END_RE.test(text)) return true;
+  if (/╔/.test(text) && /DECREE/i.test(text)) return true;
+  if (/(Decree|DECREE)/i.test(text) && /(VERDICT|Verdict|ISSUE|Issue)/i.test(text)) return true;
+  return false;
+}
+function stripEmoji(s) {
+  return s.replace(/[❌✅🔴🟢⚠️🚫✔️❎]/g, "").replace(/[\u{1F300}-\u{1FAFF}]/gu, "").trim();
+}
+function normaliseVerdict(raw) {
+  const cleaned = stripEmoji(raw).toUpperCase().trim();
+  if (cleaned === "COMPLETE" || cleaned === "SUCCESS") return "DONE";
+  return cleaned;
+}
+function extractAgentFromBoxTitle(text) {
+  const m = text.match(/(?:FIREMAN\s*DECKO|FIREMANDECKO)/i);
+  if (m) return "firemandecko";
+  if (/\bLOKI\b/i.test(text)) return "loki";
+  if (/\bLUNA\b/i.test(text)) return "luna";
+  if (/\bHEIMDALL\b/i.test(text)) return "heimdall";
+  if (/\bFREYA\b/i.test(text)) return "freya";
+  return "";
+}
+function parseCheckLines(text) {
+  const checks = [];
+  const checkRe = /\b(tsc|build|vitest|playwright|owasp|requireauth|secrets|wireframes|interactions|accessibility|product-brief|acceptance-criteria|backlog)\b[:\s]+([^\n║╝╚╣]+)/gi;
+  let m;
+  while ((m = checkRe.exec(text)) !== null) {
+    const name = m[1].toLowerCase();
+    let rawVal = m[2].trim();
+    rawVal = rawVal.replace(/[║╝╚╣═╗╔╠╬╩╦╟─│┌┐└┘├┤┬┴┼]+/g, "").trim();
+    rawVal = rawVal.replace(/✅/g, "PASS").replace(/❌/g, "FAIL").trim();
+    if (rawVal) checks.push({ name, value: rawVal });
+  }
+  return checks;
+}
+function parseBoxDrawingDecree(text) {
+  if (!/╔/.test(text) || !/DECREE/i.test(text)) return null;
+  let issue = "";
+  let verdict = "";
+  let pr = null;
+  const summary = [];
+  const seal = "";
+  const signoff = "";
+  const issueM = text.match(/Issue:?\s*#?(\d+)/i);
+  if (issueM) issue = `#${issueM[1]}`;
+  const verdictM = text.match(/Verdict:?\s*([\w❌✅🔴🟢 ]+)/i);
+  if (verdictM) verdict = normaliseVerdict(verdictM[1] ?? "");
+  const prM = text.match(/PR:?\s*(https:\/\/\S+|#\d+)/i);
+  if (prM) pr = prM[1] ?? null;
+  const agentKey = extractAgentFromBoxTitle(text);
+  const checks = parseCheckLines(text);
+  if (!issue && !verdict) return null;
+  return { issue, verdict, pr, summary, checks, seal, signoff, agentKey, format: "box-drawing" };
+}
+function parseFreeformDecree(text) {
+  if (!/(Decree|DECREE)/i.test(text)) return null;
+  if (!/(VERDICT|Verdict|ISSUE|Issue)/i.test(text)) return null;
+  let issue = "";
+  let verdict = "";
+  let pr = null;
+  const summary = [];
+  const seal = "";
+  const signoff = "";
+  const issueM = text.match(/(?:ISSUE|Issue):?\s*#?(\d+)/i);
+  if (issueM) issue = `#${issueM[1]}`;
+  const verdictM = text.match(/(?:VERDICT|Verdict|STATUS|Status):?\s*\*{0,2}([\w❌✅🔴🟢 ]+)\*{0,2}/i);
+  if (verdictM) verdict = normaliseVerdict(verdictM[1] ?? "");
+  const prM = text.match(/PR:?\s*(https:\/\/\S+|#\d+)/i);
+  if (prM) pr = prM[1] ?? null;
+  const agentKey = extractAgentFromBoxTitle(text);
+  const checks = parseCheckLines(text);
+  if (!issue && !verdict) return null;
+  return { issue, verdict, pr, summary, checks, seal, signoff, agentKey, format: "freeform" };
+}
+function parseCanonicalDecree(text) {
+  const startMatch = DECREE_START_RE.exec(text);
+  const endMatch = DECREE_END_RE.exec(text);
+  if (!startMatch || !endMatch) return null;
+  const content = text.slice(startMatch.index + startMatch[0].length, endMatch.index).trim();
+  const normalized = content.replace(/([^\n])(?=(?:ISSUE|VERDICT|PR|SUMMARY|CHECKS|SEAL|SIGNOFF):)/g, "$1\n").replace(/^(SUMMARY:|CHECKS:)(?=- )/gm, "$1\n");
+  const lines = normalized.split("\n");
+  let issue = "";
+  let verdict = "";
+  let pr = null;
+  const summary = [];
+  const checks = [];
+  let seal = "";
+  let signoff = "";
+  let inSection = "none";
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    if (trimmed.startsWith("ISSUE:")) {
+      issue = trimmed.replace(/^ISSUE:\s*/, "").trim();
+      inSection = "none";
+    } else if (trimmed.startsWith("VERDICT:")) {
+      verdict = trimmed.replace(/^VERDICT:\s*/, "").trim();
+      inSection = "none";
+    } else if (trimmed.startsWith("PR:")) {
+      const raw = trimmed.replace(/^PR:\s*/, "").trim();
+      pr = raw === "N/A" || raw === "n/a" ? null : raw;
+      inSection = "none";
+    } else if (trimmed === "SUMMARY:") {
+      inSection = "summary";
+    } else if (trimmed === "CHECKS:") {
+      inSection = "checks";
+    } else if (trimmed.startsWith("SEAL:")) {
+      seal = trimmed.replace(/^SEAL:\s*/, "").trim();
+      inSection = "none";
+    } else if (trimmed.startsWith("SIGNOFF:")) {
+      signoff = trimmed.replace(/^SIGNOFF:\s*/, "").trim();
+      inSection = "none";
+    } else if (inSection === "summary" && trimmed.startsWith("-")) {
+      summary.push(trimmed.replace(/^-\s*/, ""));
+    } else if (inSection === "checks" && trimmed.startsWith("-")) {
+      const checkLine = trimmed.replace(/^-\s*/, "");
+      const colon = checkLine.indexOf(":");
+      if (colon !== -1) {
+        checks.push({ name: checkLine.slice(0, colon).trim(), value: checkLine.slice(colon + 1).trim() });
+      } else {
+        checks.push({ name: checkLine, value: "" });
+      }
+    }
+  }
+  const agentNameMatch = /^(\w+)/.exec(seal);
+  const agentKey = agentNameMatch?.[1]?.toLowerCase() ?? "";
+  return { issue, verdict, pr, summary, checks, seal, signoff, agentKey, format: "canonical" };
+}
+function parseDecree(text) {
+  const canonical = parseCanonicalDecree(text);
+  if (canonical) return canonical;
+  const boxDrawing = parseBoxDrawingDecree(text);
+  if (boxDrawing) return boxDrawing;
+  const freeform = parseFreeformDecree(text);
+  if (freeform) return freeform;
+  return { issue: "", verdict: "", pr: null, summary: [], checks: [], seal: "", signoff: "", agentKey: "", format: "freeform" };
+}
+var keyframes = `
+@keyframes decree-gold-glow {
+  0%, 100% { box-shadow: 0 0 8px 0 rgba(201,146,10,0.30), 0 0 24px 0 rgba(201,146,10,0.12); }
+  50%       { box-shadow: 0 0 16px 2px rgba(240,180,41,0.50), 0 0 40px 4px rgba(240,180,41,0.18); }
+}
+@keyframes decree-red-glow {
+  0%, 100% { box-shadow: 0 0 8px 0 rgba(239,68,68,0.30), 0 0 24px 0 rgba(239,68,68,0.12); }
+  50%       { box-shadow: 0 0 16px 2px rgba(239,68,68,0.55), 0 0 40px 4px rgba(239,68,68,0.20); }
+}
+@keyframes decree-shake {
+  0%, 100% { transform: translateX(0); }
+  15%       { transform: translateX(-4px); }
+  30%       { transform: translateX(4px); }
+  45%       { transform: translateX(-3px); }
+  60%       { transform: translateX(3px); }
+  75%       { transform: translateX(-2px); }
+  90%       { transform: translateX(2px); }
+}
+`;
+function DecreeBlock({ text, agentKey: jobAgentKey, onAvatarClick }) {
+  const { theme } = useTheme();
+  const decree = parseDecree(text);
+  const agentKey = decree.agentKey || jobAgentKey || "";
+  const agentName = AGENT_NAMES[agentKey] ?? decree.agentKey ?? "Agent";
+  const agentTitle = AGENT_TITLES[agentKey] ?? "";
+  const agentRunes = AGENT_RUNE_NAMES[agentKey] ?? "";
+  const agentColor = AGENT_COLORS[agentKey] ?? "#c9920a";
+  const avatarMap = theme === "light" ? AGENT_LIGHT_AVATARS : AGENT_AVATARS;
+  const avatar = avatarMap[agentKey];
+  const [summaryOpen, setSummaryOpen] = useState13(true);
+  const [checksOpen, setChecksOpen] = useState13(true);
+  const isPass = /^(PASS|DONE|DELIVERED|APPROVED|SECURED)$/i.test(decree.verdict);
+  const isFail = /^FAIL$/i.test(decree.verdict);
+  const verdictColor = isFail ? "var(--error-strong)" : isPass ? "var(--gold-bright)" : "var(--text-rune)";
+  const glowAnimation = isFail ? "decree-red-glow 2.5s ease-in-out infinite" : isPass ? "decree-gold-glow 3s ease-in-out infinite" : "none";
+  const shakeAnimation = isFail ? "decree-shake 0.6s ease-out 0.1s 1" : "none";
+  const borderColor = isFail ? "var(--error-strong)" : agentColor;
+  const isFallback = decree.format !== "canonical";
+  return /* @__PURE__ */ jsxs15(Fragment4, { children: [
+    /* @__PURE__ */ jsx15("style", { children: keyframes }),
+    /* @__PURE__ */ jsxs15(
+      "div",
+      {
+        className: "decree-card",
+        style: {
+          borderLeftColor: borderColor,
+          borderLeftWidth: "3px",
+          animation: `${glowAnimation}, ${shakeAnimation}`,
+          position: "relative"
+        },
+        "aria-label": `Decree from ${agentName}: verdict ${decree.verdict}`,
+        children: [
+          isFallback && /* @__PURE__ */ jsx15(
+            "div",
+            {
+              style: {
+                position: "absolute",
+                top: "6px",
+                right: "8px",
+                fontSize: "9px",
+                color: "var(--text-void)",
+                background: theme === "light" ? "rgba(100, 80, 45, 0.12)" : "rgba(42,42,62,0.6)",
+                padding: "1px 5px",
+                borderRadius: "3px",
+                fontFamily: "monospace",
+                letterSpacing: "0.5px"
+              },
+              "aria-label": `Decree format: ${decree.format} (fallback parsed)`,
+              children: decree.format
+            }
+          ),
+          /* @__PURE__ */ jsxs15("div", { className: "decree-card-header", children: [
+            /* @__PURE__ */ jsxs15("div", { className: "decree-card-identity", children: [
+              avatar && /* @__PURE__ */ jsx15(
+                "button",
+                {
+                  className: "decree-card-avatar-btn",
+                  onClick: () => onAvatarClick?.(agentKey),
+                  "aria-label": `View ${agentName} profile`,
+                  title: `View ${agentName} profile`,
+                  children: /* @__PURE__ */ jsx15(
+                    "img",
+                    {
+                      className: "decree-card-avatar",
+                      src: avatar,
+                      alt: agentName,
+                      style: { borderColor: agentColor }
+                    }
+                  )
+                }
+              ),
+              /* @__PURE__ */ jsxs15("div", { className: "decree-card-agent-info", children: [
+                /* @__PURE__ */ jsx15("span", { className: "decree-card-agent-name", style: { color: agentColor }, children: agentName }),
+                agentTitle && /* @__PURE__ */ jsx15("span", { className: "decree-card-agent-title", children: agentTitle }),
+                agentRunes && /* @__PURE__ */ jsx15(
+                  "span",
+                  {
+                    className: "decree-card-agent-runes",
+                    "aria-hidden": "true",
+                    style: {
+                      fontSize: "11px",
+                      color: agentColor,
+                      opacity: 0.75,
+                      letterSpacing: "2px"
+                    },
+                    children: agentRunes
+                  }
+                )
+              ] })
+            ] }),
+            /* @__PURE__ */ jsxs15("div", { className: "decree-card-meta", children: [
+              /* @__PURE__ */ jsxs15("div", { className: "decree-card-title", children: [
+                /* @__PURE__ */ jsx15("span", { className: "decree-card-rune-delim", "aria-hidden": "true", children: "\u16ED\u16ED\u16ED" }),
+                " ",
+                "DECREE COMPLETE",
+                " ",
+                /* @__PURE__ */ jsx15("span", { className: "decree-card-rune-delim", "aria-hidden": "true", children: "\u16ED\u16ED\u16ED" })
+              ] }),
+              decree.issue && /* @__PURE__ */ jsxs15("span", { className: "decree-card-issue", "aria-label": `Issue ${decree.issue}`, children: [
+                "Issue ",
+                decree.issue
+              ] })
+            ] })
+          ] }),
+          /* @__PURE__ */ jsxs15(
+            "div",
+            {
+              className: "decree-card-verdict-row",
+              "aria-label": `Verdict: ${decree.verdict}`,
+              style: {
+                borderTop: `1px solid ${isFail ? "rgba(239,68,68,0.25)" : "rgba(201,146,10,0.20)"}`,
+                borderBottom: `1px solid ${isFail ? "rgba(239,68,68,0.25)" : "rgba(201,146,10,0.20)"}`,
+                padding: "10px 14px",
+                display: "flex",
+                alignItems: "center",
+                gap: "12px",
+                background: isFail ? "rgba(239,68,68,0.06)" : "rgba(201,146,10,0.04)"
+              },
+              children: [
+                /* @__PURE__ */ jsx15("span", { className: "decree-card-verdict-label", style: { fontSize: "10px", letterSpacing: "1.5px", color: "var(--text-void)", textTransform: "uppercase" }, children: "VERDICT" }),
+                /* @__PURE__ */ jsx15(
+                  "span",
+                  {
+                    className: "decree-card-verdict-value",
+                    style: {
+                      color: verdictColor,
+                      fontSize: "22px",
+                      fontWeight: 700,
+                      letterSpacing: "2px",
+                      textShadow: isFail ? "0 0 12px rgba(239,68,68,0.6)" : isPass ? "0 0 12px rgba(240,180,41,0.5)" : "none"
+                    },
+                    children: decree.verdict
+                  }
+                ),
+                decree.pr && /* @__PURE__ */ jsx15(
+                  "a",
+                  {
+                    className: "decree-card-pr-link",
+                    href: decree.pr,
+                    target: "_blank",
+                    rel: "noopener noreferrer",
+                    "aria-label": `Pull request: ${decree.pr}`,
+                    style: { marginLeft: "auto" },
+                    children: "PR \u2197"
+                  }
+                )
+              ]
+            }
+          ),
+          decree.summary.length > 0 && /* @__PURE__ */ jsxs15("div", { className: `decree-card-section${summaryOpen ? " open" : ""}`, children: [
+            /* @__PURE__ */ jsxs15(
+              "button",
+              {
+                className: "decree-card-section-header",
+                onClick: () => setSummaryOpen((o) => !o),
+                "aria-expanded": summaryOpen,
+                children: [
+                  /* @__PURE__ */ jsx15("span", { className: "decree-card-section-glyph", "aria-hidden": "true", children: "\u16CA" }),
+                  /* @__PURE__ */ jsx15("span", { className: "decree-card-section-title", children: "SUMMARY" }),
+                  /* @__PURE__ */ jsx15("span", { className: "ep-group-chevron", "aria-hidden": "true", children: "\u203A" })
+                ]
+              }
+            ),
+            summaryOpen && /* @__PURE__ */ jsx15("ul", { className: "decree-card-list", "aria-label": "Decree summary", children: decree.summary.map((item, i) => /* @__PURE__ */ jsx15("li", { className: "decree-card-list-item", children: item }, i)) })
+          ] }),
+          decree.checks.length > 0 && /* @__PURE__ */ jsxs15("div", { className: `decree-card-section${checksOpen ? " open" : ""}`, children: [
+            /* @__PURE__ */ jsxs15(
+              "button",
+              {
+                className: "decree-card-section-header",
+                onClick: () => setChecksOpen((o) => !o),
+                "aria-expanded": checksOpen,
+                children: [
+                  /* @__PURE__ */ jsx15("span", { className: "decree-card-section-glyph", "aria-hidden": "true", children: "\u16CF" }),
+                  /* @__PURE__ */ jsx15("span", { className: "decree-card-section-title", children: "CHECKS" }),
+                  /* @__PURE__ */ jsx15("span", { className: "ep-group-chevron", "aria-hidden": "true", children: "\u203A" })
+                ]
+              }
+            ),
+            checksOpen && /* @__PURE__ */ jsx15("ul", { className: "decree-card-list decree-card-checks", "aria-label": "Decree checks", children: decree.checks.map((check, i) => {
+              const isCheckPass = /^(PASS|COMPLETE|SECURED|DELIVERED|APPROVED|DONE)/i.test(check.value);
+              const isCheckFail = /^(FAIL|FINDINGS)/i.test(check.value);
+              const checkColor = isCheckFail ? "var(--error-strong)" : isCheckPass ? "var(--success-strong)" : "var(--text-rune)";
+              const badgeBg = isCheckFail ? "rgba(239,68,68,0.15)" : isCheckPass ? "rgba(34,197,94,0.12)" : "rgba(96,96,112,0.15)";
+              return /* @__PURE__ */ jsxs15("li", { className: "decree-card-check-item", children: [
+                /* @__PURE__ */ jsx15("span", { className: "decree-card-check-name", style: { fontFamily: "monospace", fontSize: "12px" }, children: check.name }),
+                /* @__PURE__ */ jsx15(
+                  "span",
+                  {
+                    className: "decree-card-check-value",
+                    style: {
+                      color: checkColor,
+                      background: badgeBg,
+                      padding: "1px 7px",
+                      borderRadius: "4px",
+                      fontSize: "11px",
+                      fontWeight: 600,
+                      letterSpacing: "0.8px"
+                    },
+                    children: check.value
+                  }
+                )
+              ] }, i);
+            }) })
+          ] }),
+          /* @__PURE__ */ jsxs15(
+            "div",
+            {
+              className: "decree-card-footer",
+              "aria-label": "Decree seal and signoff",
+              style: {
+                borderTop: `1px solid rgba(201,146,10,0.20)`,
+                marginTop: "4px",
+                paddingTop: "10px"
+              },
+              children: [
+                /* @__PURE__ */ jsx15(
+                  "div",
+                  {
+                    className: "decree-card-seal-band",
+                    "aria-hidden": "true",
+                    style: { color: agentColor, opacity: 0.5, letterSpacing: "4px", fontSize: "12px", textAlign: "center" },
+                    children: "\u16ED \xB7 \u16ED \xB7 \u16ED"
+                  }
+                ),
+                decree.seal && /* @__PURE__ */ jsx15(
+                  "div",
+                  {
+                    className: "decree-card-seal",
+                    style: {
+                      fontStyle: "italic",
+                      fontSize: "12px",
+                      color: "var(--gold-bright)",
+                      textAlign: "center",
+                      padding: "4px 0",
+                      letterSpacing: "0.5px"
+                    },
+                    children: decree.seal
+                  }
+                ),
+                decree.signoff && /* @__PURE__ */ jsxs15(
+                  "div",
+                  {
+                    className: "decree-card-signoff",
+                    style: {
+                      fontStyle: "italic",
+                      fontSize: "11px",
+                      color: "var(--text-rune)",
+                      textAlign: "center",
+                      padding: "2px 0 4px"
+                    },
+                    children: [
+                      "\u201C",
+                      decree.signoff,
+                      "\u201D"
+                    ]
+                  }
+                ),
+                /* @__PURE__ */ jsx15(
+                  "div",
+                  {
+                    className: "decree-card-seal-band",
+                    "aria-hidden": "true",
+                    style: { color: agentColor, opacity: 0.5, letterSpacing: "4px", fontSize: "12px", textAlign: "center" },
+                    children: "\u16ED \xB7 \u16ED \xB7 \u16ED"
+                  }
+                )
+              ]
+            }
+          )
+        ]
+      }
+    )
+  ] });
+}
+
+// src/ui/components/LogViewer.tsx
+import { Fragment as Fragment5, jsx as jsx16, jsxs as jsxs16 } from "react/jsx-runtime";
+function collapseKey(entry) {
+  if (entry.type === "tool-use" && entry.toolName) {
+    return `tool-use:${entry.toolName}`;
+  }
+  if (entry.type === "system" && entry.detail) {
+    return `system:${entry.detail}`;
+  }
+  return null;
+}
+function groupConsecutiveEntries(entries) {
+  const result = [];
+  let i = 0;
+  while (i < entries.length) {
+    const entry = entries[i];
+    if (entry.type === "entrypoint-header" && /^Starting (Claude Code|Hermes Agent)$/.test(entry.text ?? "")) {
+      const metaEntries = [];
+      let k = i + 1;
+      while (k < entries.length) {
+        const next = entries[k];
+        if (next.type === "raw" && /^(Model|Session|Working directory|Branch):\s*/.test(next.text ?? "")) {
+          metaEntries.push(next);
+          k++;
+        } else {
+          break;
+        }
+      }
+      result.push({ _startup: true, key: `startup-${entry.id}`, headerEntry: entry, metaEntries });
+      i = k;
+      continue;
+    }
+    const key = collapseKey(entry);
+    if (!key) {
+      result.push(entry);
+      i++;
+      continue;
+    }
+    let j = i + 1;
+    while (j < entries.length && collapseKey(entries[j]) === key) {
+      j++;
+    }
+    const count = j - i;
+    if (count === 1) {
+      result.push(entry);
+    } else {
+      result.push({ _collapsed: true, key, count, representative: entries[j - 1] });
+    }
+    i = j;
+  }
+  return result;
+}
+function SessionHeader({ job, isPinned: isPinned2 = false, onTogglePin, showPin = true, replayedFromCache = false, onCancelJob }) {
+  const displayTitle = resolveSessionTitle(job);
+  const [confirmingUnpin, setConfirmingUnpin] = useState14(false);
+  const { theme } = useTheme();
+  const statusColorMap = theme === "light" ? STATUS_COLORS_LIGHT : STATUS_COLORS;
+  useEffect10(() => {
+    setConfirmingUnpin(false);
+  }, [isPinned2]);
+  return /* @__PURE__ */ jsxs16(
+    "div",
+    {
+      className: "content-header",
+      "aria-label": `Active session: ${displayTitle}`,
+      children: [
+        /* @__PURE__ */ jsxs16("div", { className: "session-title-block", children: [
+          /* @__PURE__ */ jsx16(
+            "span",
+            {
+              className: "session-title-primary",
+              title: displayTitle,
+              children: displayTitle
+            }
+          ),
+          /* @__PURE__ */ jsxs16("div", { className: "session-meta-row", children: [
+            /* @__PURE__ */ jsx16(
+              "span",
+              {
+                className: "session-agent-badge",
+                "aria-label": `Agent: ${job.agentName}`,
+                children: job.agentName
+              }
+            ),
+            /* @__PURE__ */ jsxs16("span", { className: "session-step-tag", children: [
+              "Step ",
+              job.step
+            ] }),
+            /* @__PURE__ */ jsxs16(
+              "span",
+              {
+                className: "session-id-chip",
+                title: job.sessionId,
+                role: "text",
+                "aria-label": `Session ID: ${job.sessionId}`,
+                children: [
+                  /* @__PURE__ */ jsx16("span", { className: "session-id-label", children: "Session:" }),
+                  " ",
+                  job.sessionId
+                ]
+              }
+            )
+          ] })
+        ] }),
+        /* @__PURE__ */ jsxs16("span", { className: "header-badges", children: [
+          job.status === "running" && onCancelJob ? /* @__PURE__ */ jsxs16(
+            "button",
+            {
+              className: `header-action-btn header-action-btn--cancel${job.status === "running" ? " pulse" : ""}`,
+              title: "Click to cancel this job",
+              "aria-label": "Cancel running job",
+              onClick: () => onCancelJob(job.sessionId, job),
+              children: [
+                /* @__PURE__ */ jsx16(StatusIconSvg, { status: job.status }),
+                /* @__PURE__ */ jsx16("span", { children: "Cancel" })
+              ]
+            }
+          ) : /* @__PURE__ */ jsx16(
+            "span",
+            {
+              className: `job-status-icon-btn${job.status === "running" ? " pulse" : ""}`,
+              style: { color: statusColorMap[job.status] },
+              title: `Job status: ${STATUS_LABELS[job.status]}`,
+              "aria-label": `Job status: ${STATUS_LABELS[job.status]}`,
+              children: /* @__PURE__ */ jsx16(StatusIconSvg, { status: job.status })
+            }
+          ),
+          replayedFromCache && /* @__PURE__ */ jsx16(
+            "span",
+            {
+              className: "header-action-btn replayed-cache",
+              title: "Pod cleaned up \u2014 showing cached logs",
+              "aria-label": "Replayed from cache",
+              children: "\u16D7 Cached"
+            }
+          ),
+          /* @__PURE__ */ jsx16(CopySessionIdButton, { sessionId: job.sessionId }),
+          showPin && onTogglePin && (confirmingUnpin ? /* @__PURE__ */ jsxs16(
+            "button",
+            {
+              className: "header-action-btn header-action-btn--confirm",
+              onClick: () => {
+                onTogglePin();
+                setConfirmingUnpin(false);
+              },
+              onBlur: () => setConfirmingUnpin(false),
+              title: "Confirm: remove from Odin\\u2019s memory",
+              "aria-label": "Confirm unpin",
+              children: [
+                /* @__PURE__ */ jsx16("span", { children: "\u2715" }),
+                /* @__PURE__ */ jsx16("span", { children: "Unpin" })
+              ]
+            }
+          ) : /* @__PURE__ */ jsxs16(
+            "button",
+            {
+              className: `header-action-btn${isPinned2 ? " header-action-btn--pinned" : ""}`,
+              onClick: () => {
+                if (isPinned2) {
+                  setConfirmingUnpin(true);
+                } else {
+                  onTogglePin();
+                }
+              },
+              title: isPinned2 ? "Unpin from Odin\u2019s memory" : "Pin to Odin\u2019s memory",
+              "aria-label": isPinned2 ? "Unpin from Odin\u2019s memory" : "Pin to Odin\u2019s memory",
+              "aria-pressed": isPinned2,
+              children: [
+                /* @__PURE__ */ jsx16(PinIcon, { filled: isPinned2 }),
+                /* @__PURE__ */ jsx16("span", { children: isPinned2 ? "Pinned" : "Pin" })
+              ]
+            }
+          )),
+          job.status === "succeeded" && /* @__PURE__ */ jsx16(DownloadSessionButton, { sessionId: job.sessionId })
+        ] })
+      ]
+    }
+  );
+}
+function LogViewer({ entries, activeJob, isFixture, isTtlExpired, isNodeUnreachable, streamError, onSetSpeed, isPinned: isPinned2, onTogglePin, onAvatarClick, replayedFromCache, isConnecting, isPodStarting, onCancelJob }) {
+  const termRef = useRef7(null);
+  const [fixtureSpeed, setFixtureSpeed] = useState14(1);
+  const [fixturePaused, setFixturePaused] = useState14(false);
+  const [autoScroll, setAutoScroll] = useState14(true);
+  const programmaticScrollRef = useRef7(false);
+  const lastEntryId = entries[entries.length - 1]?.id;
+  useEffect10(() => {
+    if (autoScroll && termRef.current) {
+      programmaticScrollRef.current = true;
+      requestAnimationFrame(() => {
+        if (termRef.current) {
+          termRef.current.scrollTop = termRef.current.scrollHeight;
+        }
+      });
+    }
+  }, [entries.length, lastEntryId, autoScroll]);
+  useEffect10(() => {
+    setAutoScroll(true);
+    programmaticScrollRef.current = false;
+  }, [activeJob?.sessionId]);
+  const handleScroll = useCallback6(() => {
+    if (programmaticScrollRef.current) {
+      programmaticScrollRef.current = false;
+      return;
+    }
+    const el = termRef.current;
+    if (!el) return;
+    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 40;
+    if (atBottom) {
+      setAutoScroll(true);
+    } else {
+      setAutoScroll(false);
+    }
+  }, []);
+  const toggleAutoScroll = useCallback6(() => {
+    setAutoScroll((prev) => {
+      if (!prev && termRef.current) {
+        programmaticScrollRef.current = true;
+        termRef.current.scrollTop = termRef.current.scrollHeight;
+      }
+      return !prev;
+    });
+  }, []);
+  const lastAssistantTextId = useMemo(() => {
+    for (let i = entries.length - 1; i >= 0; i--) {
+      const e = entries[i];
+      if (e && e.type === "assistant-text" && e.detail !== "thinking") {
+        return e.id;
+      }
+    }
+    return null;
+  }, [entries]);
+  const lastToolBatchId = useMemo(() => {
+    for (let i = entries.length - 1; i >= 0; i--) {
+      if (entries[i]?.type === "tool-batch") return entries[i].id;
+    }
+    return null;
+  }, [entries]);
+  const displayEntries = useMemo(() => groupConsecutiveEntries(entries), [entries]);
+  if (!activeJob) {
+    return /* @__PURE__ */ jsx16("main", { className: "content", "aria-label": "Log viewer", children: /* @__PURE__ */ jsxs16("div", { className: "empty-state", "aria-label": "No session selected", children: [
+      /* @__PURE__ */ jsx16("div", { className: "empty-title", children: "All Nine Worlds await" }),
+      /* @__PURE__ */ jsx16("div", { className: "empty-sub", children: "Select an agent session to stream its logs" })
+    ] }) });
+  }
+  if (isTtlExpired && streamError && !replayedFromCache && !isConnecting) {
+    return /* @__PURE__ */ jsxs16("main", { className: "content", "aria-label": "Log viewer", children: [
+      /* @__PURE__ */ jsx16(
+        SessionHeader,
+        {
+          job: activeJob,
+          isPinned: isPinned2,
+          onTogglePin,
+          onCancelJob
+        }
+      ),
+      /* @__PURE__ */ jsx16(NorseErrorTablet, { sessionId: activeJob.sessionId, message: streamError })
+    ] });
+  }
+  if (isNodeUnreachable && streamError && !replayedFromCache && !isConnecting) {
+    return /* @__PURE__ */ jsxs16("main", { className: "content", "aria-label": "Log viewer", children: [
+      /* @__PURE__ */ jsx16(
+        SessionHeader,
+        {
+          job: activeJob,
+          isPinned: isPinned2,
+          onTogglePin,
+          showPin: false,
+          onCancelJob
+        }
+      ),
+      /* @__PURE__ */ jsx16(NorseErrorTablet, { sessionId: activeJob.sessionId, message: streamError, variant: "node-unreachable" })
+    ] });
+  }
+  return /* @__PURE__ */ jsxs16("main", { className: "content", "aria-label": "Log viewer", style: { position: "relative" }, children: [
+    /* @__PURE__ */ jsx16(
+      SessionHeader,
+      {
+        job: activeJob,
+        isPinned: isPinned2,
+        onTogglePin,
+        replayedFromCache,
+        onCancelJob
+      }
+    ),
+    /* @__PURE__ */ jsxs16(
+      "div",
+      {
+        className: "log-terminal",
+        ref: termRef,
+        role: "log",
+        "aria-live": "polite",
+        "aria-label": "Session logs",
+        onScroll: handleScroll,
+        children: [
+          isConnecting && entries.length === 0 && /* @__PURE__ */ jsxs16(
+            "div",
+            {
+              className: `session-connecting${isPodStarting ? " pod-starting" : ""}`,
+              "aria-label": isPodStarting ? "Agent is starting up" : "Connecting to session",
+              "aria-live": "polite",
+              children: [
+                /* @__PURE__ */ jsx16("span", { className: isPodStarting ? "pod-starting-rune" : "connecting-spinner", "aria-hidden": "true", children: isPodStarting ? "\u16C8" : "" }),
+                /* @__PURE__ */ jsx16("span", { children: isPodStarting ? "\u23F3 Agent is starting up \u2014 logs will appear shortly\u2026" : "Awaiting the Norns\u2026" })
+              ]
+            }
+          ),
+          displayEntries.map((item) => {
+            if ("_startup" in item) {
+              return /* @__PURE__ */ jsx16(StartupBlock, { group: item }, item.key);
+            }
+            if ("_collapsed" in item) {
+              return /* @__PURE__ */ jsx16(
+                LogLine,
+                {
+                  entry: item.representative,
+                  ...activeJob?.agentKey ? { agentKey: activeJob.agentKey } : {},
+                  ...activeJob?.agentName ? { agentName: activeJob.agentName } : {},
+                  isLastAssistantText: false,
+                  autoScroll,
+                  isLatestBatch: item.representative.type === "tool-batch" && item.representative.id === lastToolBatchId,
+                  onAvatarClick,
+                  collapseCount: item.count
+                },
+                item.representative.id
+              );
+            }
+            return /* @__PURE__ */ jsx16(
+              LogLine,
+              {
+                entry: item,
+                ...activeJob?.agentKey ? { agentKey: activeJob.agentKey } : {},
+                ...activeJob?.agentName ? { agentName: activeJob.agentName } : {},
+                isLastAssistantText: item.id === lastAssistantTextId,
+                autoScroll,
+                isLatestBatch: item.type === "tool-batch" && item.id === lastToolBatchId,
+                onAvatarClick
+              },
+              item.id
+            );
+          })
+        ]
+      }
+    ),
+    /* @__PURE__ */ jsxs16("div", { className: "log-controls", children: [
+      isFixture && /* @__PURE__ */ jsxs16("div", { className: "speed-controls", children: [
+        /* @__PURE__ */ jsx16(
+          "button",
+          {
+            className: `speed-btn ${fixturePaused ? "active" : ""}`,
+            onClick: () => {
+              const next = !fixturePaused;
+              setFixturePaused(next);
+              onSetSpeed?.(next ? 0 : fixtureSpeed);
+            },
+            title: fixturePaused ? "Resume" : "Pause",
+            children: fixturePaused ? "\u25B6" : "\u23F8"
+          }
+        ),
+        [1, 2, 3, 5].map((s) => /* @__PURE__ */ jsxs16(
+          "button",
+          {
+            className: `speed-btn ${fixtureSpeed === s && !fixturePaused ? "active" : ""}`,
+            onClick: () => {
+              setFixtureSpeed(s);
+              setFixturePaused(false);
+              onSetSpeed?.(s);
+            },
+            title: `${s}x speed`,
+            children: [
+              s,
+              "x"
+            ]
+          },
+          s
+        ))
+      ] }),
+      /* @__PURE__ */ jsx16(
+        "button",
+        {
+          className: `autoscroll-fab ${autoScroll ? "active" : ""}`,
+          onClick: toggleAutoScroll,
+          "aria-label": autoScroll ? "Auto-scroll on (click to pause)" : "Auto-scroll off (click to resume)",
+          title: autoScroll ? "Auto-scroll ON" : "Auto-scroll OFF",
+          children: autoScroll ? "\u23F8" : "\u25B6"
+        }
+      )
+    ] })
+  ] });
+}
+function LogLine({ entry, agentKey, agentName, isLastAssistantText, autoScroll, isLatestBatch, onAvatarClick, collapseCount }) {
+  switch (entry.type) {
+    case "system":
+      return /* @__PURE__ */ jsxs16("div", { className: "ev-system", children: [
+        /* @__PURE__ */ jsx16("span", { className: "ev-label", children: "system" }),
+        collapseCount != null && collapseCount > 1 && /* @__PURE__ */ jsxs16("span", { className: "ev-collapse-count", title: `${collapseCount} consecutive identical entries collapsed`, children: [
+          "\xD7",
+          collapseCount
+        ] }),
+        " ",
+        entry.detail
+      ] });
+    case "turn-divider":
+      return null;
+    // legacy, unused
+    case "tool-batch":
+      return /* @__PURE__ */ jsx16(ToolBatchGroup, { entry, ...autoScroll !== void 0 ? { autoScroll } : {}, ...isLatestBatch !== void 0 ? { isLatestBatch } : {} });
+    case "assistant-text":
+      if (entry.detail === "thinking") {
+        return /* @__PURE__ */ jsx16("div", { className: "ev-thinking", children: entry.text });
+      }
+      return /* @__PURE__ */ jsx16(
+        AgentBubble,
+        {
+          text: entry.text ?? "",
+          ...agentKey ? { agentKey } : {},
+          ...agentName ? { agentName } : {},
+          ...isLastAssistantText ? { isLastAssistantText } : {},
+          onAvatarClick
+        }
+      );
+    case "tool-use":
+      return /* @__PURE__ */ jsx16(ToolBlock, { entry, ...collapseCount != null && collapseCount > 1 ? { collapseCount } : {} });
+    case "entrypoint-group":
+      return /* @__PURE__ */ jsx16(EntrypointGroup, { entry });
+    case "entrypoint-header":
+      return /* @__PURE__ */ jsx16("div", { className: "ep-header", children: entry.text });
+    case "entrypoint-ok":
+      return /* @__PURE__ */ jsxs16("div", { className: "ep-ok", children: [
+        /* @__PURE__ */ jsx16("span", { className: "ep-ok-badge", children: "\u2713" }),
+        " ",
+        entry.text
+      ] });
+    case "entrypoint-info":
+      return /* @__PURE__ */ jsxs16("div", { className: "ep-info", children: [
+        /* @__PURE__ */ jsxs16("span", { className: "ep-info-key", children: [
+          entry.detail,
+          ":"
+        ] }),
+        " ",
+        entry.text
+      ] });
+    case "entrypoint-fatal":
+      return /* @__PURE__ */ jsxs16("div", { className: "ep-fatal", role: "alert", children: [
+        /* @__PURE__ */ jsx16("span", { className: "ep-fatal-badge", children: "\u2717" }),
+        " ",
+        entry.text
+      ] });
+    case "entrypoint-task":
+      return /* @__PURE__ */ jsx16(NorseTablet, { text: entry.text ?? "", ...autoScroll !== void 0 ? { autoScroll } : {} });
+    case "warning":
+      return /* @__PURE__ */ jsxs16("span", { className: "log-warning", children: [
+        "\u26A0",
+        " ",
+        entry.message
+      ] });
+    case "error":
+      return /* @__PURE__ */ jsxs16("div", { className: "log-error-box", role: "alert", "aria-label": "Log stream error", children: [
+        /* @__PURE__ */ jsx16("span", { className: "log-error-icon", children: "\u26A0" }),
+        /* @__PURE__ */ jsx16("span", { className: "log-error-text", children: entry.message })
+      ] });
+    case "stream-end":
+      return /* @__PURE__ */ jsxs16("div", { className: "log-end", children: [
+        "\u2014 stream ",
+        entry.reason,
+        " \u2014"
+      ] });
+    case "verdict": {
+      const color = entry.verdictResult === "PASS" ? "var(--success-strong)" : "var(--error-strong)";
+      return /* @__PURE__ */ jsxs16("span", { style: { color, fontWeight: "bold" }, children: [
+        "\u2014 Verdict: ",
+        entry.verdictResult,
+        " \u2014"
+      ] });
+    }
+    case "raw":
+      return /* @__PURE__ */ jsx16("div", { className: "log-line", style: { color: "var(--text-void)" }, children: entry.text });
+    default:
+      return null;
+  }
+}
+function isTemplateBoilerplate(text) {
+  if (isDecreeBlock(text)) return false;
+  if (/<If\s+(PASS|FAIL):/i.test(text)) return true;
+  if (/\*\*Step\s+\d+[^*]*[—\-][^*]*(Chain continuation|Decree)\b/im.test(text)) return true;
+  if (/\*\*Test Standards:/im.test(text)) return true;
+  return false;
+}
+function AgentBubble({
+  text,
+  agentKey,
+  agentName,
+  isLastAssistantText,
+  onAvatarClick
+}) {
+  if (isTemplateBoilerplate(text)) return null;
+  if (isDecreeBlock(text)) {
+    return /* @__PURE__ */ jsx16(
+      DecreeBlock,
+      {
+        text,
+        ...agentKey ? { agentKey } : {},
+        ...agentName ? { agentName } : {},
+        onAvatarClick
+      }
+    );
+  }
+  if (isLastAssistantText && isVerdictMessage(text)) {
+    return /* @__PURE__ */ jsx16(
+      NorseVerdictInscription,
+      {
+        text,
+        ...agentKey ? { agentKey } : {},
+        ...agentName ? { agentName } : {}
+      }
+    );
+  }
+  const { theme } = useTheme();
+  const name = agentName ?? AGENT_NAMES[agentKey ?? ""] ?? "Agent";
+  const title = AGENT_TITLES[agentKey ?? ""] ?? "";
+  const avatarMap = theme === "light" ? AGENT_LIGHT_AVATARS : AGENT_AVATARS;
+  const avatar = avatarMap[agentKey ?? ""];
+  const color = AGENT_COLORS[agentKey ?? ""] ?? "var(--gold)";
+  return /* @__PURE__ */ jsxs16("div", { className: "agent-bubble", style: { "--agent-accent": color, borderLeftColor: color }, children: [
+    /* @__PURE__ */ jsxs16("div", { className: "agent-bubble-header", children: [
+      avatar && /* @__PURE__ */ jsx16(
+        "button",
+        {
+          className: "agent-bubble-avatar-btn",
+          onClick: () => onAvatarClick?.(agentKey ?? ""),
+          "aria-label": `View ${name} profile`,
+          title: `View ${name} profile`,
+          children: /* @__PURE__ */ jsx16("img", { className: "agent-bubble-avatar", src: avatar, alt: name, style: { borderColor: color } })
+        }
+      ),
+      /* @__PURE__ */ jsxs16("div", { className: "agent-bubble-identity", children: [
+        /* @__PURE__ */ jsx16("span", { className: "agent-bubble-name", style: { color }, children: name }),
+        title && /* @__PURE__ */ jsx16("span", { className: "agent-bubble-title", children: title })
+      ] })
+    ] }),
+    /* @__PURE__ */ jsx16("div", { className: "agent-bubble-text", children: text })
+  ] });
+}
+function ToolBatchGroup({ entry, autoScroll, isLatestBatch }) {
+  const [open2, setOpen] = useState14(() => !autoScroll || !!isLatestBatch);
+  const hasError = entry.children?.some((c) => c.toolIsError) ?? false;
+  const prevCompleteRef = useRef7(entry.complete);
+  const prevIsLatestRef = useRef7(isLatestBatch);
+  const prevAutoScrollRef = useRef7(autoScroll);
+  useEffect10(() => {
+    if (entry.complete && !prevCompleteRef.current) {
+      prevCompleteRef.current = true;
+      setOpen(false);
+    }
+  }, [entry.complete]);
+  useEffect10(() => {
+    const wasLatest = prevIsLatestRef.current;
+    prevIsLatestRef.current = isLatestBatch;
+    if (wasLatest && !isLatestBatch && autoScroll) {
+      setOpen(false);
+    }
+  }, [isLatestBatch, autoScroll]);
+  useEffect10(() => {
+    const wasAutoScroll = prevAutoScrollRef.current;
+    prevAutoScrollRef.current = autoScroll;
+    if (!wasAutoScroll && autoScroll && !isLatestBatch) {
+      setOpen(false);
+    }
+  }, [autoScroll, isLatestBatch]);
+  return /* @__PURE__ */ jsxs16("div", { className: `ev-tool-batch ${open2 ? "open" : ""}${hasError ? " batch-error" : ""}${entry.complete ? " complete" : ""}`, children: [
+    /* @__PURE__ */ jsxs16("div", { className: "ev-tool-batch-header", onClick: () => setOpen(!open2), children: [
+      /* @__PURE__ */ jsx16("span", { className: "ev-tool-batch-chevron", children: "\u203A" }),
+      /* @__PURE__ */ jsx16("span", { className: "ev-tool-batch-label", children: entry.text }),
+      !entry.complete && /* @__PURE__ */ jsx16("span", { className: "ev-tool-batch-spinner" }),
+      entry.complete && /* @__PURE__ */ jsx16("span", { className: "ev-tool-batch-done", children: "\u2713" })
+    ] }),
+    /* @__PURE__ */ jsx16("div", { className: "ev-tool-batch-body-wrap", children: /* @__PURE__ */ jsx16("div", { className: "ev-tool-batch-body", children: entry.children?.map((child) => /* @__PURE__ */ jsx16(LogLine, { entry: child }, child.id)) }) })
+  ] });
+}
+function parseDecreeSections(text) {
+  const SECTION_MAP = [
+    { pattern: /^You are \w+/m, glyph: "\u16C1", title: "Hear Me, Agent" },
+    { pattern: /SANDBOX RULES/m, glyph: "\u16BA", title: "The Sacred Ground" },
+    { pattern: /\*\*Step 1/m, glyph: "\u16B2", title: "Consecrate Thy Forge" },
+    { pattern: /TODO TRACKING/m, glyph: "\u16BE", title: "The Norns\u2019 Ledger" },
+    { pattern: /INCREMENTAL COMMIT/m, glyph: "\u16B7", title: "The Chain of Gleipnir" },
+    { pattern: /VERIFY.*tsc.*build/m, glyph: "\u16D7", title: "Trial by Fire" },
+    { pattern: /STRICT SCOPE/m, glyph: "\u16CF", title: "The Gjallarhorn Boundary" },
+    { pattern: /\*\*Step 2/m, glyph: "\u16B1", title: "Consult the Runes" },
+    { pattern: /\*\*Issue details/m, glyph: "\u16C3", title: "The Wound in Yggdrasil", defaultOpen: true, wide: true },
+    { pattern: /\*\*Step 3[^b]/m, glyph: "\u16A0", title: "Take Up Mj\xF6lnir" },
+    { pattern: /\*\*Step 3b/m, glyph: "\u16CA", title: "Forge the Tests" },
+    { pattern: /\*\*Step 4/m, glyph: "\u16D2", title: "Walk the Bifr\xF6st" },
+    { pattern: /\*\*Step 5/m, glyph: "\u16DA", title: "Align with the World Tree" },
+    { pattern: /\*\*Step 6/m, glyph: "\u16D6", title: "Present Thy Offering" },
+    { pattern: /\*\*Step 7/m, glyph: "\u16DE", title: "Pass the Torch" }
+  ];
+  const boundaries = [];
+  for (const sec of SECTION_MAP) {
+    const match = sec.pattern.exec(text);
+    if (match) boundaries.push({ idx: match.index, glyph: sec.glyph, title: sec.title, defaultOpen: sec.defaultOpen ?? false, wide: sec.wide ?? false });
+  }
+  boundaries.sort((a, b) => a.idx - b.idx);
+  if (boundaries.length === 0) {
+    return [{ glyph: "\u16DF", title: "The Decree", body: text, defaultOpen: true, wide: false }];
+  }
+  const sections = [];
+  for (let i = 0; i < boundaries.length; i++) {
+    const start = boundaries[i].idx;
+    const end = i + 1 < boundaries.length ? boundaries[i + 1].idx : text.length;
+    sections.push({
+      glyph: boundaries[i].glyph,
+      title: boundaries[i].title,
+      body: text.slice(start, end).trim(),
+      defaultOpen: boundaries[i].defaultOpen,
+      wide: boundaries[i].wide
+    });
+  }
+  return sections;
+}
+function applyWikiLinksToNodes(nodes) {
+  let current2 = nodes;
+  let keyIdx = 0;
+  for (const [term, url] of Object.entries(WIKI_LINKS)) {
+    const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const regex = new RegExp(`(\\b${escaped}\\b)`, "g");
+    const next = [];
+    for (const node of current2) {
+      if (typeof node !== "string") {
+        next.push(node);
+        continue;
+      }
+      const parts = node.split(regex);
+      for (const part of parts) {
+        if (part === term) {
+          next.push(
+            /* @__PURE__ */ jsx16(
+              "a",
+              {
+                className: "decree-body-link",
+                href: url,
+                target: "_blank",
+                rel: "noopener noreferrer",
+                title: `Wikipedia: ${term}`,
+                children: term
+              },
+              `wiki-${term}-${keyIdx++}`
+            )
+          );
+        } else if (part) {
+          next.push(part);
+        }
+      }
+    }
+    current2 = next;
+  }
+  return current2;
+}
+function processInline(text) {
+  const btParts = text.split(/`([^`]+)`/);
+  const nodes = [];
+  for (let i = 0; i < btParts.length; i++) {
+    const part = btParts[i] ?? "";
+    if (i % 2 === 1) {
+      nodes.push(/* @__PURE__ */ jsx16("code", { className: "decree-body-code", children: part }, `bc-${i}`));
+    } else if (part) {
+      nodes.push(part);
+    }
+  }
+  return applyWikiLinksToNodes(nodes);
+}
+function DecreeSectionBody({ body }) {
+  const lines = body.split("\n");
+  const elements = [];
+  const listBuffer = [];
+  const codeBuffer = [];
+  const fenceBuffer = [];
+  let inFence = false;
+  let fenceLang = "";
+  let keyIdx = 0;
+  const isCodeLine = (line) => /^(cd |git |gh |bash |npm |node )/.test(line.trimStart()) || /^ {2,}/.test(line);
+  const isListLine = (line) => /^[-*] /.test(line.trimStart());
+  const isHeadingLine = (line) => /^##\s+/.test(line.trimStart()) || /^\*\*/.test(line.trimStart());
+  const isFenceLine = (line) => /^`{3,}/.test(line.trimStart());
+  const flushList = () => {
+    if (listBuffer.length === 0) return;
+    elements.push(
+      /* @__PURE__ */ jsx16("ul", { children: listBuffer.map((item, i) => {
+        const content = item.trimStart().replace(/^[-*]\s+/, "");
+        return /* @__PURE__ */ jsx16("li", { children: processInline(content) }, i);
+      }) }, `ul-${keyIdx++}`)
+    );
+    listBuffer.length = 0;
+  };
+  const flushCode = () => {
+    if (codeBuffer.length === 0) return;
+    elements.push(
+      /* @__PURE__ */ jsx16("code", { className: "decree-body-block", children: codeBuffer.join("\n") }, `blk-${keyIdx++}`)
+    );
+    codeBuffer.length = 0;
+  };
+  const flushFence = () => {
+    if (fenceBuffer.length === 0 && !inFence) return;
+    elements.push(
+      /* @__PURE__ */ jsx16("pre", { className: "decree-body-fence", children: /* @__PURE__ */ jsx16("code", { className: fenceLang ? `language-${fenceLang}` : void 0, children: fenceBuffer.join("\n") }) }, `fence-${keyIdx++}`)
+    );
+    fenceBuffer.length = 0;
+    inFence = false;
+    fenceLang = "";
+  };
+  for (const line of lines) {
+    if (isFenceLine(line)) {
+      if (!inFence) {
+        flushList();
+        flushCode();
+        inFence = true;
+        fenceLang = line.trimStart().replace(/^`{3,}/, "").trim();
+      } else {
+        flushFence();
+      }
+      continue;
+    }
+    if (inFence) {
+      fenceBuffer.push(line);
+      continue;
+    }
+    if (isCodeLine(line)) {
+      flushList();
+      codeBuffer.push(line);
+    } else if (isListLine(line)) {
+      flushCode();
+      listBuffer.push(line);
+    } else {
+      flushCode();
+      flushList();
+      const trimmed = line.trim();
+      if (!trimmed) continue;
+      if (isHeadingLine(line)) {
+        const content = trimmed.replace(/^##\s+/, "").replace(/^\*\*/, "").replace(/\*\*$/, "");
+        elements.push(/* @__PURE__ */ jsx16("strong", { children: processInline(content) }, `h-${keyIdx++}`));
+      } else {
+        elements.push(/* @__PURE__ */ jsx16("p", { children: processInline(trimmed) }, `p-${keyIdx++}`));
+      }
+    }
+  }
+  flushCode();
+  flushList();
+  if (inFence) flushFence();
+  return /* @__PURE__ */ jsx16(Fragment5, { children: elements });
+}
+function DecreeSection({ glyph, title, body, defaultOpen, wide }) {
+  const [open2, setOpen] = useState14(defaultOpen);
+  return /* @__PURE__ */ jsxs16("div", { className: `decree-section ${open2 ? "open" : ""}${wide ? " decree-wide" : ""}`, children: [
+    /* @__PURE__ */ jsxs16(
+      "div",
+      {
+        className: "decree-section-header",
+        onClick: () => setOpen((o) => !o),
+        role: "button",
+        tabIndex: 0,
+        "aria-expanded": open2,
+        onKeyDown: (e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            setOpen((o) => !o);
+          }
+        },
+        children: [
+          /* @__PURE__ */ jsx16("span", { className: "decree-section-glyph", "aria-hidden": "true", children: glyph }),
+          /* @__PURE__ */ jsx16("span", { className: "decree-section-title", children: title }),
+          /* @__PURE__ */ jsx16("span", { className: "ep-group-chevron", style: { marginLeft: "auto" }, children: "\u203A" })
+        ]
+      }
+    ),
+    open2 && /* @__PURE__ */ jsx16("div", { className: "decree-section-body", children: /* @__PURE__ */ jsx16(DecreeSectionBody, { body }) })
+  ] });
+}
+function NorseTablet({ text, autoScroll }) {
+  const [open2, setOpen] = useState14(true);
+  const [hasBeenCollapsed, setHasBeenCollapsed] = useState14(false);
+  const agentMatch = /^You are (\w+)/m.exec(text);
+  const agent = agentMatch?.[1] ?? "Agent";
+  const agentKey = agent.toLowerCase();
+  const issueMatch = /#(\d+)/.exec(text);
+  const issue = issueMatch?.[1] ?? "";
+  const sections = parseDecreeSections(text);
+  const agentRunes = AGENT_RUNE_NAMES[agentKey] ?? AGENT_RUNE_NAMES._fallback ?? "\u16A8\u16CA\u16B7\u16A8\u16B1\u16DE";
+  const firstRune = [...agentRunes][0] ?? "\u16DF";
+  const agentColor = AGENT_COLORS[agentKey] ?? "#888";
+  const agentTitle = AGENT_TITLES[agentKey] ?? "Agent";
+  const agentDisplayName = AGENT_NAMES[agentKey] ?? agent;
+  useEffect10(() => {
+    if (!autoScroll || hasBeenCollapsed) return;
+    const timer = setTimeout(() => {
+      setOpen(false);
+      setHasBeenCollapsed(true);
+    }, 3e3);
+    return () => clearTimeout(timer);
+  }, [autoScroll, hasBeenCollapsed]);
+  return /* @__PURE__ */ jsxs16(
+    "div",
+    {
+      className: `norse-tablet ${open2 ? "open" : ""}`,
+      style: { borderLeft: `3px solid ${agentColor}` },
+      children: [
+        /* @__PURE__ */ jsxs16(
+          "div",
+          {
+            className: "norse-tablet-header",
+            onClick: () => setOpen(!open2),
+            role: "button",
+            tabIndex: 0,
+            "aria-expanded": open2,
+            onKeyDown: (e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                setOpen((o) => !o);
+              }
+            },
+            children: [
+              /* @__PURE__ */ jsx16("span", { className: "norse-tablet-rune", "aria-hidden": "true", children: firstRune }),
+              /* @__PURE__ */ jsxs16("div", { className: "norse-tablet-title-block", children: [
+                /* @__PURE__ */ jsxs16("div", { className: "norse-tablet-title", children: [
+                  "THE ALL-FATHER'S DECREE UNTO ",
+                  agentDisplayName.toUpperCase()
+                ] }),
+                /* @__PURE__ */ jsxs16("div", { className: "norse-tablet-subtitle", children: [
+                  issue ? `Issue #${issue} \xB7 ` : "",
+                  agentTitle,
+                  agentRunes && /* @__PURE__ */ jsxs16("span", { className: "norse-tablet-rune-name", "aria-hidden": "true", children: [
+                    " \\u00B7 ",
+                    agentRunes
+                  ] })
+                ] })
+              ] }),
+              /* @__PURE__ */ jsx16("span", { className: "norse-tablet-rune", "aria-hidden": "true", children: firstRune }),
+              /* @__PURE__ */ jsx16("span", { className: "ep-group-chevron", style: { marginLeft: "auto" }, children: "\u203A" })
+            ]
+          }
+        ),
+        /* @__PURE__ */ jsx16("div", { className: "norse-tablet-body-wrap", children: /* @__PURE__ */ jsxs16("div", { className: "norse-tablet-body", children: [
+          /* @__PURE__ */ jsx16("div", { className: "decree-grid", children: sections.map((sec, i) => /* @__PURE__ */ jsx16(
+            DecreeSection,
+            {
+              glyph: sec.glyph,
+              title: sec.title,
+              body: sec.body,
+              defaultOpen: sec.defaultOpen,
+              wide: sec.wide
+            },
+            i
+          )) }),
+          /* @__PURE__ */ jsxs16("div", { className: "decree-seal", role: "complementary", "aria-label": "Odin's royal seal", children: [
+            /* @__PURE__ */ jsx16("div", { className: "decree-seal-runic-band", "aria-hidden": "true", children: "\u16DF \u16DE \u16C1 \u16BE \xB7 \u16A8 \u16DA \u16DA \u16A0 \u16A8 \u16A6 \u16D6 \u16B1 \xB7 \u16A2 \u16CF \u16B7 \u16A8 \u16B1 \u16DE" }),
+            /* @__PURE__ */ jsx16("div", { className: "decree-seal-medallion", role: "img", "aria-label": "Odin's rune \u2014 Othalan", children: "\u16DF" }),
+            /* @__PURE__ */ jsx16("div", { className: "decree-seal-divider", "aria-hidden": "true", children: "\u2014 \u16A8 \u2014" }),
+            /* @__PURE__ */ jsxs16("div", { className: "decree-seal-command", children: [
+              "\u201CBy mine eye that sees all",
+              " ",
+              /* @__PURE__ */ jsx16(
+                "a",
+                {
+                  className: "wiki-link decree-body-link",
+                  href: "https://en.wikipedia.org/wiki/Norse_cosmology#Nine_worlds",
+                  target: "_blank",
+                  rel: "noopener noreferrer",
+                  title: "Wikipedia: Nine Worlds",
+                  "aria-label": "Wikipedia: Nine Worlds",
+                  children: "Nine Realms"
+                }
+              ),
+              " ",
+              "\u2014 I command thee to this task. Fail not.",
+              " ",
+              /* @__PURE__ */ jsx16(
+                "a",
+                {
+                  className: "wiki-link decree-body-link",
+                  href: "https://en.wikipedia.org/wiki/Fenrir",
+                  target: "_blank",
+                  rel: "noopener noreferrer",
+                  title: "Wikipedia: Fenrir",
+                  "aria-label": "Wikipedia: Fenrir",
+                  children: "Fenrir"
+                }
+              ),
+              " ",
+              "hungers.\u201D"
+            ] }),
+            /* @__PURE__ */ jsx16("div", { className: "decree-seal-attribution", children: "Odin \xB7 All-Father" }),
+            /* @__PURE__ */ jsx16("div", { className: "decree-seal-title-runes", "aria-hidden": "true", children: "\u16DF\u16DE\u16C1\u16BE \u16A8\u16DA\u16DA\u16A0\u16A8\u16A6\u16D6\u16B1" })
+          ] })
+        ] }) })
+      ]
+    }
+  );
+}
+function PinIcon({ filled }) {
+  return /* @__PURE__ */ jsx16("svg", { width: "16", height: "16", viewBox: "0 0 16 16", fill: "none", "aria-hidden": "true", children: filled ? (
+    // Filled tack (pinned state — gold)
+    /* @__PURE__ */ jsxs16(Fragment5, { children: [
+      /* @__PURE__ */ jsx16("path", { d: "M10 2L14 6L10.5 9.5L8.5 14L7 12.5L9 8.5L5.5 5L2 3.5L6.5 1.5L10 2Z", fill: "currentColor" }),
+      /* @__PURE__ */ jsx16("line", { x1: "5", y1: "11", x2: "2", y2: "14", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round" })
+    ] })
+  ) : (
+    // Hollow tack (unpinned state — dim)
+    /* @__PURE__ */ jsxs16(Fragment5, { children: [
+      /* @__PURE__ */ jsx16("path", { d: "M10 2L14 6L10.5 9.5L8.5 14L7 12.5L9 8.5L5.5 5L2 3.5L6.5 1.5L10 2Z", stroke: "currentColor", strokeWidth: "1.5", strokeLinejoin: "round" }),
+      /* @__PURE__ */ jsx16("line", { x1: "5", y1: "11", x2: "2", y2: "14", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round" })
+    ] })
+  ) });
+}
+function ClipboardIcon() {
+  return /* @__PURE__ */ jsxs16("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "none", "aria-hidden": "true", children: [
+    /* @__PURE__ */ jsx16("rect", { x: "4", y: "3", width: "7", height: "9", rx: "1", stroke: "currentColor", strokeWidth: "1.5" }),
+    /* @__PURE__ */ jsx16("path", { d: "M4 4H3a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-1", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round" }),
+    /* @__PURE__ */ jsx16("path", { d: "M6 3V2h3v1", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" })
+  ] });
+}
+function CheckIcon() {
+  return /* @__PURE__ */ jsx16("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "none", "aria-hidden": "true", children: /* @__PURE__ */ jsx16("path", { d: "M2 7l4 4 6-6", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" }) });
+}
+function CopySessionIdButton({ sessionId }) {
+  const [copied, setCopied] = useState14(false);
+  async function handleCopy() {
+    try {
+      await navigator.clipboard.writeText(sessionId);
+      setCopied(true);
+      setTimeout(() => {
+        setCopied(false);
+      }, 2e3);
+    } catch {
+    }
+  }
+  return /* @__PURE__ */ jsxs16(
+    "button",
+    {
+      className: `header-action-btn${copied ? " header-action-btn--copied" : ""}`,
+      onClick: handleCopy,
+      title: copied ? "Copied!" : "Copy session ID",
+      "aria-label": copied ? "Session ID copied" : "Copy session ID",
+      children: [
+        copied ? /* @__PURE__ */ jsx16(CheckIcon, {}) : /* @__PURE__ */ jsx16(ClipboardIcon, {}),
+        /* @__PURE__ */ jsx16("span", { children: copied ? "Copied" : "Copy" })
+      ]
+    }
+  );
+}
+function DownloadIcon() {
+  return /* @__PURE__ */ jsxs16("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "none", "aria-hidden": "true", children: [
+    /* @__PURE__ */ jsx16("path", { d: "M7 2v7M4 6l3 3 3-3", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" }),
+    /* @__PURE__ */ jsx16("path", { d: "M2 11h10", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round" })
+  ] });
+}
+function DownloadSessionButton({ sessionId }) {
+  return /* @__PURE__ */ jsx16(
+    "button",
+    {
+      className: "copy-session-btn",
+      onClick: () => void downloadLogFile(sessionId),
+      title: "Download session log",
+      "aria-label": "Download session log",
+      children: /* @__PURE__ */ jsx16(DownloadIcon, {})
+    }
+  );
+}
+function StartupBlock({ group }) {
+  const [open2, setOpen] = useState14(false);
+  const modelEntry = group.metaEntries.find((e) => /^Model:\s*/.test(e.text ?? ""));
+  const sessionEntry = group.metaEntries.find((e) => /^Session:\s*/.test(e.text ?? ""));
+  const model = modelEntry?.text?.replace(/^Model:\s*/, "").trim() ?? "";
+  const session = sessionEntry?.text?.replace(/^Session:\s*/, "").trim() ?? "";
+  return /* @__PURE__ */ jsxs16("div", { className: `ep-group ${open2 ? "open" : ""}`, children: [
+    /* @__PURE__ */ jsxs16("div", { className: "ep-group-header", onClick: () => setOpen(!open2), role: "button", tabIndex: 0, "aria-expanded": open2, onKeyDown: (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        setOpen((o) => !o);
+      }
+    }, children: [
+      /* @__PURE__ */ jsx16("span", { className: "ep-group-chevron", children: "\u203A" }),
+      /* @__PURE__ */ jsx16("span", { className: "ep-group-title", children: group.headerEntry.text }),
+      /* @__PURE__ */ jsxs16("span", { className: "ep-group-meta", children: [
+        model && /* @__PURE__ */ jsxs16("span", { className: "ep-group-meta-item", children: [
+          /* @__PURE__ */ jsx16("span", { className: "ep-group-meta-key", children: "Model:" }),
+          " ",
+          model
+        ] }),
+        session && /* @__PURE__ */ jsxs16("span", { className: "ep-group-meta-item", children: [
+          /* @__PURE__ */ jsx16("span", { className: "ep-group-meta-key", children: "Session:" }),
+          " ",
+          session
+        ] })
+      ] })
+    ] }),
+    /* @__PURE__ */ jsx16("div", { className: "ep-group-body-wrap", children: /* @__PURE__ */ jsx16("div", { className: "ep-group-body", children: /* @__PURE__ */ jsx16("div", { className: "ep-info-card", children: group.metaEntries.map((e) => {
+      const kvMatch = /^([^:]+):\s*(.+)$/.exec(e.text ?? "");
+      return /* @__PURE__ */ jsx16("div", { className: "ep-info", children: kvMatch ? /* @__PURE__ */ jsxs16(Fragment5, { children: [
+        /* @__PURE__ */ jsxs16("span", { className: "ep-info-key", children: [
+          kvMatch[1],
+          ":"
+        ] }),
+        " ",
+        kvMatch[2]
+      ] }) : e.text }, e.id);
+    }) }) }) })
+  ] });
+}
+function EntrypointGroup({ entry }) {
+  const [open2, setOpen] = useState14(false);
+  const [noiseOpen, setNoiseOpen] = useState14(false);
+  const children = entry.children ?? [];
+  const infoItems = children.filter((c) => c.type === "entrypoint-info");
+  const okItems = children.filter((c) => c.type === "entrypoint-ok");
+  const fatalItems = children.filter((c) => c.type === "entrypoint-fatal");
+  const noiseItems = children.filter((c) => c.type === "raw" || c.type === "warning");
+  const hasFatal = fatalItems.length > 0;
+  return /* @__PURE__ */ jsxs16("div", { className: `ep-group ${open2 ? "open" : ""}${hasFatal ? " ep-group-error" : ""}`, children: [
+    /* @__PURE__ */ jsxs16("div", { className: "ep-group-header", onClick: () => setOpen(!open2), children: [
+      /* @__PURE__ */ jsx16("span", { className: "ep-group-chevron", children: "\u203A" }),
+      /* @__PURE__ */ jsx16("span", { className: "ep-group-title", children: entry.text }),
+      infoItems.length > 0 && /* @__PURE__ */ jsx16("span", { className: "ep-group-meta", children: infoItems.map((i) => /* @__PURE__ */ jsxs16("span", { className: "ep-group-meta-item", children: [
+        /* @__PURE__ */ jsxs16("span", { className: "ep-group-meta-key", children: [
+          i.detail,
+          ":"
+        ] }),
+        " ",
+        i.text
+      ] }, i.id)) }),
+      /* @__PURE__ */ jsx16("span", { className: "ep-group-summary", children: hasFatal ? "\u26A0 setup failed" : `${okItems.length} steps \u2713` })
+    ] }),
+    /* @__PURE__ */ jsx16("div", { className: "ep-group-body-wrap", children: /* @__PURE__ */ jsxs16("div", { className: "ep-group-body", children: [
+      infoItems.length > 0 && /* @__PURE__ */ jsx16("div", { className: "ep-info-card", children: infoItems.map((i) => /* @__PURE__ */ jsxs16("div", { className: "ep-info", children: [
+        /* @__PURE__ */ jsxs16("span", { className: "ep-info-key", children: [
+          i.detail,
+          ":"
+        ] }),
+        " ",
+        i.text
+      ] }, i.id)) }),
+      fatalItems.map((c) => /* @__PURE__ */ jsx16(LogLine, { entry: c }, c.id)),
+      okItems.map((c) => /* @__PURE__ */ jsx16(LogLine, { entry: c }, c.id)),
+      noiseItems.length > 0 && /* @__PURE__ */ jsxs16("div", { className: `ep-noise-group ${noiseOpen ? "open" : ""}`, children: [
+        /* @__PURE__ */ jsxs16("div", { className: "ep-noise-header", onClick: (e) => {
+          e.stopPropagation();
+          setNoiseOpen((v) => !v);
+        }, children: [
+          /* @__PURE__ */ jsx16("span", { className: "ep-group-chevron", children: "\u203A" }),
+          /* @__PURE__ */ jsx16("span", { className: "ep-noise-title", children: "Setup details" }),
+          /* @__PURE__ */ jsxs16("span", { className: "ep-group-summary", children: [
+            noiseItems.length,
+            " lines"
+          ] })
+        ] }),
+        /* @__PURE__ */ jsx16("div", { className: "ep-group-body-wrap", children: /* @__PURE__ */ jsx16("div", { className: "ep-group-body", children: noiseItems.map((c) => /* @__PURE__ */ jsx16(LogLine, { entry: c }, c.id)) }) })
+      ] })
+    ] }) })
+  ] });
+}
+
+>>>>>>> 41613a4 (wip: job-aware selection + cancel callbacks, per-session tab smoke contract (open/dedupe/cancel-close/cross-world), loader fallback for CI — issue:6)
 // src/ui/hooks/useLogStream.ts
 import { useState as useState12, useCallback as useCallback6, useRef as useRef7 } from "react";
 
@@ -6847,9 +8795,245 @@ function App() {
       send({ type: "subscribe", sessionId: activeSessionId });
     }, 4e3);
     return () => clearInterval(intervalId);
+<<<<<<< HEAD
   }, [isPodStarting, activeSessionId, send, showPodStartTimeout]);
   const activeJob = jobs.find((j) => j.sessionId === activeSessionId) || null;
   const handleTogglePinForSession = useCallback7(
+=======
+  }, [isPodStarting, sessionId, send, showPodStartTimeout]);
+  const activeJob = jobs.find((j) => j.sessionId === sessionId) ?? jobSnapshot ?? null;
+  const handleTogglePin = useCallback8(() => {
+    if (jobs.some((j) => j.sessionId === sessionId) && snap) {
+      snap.onTogglePinSession(sessionId);
+    } else {
+      const job = jobSnapshot;
+      if (isPinned(sessionId)) {
+        unpinSession(sessionId);
+      } else if (job) {
+        const meta = {
+          sessionId,
+          name: job.name,
+          issueNumber: Number(job.issue) || 0,
+          agent: job.agentKey ?? "unknown",
+          step: Number(job.step) || 1,
+          startedAt: job.startTime ? new Date(job.startTime).toISOString() : null,
+          completedAt: job.completionTime ? new Date(job.completionTime).toISOString() : null,
+          issueTitle: job.issueTitle,
+          branchName: job.branchName,
+          pinnedAt: Date.now()
+        };
+        pinSession(sessionId, meta);
+      }
+    }
+    setIsPinned((prev) => !prev);
+  }, [jobs, snap, sessionId, jobSnapshot]);
+  return /* @__PURE__ */ jsx17(
+    LogViewer,
+    {
+      entries,
+      activeJob,
+      isFixture,
+      isTtlExpired,
+      isNodeUnreachable,
+      streamError,
+      isPinned: isPinned2,
+      onTogglePin: handleTogglePin,
+      onAvatarClick: snap?.onAvatarClick ?? (() => {
+      }),
+      replayedFromCache,
+      isConnecting,
+      isPodStarting,
+      onCancelJob: snap?.onCancelJob ?? (() => {
+      }),
+      onSetSpeed: (speed) => send({ type: "set-speed", sessionId, speed })
+    }
+  );
+}
+function LogViewerEmpty() {
+  const snap = useThrone();
+  return /* @__PURE__ */ jsx17(
+    LogViewer,
+    {
+      entries: [],
+      activeJob: null,
+      isFixture: false,
+      isTtlExpired: false,
+      isNodeUnreachable: false,
+      streamError: null,
+      isPinned: false,
+      onTogglePin: () => {
+      },
+      onAvatarClick: snap?.onAvatarClick ?? (() => {
+      }),
+      replayedFromCache: false,
+      isConnecting: false,
+      isPodStarting: false,
+      onCancelJob: () => {
+      },
+      onSetSpeed: () => {
+      }
+    }
+  );
+}
+function ThronePage({
+  sessionId,
+  tabNamespace,
+  jobSnapshot
+}) {
+  const snap = useThrone();
+  const { theme } = useTheme();
+  const namespace = tabNamespace ?? snap?.namespace ?? "fenrir-agents";
+  return /* @__PURE__ */ jsx17(
+    "div",
+    {
+      className: "odins-throne-root",
+      "data-theme": theme === "light" ? "light" : void 0,
+      style: { width: "100%", height: "100%" },
+      children: sessionId ? /* @__PURE__ */ jsx17(ErrorBoundary, { children: /* @__PURE__ */ jsx17(
+        LogViewerConnected,
+        {
+          sessionId,
+          tabNamespace: namespace,
+          jobSnapshot: jobSnapshot ?? null
+        }
+      ) }) : /* @__PURE__ */ jsx17(ErrorBoundary, { children: /* @__PURE__ */ jsx17(LogViewerEmpty, {}) })
+    }
+  );
+}
+
+// src/sessionTabs.tsx
+import { jsx as jsx18 } from "react/jsx-runtime";
+var pluginCtx = null;
+var openTabs = /* @__PURE__ */ new Map();
+var fallbackRoutes = /* @__PURE__ */ new Set();
+function initSessionTabs(ctx2) {
+  pluginCtx = ctx2;
+}
+function tabTitleFor(job) {
+  if (!job) return "Session";
+  if (job.issueTitle) return `#${job.issue} \u2013 ${job.issueTitle}`;
+  if (job.issue && job.issue !== "?") {
+    return `#${job.issue} \u2013 ${job.agentName} Step ${job.step}`;
+  }
+  return job.name;
+}
+function openWorkspaceFn() {
+  const fn = host.openWorkspace;
+  return typeof fn === "function" ? fn : null;
+}
+function openSessionTab(sessionId, opts) {
+  const { namespace, job = null } = opts;
+  const title = tabTitleFor(job);
+  const openWorkspace = openWorkspaceFn();
+  if (openWorkspace) {
+    const id = `odins-throne-session-${sessionId}`;
+    try {
+      const disposer = openWorkspace(id, {
+        title,
+        dock: { pane: "workspace", pos: "center" },
+        onClose: () => {
+          openTabs.delete(sessionId);
+        },
+        render: () => /* @__PURE__ */ jsx18(ThronePage, { sessionId, tabNamespace: namespace, jobSnapshot: job })
+      });
+      const existing = openTabs.get(sessionId);
+      const close = typeof disposer === "function" ? disposer : void 0;
+      openTabs.set(sessionId, {
+        sessionId,
+        namespace,
+        title,
+        job,
+        close: close ?? existing?.close
+      });
+      return;
+    } catch {
+    }
+  }
+  if (pluginCtx && !fallbackRoutes.has(sessionId)) {
+    try {
+      pluginCtx.register({
+        id: `odins-throne-session-${sessionId}`,
+        area: ROUTES_AREA,
+        data: { path: `/odins-throne/${sessionId}` },
+        render: () => /* @__PURE__ */ jsx18(ThronePage, { sessionId, tabNamespace: namespace, jobSnapshot: job })
+      });
+      fallbackRoutes.add(sessionId);
+    } catch {
+    }
+  }
+  openTabs.set(sessionId, { sessionId, namespace, title, job });
+  try {
+    host.navigate(`/odins-throne/${sessionId}`);
+  } catch {
+  }
+}
+function closeSessionTab(sessionId) {
+  const tab = openTabs.get(sessionId);
+  if (!tab) return;
+  openTabs.delete(sessionId);
+  try {
+    tab.close?.();
+  } catch {
+  }
+}
+
+// src/ui/App.tsx
+function App() {
+  const quote = useMemo2(() => randomQuote(), []);
+  const { theme } = useTheme();
+  const { namespace, namespaces, setNamespace } = useNamespace();
+  const [profileAgent, setProfileAgent] = useState17(null);
+  const [cancelTarget, setCancelTarget] = useState17(null);
+  const { jobs, handleMessage: handleJobsMessage, refreshCached } = useJobs();
+  const jobsActivityKey = useMemo2(
+    () => jobs.map((j) => `${j.sessionId}:${j.status}`).join("|"),
+    [jobs]
+  );
+  const namespaceSummaries = useNamespaceSummaries(namespaces, namespace, jobsActivityKey);
+  useEffect12(() => {
+    migrateRemoveDuplicateLogs();
+    evictExpiredLogs();
+  }, []);
+  const [activeSessionId, setActiveSessionId] = useState17(null);
+  const [storageWarning, setStorageWarning] = useState17(null);
+  const [toast, setToast] = useState17(null);
+  const [terminatingSessionIds, setTerminatingSessionIds] = useState17(/* @__PURE__ */ new Set());
+  const onMessage = useCallback9(
+    (msg) => {
+      handleJobsMessage(msg);
+    },
+    [handleJobsMessage]
+  );
+  const { state: wsState, error: wsError } = useWebSocket(onMessage, namespace);
+  const handleSelectSession = useCallback9(
+    (sessionId) => {
+      setActiveSessionId(sessionId);
+      openSessionTab(sessionId, {
+        namespace,
+        job: jobs.find((j) => j.sessionId === sessionId) ?? null
+      });
+    },
+    [namespace, jobs]
+  );
+  const handleSelectTask = useCallback9(
+    (ns, sessionId, job) => {
+      setActiveSessionId(sessionId);
+      if (ns !== namespace) {
+        setNamespace(ns);
+      }
+      openSessionTab(sessionId, {
+        namespace: ns,
+        job: job ?? jobs.find((j) => j.sessionId === sessionId) ?? null
+      });
+    },
+    [namespace, jobs, setNamespace]
+  );
+  const pinnedSessionIds = useMemo2(
+    () => new Set(jobs.filter((j) => isPinned(j.sessionId)).map((j) => j.sessionId)),
+    [jobs]
+  );
+  const handleTogglePinForSession = useCallback9(
+>>>>>>> 41613a4 (wip: job-aware selection + cancel callbacks, per-session tab smoke contract (open/dedupe/cancel-close/cross-world), loader fallback for CI — issue:6)
     (sessionId) => {
       const job = jobs.find((j) => j.sessionId === sessionId);
       if (!job) return;
@@ -6887,6 +9071,7 @@ function App() {
     },
     [jobs, activeSessionId, refreshCached, send]
   );
+<<<<<<< HEAD
   const handleTogglePin = useCallback7(() => {
     if (!activeSessionId) return;
     handleTogglePinForSession(activeSessionId);
@@ -6894,6 +9079,11 @@ function App() {
   const handleOpenCancelDialog = useCallback7(
     (sessionId) => {
       const job = jobs.find((j) => j.sessionId === sessionId);
+=======
+  const handleOpenCancelDialog = useCallback9(
+    (sessionId, jobFromCard) => {
+      const job = jobFromCard ?? jobs.find((j) => j.sessionId === sessionId);
+>>>>>>> 41613a4 (wip: job-aware selection + cancel callbacks, per-session tab smoke contract (open/dedupe/cancel-close/cross-world), loader fallback for CI — issue:6)
       if (!job || job.status !== "running") return;
       const jobTitle = job.issueTitle ? `#${job.issue} \u2013 ${job.issueTitle}` : `#${job.issue} \u2013 ${job.agentName} Step ${job.step}`;
       setCancelTarget({ sessionId, jobTitle });

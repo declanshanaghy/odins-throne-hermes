@@ -9,6 +9,7 @@ import { useTheme } from "./hooks/useTheme";
 import { otFetch } from "../upstream";
 import { throneStore, type ThroneSnapshot } from "../store";
 import { openSessionTab, closeSessionTab } from "../sessionTabs";
+import type { DisplayJob } from "./lib/types";
 import {
   isPinned as checkIsPinned,
   pinSession,
@@ -92,17 +93,18 @@ export function App() {
    * Drilldown tree task click (issue:4) — same as handleSelectSession but the
    * task may live in another namespace: switch the pane's world first, and
    * hand the task's own namespace to the tab so its socket always dials the
-   * world its session lives in.
+   * world its session lives in. The clicked card's own job is the tab's
+   * header snapshot when the active-namespace list doesn't carry it.
    */
   const handleSelectTask = useCallback(
-    (ns: string, sessionId: string) => {
+    (ns: string, sessionId: string, job?: DisplayJob) => {
       setActiveSessionId(sessionId);
       if (ns !== namespace) {
         setNamespace(ns);
       }
       openSessionTab(sessionId, {
         namespace: ns,
-        job: jobs.find((j) => j.sessionId === sessionId) ?? null,
+        job: job ?? jobs.find((j) => j.sessionId === sessionId) ?? null,
       });
     },
     [namespace, jobs, setNamespace],
@@ -151,10 +153,11 @@ export function App() {
     [jobs, refreshCached],
   );
 
-  /** Open Ragnarök confirmation dialog for a running job. */
+  /** Open Ragnarök confirmation dialog for a running job. The card's own
+   *  job object is preferred — the active-namespace list may not carry it. */
   const handleOpenCancelDialog = useCallback(
-    (sessionId: string) => {
-      const job = jobs.find((j) => j.sessionId === sessionId);
+    (sessionId: string, jobFromCard?: DisplayJob) => {
+      const job = jobFromCard ?? jobs.find((j) => j.sessionId === sessionId);
       if (!job || job.status !== "running") return;
       const jobTitle = job.issueTitle
         ? `#${job.issue} \u2013 ${job.issueTitle}`

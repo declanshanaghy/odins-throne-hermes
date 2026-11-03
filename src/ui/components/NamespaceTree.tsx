@@ -26,7 +26,7 @@
 // minimal icon + initials list (task drilldown needs the wider modes).
 
 import { useState } from "react";
-import type { Job } from "../lib/types";
+import type { DisplayJob, Job } from "../lib/types";
 import type { NamespaceOption } from "../hooks/useNamespace";
 import { summaryLine, type NamespaceSummaries } from "../hooks/useNamespaceSummaries";
 import { parseJob, sortJobs } from "../hooks/useJobs";
@@ -41,7 +41,7 @@ interface Props {
   summaries: NamespaceSummaries;
   onNamespaceChange: (ns: string) => void;
   /** Drilldown task click — same selection semantics as the job cards. */
-  onSelectTask: (nsId: string, sessionId: string) => void;
+  onSelectTask: (nsId: string, sessionId: string, job?: DisplayJob) => void;
   activeSessionId: string | null;
   displayMode: DisplayMode;
   /** Job-card interactions, threaded through from the Sidebar exactly as the
@@ -49,7 +49,7 @@ interface Props {
   onAvatarClick?: (agentKey: string) => void;
   onTogglePinSession?: (sessionId: string) => void;
   pinnedSessionIds?: Set<string>;
-  onCancelJob?: (sessionId: string) => void;
+  onCancelJob?: (sessionId: string, job: DisplayJob) => void;
   terminatingSessionIds?: Set<string>;
 }
 
@@ -252,7 +252,7 @@ export function NamespaceTree({
                             <JobCard
                               job={job}
                               isActive={isTaskActive}
-                              onClick={() => onSelectTask(ns.id, job.sessionId)}
+                              onClick={() => onSelectTask(ns.id, job.sessionId, job)}
                               onAvatarClick={onAvatarClick}
                               isPinned={pinnedSessionIds?.has(job.sessionId) ?? false}
                               onTogglePin={onTogglePinSession ? () => onTogglePinSession(job.sessionId) : undefined}

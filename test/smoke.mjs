@@ -11,8 +11,14 @@ import jsdomPkg from "jsdom";
 const { JSDOM } = jsdomPkg;
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
+import { existsSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
 
-const require = createRequire(`${process.env.HOME}/.hermes/hermes-agent/apps/desktop/package.json`);
+const here = dirname(fileURLToPath(import.meta.url));
+const hermesDesktop = `${process.env.HOME}/.hermes/hermes-agent/apps/desktop/package.json`;
+const localPkg = join(here, "..", "node_modules", "react-dom", "package.json");
+const require = createRequire(existsSync(hermesDesktop) ? hermesDesktop : localPkg);
 const { createRoot } = require("react-dom/client");
 
 // ── jsdom global environment ────────────────────────────────────────────────
@@ -101,8 +107,12 @@ const JOBS_BY_NS = {
 function jsonResponse(body, status = 200) {
   return { ok: status >= 200 && status < 300, status, json: async () => body };
 }
-globalThis.fetch = async (input) => {
+globalThis.fetch = async (input, init) => {
   const url = String(input);
+  // Ragnarök cancel (DELETE /api/jobs/:sessionId) — namespace-agnostic REST path
+  if (init?.method === "DELETE" && url.includes("/api/jobs/")) {
+    return jsonResponse({ ok: true });
+  }
   if (url.includes("/api/namespaces")) return jsonResponse({ namespaces: NS_FIXTURES });
   const m = url.match(/\/api\/jobs\?namespace=([^&]+)/);
   if (m) {
@@ -114,9 +124,10 @@ globalThis.fetch = async (input) => {
 };
 dom.window.fetch = globalThis.fetch;
 
-globalThis.__stubNavigations = [];
-globalThis.__stubNotifications = [];
-globalThis.__stubWorkspaceTabs = [];
+// The SDK stub owns the workspace-tab records (initialized when the plugin
+// bundle imports it below): __stubWorkspaceOpens (newly stacked tabs),
+// __stubWorkspaceFocuses (fronted already-open tabs), __stubWorkspaceTabs
+// (open tabs by id — the disposer is under .close).
 
 // ── load the built plugin through the loader (stub SDK + real React) ───────
 const plugin = (await import("../desktop/plugin.js")).default;
@@ -285,15 +296,101 @@ assert.equal(
   "every branched task is a full job card",
 );
 
-// Clicking a task's job card selects that session — the same semantics the
-// old list had (aria-selected marks the task node).
-document.querySelector('.ns-tree__task[data-session="issue-1200-step1-firemandecko-1a2b3c4d"] .card').click();
+// ── per-session workspace tabs (issue:6) ────────────────────────────────────
+// A session click must stack a DEDICATED workspace tab (host.openWorkspace —
+// the session-tile door), never navigate the current tab away; a second click
+// on the same session focuses the existing tab; a different session stacks
+// another tab alongside.
+const SID_1200 = "issue-1200-step1-firemandecko-1a2b3c4d";
+const SID_1201 = "issue-1201-step2-loki-2b3c4d5e";
+const TAB_1200 = `odins-throne-session-${SID_1200}`;
+const TAB_1201 = `odins-throne-session-${SID_1201}`;
+
+const navsBeforeClicks = [...(globalThis.__stubNavigations ?? [])];
+document.querySelector(`.ns-tree__task[data-session="${SID_1200}"] .card`).click();
 await flush();
 await flush();
 assert.equal(
-  document.querySelector('.ns-tree__task[data-session="issue-1200-step1-firemandecko-1a2b3c4d"]').getAttribute("aria-selected"),
+  document.querySelector(`.ns-tree__task[data-session="${SID_1200}"]`).getAttribute("aria-selected"),
   "true",
   "clicked task node is marked selected",
+);
+assert.equal(
+  globalThis.__stubWorkspaceOpens[globalThis.__stubWorkspaceOpens.length - 1],
+  TAB_1200,
+  "session click stacks a dedicated per-session workspace tab",
+);
+assert.equal(
+  globalThis.__stubWorkspaceTabs.get(TAB_1200)?.title,
+  "#1200 – wire the namespace drilldown tree",
+  "session tab carries the job title",
+);
+assert.equal(
+  globalThis.__stubNavigations.length,
+  navsBeforeClicks.length,
+  "session click does not navigate the current tab away",
+);
+
+// Clicking the same session again focuses the existing tab — no duplicate.
+document.querySelector(`.ns-tree__task[data-session="${SID_1200}"] .card`).click();
+await flush();
+await flush();
+assert.ok(
+  globalThis.__stubWorkspaceFocuses.includes(TAB_1200),
+  "second click on the same session focuses its existing tab",
+);
+assert.equal(
+  globalThis.__stubWorkspaceOpens.filter((id) => id === TAB_1200).length,
+  1,
+  "focusing an open session never stacks a duplicate tab",
+);
+
+// A second, DIFFERENT session stacks another tab — several log terminals at
+// once, one per session.
+document.querySelector(`.ns-tree__task[data-session="${SID_1201}"] .card`).click();
+await flush();
+await flush();
+assert.ok(
+  globalThis.__stubWorkspaceTabs.has(TAB_1200) && globalThis.__stubWorkspaceTabs.has(TAB_1201),
+  "two different sessions hold two tabs open at once",
+);
+
+// Ragnarök closes the session's tab with the pod (reference design: "cancel
+// closes its tab"). The dialog lives in the pane overlay; confirm issues
+// DELETE /api/jobs/:sessionId, then the tab must be gone.
+document
+  .querySelector(`.ns-tree__task[data-session="${SID_1201}"] [title^="Invoke Ragnarök"]`)
+  .click();
+await flush();
+assert.ok(document.querySelector(".rdk-backdrop"), "Ragnarök dialog opens from the pane");
+document.querySelector(".rdk-btn--confirm").click();
+await flush();
+await flush();
+assert.ok(
+  !globalThis.__stubWorkspaceTabs.has(TAB_1201),
+  "confirmed Ragnarök closes the session's workspace tab",
+);
+assert.ok(
+  document.getElementById("pane").innerHTML.includes("Ragnarok unleashed"),
+  "Ragnarök toast confirms the termination",
+);
+
+// Closing a tab via its strip ✕ (the openWorkspace disposer) cleans up; a
+// re-click on that session stacks a fresh tab again.
+globalThis.__stubWorkspaceTabs.get(TAB_1200)?.close();
+await flush();
+assert.ok(!globalThis.__stubWorkspaceTabs.has(TAB_1200), "tab disposer closes the tab");
+document.querySelector(`.ns-tree__task[data-session="${SID_1200}"] .card`).click();
+await flush();
+await flush();
+assert.ok(
+  globalThis.__stubWorkspaceTabs.has(TAB_1200),
+  "re-clicking a closed session's card re-opens its tab",
+);
+assert.equal(
+  globalThis.__stubWorkspaceOpens.filter((id) => id === TAB_1200).length,
+  2,
+  "re-open after close is a new tab, not a focus",
 );
 
 // Icons from shanaghy.com's icon library sit on the namespace rows only —
@@ -350,7 +447,8 @@ assert.equal(
 );
 
 // Cross-world task click: a task in a non-active namespace switches the
-// namespace AND keeps that session selected (pending-select flow in App).
+// namespace AND opens the session's own tab — captured against the task's
+// world, so the pane's later namespace moves never rewire the tab's socket.
 document.querySelector('.ns-tree__item[data-namespace="re-goatmower-agents"] .ns-tree__chevron-btn').click();
 await flush();
 document.querySelector('.ns-tree__task[data-session="issue-4400-step1-firemandecko-5e6f7a8b"] .card').click();
@@ -360,6 +458,10 @@ assert.equal(
   localStorage.getItem("hlidskjalf:namespace"),
   "re-goatmower-agents",
   "cross-world task click switches the active namespace",
+);
+assert.ok(
+  globalThis.__stubWorkspaceTabs.has("odins-throne-session-issue-4400-step1-firemandecko-5e6f7a8b"),
+  "cross-world task click opens the session's tab in its own world",
 );
 assert.equal(
   document.querySelector('.ns-tree__task[data-session="issue-4400-step1-firemandecko-5e6f7a8b"]').getAttribute("aria-selected"),
@@ -398,54 +500,57 @@ assert.equal(
 );
 assert.equal(dom.window.document.documentElement.getAttribute("data-theme"), null, "app <html> untouched");
 
-// ── job-card click → workspace tab open ────────────────────────────────────
-// Verify that the pane's onSelectSession wiring reaches host.openWorkspace.
-// The entry.tsx exports openThroneTab as a test seam; calling it with a session
-// id is exactly what SidebarConnected does when a job card is clicked.
+// ── openThroneTab seam → per-session workspace tab (issue:6) ───────────────
+// The entry.tsx exports openThroneTab as a test seam; calling it with a
+// session id is exactly what SidebarConnected does when a job card is clicked.
+// Issue:6 supersedes the single 'throne-log' tab: each session opens its OWN
+// tab id, so several log terminals can be open at once.
 const { openThroneTab } = await import("../desktop/plugin.js");
 
 assert.equal(typeof openThroneTab, "function", "openThroneTab exported as test seam");
 
-// Before any click the workspace tab list is empty.
-assert.equal(globalThis.__stubWorkspaceTabs.length, 0, "no workspace tabs opened yet");
-
+const seamTabsBefore = globalThis.__stubWorkspaceTabs.size;
 openThroneTab("test-session-001");
 await flush();
 
 assert.ok(
-  globalThis.__stubWorkspaceTabs.length > 0,
-  "job-card click triggers host.openWorkspace (new workspace tab)",
+  globalThis.__stubWorkspaceTabs.has("odins-throne-session-test-session-001"),
+  "job-card click opens a DEDICATED workspace tab for the session",
 );
 assert.equal(
-  globalThis.__stubWorkspaceTabs[0].id,
-  "throne-log",
-  "openWorkspace called with stable tab id 'throne-log'",
-);
-assert.equal(
-  globalThis.__stubWorkspaceTabs[0].title,
-  "Odin's Throne",
-  "workspace tab carries the 'Odin's Throne' title",
+  globalThis.__stubWorkspaceTabs.size,
+  seamTabsBefore + 1,
+  "first session stacks exactly one new tab",
 );
 
-// Re-clicking with a different session re-uses the same tab (re-fronts it)
-// rather than opening a second one — stub records every call so we can count.
+// A second, DIFFERENT session stacks another tab — not a re-front.
 openThroneTab("test-session-002");
 await flush();
-assert.equal(
-  globalThis.__stubWorkspaceTabs.length,
-  2,
-  "second click records another openWorkspace call (stub records all; host dedupes by id)",
+assert.ok(
+  globalThis.__stubWorkspaceTabs.has("odins-throne-session-test-session-002") &&
+    globalThis.__stubWorkspaceTabs.has("odins-throne-session-test-session-001"),
+  "second session keeps its own tab alongside the first",
+);
+
+// Re-clicking the SAME session focuses the existing tab — never a duplicate.
+const opensBefore = globalThis.__stubWorkspaceOpens.length;
+openThroneTab("test-session-001");
+await flush();
+assert.ok(
+  globalThis.__stubWorkspaceFocuses.includes("odins-throne-session-test-session-001"),
+  "re-clicking an open session fronts its existing tab",
 );
 assert.equal(
-  globalThis.__stubWorkspaceTabs[1].id,
-  "throne-log",
-  "second click uses the same stable tab id",
+  globalThis.__stubWorkspaceOpens.length,
+  opensBefore,
+  "re-clicking an open session never stacks a duplicate tab",
 );
 
 // ── fallback: host.openWorkspace unavailable (older desktop builds) ────────
 // On older desktop builds host.openWorkspace may be absent. The opener must
-// fall back to host.navigate('/odins-throne') so the user still reaches the
-// log page. We simulate this by temporarily removing the method from the stub.
+// fall back to a per-session route page + host.navigate so the user still
+// reaches the session's log. We simulate this by temporarily removing the
+// method from the stub.
 const { host: stubHost } = await import("./sdk-stub.mjs");
 const savedOpenWorkspace = stubHost.openWorkspace;
 stubHost.openWorkspace = undefined; // simulate older build
@@ -460,26 +565,23 @@ assert.ok(
 );
 assert.equal(
   globalThis.__stubNavigations[globalThis.__stubNavigations.length - 1],
-  "/odins-throne",
-  "fallback: navigates to /odins-throne on older desktop builds",
+  "/odins-throne/test-session-fallback",
+  "fallback: navigates to the session's own route page on older desktop builds",
 );
 // Restore so the tab-open path is active for the remainder of the test run.
 stubHost.openWorkspace = savedOpenWorkspace;
 
-// ── multiple rapid clicks all use the stable tab id ───────────────────────
-// Three successive clicks all go through the same 'throne-log' id so the host
-// never opens more than one tab (host dedupes on id; stub just records calls).
-const countBefore = globalThis.__stubWorkspaceTabs.length;
+// ── multiple rapid clicks each carry their own session tab id ──────────────
 openThroneTab("rapid-a");
 openThroneTab("rapid-b");
 openThroneTab("rapid-c");
 await flush();
-const rapidCalls = globalThis.__stubWorkspaceTabs.slice(countBefore);
-assert.equal(rapidCalls.length, 3, "three rapid clicks each call openWorkspace once");
-assert.ok(
-  rapidCalls.every((t) => t.id === "throne-log"),
-  "all rapid clicks use the stable 'throne-log' id (host dedupes by id)",
-);
+for (const s of ["rapid-a", "rapid-b", "rapid-c"]) {
+  assert.ok(
+    globalThis.__stubWorkspaceTabs.has(`odins-throne-session-${s}`),
+    `rapid click on ${s} stacks its own per-session tab`,
+  );
+}
 
-console.log("SMOKE PASS — pane + page render, namespace drilldown tree (top-level roots, job-card task branches, old flat list gone, shanaghy.com icons + fallback, connector lines), CSS scoped, theme plugin-local, overlays wired, job-card click opens workspace tab");
+console.log("SMOKE PASS — pane + page render, namespace drilldown tree (top-level roots, job-card task branches, old flat list gone, shanaghy.com icons + fallback, connector lines), CSS scoped, theme plugin-local, overlays wired, per-session workspace tabs (issue:6: open per click, focus dedupe, cancel + strip-close teardown, cross-world capture)");
 process.exit(0);

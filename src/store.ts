@@ -36,8 +36,10 @@ export interface ThroneSnapshot {
   // per-namespace task summaries + status stats for the namespace tree (issue:2)
   namespaceSummaries: NamespaceSummaries;
   // drilldown tree task click — opens a dedicated tab for the session,
-  // switching namespace first if the task lives in another world (issue:4)
-  onSelectTask: (nsId: string, sessionId: string) => void;
+  // switching namespace first if the task lives in another world (issue:4).
+  // The clicked card's own job is passed through when available — it is the
+  // freshest snapshot for the tab header (issue:6).
+  onSelectTask: (nsId: string, sessionId: string, job?: DisplayJob) => void;
 
   // actions
   onSelectSession: (sessionId: string) => void;
@@ -45,7 +47,7 @@ export interface ThroneSnapshot {
   onOdinClick: () => void;
   // Per-session pin toggle — used by both the sidebar and the session tabs
   onTogglePinSession: (sessionId: string) => void;
-  onCancelJob: (sessionId: string) => void;
+  onCancelJob: (sessionId: string, job?: DisplayJob) => void;
   pinnedSessionIds: Set<string>;
   terminatingSessionIds: Set<string>;
 
