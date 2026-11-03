@@ -5,7 +5,7 @@ the 2026-11-02 audit: 17 of 28 shared-path files byte-identical; 96.1% aggregate
 similarity over 9,108 shared-origin LOC; this repo's copy is the superset (adds NamespaceTree,
 useNamespaceSummaries, hermesFormat — hermes-harness log parsing).
 
-Since issue #17 the five points where the targets diverge live behind ONE platform adapter
+Since issue #17 the points where the targets diverge live behind ONE platform adapter
 interface, src/ui/platform.ts — the ui/ core imports no target:
 
 1. Theme root — applyTheme: web sets data-theme on <html>; plugin scopes to .odins-throne-root
@@ -13,7 +13,17 @@ interface, src/ui/platform.ts — the ui/ core imports no target:
 3. REST — restFetch: same-origin /api/* vs the otFetch mapping to /bot/api + bearer
 4. Assets — avatarUrl: /profiles/*.png URLs vs imported data-URLs
 5. App shell — shell marker + focusLogView: full-page AppShell (targets/web) vs headless
-   StoreBridge (ui/App) whose snapshot the plugin's pane + workspace page render
+   StoreBridge (ui/App) whose snapshot the plugin's pane + workspace tabs render
+6. Session log views — openSessionLog/closeSessionLog (issue #6): the plugin stacks one
+   closeable workspace tab per session (host.openWorkspace, older hosts fall back to
+   per-session route pages); the web shell is a no-op — its single terminal follows the
+   store's activeSessionId
+
+Since issue #6 the per-session log terminal is a shared core component
+(ui/components/SessionLogViewer.tsx): each mount owns its OWN WebSocket and useLogStream
+instance keyed by its sessionId, so several session tabs stream side by side. The
+StoreBridge snapshot (src/ui/store.ts) carries pane-level state only (jobs, pins,
+Ragnarök, namespace tree) — no log-stream fields.
 
 Each target implements the interface: src/targets/plugin/platform.ts (desktop, pairs with
 upstream.ts) and src/targets/web/platform.ts (the original SPA flavor). Targets install their

@@ -30,10 +30,11 @@ function SidebarConnected() {
       quote={snap.quote}
       wsState={snap.wsState}
       onSelectSession={(sessionId) => {
-        // Open (or focus) the log terminal tab in the workspace and select the
-        // clicked session. The tab opener wired in entry.tsx calls
-        // snap.onSelectSession before opening the tab so the page renders the
-        // right stream immediately.
+        // Open (or focus) this session's log terminal tab in the workspace.
+        // The tab opener wired in entry.tsx routes through the store's
+        // onSelectSession, which marks the sidebar selection and opens the
+        // session's own workspace tab (issue:6) — one tab per session, each
+        // streaming independently.
         openThroneTab(sessionId);
       }}
       onAvatarClick={snap.onAvatarClick}
