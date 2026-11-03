@@ -265,7 +265,10 @@ body {
   border-right: 5px solid transparent;
   border-bottom: 5px solid var(--rune-border, #334155);
 }
-.sidebar-header img {
+/* Odin's brand avatar only — the old bare `.sidebar-header img` selector
+   (specificity 0,2,1) outranked .card-avatar (0,2,0) and .ns-tree__icon,
+   inflating every card avatar and tree icon to 40px inside the header. */
+.sidebar-header .brand img {
   width: 40px; height: 40px; border-radius: 50%;
   border: 2px solid var(--gold);
   object-fit: cover;
@@ -475,7 +478,7 @@ body {
  * bespoke task-row styling. Just keep them tight inside the branch and let
  * the connector rail breathe. */
 .ns-tree__tasks .card {
-  margin-bottom: 0.15rem;
+  margin-bottom: 0;
 }
 .ns-tree__task--empty {
   padding: 0.05rem 0.3rem 0.1rem 1.1rem;
@@ -673,8 +676,8 @@ body {
 
 /* ── Job cards ─────────────────────────────────── */
 .card {
-  padding: 0.6rem 0.75rem; border-radius: 4px; cursor: pointer;
-  margin-bottom: 2px; border-left: 3px solid transparent;
+  padding: 0.28rem 0.6rem; border-radius: 4px; cursor: pointer;
+  margin-bottom: 1px; border-left: 3px solid transparent;
   background: var(--void-black, transparent);
   transition: background 0.2s, box-shadow 0.2s, border-color 0.2s;
 }
@@ -684,9 +687,9 @@ body {
   border-left-color: var(--gold-bright);
   box-shadow: 0 0 10px rgba(201, 146, 10, 0.18), inset 0 0 16px rgba(201, 146, 10, 0.06);
 }
-.card-top { display: flex; align-items: center; gap: 0.5rem; }
+.card-top { display: flex; align-items: center; gap: 0.4rem; }
 .card-avatar {
-  width: 24px; height: 24px; border-radius: 50%;
+  width: 18px; height: 18px; border-radius: 50%;
   border: 1px solid var(--rune-border);
   object-fit: cover; flex-shrink: 0;
 }
@@ -710,18 +713,21 @@ body {
   color: var(--text-saga);
 }
 .card-meta-new {
-  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
-  margin-top: 0.2rem;
+  display: flex; align-items: center; gap: 5px; flex-wrap: nowrap;
+  margin-top: 0.1rem;
   font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: var(--text-rune);
+  overflow: hidden;
 }
+/* Extended mode has labeled buttons — let its meta line wrap instead of clip. */
+.ns-tree--extended .card-meta-new { flex-wrap: wrap; overflow: visible; }
 .card-agent-badge {
   font-size: 0.6rem; font-weight: 600;
   padding: 1px 5px; border: 1px solid var(--rune-border);
   white-space: nowrap;
 }
 .card-secondary-meta {
-  display: flex; align-items: center; flex-wrap: nowrap;
-  overflow: hidden; min-width: 0;
+  display: block; min-width: 0; flex: 1;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .card-secondary-issue {
   color: var(--text-void); white-space: nowrap; flex-shrink: 0;
@@ -736,7 +742,6 @@ body {
   border-radius: 2px;
   padding: 0 3px;
   opacity: 0.7;
-  margin-left: auto;
 }
 
 /* ── Content area ──────────────────────────────── */
@@ -835,26 +840,40 @@ body {
   .job-status-icon-btn { min-width: 1.6rem; min-height: 1.6rem; }
 }
 
-/* ── Card status icon button (sidebar second line) ──
-   Matches card-pin-btn — inline, border, color-only hover. */
-.card-status-icon-btn {
+/* ── Card status lead (sidebar second line) ──
+   The status icon LEADS the meta line — under the title, beside the avatar
+   column — so statuses scan down the LEFT edge across hundreds of jobs.
+   Bare icon by default; bordered pill only when clickable (Ragnarök cancel). */
+.card-status-lead {
   display: inline-flex; align-items: center; justify-content: center;
-  width: 1.6rem; height: 1.6rem; padding: 0; margin-left: auto;
-  background: transparent; border: 1px solid var(--rune-border);
-  border-radius: 3px; cursor: default;
-  line-height: 1; transition: color 0.15s, border-color 0.15s;
-  flex-shrink: 0;
+  width: 1rem; height: 1rem; padding: 0;
+  background: transparent; border: none; cursor: default;
+  line-height: 1; flex-shrink: 0;
 }
-.card-status-icon-btn:hover { border-color: currentColor; }
-.card-status-icon-btn--cancel { cursor: pointer; }
-.card-status-icon-btn--cancel:hover {
+.card-status-lead--cancel {
+  cursor: pointer;
+  width: auto; height: auto; padding: 0 3px;
+  border: 1px solid var(--rune-border); border-radius: 3px;
+  transition: color 0.15s, border-color 0.15s;
+}
+.card-status-lead--cancel:hover {
   color: var(--error-strong);
   border-color: var(--error-strong);
 }
-.card-status-icon-btn:focus-visible {
+.card-status-lead:focus-visible {
   outline: 2px solid var(--gold); outline-offset: 2px;
 }
-.card-status-icon-btn.pulse { animation: pulse 1.5s ease-in-out infinite; }
+.card-status-lead.pulse { animation: pulse 1.5s ease-in-out infinite; }
+
+/* ── Card meta actions — right-aligned cluster on the meta line ── */
+.card-meta-actions {
+  margin-left: auto;
+  display: inline-flex; align-items: center; gap: 4px;
+  flex-shrink: 0;
+}
+/* Squashed cards carry smaller square action buttons than the log header. */
+.card .card-pin-btn,
+.card .copy-session-btn { width: 1.25rem; height: 1.25rem; }
 
 /* ── Pin button (replaces download) ────────────────
    44x44 touch target via min-width/height on mobile,
@@ -998,11 +1017,6 @@ body {
   flex-shrink: 0;
   white-space: nowrap;
   opacity: 0.85;
-}
-
-/* ── Extended mode: first action item pushed to right in flex row ── */
-.card-extended-action-first {
-  margin-left: auto;
 }
 
 /* ── Extended mode: labeled action buttons (status, copy, pin) ── */

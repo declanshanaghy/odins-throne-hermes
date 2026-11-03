@@ -47,7 +47,9 @@ export function JobCard({ job, isActive, onClick, onAvatarClick, isPinned = fals
   const pulse = job.status === "running" ? " pulse" : "";
   // Primary title: bare issueTitle when available, else "Issue #N – Step N" fallback
   const displayTitle = resolveSessionTitle(job);
-  // Secondary meta line: "Issue #N · Agent · Step N" when title is shown; otherwise "Agent · Step N"
+  // Secondary meta line: the status icon LEADS it (left edge, directly under
+  // the avatar) so statuses scan down the left column across hundreds of jobs;
+  // then "Issue #N · Agent · Step N"; the action buttons cluster at the right.
   const secondaryMeta = job.issueTitle
     ? `Issue #${job.issue} \u00b7 ${job.agentName} \u00b7 Step ${job.step}`
     : null;
@@ -120,28 +122,11 @@ export function JobCard({ job, isActive, onClick, onAvatarClick, isPinned = fals
         </span>
       </div>
       <div className="card-meta-new">
-        {secondaryMeta ? (
-          <span className="card-secondary-meta" aria-label={secondaryMeta}>
-            <span className="card-secondary-issue">Issue #{job.issue}</span>
-            <span className="card-meta-sep" aria-hidden="true"> · </span>
-            <span className="card-agent-badge" style={{ color: agentColor }}>{job.agentName}</span>
-            <span className="card-meta-sep" aria-hidden="true"> · </span>
-            <span>Step {job.step}</span>
-          </span>
-        ) : (
-          <>
-            <span className="card-agent-badge" style={{ color: agentColor }}>
-              {job.agentName}
-            </span>
-            <span>Step {job.step}</span>
-          </>
-        )}
-        {job.fixture && <span className="card-fixture-badge" title="Fixture (replayed log)">ᚠ</span>}
         {isExtended ? (
           <>
             {job.status === "running" && onCancelJob ? (
               <button
-                className={`card-extended-action-btn card-extended-action-btn--cancel card-extended-action-first${pulse}`}
+                className={`card-extended-action-btn card-extended-action-btn--cancel${pulse}`}
                 style={{ color: sColor }}
                 title="Invoke Ragnarök — click to cancel this job"
                 aria-label="Cancel running job"
@@ -155,7 +140,7 @@ export function JobCard({ job, isActive, onClick, onAvatarClick, isPinned = fals
               </button>
             ) : (
               <span
-                className={`card-extended-status-label card-extended-action-first${pulse}`}
+                className={`card-extended-status-label${pulse}`}
                 style={{ color: sColor }}
                 aria-label={`Status: ${sLabel}`}
                 title={sLabel}
@@ -164,19 +149,38 @@ export function JobCard({ job, isActive, onClick, onAvatarClick, isPinned = fals
                 <span>{sLabel}</span>
               </span>
             )}
-            <CardCopySessionIdButton sessionId={job.sessionId} labeled />
-            {onTogglePin && (
-              <CardPinButtonLabeled isPinned={isPinned} onTogglePin={onTogglePin} />
+            {secondaryMeta ? (
+              <span className="card-secondary-meta" aria-label={secondaryMeta}>
+                <span className="card-secondary-issue">Issue #{job.issue}</span>
+                <span className="card-meta-sep" aria-hidden="true"> · </span>
+                <span className="card-agent-badge" style={{ color: agentColor }}>{job.agentName}</span>
+                <span className="card-meta-sep" aria-hidden="true"> · </span>
+                <span>Step {job.step}</span>
+              </span>
+            ) : (
+              <>
+                <span className="card-agent-badge" style={{ color: agentColor }}>
+                  {job.agentName}
+                </span>
+                <span>Step {job.step}</span>
+              </>
             )}
-            {job.status === "succeeded" && (
-              <CardDownloadButtonLabeled sessionId={job.sessionId} />
-            )}
+            {job.fixture && <span className="card-fixture-badge" title="Fixture (replayed log)">ᚠ</span>}
+            <span className="card-meta-actions">
+              <CardCopySessionIdButton sessionId={job.sessionId} labeled />
+              {onTogglePin && (
+                <CardPinButtonLabeled isPinned={isPinned} onTogglePin={onTogglePin} />
+              )}
+              {job.status === "succeeded" && (
+                <CardDownloadButtonLabeled sessionId={job.sessionId} />
+              )}
+            </span>
           </>
         ) : (
           <>
             {job.status !== "cached" && (job.status === "running" && onCancelJob ? (
               <button
-                className={`card-status-icon-btn card-status-icon-btn--cancel${pulse}`}
+                className={`card-status-lead card-status-lead--cancel${pulse}`}
                 style={{ color: sColor }}
                 title="Invoke Ragnarök — click to cancel this job"
                 aria-label="Cancel running job"
@@ -189,7 +193,7 @@ export function JobCard({ job, isActive, onClick, onAvatarClick, isPinned = fals
               </button>
             ) : (
               <span
-                className={`card-status-icon-btn${pulse}`}
+                className={`card-status-lead${pulse}`}
                 style={{ color: sColor }}
                 title={sLabel}
                 aria-label={`Status: ${sLabel}`}
@@ -197,13 +201,32 @@ export function JobCard({ job, isActive, onClick, onAvatarClick, isPinned = fals
                 <StatusIconSvg status={job.status} />
               </span>
             ))}
-            {onTogglePin && (
-              <CardPinButton isPinned={isPinned} onTogglePin={onTogglePin} />
+            {secondaryMeta ? (
+              <span className="card-secondary-meta" aria-label={secondaryMeta}>
+                <span className="card-secondary-issue">Issue #{job.issue}</span>
+                <span className="card-meta-sep" aria-hidden="true"> · </span>
+                <span className="card-agent-badge" style={{ color: agentColor }}>{job.agentName}</span>
+                <span className="card-meta-sep" aria-hidden="true"> · </span>
+                <span>Step {job.step}</span>
+              </span>
+            ) : (
+              <>
+                <span className="card-agent-badge" style={{ color: agentColor }}>
+                  {job.agentName}
+                </span>
+                <span>Step {job.step}</span>
+              </>
             )}
-            {job.status === "succeeded" && (
-              <CardDownloadButton sessionId={job.sessionId} />
-            )}
-            <CardCopySessionIdButton sessionId={job.sessionId} />
+            {job.fixture && <span className="card-fixture-badge" title="Fixture (replayed log)">ᚠ</span>}
+            <span className="card-meta-actions">
+              {onTogglePin && (
+                <CardPinButton isPinned={isPinned} onTogglePin={onTogglePin} />
+              )}
+              {job.status === "succeeded" && (
+                <CardDownloadButton sessionId={job.sessionId} />
+              )}
+              <CardCopySessionIdButton sessionId={job.sessionId} />
+            </span>
           </>
         )}
       </div>

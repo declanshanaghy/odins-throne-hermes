@@ -275,7 +275,10 @@ var styles_default = `.odins-throne-root .odins-throne-root {
   border-right: 5px solid transparent;
   border-bottom: 5px solid var(--rune-border, #334155);
 }
-.odins-throne-root .sidebar-header img {
+/* Odin's brand avatar only \u2014 the old bare \`.sidebar-header img\` selector
+   (specificity 0,2,1) outranked .card-avatar (0,2,0) and .ns-tree__icon,
+   inflating every card avatar and tree icon to 40px inside the header. */
+.odins-throne-root .sidebar-header .brand img {
   width: 40px; height: 40px; border-radius: 50%;
   border: 2px solid var(--gold);
   object-fit: cover;
@@ -485,7 +488,7 @@ var styles_default = `.odins-throne-root .odins-throne-root {
  * bespoke task-row styling. Just keep them tight inside the branch and let
  * the connector rail breathe. */
 .odins-throne-root .ns-tree__tasks .card {
-  margin-bottom: 0.15rem;
+  margin-bottom: 0;
 }
 .odins-throne-root .ns-tree__task--empty {
   padding: 0.05rem 0.3rem 0.1rem 1.1rem;
@@ -683,8 +686,8 @@ var styles_default = `.odins-throne-root .odins-throne-root {
 
 /* \u2500\u2500 Job cards \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
 .odins-throne-root .card {
-  padding: 0.6rem 0.75rem; border-radius: 4px; cursor: pointer;
-  margin-bottom: 2px; border-left: 3px solid transparent;
+  padding: 0.28rem 0.6rem; border-radius: 4px; cursor: pointer;
+  margin-bottom: 1px; border-left: 3px solid transparent;
   background: var(--void-black, transparent);
   transition: background 0.2s, box-shadow 0.2s, border-color 0.2s;
 }
@@ -694,9 +697,9 @@ var styles_default = `.odins-throne-root .odins-throne-root {
   border-left-color: var(--gold-bright);
   box-shadow: 0 0 10px rgba(201, 146, 10, 0.18), inset 0 0 16px rgba(201, 146, 10, 0.06);
 }
-.odins-throne-root .card-top { display: flex; align-items: center; gap: 0.5rem; }
+.odins-throne-root .card-top { display: flex; align-items: center; gap: 0.4rem; }
 .odins-throne-root .card-avatar {
-  width: 24px; height: 24px; border-radius: 50%;
+  width: 18px; height: 18px; border-radius: 50%;
   border: 1px solid var(--rune-border);
   object-fit: cover; flex-shrink: 0;
 }
@@ -720,18 +723,21 @@ var styles_default = `.odins-throne-root .odins-throne-root {
   color: var(--text-saga);
 }
 .odins-throne-root .card-meta-new {
-  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
-  margin-top: 0.2rem;
+  display: flex; align-items: center; gap: 5px; flex-wrap: nowrap;
+  margin-top: 0.1rem;
   font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: var(--text-rune);
+  overflow: hidden;
 }
+/* Extended mode has labeled buttons \u2014 let its meta line wrap instead of clip. */
+.odins-throne-root .ns-tree--extended .card-meta-new { flex-wrap: wrap; overflow: visible; }
 .odins-throne-root .card-agent-badge {
   font-size: 0.6rem; font-weight: 600;
   padding: 1px 5px; border: 1px solid var(--rune-border);
   white-space: nowrap;
 }
 .odins-throne-root .card-secondary-meta {
-  display: flex; align-items: center; flex-wrap: nowrap;
-  overflow: hidden; min-width: 0;
+  display: block; min-width: 0; flex: 1;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .odins-throne-root .card-secondary-issue {
   color: var(--text-void); white-space: nowrap; flex-shrink: 0;
@@ -746,7 +752,6 @@ var styles_default = `.odins-throne-root .odins-throne-root {
   border-radius: 2px;
   padding: 0 3px;
   opacity: 0.7;
-  margin-left: auto;
 }
 
 /* \u2500\u2500 Content area \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
@@ -845,26 +850,40 @@ var styles_default = `.odins-throne-root .odins-throne-root {
   .odins-throne-root .job-status-icon-btn { min-width: 1.6rem; min-height: 1.6rem; }
 }
 
-/* \u2500\u2500 Card status icon button (sidebar second line) \u2500\u2500
-   Matches card-pin-btn \u2014 inline, border, color-only hover. */
-.odins-throne-root .card-status-icon-btn {
+/* \u2500\u2500 Card status lead (sidebar second line) \u2500\u2500
+   The status icon LEADS the meta line \u2014 under the title, beside the avatar
+   column \u2014 so statuses scan down the LEFT edge across hundreds of jobs.
+   Bare icon by default; bordered pill only when clickable (Ragnar\xF6k cancel). */
+.odins-throne-root .card-status-lead {
   display: inline-flex; align-items: center; justify-content: center;
-  width: 1.6rem; height: 1.6rem; padding: 0; margin-left: auto;
-  background: transparent; border: 1px solid var(--rune-border);
-  border-radius: 3px; cursor: default;
-  line-height: 1; transition: color 0.15s, border-color 0.15s;
-  flex-shrink: 0;
+  width: 1rem; height: 1rem; padding: 0;
+  background: transparent; border: none; cursor: default;
+  line-height: 1; flex-shrink: 0;
 }
-.odins-throne-root .card-status-icon-btn:hover { border-color: currentColor; }
-.odins-throne-root .card-status-icon-btn--cancel { cursor: pointer; }
-.odins-throne-root .card-status-icon-btn--cancel:hover {
+.odins-throne-root .card-status-lead--cancel {
+  cursor: pointer;
+  width: auto; height: auto; padding: 0 3px;
+  border: 1px solid var(--rune-border); border-radius: 3px;
+  transition: color 0.15s, border-color 0.15s;
+}
+.odins-throne-root .card-status-lead--cancel:hover {
   color: var(--error-strong);
   border-color: var(--error-strong);
 }
-.odins-throne-root .card-status-icon-btn:focus-visible {
+.odins-throne-root .card-status-lead:focus-visible {
   outline: 2px solid var(--gold); outline-offset: 2px;
 }
-.odins-throne-root .card-status-icon-btn.pulse { animation: pulse 1.5s ease-in-out infinite; }
+.odins-throne-root .card-status-lead.pulse { animation: pulse 1.5s ease-in-out infinite; }
+
+/* \u2500\u2500 Card meta actions \u2014 right-aligned cluster on the meta line \u2500\u2500 */
+.odins-throne-root .card-meta-actions {
+  margin-left: auto;
+  display: inline-flex; align-items: center; gap: 4px;
+  flex-shrink: 0;
+}
+/* Squashed cards carry smaller square action buttons than the log header. */
+.odins-throne-root .card .card-pin-btn,
+.odins-throne-root .card .copy-session-btn { width: 1.25rem; height: 1.25rem; }
 
 /* \u2500\u2500 Pin button (replaces download) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
    44x44 touch target via min-width/height on mobile,
@@ -1008,11 +1027,6 @@ var styles_default = `.odins-throne-root .odins-throne-root {
   flex-shrink: 0;
   white-space: nowrap;
   opacity: 0.85;
-}
-
-/* \u2500\u2500 Extended mode: first action item pushed to right in flex row \u2500\u2500 */
-.odins-throne-root .card-extended-action-first {
-  margin-left: auto;
 }
 
 /* \u2500\u2500 Extended mode: labeled action buttons (status, copy, pin) \u2500\u2500 */
@@ -4925,7 +4939,36 @@ function JobCard({ job, isActive, onClick, onAvatarClick, isPinned: isPinned2 = 
           ] }),
           /* @__PURE__ */ jsx6("span", { className: "card-issue-title", title: displayTitle, children: displayTitle })
         ] }),
-        /* @__PURE__ */ jsxs5("div", { className: "card-meta-new", children: [
+        /* @__PURE__ */ jsx6("div", { className: "card-meta-new", children: isExtended ? /* @__PURE__ */ jsxs5(Fragment, { children: [
+          job.status === "running" && onCancelJob ? /* @__PURE__ */ jsxs5(
+            "button",
+            {
+              className: `card-extended-action-btn card-extended-action-btn--cancel${pulse}`,
+              style: { color: sColor },
+              title: "Invoke Ragnar\xF6k \u2014 click to cancel this job",
+              "aria-label": "Cancel running job",
+              onClick: (e) => {
+                e.stopPropagation();
+                onCancelJob(job.sessionId);
+              },
+              children: [
+                /* @__PURE__ */ jsx6(StatusIconSvg, { status: job.status }),
+                /* @__PURE__ */ jsx6("span", { children: sLabel })
+              ]
+            }
+          ) : /* @__PURE__ */ jsxs5(
+            "span",
+            {
+              className: `card-extended-status-label${pulse}`,
+              style: { color: sColor },
+              "aria-label": `Status: ${sLabel}`,
+              title: sLabel,
+              children: [
+                /* @__PURE__ */ jsx6(StatusIconSvg, { status: job.status }),
+                /* @__PURE__ */ jsx6("span", { children: sLabel })
+              ]
+            }
+          ),
           secondaryMeta ? /* @__PURE__ */ jsxs5("span", { className: "card-secondary-meta", "aria-label": secondaryMeta, children: [
             /* @__PURE__ */ jsxs5("span", { className: "card-secondary-issue", children: [
               "Issue #",
@@ -4946,68 +4989,61 @@ function JobCard({ job, isActive, onClick, onAvatarClick, isPinned: isPinned2 = 
             ] })
           ] }),
           job.fixture && /* @__PURE__ */ jsx6("span", { className: "card-fixture-badge", title: "Fixture (replayed log)", children: "\u16A0" }),
-          isExtended ? /* @__PURE__ */ jsxs5(Fragment, { children: [
-            job.status === "running" && onCancelJob ? /* @__PURE__ */ jsxs5(
-              "button",
-              {
-                className: `card-extended-action-btn card-extended-action-btn--cancel card-extended-action-first${pulse}`,
-                style: { color: sColor },
-                title: "Invoke Ragnar\xF6k \u2014 click to cancel this job",
-                "aria-label": "Cancel running job",
-                onClick: (e) => {
-                  e.stopPropagation();
-                  onCancelJob(job.sessionId);
-                },
-                children: [
-                  /* @__PURE__ */ jsx6(StatusIconSvg, { status: job.status }),
-                  /* @__PURE__ */ jsx6("span", { children: sLabel })
-                ]
-              }
-            ) : /* @__PURE__ */ jsxs5(
-              "span",
-              {
-                className: `card-extended-status-label card-extended-action-first${pulse}`,
-                style: { color: sColor },
-                "aria-label": `Status: ${sLabel}`,
-                title: sLabel,
-                children: [
-                  /* @__PURE__ */ jsx6(StatusIconSvg, { status: job.status }),
-                  /* @__PURE__ */ jsx6("span", { children: sLabel })
-                ]
-              }
-            ),
+          /* @__PURE__ */ jsxs5("span", { className: "card-meta-actions", children: [
             /* @__PURE__ */ jsx6(CardCopySessionIdButton, { sessionId: job.sessionId, labeled: true }),
             onTogglePin && /* @__PURE__ */ jsx6(CardPinButtonLabeled, { isPinned: isPinned2, onTogglePin }),
             job.status === "succeeded" && /* @__PURE__ */ jsx6(CardDownloadButtonLabeled, { sessionId: job.sessionId })
+          ] })
+        ] }) : /* @__PURE__ */ jsxs5(Fragment, { children: [
+          job.status !== "cached" && (job.status === "running" && onCancelJob ? /* @__PURE__ */ jsx6(
+            "button",
+            {
+              className: `card-status-lead card-status-lead--cancel${pulse}`,
+              style: { color: sColor },
+              title: "Invoke Ragnar\xF6k \u2014 click to cancel this job",
+              "aria-label": "Cancel running job",
+              onClick: (e) => {
+                e.stopPropagation();
+                onCancelJob(job.sessionId);
+              },
+              children: /* @__PURE__ */ jsx6(StatusIconSvg, { status: job.status })
+            }
+          ) : /* @__PURE__ */ jsx6(
+            "span",
+            {
+              className: `card-status-lead${pulse}`,
+              style: { color: sColor },
+              title: sLabel,
+              "aria-label": `Status: ${sLabel}`,
+              children: /* @__PURE__ */ jsx6(StatusIconSvg, { status: job.status })
+            }
+          )),
+          secondaryMeta ? /* @__PURE__ */ jsxs5("span", { className: "card-secondary-meta", "aria-label": secondaryMeta, children: [
+            /* @__PURE__ */ jsxs5("span", { className: "card-secondary-issue", children: [
+              "Issue #",
+              job.issue
+            ] }),
+            /* @__PURE__ */ jsx6("span", { className: "card-meta-sep", "aria-hidden": "true", children: " \xB7 " }),
+            /* @__PURE__ */ jsx6("span", { className: "card-agent-badge", style: { color: agentColor }, children: job.agentName }),
+            /* @__PURE__ */ jsx6("span", { className: "card-meta-sep", "aria-hidden": "true", children: " \xB7 " }),
+            /* @__PURE__ */ jsxs5("span", { children: [
+              "Step ",
+              job.step
+            ] })
           ] }) : /* @__PURE__ */ jsxs5(Fragment, { children: [
-            job.status !== "cached" && (job.status === "running" && onCancelJob ? /* @__PURE__ */ jsx6(
-              "button",
-              {
-                className: `card-status-icon-btn card-status-icon-btn--cancel${pulse}`,
-                style: { color: sColor },
-                title: "Invoke Ragnar\xF6k \u2014 click to cancel this job",
-                "aria-label": "Cancel running job",
-                onClick: (e) => {
-                  e.stopPropagation();
-                  onCancelJob(job.sessionId);
-                },
-                children: /* @__PURE__ */ jsx6(StatusIconSvg, { status: job.status })
-              }
-            ) : /* @__PURE__ */ jsx6(
-              "span",
-              {
-                className: `card-status-icon-btn${pulse}`,
-                style: { color: sColor },
-                title: sLabel,
-                "aria-label": `Status: ${sLabel}`,
-                children: /* @__PURE__ */ jsx6(StatusIconSvg, { status: job.status })
-              }
-            )),
+            /* @__PURE__ */ jsx6("span", { className: "card-agent-badge", style: { color: agentColor }, children: job.agentName }),
+            /* @__PURE__ */ jsxs5("span", { children: [
+              "Step ",
+              job.step
+            ] })
+          ] }),
+          job.fixture && /* @__PURE__ */ jsx6("span", { className: "card-fixture-badge", title: "Fixture (replayed log)", children: "\u16A0" }),
+          /* @__PURE__ */ jsxs5("span", { className: "card-meta-actions", children: [
             onTogglePin && /* @__PURE__ */ jsx6(CardPinButton, { isPinned: isPinned2, onTogglePin }),
             job.status === "succeeded" && /* @__PURE__ */ jsx6(CardDownloadButton, { sessionId: job.sessionId }),
             /* @__PURE__ */ jsx6(CardCopySessionIdButton, { sessionId: job.sessionId })
           ] })
-        ] }),
+        ] }) }),
         isExtended && (job.startTime || job.completionTime) && /* @__PURE__ */ jsxs5("div", { className: "card-extended-meta", children: [
           /* @__PURE__ */ jsx6("span", { className: "card-extended-elapsed", title: "Elapsed time", children: formatElapsed(job.startTime, job.completionTime) }),
           /* @__PURE__ */ jsx6("span", { className: "card-extended-timestamp", title: "Last activity", children: formatTimestamp(job.completionTime ?? job.startTime) })

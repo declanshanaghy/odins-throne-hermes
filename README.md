@@ -113,6 +113,11 @@ and asserts the structured entries end to end.
 
 - The pane sash (host) resizes the job list — the browser's in-app drag handle
   is gone; compact/normal/extended display modes react to pane width instead.
+- Job cards are squashed for dense lists (hundreds of jobs): the status icon
+  LEADS the card's secondary meta line — under the title, beside the avatar
+  column, so statuses scan down the left edge — instead of trailing on the
+  right; padding/avatars/buttons are tighter than the SPA, and the meta line
+  ellipsizes instead of wrapping (extended mode still wraps).
 - Odin's light/dark theme scopes to the plugin's own surfaces, not the window.
 - Modals/toasts overlay the app window from the pane (fixed positioning).
 - Path params don't exist in the app router — the selected session travels

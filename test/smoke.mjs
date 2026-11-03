@@ -250,6 +250,34 @@ assert.ok(
   document.querySelector('.ns-tree__task[data-session="issue-1200-step1-firemandecko-1a2b3c4d"] .card'),
   "task child renders as a job card",
 );
+
+// Squashed card layout (issue: navigate hundreds of jobs): the status icon
+// LEADS the secondary meta line — under the title, beside the avatar column —
+// and the action buttons cluster at the line's right end. The old right-aligned
+// status button (.card-status-icon-btn) is gone.
+const squashedMeta = document.querySelector(
+  '.ns-tree__task[data-session="issue-1200-step1-firemandecko-1a2b3c4d"] .card-meta-new',
+);
+assert.ok(squashedMeta, "job card renders the secondary meta line");
+assert.ok(
+  squashedMeta.firstElementChild.className.includes("card-status-lead"),
+  "status icon leads the meta line (left edge, under the avatar)",
+);
+assert.ok(
+  squashedMeta.querySelector(".card-meta-actions"),
+  "action buttons cluster at the meta line's right end",
+);
+assert.ok(
+  !document.querySelector(".card-status-icon-btn"),
+  "old right-aligned status icon button is gone",
+);
+assert.equal(
+  document.querySelectorAll(
+    '.ns-tree__item[data-namespace="fenrir-agents"] .ns-tree__task .card-status-lead',
+  ).length,
+  12,
+  "every task card carries its leading status icon",
+);
 assert.equal(
   document.querySelectorAll('.ns-tree__item[data-namespace="fenrir-agents"] .ns-tree__task .card').length,
   12,
