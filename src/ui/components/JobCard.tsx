@@ -14,7 +14,7 @@ interface Props {
   onAvatarClick?: (agentKey: string) => void;
   isPinned?: boolean;
   onTogglePin?: () => void;
-  onCancelJob?: (sessionId: string) => void;
+  onCancelJob?: (sessionId: string, job: DisplayJob) => void;
   displayMode?: DisplayMode;
   isTerminating?: boolean;
 }
@@ -131,7 +131,7 @@ export function JobCard({ job, isActive, onClick, onAvatarClick, isPinned = fals
                 aria-label="Cancel running job"
                 onClick={(e) => {
                   e.stopPropagation();
-                  onCancelJob(job.sessionId);
+                  onCancelJob(job.sessionId, job);
                 }}
               >
                 <StatusIconSvg status={job.status} />
@@ -185,7 +185,7 @@ export function JobCard({ job, isActive, onClick, onAvatarClick, isPinned = fals
                 aria-label="Cancel running job"
                 onClick={(e) => {
                   e.stopPropagation();
-                  onCancelJob(job.sessionId);
+                  onCancelJob(job.sessionId, job);
                 }}
               >
                 <StatusIconSvg status={job.status} />

@@ -51,4 +51,16 @@ export const webPlatform: PlatformAdapter = {
   focusLogView() {
     /* intentionally blank */
   },
+
+  // Seam 6: the web shell has one log terminal — it follows the store's
+  // activeSessionId, which the App bridge already set before calling here.
+  openSessionLog(_sessionId, _target) {
+    /* intentionally blank */
+  },
+
+  // Seam 7: no per-session views to close — the single terminal just loses
+  // its job from the list refresh.
+  closeSessionLog(_sessionId) {
+    /* intentionally blank */
+  },
 };

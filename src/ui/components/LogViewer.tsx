@@ -96,7 +96,7 @@ interface SessionHeaderProps {
   onTogglePin?: () => void;
   showPin?: boolean;
   replayedFromCache?: boolean;
-  onCancelJob?: (sessionId: string) => void;
+  onCancelJob?: (sessionId: string, job: DisplayJob) => void;
 }
 
 function SessionHeader({ job, isPinned = false, onTogglePin, showPin = true, replayedFromCache = false, onCancelJob }: SessionHeaderProps) {
@@ -146,7 +146,7 @@ function SessionHeader({ job, isPinned = false, onTogglePin, showPin = true, rep
             className={`header-action-btn header-action-btn--cancel${job.status === "running" ? " pulse" : ""}`}
             title="Click to cancel this job"
             aria-label="Cancel running job"
-            onClick={() => onCancelJob(job.sessionId)}
+            onClick={() => onCancelJob(job.sessionId, job)}
           >
             <StatusIconSvg status={job.status} />
             <span>Cancel</span>
@@ -224,7 +224,7 @@ interface Props {
   replayedFromCache?: boolean;
   isConnecting?: boolean;
   isPodStarting?: boolean;
-  onCancelJob?: (sessionId: string) => void;
+  onCancelJob?: (sessionId: string, job: DisplayJob) => void;
 }
 
 export function LogViewer({ entries, activeJob, isFixture, isTtlExpired, isNodeUnreachable, streamError, onSetSpeed, isPinned, onTogglePin, onAvatarClick, replayedFromCache, isConnecting, isPodStarting, onCancelJob }: Props) {

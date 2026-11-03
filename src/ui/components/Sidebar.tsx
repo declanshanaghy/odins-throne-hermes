@@ -31,7 +31,7 @@ interface Props {
   onOdinClick?: () => void;
   onTogglePinSession?: (sessionId: string) => void;
   pinnedSessionIds?: Set<string>;
-  onCancelJob?: (sessionId: string) => void;
+  onCancelJob?: (sessionId: string, job: DisplayJob) => void;
   terminatingSessionIds?: Set<string>;
   namespace: string;
   namespaces: NamespaceOption[];

@@ -18,6 +18,7 @@ import { ThronePane } from "./pane";
 import { ThronePage } from "./page";
 import { settingsUi } from "./settings";
 import { setCtx, setThroneTabOpener } from "./pluginCtx";
+import { initSessionTabs, openSessionTab } from "./sessionTabs";
 import { throneStore } from "../../ui/store";
 
 const FONTS_HREF =
@@ -83,24 +84,27 @@ export default {
   defaultEnabled: true,
   register(ctx: any) {
     setCtx(ctx);
+    // Per-session workspace tabs (issue:6): session clicks open a dedicated
+    // closeable tab via host.openWorkspace; older hosts fall back to
+    // per-session route pages registered through this ctx.
+    initSessionTabs(ctx);
 
-    // Wire the workspace-tab opener. host.openWorkspace (SDK ≥ [current]) docks
-    // a plugin-rendered tab in the main workspace zone; re-calling with the same
-    // id re-fronts the existing tab. Falls back to host.navigate on older builds.
+    // Wire the workspace-tab opener (the pane's job-card click seam).
+    // host.openWorkspace (SDK ≥ [current]) docks a plugin-rendered tab in the
+    // main workspace zone; re-calling with the same id re-fronts the existing
+    // tab. Issue:6 supersedes the single shared tab: every session gets its
+    // OWN tab (id "odins-throne-session-<sessionId>"), so selection itself
+    // opens the per-session tab — App.handleSelectSession → openSessionTab.
     setThroneTabOpener((sessionId: string) => {
-      // Select the session in the shared store first so the page renders the
-      // right log stream the moment the tab becomes visible.
-      throneStore.get()?.onSelectSession(sessionId);
-
-      if (typeof host.openWorkspace === "function") {
-        host.openWorkspace("throne-log", {
-          render: () => <ThronePage />,
-          title: "Odin's Throne",
-          minWidth: 480,
-        });
+      const snap = throneStore.get();
+      if (snap) {
+        // Marks the sidebar selection AND opens the per-session workspace
+        // tab; each tab renders its own stream (issue:6).
+        snap.onSelectSession(sessionId);
       } else {
-        // Older desktop: navigate the current workspace tab to the log page.
-        host.navigate("/odins-throne");
+        // No StoreBridge mounted (pane closed): open the tab directly with
+        // defaults — the tab owns its own WS + log stream anyway.
+        openSessionTab(sessionId, { namespace: "fenrir-agents", job: null });
       }
     });
 

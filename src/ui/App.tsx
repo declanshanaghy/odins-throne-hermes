@@ -1,11 +1,10 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { ServerMessage } from "./lib/types";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import type { ServerMessage, DisplayJob } from "./lib/types";
 import { randomQuote } from "./lib/constants";
 import { useWebSocket } from "./hooks/useWebSocket";
 import { useNamespace } from "./hooks/useNamespace";
 import { useNamespaceSummaries } from "./hooks/useNamespaceSummaries";
 import { useJobs } from "./hooks/useJobs";
-import { useLogStream } from "./hooks/useLogStream";
 import { useTheme } from "./hooks/useTheme";
 import { getPlatform } from "./platform";
 import { throneStore, type ThroneSnapshot } from "./store";
@@ -14,7 +13,6 @@ import {
   pinSession,
   unpinSession,
   isCacheNearCap,
-  appendLogLine,
   migrateRemoveDuplicateLogs,
   evictExpiredLogs,
 } from "./lib/localStorageLogs";
@@ -22,11 +20,13 @@ import type { CachedSessionMeta } from "./lib/localStorageLogs";
 
 /**
  * StoreBridge — the ported App. In the browser SPA this component rendered the
- * whole page; in the desktop plugin it keeps every piece of that logic (the
- * WebSocket, job list state machine, log stream, pin cache, Ragnarök) but
- * publishes a snapshot to the module store instead of rendering JSX. The
- * right-docked pane renders the Sidebar from this snapshot, the workspace
- * page renders the LogViewer, and the pane renders the overlays.
+ * whole page; in the desktop plugin it owns the pane-level logic (the jobs
+ * WebSocket, job list state machine, pin registry, Ragnarök, namespace tree)
+ * and publishes a snapshot to the module store instead of rendering JSX. The
+ * right-docked pane renders the Sidebar from this snapshot; per-session
+ * workspace tabs render the LogViewer from it (issue:6) — each tab owns its
+ * own log stream (ui/components/SessionLogViewer.tsx), so this bridge no
+ * longer manages per-session entries or subscriptions.
  */
 export function App() {
   const quote = useMemo(() => randomQuote(), []);
@@ -44,29 +44,6 @@ export function App() {
     [jobs],
   );
   const namespaceSummaries = useNamespaceSummaries(namespaces, namespace, jobsActivityKey);
-  const {
-    entries,
-    activeSessionId,
-    setActiveSessionId,
-    clearEntries,
-    handleMessage: handleLogMessage,
-    replayFromCache,
-    replayFromTempLog,
-    setLiveSkipCount,
-    isTtlExpired,
-    isNodeUnreachable,
-    streamError,
-    replayedFromCache,
-    isConnecting,
-    isPodStarting,
-    showPodStartTimeout,
-  } = useLogStream();
-
-  // Tracks the sessionId we currently have an active WS subscription for.
-  // Distinct from activeSessionId (display state) — this is the wire-protocol state.
-  const subscribedSessionRef = useRef<string | null>(null);
-  // Sessions we kept subscribed in the background for caching after navigation
-  const backgroundSubsRef = useRef<Set<string>>(new Set());
 
   // Migrate existing duplicate log: entries for pinned sessions on mount
   // and evict non-pinned temp logs older than the 1-hour TTL
@@ -75,225 +52,70 @@ export function App() {
     evictExpiredLogs();
   }, []);
 
-  // When namespace changes: clear active session, entries, and subscriptions.
-  // The WebSocket hook reconnects automatically to the new namespace — except
-  // when a cross-world task click (handleSelectTask below) is pending: then
-  // the clicked session stays selected and the reconnect effect subscribes
-  // to it once the new namespace's socket opens.
-  const prevNamespaceRef = useRef(namespace);
-  const pendingSelectRef = useRef<string | null>(null);
-  useEffect(() => {
-    if (prevNamespaceRef.current === namespace) return;
-    prevNamespaceRef.current = namespace;
-    // Clean up existing subscriptions
-    if (subscribedSessionRef.current) {
-      subscribedSessionRef.current = null;
-    }
-    backgroundSubsRef.current.clear();
-    const pending = pendingSelectRef.current;
-    pendingSelectRef.current = null;
-    setActiveSessionId(pending);
-    clearEntries();
-  }, [namespace, setActiveSessionId, clearEntries]);
+  // Most recently opened session — used for sidebar highlighting only.
+  // Per-session log streaming lives in each workspace tab (issue:6).
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
 
-  const [isFixture, setIsFixture] = useState(false);
-  const [pinnedSessionId, setPinnedSessionId] = useState<string | null>(null);
   const [storageWarning, setStorageWarning] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; id: number } | null>(null);
   const [terminatingSessionIds, setTerminatingSessionIds] = useState<Set<string>>(new Set());
 
-  // Sync pin state when active session changes
-  useEffect(() => {
-    if (activeSessionId) {
-      setPinnedSessionId(checkIsPinned(activeSessionId) ? activeSessionId : null);
-    } else {
-      setPinnedSessionId(null);
-    }
-  }, [activeSessionId]);
+  // The pane's socket carries the job list feed; every log stream dials its
+  // own per-session WebSocket inside its tab.
+  const onMessage = useCallback(
+    (msg: ServerMessage) => {
+      handleJobsMessage(msg);
+    },
+    [handleJobsMessage],
+  );
 
-  const isPinned = pinnedSessionId === activeSessionId && activeSessionId !== null;
+  const { state: wsState, error: wsError } = useWebSocket(onMessage, namespace);
+
+  /**
+   * Session click: open (or focus) a dedicated workspace tab for this session.
+   * Each tab manages its own WS connection and log stream (issue:6); the
+   * current tab is never navigated away. The platform adapter decides what
+   * "open the session's log view" means — a stacked workspace tab in the
+   * desktop plugin, a no-op on the web shell where the LogViewer follows the
+   * store's activeSessionId.
+   */
+  const handleSelectSession = useCallback(
+    (sessionId: string) => {
+      setActiveSessionId(sessionId);
+      getPlatform().openSessionLog(sessionId, {
+        namespace,
+        job: jobs.find((j) => j.sessionId === sessionId) ?? null,
+      });
+    },
+    [namespace, jobs],
+  );
+
+  /**
+   * Drilldown tree task click (issue:4) — same as handleSelectSession but the
+   * task may live in another namespace: switch the pane's world first, and
+   * hand the task's own namespace to the tab so its socket always dials the
+   * world its session lives in. The clicked card's own job is the tab's
+   * header snapshot when the active-namespace list doesn't carry it.
+   */
+  const handleSelectTask = useCallback(
+    (ns: string, sessionId: string, job?: DisplayJob) => {
+      setActiveSessionId(sessionId);
+      if (ns !== namespace) {
+        setNamespace(ns);
+      }
+      getPlatform().openSessionLog(sessionId, {
+        namespace: ns,
+        job: job ?? jobs.find((j) => j.sessionId === sessionId) ?? null,
+      });
+    },
+    [namespace, jobs, setNamespace],
+  );
 
   // Set of all pinned sessionIds (for sidebar display across all jobs)
   const pinnedSessionIds = useMemo(
     () => new Set(jobs.filter((j) => checkIsPinned(j.sessionId)).map((j) => j.sessionId)),
-    [jobs]
+    [jobs],
   );
-
-  const onMessage = useCallback(
-    (msg: ServerMessage) => {
-      handleJobsMessage(msg);
-      if (msg.type === "fixture-start" && "sessionId" in msg && msg.sessionId === activeSessionId) {
-        setIsFixture(true);
-      }
-      if (msg.type === "stream-end" && "sessionId" in msg && msg.sessionId === activeSessionId) {
-        setIsFixture(false);
-      }
-      if (
-        msg.type === "log-line" ||
-        msg.type === "stream-error" ||
-        msg.type === "stream-end" ||
-        msg.type === "verdict"
-      ) {
-        if ("sessionId" in msg && msg.sessionId === activeSessionId) {
-          handleLogMessage(msg);
-        } else if ("sessionId" in msg && backgroundSubsRef.current.has(msg.sessionId)) {
-          // Background pinned session: persist log lines to cache, clean up on end
-          if (msg.type === "log-line") {
-            appendLogLine(msg.sessionId, msg.line);
-          } else if (msg.type === "stream-end") {
-            backgroundSubsRef.current.delete(msg.sessionId);
-          }
-        }
-      }
-    },
-    [handleJobsMessage, handleLogMessage, activeSessionId]
-  );
-
-  const { state: wsState, error: wsError, send } = useWebSocket(onMessage, namespace);
-
-  const handleSelectSession = useCallback(
-    (sessionId: string) => {
-      const currentSub = subscribedSessionRef.current;
-
-      // Unsubscribe / move to background for the current active subscription
-      if (currentSub !== null && currentSub !== sessionId) {
-        if (checkIsPinned(currentSub)) {
-          // Keep subscription alive so background caching continues
-          backgroundSubsRef.current.add(currentSub);
-        } else {
-          send({ type: "unsubscribe", sessionId: currentSub });
-          backgroundSubsRef.current.delete(currentSub);
-        }
-      }
-
-      setActiveSessionId(sessionId);
-      setIsFixture(false);
-      clearEntries();
-
-      // Bring the log terminal forward so the host shell shows the selected
-      // job (best-effort; the store already carries the selection, so this
-      // only focuses the view — a no-op on the web target).
-      getPlatform().focusLogView();
-
-      // Determine if this session is cached-only (pinned, no live pod)
-      const selectedJob = jobs.find((j) => j.sessionId === sessionId);
-      if (selectedJob?.status === "cached") {
-        // Replay from pinned localStorage cache — do NOT subscribe to server
-        subscribedSessionRef.current = null;
-        // Use setTimeout to let clearEntries flush before replay
-        setTimeout(() => replayFromCache(sessionId), 0);
-      } else if (currentSub === sessionId) {
-        // Revisiting the session we're already subscribed to (e.g. user clicks
-        // the same session again). Replay temp log for instant display — the live
-        // stream is still active and will continue from where it left off.
-        const cachedLineCount = replayFromTempLog(sessionId);
-        if (cachedLineCount > 0) {
-          setLiveSkipCount(cachedLineCount);
-        }
-        // subscribedSessionRef stays the same — still subscribed
-      } else {
-        // New session: load from temp log for instant display, then subscribe
-        const cachedLineCount = replayFromTempLog(sessionId);
-        subscribedSessionRef.current = sessionId;
-        if (cachedLineCount > 0) {
-          // Tell handleMessage to skip the first N live lines (server re-streams
-          // from beginning, these are duplicates of what we just showed from cache)
-          setLiveSkipCount(cachedLineCount);
-        }
-        send({ type: "subscribe", sessionId });
-      }
-    },
-    [send, setActiveSessionId, clearEntries, replayFromCache, replayFromTempLog, setLiveSkipCount, jobs]
-  );
-
-  /**
-   * Drilldown tree task click (issue:4) — same selection semantics as the job
-   * cards, but the task may live in another namespace. Within the active
-   * world this is exactly handleSelectSession. Across worlds it switches the
-   * namespace first; the pending session survives the namespace-change reset
-   * and the WS reconnect effect subscribes once the new socket opens.
-   */
-  const handleSelectTask = useCallback(
-    (ns: string, sessionId: string) => {
-      if (ns === namespace) {
-        handleSelectSession(sessionId);
-        return;
-      }
-      pendingSelectRef.current = sessionId;
-      setIsFixture(false);
-      setNamespace(ns);
-      // Bring the log terminal forward (best-effort; no-op on the web).
-      getPlatform().focusLogView();
-    },
-    [namespace, handleSelectSession, setNamespace],
-  );
-
-  // Send unsubscribe when App unmounts (e.g. the pane is closed).
-  // Also covers backgroundSubsRef sessions so the server cleans up cleanly.
-  useEffect(() => {
-    return () => {
-      if (subscribedSessionRef.current) {
-        send({ type: "unsubscribe", sessionId: subscribedSessionRef.current });
-      }
-      for (const sessionId of backgroundSubsRef.current) {
-        send({ type: "unsubscribe", sessionId });
-      }
-    };
-  }, [send]);
-
-  // Re-subscribe only on actual reconnect (wsState transitions to "open").
-  // Skip re-subscribe if the session ended with a TTL-expired or node-unreachable
-  // error — the pod is gone and retrying would just loop the same error again.
-  // Also skip for cached sessions (no server pod).
-  const isTtlExpiredRef = useRef(isTtlExpired);
-  isTtlExpiredRef.current = isTtlExpired;
-  const isNodeUnreachableRef = useRef(isNodeUnreachable);
-  isNodeUnreachableRef.current = isNodeUnreachable;
-  const prevWsState = useRef(wsState);
-  useEffect(() => {
-    const wasDisconnected = prevWsState.current !== "open";
-    prevWsState.current = wsState;
-    if (wsState === "open" && wasDisconnected && activeSessionId && !isTtlExpiredRef.current && !isNodeUnreachableRef.current) {
-      // Skip re-subscribe for cached-only sessions
-      const activeJob = jobs.find((j) => j.sessionId === activeSessionId);
-      if (activeJob?.status === "cached") return;
-
-      // On reconnect: clear stale entries, replay temp log for instant display,
-      // then re-subscribe. Set skip count so duplicates from re-stream are ignored.
-      clearEntries();
-      const cachedLineCount = replayFromTempLog(activeSessionId);
-      if (cachedLineCount > 0) {
-        setLiveSkipCount(cachedLineCount);
-      }
-      subscribedSessionRef.current = activeSessionId;
-      send({ type: "subscribe", sessionId: activeSessionId });
-    }
-  }, [wsState, activeSessionId, send, clearEntries, replayFromTempLog, setLiveSkipCount, jobs]);
-
-  // Auto-retry subscribe when pod is starting up (HTTP 400 returned by kubectl logs).
-  // Retries every 4 seconds. Clears when logs start flowing or after 2-minute timeout.
-  const podStartBeginRef = useRef<number | null>(null);
-  useEffect(() => {
-    if (!isPodStarting || !activeSessionId) {
-      podStartBeginRef.current = null;
-      return;
-    }
-    if (podStartBeginRef.current === null) {
-      podStartBeginRef.current = Date.now();
-    }
-    const intervalId = setInterval(() => {
-      const elapsed = Date.now() - (podStartBeginRef.current ?? Date.now());
-      if (elapsed >= 120_000) {
-        clearInterval(intervalId);
-        showPodStartTimeout();
-        return;
-      }
-      send({ type: "subscribe", sessionId: activeSessionId });
-    }, 4000);
-    return () => clearInterval(intervalId);
-  }, [isPodStarting, activeSessionId, send, showPodStartTimeout]);
-
-  const activeJob = jobs.find((j) => j.sessionId === activeSessionId) || null;
 
   /** Toggle pin for any session by sessionId. Used by both header and sidebar. */
   const handleTogglePinForSession = useCallback(
@@ -304,12 +126,6 @@ export function App() {
       if (checkIsPinned(sessionId)) {
         // Unpin: remove from cache
         unpinSession(sessionId);
-        if (sessionId === activeSessionId) setPinnedSessionId(null);
-        // If we had a background subscription for this session, clean it up
-        if (backgroundSubsRef.current.has(sessionId)) {
-          send({ type: "unsubscribe", sessionId });
-          backgroundSubsRef.current.delete(sessionId);
-        }
         refreshCached();
       } else {
         // Pin: save log buffer to cache
@@ -327,7 +143,6 @@ export function App() {
         };
         const ok = pinSession(sessionId, meta);
         if (ok) {
-          if (sessionId === activeSessionId) setPinnedSessionId(sessionId);
           refreshCached();
           if (isCacheNearCap()) {
             setStorageWarning("Odin\u2019s memory is nearly full \u2014 oldest pins will be evicted.");
@@ -336,29 +151,25 @@ export function App() {
         }
       }
     },
-    [jobs, activeSessionId, refreshCached, send]
+    [jobs, refreshCached],
   );
 
-  /** Toggle pin for the currently active session (header shortcut). */
-  const handleTogglePin = useCallback(() => {
-    if (!activeSessionId) return;
-    handleTogglePinForSession(activeSessionId);
-  }, [activeSessionId, handleTogglePinForSession]);
-
-  /** Open Ragnarök confirmation dialog for a running job. */
+  /** Open Ragnarök confirmation dialog for a running job. The card's own
+   *  job object is preferred — the active-namespace list may not carry it. */
   const handleOpenCancelDialog = useCallback(
-    (sessionId: string) => {
-      const job = jobs.find((j) => j.sessionId === sessionId);
+    (sessionId: string, jobFromCard?: DisplayJob) => {
+      const job = jobFromCard ?? jobs.find((j) => j.sessionId === sessionId);
       if (!job || job.status !== "running") return;
       const jobTitle = job.issueTitle
         ? `#${job.issue} \u2013 ${job.issueTitle}`
         : `#${job.issue} \u2013 ${job.agentName} Step ${job.step}`;
       setCancelTarget({ sessionId, jobTitle });
     },
-    [jobs]
+    [jobs],
   );
 
-  /** Confirmed: call DELETE /api/jobs/:sessionId to kill the K8s job. */
+  /** Confirmed: call DELETE /api/jobs/:sessionId to kill the K8s job. The
+   *  pod is gone, so the session's workspace tab closes with it (issue:6). */
   const handleConfirmCancel = useCallback(async () => {
     if (!cancelTarget) return;
     const res = await getPlatform().restFetch(`/api/jobs/${encodeURIComponent(cancelTarget.sessionId)}`, { method: "DELETE" });
@@ -368,6 +179,8 @@ export function App() {
     }
     const { sessionId } = cancelTarget;
     setCancelTarget(null);
+    // The pod is gone; its log tab closes with it (reference design).
+    getPlatform().closeSessionLog(sessionId);
     // Flash the card as terminating, then clear after 3s
     setTerminatingSessionIds((prev) => new Set(prev).add(sessionId));
     setTimeout(() => {
@@ -394,28 +207,12 @@ export function App() {
     namespaces,
     setNamespace,
     namespaceSummaries,
-    entries,
-    activeJob,
-    isFixture,
-    isTtlExpired,
-    isNodeUnreachable,
-    streamError,
-    isPinned,
-    replayedFromCache,
-    isConnecting,
-    isPodStarting,
     onSelectSession: handleSelectSession,
     onSelectTask: handleSelectTask,
     onAvatarClick: setProfileAgent,
     onOdinClick: () => setProfileAgent("odin"),
-    onTogglePin: handleTogglePin,
     onTogglePinSession: handleTogglePinForSession,
     onCancelJob: handleOpenCancelDialog,
-    onSetSpeed: (speed: number) => {
-      if (activeSessionId) {
-        send({ type: "set-speed", sessionId: activeSessionId, speed });
-      }
-    },
     pinnedSessionIds,
     terminatingSessionIds,
     profileAgent,

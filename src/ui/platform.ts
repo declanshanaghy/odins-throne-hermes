@@ -1,7 +1,7 @@
 // The platform adapter — the single seam between the shared ui/ core and the
 // targets that host it (knowledge/tech-designs/ui-sharing.md). The core never
-// imports a target; every place the web SPA and the desktop plugin used to
-// diverge goes through one of these five adapter calls:
+// imports a target; every place the web SPA and the desktop plugin diverge
+// goes through one of these adapter calls:
 //
 //   1. applyTheme — where the active theme lands: the web page sets
 //      data-theme on <html>; the plugin scopes it to its .odins-throne-root
@@ -17,6 +17,14 @@
 // Targets install their adapter at entry time, before any ui/ code renders.
 
 import type { Theme } from "./hooks/useTheme";
+import type { DisplayJob } from "./lib/types";
+
+export interface SessionLogTarget {
+  /** Namespace captured at open time — the viewer's WS dials this, not the pane's. */
+  namespace: string;
+  /** Job snapshot captured at open time — header fallback until jobs land. */
+  job: DisplayJob | null;
+}
 
 export interface PlatformAdapter {
   /** Declarative marker for which shell hosts the core (seam 5). */
@@ -43,6 +51,21 @@ export interface PlatformAdapter {
    * at once. Implementations must not throw.
    */
   focusLogView(): void;
+
+  /**
+   * Seam 6 — open (or focus) a dedicated log view for one session (issue:6).
+   * The desktop plugin stacks a closeable workspace tab per session; the web
+   * shell is a no-op because its single SessionLogViewer already follows the
+   * store's activeSessionId. Implementations must not throw.
+   */
+  openSessionLog(sessionId: string, target: SessionLogTarget): void;
+
+  /**
+   * Seam 7 — close the session's log view when its pod is gone (a confirmed
+   * Ragnarök cancel tears down the K8s job, so its log tab closes with it).
+   * No-op where no per-session view exists. Implementations must not throw.
+   */
+  closeSessionLog(sessionId: string): void;
 }
 
 let adapter: PlatformAdapter | null = null;

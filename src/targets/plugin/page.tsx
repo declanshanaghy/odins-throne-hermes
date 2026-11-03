@@ -1,53 +1,55 @@
-// Workspace route page (/odins-throne): the ported LogViewer terminal for the
-// session selected in the right-pane job list. State arrives via the module
-// store published by the pane's StoreBridge; if the pane is closed the page
-// shows a hint instead.
+// Per-session workspace surfaces (issue:6).
+//
+// ThronePage renders the ported LogViewer terminal for ONE session:
+//   - as the content of a per-session workspace tab (sessionTabs.tsx passes
+//     sessionId + the namespace/job captured at open time)
+//   - as the static /odins-throne route page (no sessionId → empty state)
+//
+// The per-session viewer itself lives in the shared ui core
+// (ui/components/SessionLogViewer.tsx) so the web target mounts the same
+// self-contained stream for its selected session. Every mounted viewer owns
+// its OWN WebSocket connection and useLogStream instance, so several session
+// tabs can stream independently without replacing each other.
 
 import { ErrorBoundary } from "../../ui/components/ErrorBoundary";
-import { LogViewer } from "../../ui/components/LogViewer";
+import { SessionLogViewer, SessionLogViewerEmpty } from "../../ui/components/SessionLogViewer";
 import { useThrone } from "../../ui/store";
 import { useTheme } from "../../ui/hooks/useTheme";
+import type { DisplayJob } from "../../ui/lib/types";
 
-function LogViewerConnected() {
-  const snap = useThrone()!;
-  return (
-    <LogViewer
-      entries={snap.entries}
-      activeJob={snap.activeJob}
-      isFixture={snap.isFixture}
-      isTtlExpired={snap.isTtlExpired}
-      isNodeUnreachable={snap.isNodeUnreachable}
-      streamError={snap.streamError}
-      isPinned={snap.isPinned}
-      onTogglePin={snap.onTogglePin}
-      onAvatarClick={snap.onAvatarClick}
-      replayedFromCache={snap.replayedFromCache}
-      isConnecting={snap.isConnecting}
-      isPodStarting={snap.isPodStarting}
-      onCancelJob={snap.onCancelJob}
-      onSetSpeed={snap.onSetSpeed}
-    />
-  );
-}
-
-export function ThronePage() {
+export function ThronePage({
+  sessionId,
+  tabNamespace,
+  jobSnapshot,
+}: {
+  /** Session this tab/page streams. Absent on the static landing page. */
+  sessionId?: string;
+  /** Namespace captured at open time (tab content); defaults to the pane's. */
+  tabNamespace?: string;
+  /** Job captured at open time (tab content header fallback). */
+  jobSnapshot?: DisplayJob | null;
+}) {
   const snap = useThrone();
   const { theme } = useTheme();
+  const namespace = tabNamespace ?? snap?.namespace ?? "fenrir-agents";
   return (
     <div
       className="odins-throne-root"
       data-theme={theme === "light" ? "light" : undefined}
       style={{ width: "100%", height: "100%" }}
     >
-      {snap ? (
+      {sessionId ? (
         <ErrorBoundary>
-          <LogViewerConnected />
+          <SessionLogViewer
+            sessionId={sessionId}
+            namespace={namespace}
+            jobSnapshot={jobSnapshot ?? null}
+          />
         </ErrorBoundary>
       ) : (
-        <div className="throne-boot">
-          The Allfather is not seated — open the Odin's Throne pane (right edge)
-          to wake him. ⌘K → “Odin's Throne: Open Hlidskjalf” also works.
-        </div>
+        <ErrorBoundary>
+          <SessionLogViewerEmpty />
+        </ErrorBoundary>
       )}
     </div>
   );

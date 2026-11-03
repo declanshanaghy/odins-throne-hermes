@@ -11,8 +11,14 @@ import jsdomPkg from "jsdom";
 const { JSDOM } = jsdomPkg;
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
+import { existsSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
 
-const require = createRequire(`${process.env.HOME}/.hermes/hermes-agent/apps/desktop/package.json`);
+const here = dirname(fileURLToPath(import.meta.url));
+const hermesDesktop = `${process.env.HOME}/.hermes/hermes-agent/apps/desktop/package.json`;
+const localPkg = join(here, "..", "node_modules", "react-dom", "package.json");
+const require = createRequire(existsSync(hermesDesktop) ? hermesDesktop : localPkg);
 const { createRoot } = require("react-dom/client");
 const React = require("react");
 

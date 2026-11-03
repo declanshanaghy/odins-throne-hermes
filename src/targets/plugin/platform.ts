@@ -16,6 +16,7 @@
 import { host } from "@hermes/plugin-sdk";
 import type { PlatformAdapter } from "../../ui/platform";
 import { otFetch, wsUrl } from "./upstream";
+import { openSessionTab, closeSessionTab } from "./sessionTabs";
 import avatarFiremandeckoDark from "../../assets/profiles/fireman-decko-dark.png";
 import avatarLokiDark from "../../assets/profiles/loki-dark.png";
 import avatarLunaDark from "../../assets/profiles/luna-dark.png";
@@ -77,5 +78,18 @@ export const pluginPlatform: PlatformAdapter = {
     } catch {
       // navigation unavailable — selection still works via the store
     }
+  },
+
+  // Seam 6: one closeable workspace tab per session (issue:6) — a fresh tab
+  // for a new session, focus + refresh for an already-open one. Older hosts
+  // without host.openWorkspace fall back to a per-session route page.
+  openSessionLog(sessionId, target) {
+    openSessionTab(sessionId, { namespace: target.namespace, job: target.job });
+  },
+
+  // Seam 7: a confirmed Ragnarök kills the pod, so the session's log tab
+  // closes with it (reference design: "cancel closes its tab").
+  closeSessionLog(sessionId) {
+    closeSessionTab(sessionId);
   },
 };
