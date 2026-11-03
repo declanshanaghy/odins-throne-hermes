@@ -1,0 +1,17 @@
+node_modules
+dist-ui
+dist-server
+src/generated
+*.log
+.git
+.github
+knowledge
+quality
+security
+test
+desktop
+infrastructure
+__pycache__
+.pytest_cache
+tmp
+.DS_Store
