@@ -1,0 +1,181 @@
+# --------------------------------------------------------------------------
+# Odin's Throne — Deploy Pipeline
+#
+# Builds the odin-throne image (Hono server + React web bundle), pushes it to
+# Artifact Registry (sha + latest), and rolls out the Helm chart to GKE
+# Autopilot in the odins-throne namespace.
+#
+# Auth is KEYLESS via Workload Identity Federation — org policy blocks
+# service-account keys. No GCP_SA_KEY is referenced anywhere.
+#
+# Required GitHub Secrets:
+#   GCP_PROJECT_ID, GCP_REGION, GKE_CLUSTER_NAME
+#   ODINS_THRONE_CLIENT_ID, ODINS_THRONE_CLIENT_SECRET
+#   ODINS_THRONE_BOT_TOKEN, ODINS_THRONE_HANDOFF_SECRET
+#   OAUTH2_PROXY_COOKIE_SECRET
+# --------------------------------------------------------------------------
+
+name: Deploy to GKE
+
+# Serial deploys — queue runs, never cancel in-flight
+concurrency:
+  group: deploy-main
+  cancel-in-progress: false
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      skip_deploy:
+        description: "Build + push image only — skip the Helm deploy"
+        required: false
+        type: boolean
+        default: false
+
+env:
+  REGISTRY: ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/fenrir-images
+  IMAGE_NAME: odin-throne
+  IMAGE_TAG: ${{ github.sha }}
+
+jobs:
+  # ============================================================================
+  # Build + push the image (sha tag + latest)
+  # ============================================================================
+  build-image:
+    name: "Build Monitor Image"
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: projects/317218387675/locations/global/workloadIdentityPools/github-actions/providers/odins-throne-hermes
+          service_account: fenrir-deploy@fenrir-ledger-prod.iam.gserviceaccount.com
+
+      - name: Setup gcloud CLI
+        uses: google-github-actions/setup-gcloud@v3
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ secrets.GCP_REGION }}-docker.pkg.dev --quiet
+
+      - name: Setup Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build and push
+        id: build
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Summary
+        run: |
+          echo "### Monitor Image Published" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tag:** \`${{ env.IMAGE_TAG }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Digest:** \`${{ steps.build.outputs.digest }}\`" >> $GITHUB_STEP_SUMMARY
+
+  # ============================================================================
+  # Deploy — Helm upgrade --install into the odins-throne namespace
+  # ============================================================================
+  deploy:
+    name: "Deploy Monitor to GKE"
+    needs: [build-image]
+    if: ${{ !inputs.skip_deploy }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: projects/317218387675/locations/global/workloadIdentityPools/github-actions/providers/odins-throne-hermes
+          service_account: fenrir-deploy@fenrir-ledger-prod.iam.gserviceaccount.com
+
+      - name: Setup gcloud CLI
+        uses: google-github-actions/setup-gcloud@v3
+
+      - name: Get GKE credentials
+        uses: google-github-actions/get-gke-credentials@v3
+        with:
+          cluster_name: ${{ secrets.GKE_CLUSTER_NAME }}
+          location: ${{ secrets.GCP_REGION }}
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Ensure namespace
+        run: kubectl create namespace odins-throne --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Sync oauth2-proxy secrets
+        run: |
+          # Bot surface (Hermes desktop plugin) — fail closed: an empty token
+          # would deploy with the /bot/* routes open (server/botToken.ts).
+          if [ -z "${{ secrets.ODINS_THRONE_BOT_TOKEN }}" ]; then
+            echo "ODINS_THRONE_BOT_TOKEN repo secret is not set — refusing to deploy an open bot surface" >&2
+            exit 1
+          fi
+          if [ -z "${{ secrets.ODINS_THRONE_HANDOFF_SECRET }}" ]; then
+            echo "ODINS_THRONE_HANDOFF_SECRET repo secret is not set — refusing to deploy (sessions could not be signed)" >&2
+            exit 1
+          fi
+          kubectl create secret generic odin-throne-oauth2-proxy-secrets \
+            --namespace=odins-throne \
+            --from-literal=GOOGLE_CLIENT_ID="${{ secrets.ODINS_THRONE_CLIENT_ID }}" \
+            --from-literal=GOOGLE_CLIENT_SECRET="${{ secrets.ODINS_THRONE_CLIENT_SECRET }}" \
+            --from-literal=OAUTH2_PROXY_COOKIE_SECRET="${{ secrets.OAUTH2_PROXY_COOKIE_SECRET }}" \
+            --from-literal=ODINS_THRONE_BOT_TOKEN="${{ secrets.ODINS_THRONE_BOT_TOKEN }}" \
+            --from-literal=ODINS_THRONE_HANDOFF_SECRET="${{ secrets.ODINS_THRONE_HANDOFF_SECRET }}" \
+            --dry-run=client -o yaml | kubectl apply -f -
+          kubectl create secret generic oauth2-proxy-emails \
+            --namespace=odins-throne \
+            --from-literal=emails.txt=$'declanshanaghy@gmail.com\nfreyafenrir78@gmail.com' \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Sync app secrets
+        run: |
+          # GOOGLE_CLIENT_ID/SECRET for the app container's envFrom secretRef
+          # (odin-throne-secrets) — the Google client is shared with the proxy.
+          kubectl create secret generic odin-throne-secrets \
+            --namespace=odins-throne \
+            --from-literal=GOOGLE_CLIENT_ID="${{ secrets.ODINS_THRONE_CLIENT_ID }}" \
+            --from-literal=GOOGLE_CLIENT_SECRET="${{ secrets.ODINS_THRONE_CLIENT_SECRET }}" \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: 'v3.20.1'
+
+      - name: Helm deploy
+        run: |
+          helm upgrade --install odin-throne \
+            ./infrastructure/helm/odin-throne \
+            --namespace=odins-throne \
+            -f ./infrastructure/helm/odin-throne/values-prod.yaml \
+            --set app.image.repository=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }} \
+            --set app.image.tag=${{ env.IMAGE_TAG }} \
+            --wait --timeout=5m
+
+      - name: Verify rollout
+        run: |
+          echo "### Odin's Throne Deploy" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          kubectl get pods -n odins-throne >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          kubectl rollout status deployment/odin-throne -n odins-throne --timeout=60s

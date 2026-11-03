@@ -1,0 +1,156 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: odin-throne
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "odin-throne.labels" (dict "component" "odins-throne") | nindent 4 }}
+spec:
+  replicas: {{ .Values.app.replicaCount }}
+  revisionHistoryLimit: {{ .Values.app.revisionHistoryLimit }}
+  strategy:
+    {{- toYaml .Values.app.strategy | nindent 4 }}
+  selector:
+    matchLabels:
+      {{- include "odin-throne.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "odin-throne.labels" (dict "component" "odins-throne") | nindent 8 }}
+    spec:
+      serviceAccountName: {{ .Values.app.serviceAccountName }}
+      terminationGracePeriodSeconds: 30
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: odin-throne
+              app.kubernetes.io/component: odins-throne
+      volumes:
+        - name: oauth2-proxy-emails
+          secret:
+            secretName: oauth2-proxy-emails
+            items:
+              - key: emails.txt
+                path: emails.txt
+      containers:
+        - name: odin-throne
+          image: "{{ .Values.app.image.repository }}:{{ .Values.app.image.tag }}"
+          imagePullPolicy: {{ .Values.app.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.containerPort }}
+              protocol: TCP
+          env:
+            {{- range $key, $value := .Values.app.env }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
+            {{- if .Values.namespaces.enabled }}
+            - name: NAMESPACES_JSON
+              valueFrom:
+                configMapKeyRef:
+                  name: odins-throne-config
+                  key: namespaces.json
+            {{- end }}
+            # Bot surface (Hermes desktop plugin) shared secret — see
+            # development/odins-throne/src/botToken.ts. Created by the deploy
+            # pipeline from the ODINS_THRONE_BOT_TOKEN repo secret.
+            - name: ODINS_THRONE_BOT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: odin-throne-oauth2-proxy-secrets
+                  key: ODINS_THRONE_BOT_TOKEN
+            # Hermes handoff session signing key (see src/handoff.ts).
+            - name: ODINS_THRONE_HANDOFF_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: odin-throne-oauth2-proxy-secrets
+                  key: ODINS_THRONE_HANDOFF_SECRET
+            {{- if .Values.app.secretRef }}
+          envFrom:
+            - secretRef:
+                name: {{ .Values.app.secretRef }}
+            {{- end }}
+          resources:
+            {{- toYaml .Values.app.resources | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.app.readinessProbe | nindent 12 }}
+          livenessProbe:
+            {{- toYaml .Values.app.livenessProbe | nindent 12 }}
+          startupProbe:
+            {{- toYaml .Values.app.startupProbe | nindent 12 }}
+        {{- if .Values.oauth2Proxy.enabled }}
+        - name: oauth2-proxy
+          image: "{{ .Values.oauth2Proxy.image.repository }}:{{ .Values.oauth2Proxy.image.tag }}"
+          imagePullPolicy: {{ .Values.oauth2Proxy.image.pullPolicy }}
+          args:
+            - --provider=google
+            - --client-id=$(GOOGLE_CLIENT_ID)
+            - --client-secret=$(GOOGLE_CLIENT_SECRET)
+            - --cookie-secret=$(OAUTH2_PROXY_COOKIE_SECRET)
+            - --authenticated-emails-file=/etc/oauth2-proxy/emails.txt
+            - --upstream=http://localhost:{{ .Values.service.containerPort }}
+            - --http-address=0.0.0.0:{{ .Values.oauth2Proxy.port }}
+            - --redirect-url={{ .Values.oauth2Proxy.redirectUrl }}
+            - --skip-auth-route=GET=^/healthz$
+            # Bot surface passes the proxy — the app enforces the bearer token
+            # itself (src/botToken.ts). The WS upgrade is an HTTP GET.
+            - --skip-auth-route=GET=^/bot/api/.*$
+            - --skip-auth-route=DELETE=^/bot/api/.*$
+            - --skip-auth-route=GET=^/bot/ws.*$
+            # Hermes handoff: the redeem trade + CORS preflights pass the proxy
+            # (the pairing code itself is only obtainable behind Google auth
+            # at /api/handoff; the in-app token gate is the only check here).
+            - --skip-auth-route=POST=^/bot/handoff/.*$
+            - --skip-auth-route=OPTIONS=^/bot/.*$
+            # Identify the authenticated user to the app (pairing codes bind
+            # to the email that completed the Google login).
+            - --pass-user-headers
+            - --cookie-secure=true
+            - --cookie-samesite=lax
+          ports:
+            - name: oauth2-proxy
+              containerPort: {{ .Values.oauth2Proxy.port }}
+              protocol: TCP
+          env:
+            - name: GOOGLE_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: odin-throne-oauth2-proxy-secrets
+                  key: GOOGLE_CLIENT_ID
+            - name: GOOGLE_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: odin-throne-oauth2-proxy-secrets
+                  key: GOOGLE_CLIENT_SECRET
+            - name: OAUTH2_PROXY_COOKIE_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: odin-throne-oauth2-proxy-secrets
+                  key: OAUTH2_PROXY_COOKIE_SECRET
+          volumeMounts:
+            - name: oauth2-proxy-emails
+              mountPath: /etc/oauth2-proxy
+              readOnly: true
+          resources:
+            {{- toYaml .Values.oauth2Proxy.resources | nindent 12 }}
+          readinessProbe:
+            httpGet:
+              path: /ping
+              port: {{ .Values.oauth2Proxy.port }}
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /ping
+              port: {{ .Values.oauth2Proxy.port }}
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+        {{- end }}

@@ -1,0 +1,176 @@
+# --------------------------------------------------------------------------
+# Odin's Throne — Helm Chart Default Values
+#
+# Hono-based real-time agent monitor for Odin's Throne (odins-throne-hermes).
+# Serves both the React UI (static files) and API/WebSocket on :3001.
+# Override per-environment with values-prod.yaml etc.
+# --------------------------------------------------------------------------
+
+namespace: odins-throne
+
+# -- App Deployment --------------------------------------------------------
+app:
+  replicaCount: 2
+  revisionHistoryLimit: 3
+
+  image:
+    repository: us-central1-docker.pkg.dev/fenrir-ledger-prod/fenrir-images/odin-throne
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  serviceAccountName: odin-throne-sa
+
+  env:
+    NODE_ENV: "production"
+    PORT: "3001"
+    K8S_NAMESPACE: "fenrir-agents"
+    JOB_LABEL_SELECTOR: "app.kubernetes.io/component=agent-sandbox"
+    # NAMESPACES_JSON injected separately from odins-throne-config ConfigMap
+    # via deployment.yaml valueFrom configMapKeyRef when namespaces.enabled=true.
+
+  # K8s secret containing GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET — injected via envFrom.
+  # SESSION_SECRET and ALLOWED_EMAIL are no longer used (handled by oauth2-proxy).
+  secretRef: "odin-throne-secrets"
+
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+      ephemeral-storage: "128Mi"
+    limits:
+      cpu: "250m"
+      memory: "256Mi"
+      ephemeral-storage: "256Mi"
+
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+
+  readinessProbe:
+    httpGet:
+      path: /healthz
+      port: http
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    timeoutSeconds: 3
+    failureThreshold: 3
+    successThreshold: 1
+
+  livenessProbe:
+    httpGet:
+      path: /healthz
+      port: http
+    initialDelaySeconds: 15
+    periodSeconds: 30
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+  startupProbe:
+    httpGet:
+      path: /healthz
+      port: http
+    initialDelaySeconds: 5
+    periodSeconds: 5
+    failureThreshold: 12
+
+# -- oauth2-proxy Sidecar --------------------------------------------------
+oauth2Proxy:
+  enabled: true
+  image:
+    repository: quay.io/oauth2-proxy/oauth2-proxy
+    tag: v7.6.0
+    pullPolicy: IfNotPresent
+  port: 4180
+  redirectUrl: "https://odins-throne.shanaghy.com/oauth2/callback"
+  resources:
+    requests:
+      cpu: "50m"
+      memory: "64Mi"
+      ephemeral-storage: "64Mi"
+    limits:
+      cpu: "200m"
+      memory: "128Mi"
+      ephemeral-storage: "128Mi"
+  # oauth2-proxy secrets are created imperatively by the deploy-odin-throne CI step.
+  # They are NOT rendered from values.yaml. See secrets.yaml template for details.
+
+# -- Service ---------------------------------------------------------------
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: oauth2-proxy
+  containerPort: 3001
+
+# -- Ingress ---------------------------------------------------------------
+ingress:
+  enabled: true
+  className: "gce"
+  hosts:
+    - odins-throne.shanaghy.com
+  annotations:
+    networking.gke.io/managed-certificates: "odin-throne-cert"
+    kubernetes.io/ingress.allow-http: "false"
+    kubernetes.io/ingress.global-static-ip-name: "odins-throne-hall-ip"
+    cloud.google.com/backend-config: '{"default":"odin-throne-backend-config"}'
+
+  backendConfig:
+    enabled: true
+    healthCheck:
+      checkIntervalSec: 15
+      timeoutSec: 5
+      healthyThreshold: 1
+      unhealthyThreshold: 3
+      type: HTTP
+      requestPath: /healthz
+      port: 3001
+    timeoutSec: 3600
+    connectionDraining:
+      drainingTimeoutSec: 15
+
+  managedCertificate:
+    enabled: true
+    domains:
+      - odins-throne.shanaghy.com
+
+# -- RBAC ------------------------------------------------------------------
+# ServiceAccount with cross-namespace read access to jobs/pods/logs.
+# agentsNamespaces lists every namespace the monitor needs read access to.
+rbac:
+  enabled: true
+  agentsNamespace: fenrir-agents
+  # Additional namespaces for cross-project monitoring.
+  # Each entry gets its own RoleBinding in that namespace.
+  additionalNamespaces:
+    - say-so-agents
+    - odins-throne-hermes-agents
+    - mytruthfinder-agents
+    - shanaghy-com-agents
+    - re-goatmower-agents
+    - odins-throne-plugin
+
+# -- Namespaces ConfigMap --------------------------------------------------
+# Defines which namespaces are available in the UI selector.
+# The list is serialised as NAMESPACES_JSON and injected into the pod env.
+namespaces:
+  enabled: true
+  list:
+    - id: fenrir-agents
+      label: "Fenrir Ledger Agents"
+    - id: say-so-agents
+      label: "SaySo Agents"
+    - id: mytruthfinder-agents
+      label: "MyTruthFinder Agents"
+    - id: shanaghy-com-agents
+      label: "Shanaghy.com Agents"
+    - id: re-goatmower-agents
+      label: "Re-Goatmower Agents"
+    - id: odins-throne-plugin
+      label: "Odin's Throne Plugin Agents"
+    - id: odins-throne-hermes-agents
+      label: "Odins Throne Hermes Agents"
+
+# -- Secrets ---------------------------------------------------------------
+secrets:
+  enabled: false

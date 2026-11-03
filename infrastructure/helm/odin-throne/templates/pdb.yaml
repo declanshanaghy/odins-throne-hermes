@@ -1,0 +1,15 @@
+{{- if ge (int .Values.app.replicaCount) 2 }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: odin-throne-pdb
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "odin-throne.labels" (dict "component" "odins-throne") | nindent 4 }}
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: odin-throne
+      app.kubernetes.io/component: odins-throne
+{{- end }}
