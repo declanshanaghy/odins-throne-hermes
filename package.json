@@ -3,23 +3,39 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Odin's Throne as a Hermes desktop plugin \u2014 right-pane job list, main-pane log viewer (Hlidskjalf ported from fenrir-ledger)",
+  "description": "Odin's Throne as a Hermes desktop plugin — right-pane job list, main-pane log viewer (Hlidskjalf ported from fenrir-ledger)",
   "scripts": {
     "build": "node build/build.mjs",
+    "build:server": "esbuild server/index.ts --bundle --platform=node --format=esm --packages=external --outfile=dist-server/index.mjs",
+    "build:web": "tsc --noEmit -p src/targets/web/tsconfig.ui.json && vite build -c src/targets/web/vite.config.ts",
     "dev": "node build/build.mjs --watch --live",
-    "test": "node --import ./test/register.mjs test/hermes-stream.mjs && node --import ./test/register.mjs test/smoke.mjs && node --import ./test/register.mjs test/tree-seats.mjs",
-    "verify": "tsc --noEmit && npm run build && npm test",
+    "dev:web": "vite -c src/targets/web/vite.config.ts",
+    "start": "node dist-server/index.mjs",
+    "test": "node --import ./test/register.mjs test/platform.mjs && node --import ./test/register.mjs test/pack-conventions.mjs && node --import ./test/register.mjs test/pairing.mjs && node --import ./test/register.mjs test/hermes-stream.mjs && node --import ./test/register.mjs test/smoke.mjs && node --import ./test/register.mjs test/web-target.mjs && node --import ./test/register.mjs test/tree-seats.mjs",
+    "verify": "tsc --noEmit && npm run build && npm run build:web && npm test",
     "postinstall": "node build/build.mjs || true"
   },
   "devDependencies": {
+    "@types/node": "^26.6.6",
     "@types/react": "^19.3.0",
+    "@types/ws": "^8.18.2",
+    "@vitejs/plugin-react": "^4.7.0",
     "esbuild": "^0.25.0",
     "postcss": "^8.5.0",
-    "typescript": "^7.0.2"
+    "typescript": "^7.0.2",
+    "vite": "^6.4.5"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
       "esbuild"
     ]
+  },
+  "dependencies": {
+    "@hono/node-server": "^2.1.5",
+    "@kubernetes/client-node": "^1.4.0",
+    "hono": "^4.13.16",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "ws": "^8.22.1"
   }
 }

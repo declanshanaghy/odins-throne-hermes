@@ -6,8 +6,7 @@ import type { NamespaceSummaries } from "../hooks/useNamespaceSummaries";
 import { ThemeSwitcher } from "./ThemeSwitcher";
 import { StatusBadge } from "./StatusBadge";
 import { NamespaceTree } from "./NamespaceTree";
-import odinLight from "../../assets/profiles/odin-light.png";
-import odinDark from "../../assets/profiles/odin-dark.png";
+import { avatarUrl } from "../lib/constants";
 
 // Desktop port: the host pane sash resizes this sidebar; the browser's in-app
 // drag handle is gone. Width is measured via ResizeObserver so the
@@ -42,7 +41,10 @@ interface Props {
   onSelectTask: (nsId: string, sessionId: string) => void;
 }
 
-export function Sidebar({ jobs, activeSessionId, quote, wsState, onSelectSession, onAvatarClick, onOdinClick, onTogglePinSession, pinnedSessionIds, onCancelJob, terminatingSessionIds, namespace, namespaces, onNamespaceChange, namespaceSummaries, onSelectTask }: Props) {
+// onSelectSession stays in the Props contract (both shells pass the
+// snapshot's seam through) but the drilldown tree routes all selection
+// through onSelectTask — the component itself no longer reads it.
+export function Sidebar({ jobs, activeSessionId, quote, wsState, onAvatarClick, onOdinClick, onTogglePinSession, pinnedSessionIds, onCancelJob, terminatingSessionIds, namespace, namespaces, onNamespaceChange, namespaceSummaries, onSelectTask }: Props) {
   const { theme, setTheme } = useTheme();
   const [width, setWidth] = useState<number>(DEFAULT_WIDTH);
   const navRef = useRef<HTMLElement | null>(null);
@@ -79,7 +81,7 @@ export function Sidebar({ jobs, activeSessionId, quote, wsState, onSelectSession
             title="View Odin profile"
           >
             <img
-              src={theme === "light" ? odinLight : odinDark}
+              src={avatarUrl("odin", theme === "light" ? "light" : "dark") ?? ""}
               alt="Odin"
             />
           </button>

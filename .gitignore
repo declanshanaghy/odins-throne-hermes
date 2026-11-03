@@ -1,7 +1,9 @@
 node_modules/
+dist-ui/
 src/generated/
 *.log
 .DS_Store
 __pycache__/
 .pytest_cache/
 tmp/
+dist-server/
