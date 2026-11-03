@@ -183,6 +183,11 @@ const paneRoot = createRoot(document.getElementById("pane"));
 paneRoot.render(byId.jobs.render());
 await flush();
 await flush();
+// The API namespace list resolves asynchronously (vendored list → API list),
+// and each API-added world's summary is one fetch hop behind that — give the
+// chain an extra cycle before asserting the lantern scene.
+await flush();
+await flush();
 
 const paneHtml = document.getElementById("pane").innerHTML;
 assert.ok(paneHtml.includes("odins-throne-root"), "pane root mounted");
