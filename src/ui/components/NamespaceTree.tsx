@@ -221,10 +221,15 @@ export function NamespaceTree({
   // the sprout NOR ghost a living card.
   const [falling, setFalling] = useState<FallingCard[]>([]);
   const prevTasksRef = useRef<DisplayJob[]>([]);
+  const prevOpenNsRef = useRef<string | null>(openNs);
   useEffect(() => {
     const prev = prevTasksRef.current;
     prevTasksRef.current = openTasks;
-    if (!vine) {
+    const worldChanged = prevOpenNsRef.current !== openNs;
+    prevOpenNsRef.current = openNs;
+    if (!vine || worldChanged) {
+      // a retracted vine unmounts its cards at once — no fall choreography
+      // across a world switch, and nothing hangs on a closed world
       setFalling([]);
       return;
     }
@@ -252,7 +257,7 @@ export function NamespaceTree({
       setFalling((cur) => cur.filter((g) => !ids.has(g.job.sessionId)));
     }, FALL_MS);
     return () => clearTimeout(t);
-  }, [openTasks, vine, vineMode, sceneSize.w, terminatingSessionIds]);
+  }, [openNs, openTasks, vine, vineMode, sceneSize.w, terminatingSessionIds]);
 
   if (isCompact) {
     const active = namespaces.find((n) => n.id === namespace);

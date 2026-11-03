@@ -113,6 +113,12 @@ export interface VineGeometry {
  * `vineFor(w, n)` from the prototype. The seat arrives in percent-of-scene;
  * the scene's measured pixel box converts it to the canvas space the SVG
  * path and the absolutely-positioned cards share.
+ *
+ * Cards sample the curve at EVEN VERTICAL intervals (equal y steps along
+ * the strand, not equal t): the prototype's t-uniform sampling scrunches
+ * near the lantern where the curve runs shallow, dipping under a card's
+ * height at high job counts — equal-y spacing keeps every pair of card
+ * centers a full even pitch apart, so cards NEVER overlap at any count.
  */
 export function vineFor(
   seat: LanternSeat,
@@ -131,10 +137,26 @@ export function vineFor(
   const C2: Pt = { x: L.x + dir * VINE.leanC2, y: L.y + arc * 0.55 };
   const P3: Pt = { x: L.x + dir * VINE.tipLean, y: L.y + arc };
   const n = Math.max(count, 0);
+  const yOf = (t: number): number => bez4(t, L, C1, C2, P3).y;
   const points: Pt[] = [];
-  for (let i = 0; i < n; i++) {
-    const t = n === 1 ? VINE.singleT : VINE.tStart + VINE.tSpan * (i / (n - 1));
-    points.push(bez4(t, L, C1, C2, P3));
+  if (n === 1) {
+    points.push(bez4(VINE.singleT, L, C1, C2, P3));
+  } else if (n > 1) {
+    // even vertical spread: card i centers at yStart + span * i/(n-1)
+    const yStart = yOf(VINE.tStart);
+    const yEnd = yOf(VINE.tStart + VINE.tSpan);
+    for (let i = 0; i < n; i++) {
+      const target = yStart + ((yEnd - yStart) * i) / (n - 1);
+      // invert the monotonic cascade by bisection on [tStart, tEnd]
+      let lo: number = VINE.tStart;
+      let hi: number = VINE.tStart + VINE.tSpan;
+      for (let step = 0; step < 24; step++) {
+        const mid = (lo + hi) / 2;
+        if (yOf(mid) < target) lo = mid;
+        else hi = mid;
+      }
+      points.push(bez4((lo + hi) / 2, L, C1, C2, P3));
+    }
   }
   return {
     d:
