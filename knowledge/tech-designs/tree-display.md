@@ -41,7 +41,7 @@ flowchart TD
     LANT -->|"click / Enter / Space"| ACC["strict accordion:<br/>one world's vine open"]
     ACC --> SUM["GET /api/jobs?namespace=<br/>(summary per open world)"]
     SUM --> VINE["vineFor<br/>(vineGeometry.ts)"]
-    VINE --> CARD["VineCard · role=treeitem · tabIndex 0<br/>sigil · title · meta<br/>open/focus · pin · cancel"]
+    VINE --> CARD["VineCard · role=treeitem · tabIndex 0<br/>sigil · title · meta<br/>icon-only pin · cancel (no text open/focus button — body click is the open affordance, #43)"]
     CARD -->|"click or Enter/Space"| TAB["host.openWorkspace<br/>odins-throne-session-&lt;id&gt;"]
     TAB -->|"already open"| FOCUS["focus the existing tab<br/>(never a duplicate)"]
     TAB --> LOG["SessionLogViewer<br/>per-session WS log terminal"]
@@ -58,7 +58,9 @@ flowchart TD
   regrows it; a world gone from the API list closes its own vine.
 - **Cards** — everything sits ON the card (no popups): status sigil
   (hammer/dice/raven/ring), title, session · issue # · agent meta, and the
-  open/focus · pin · cancel actions.
+  icon-only pin · cancel actions. The card BODY CLICK is the open/focus
+  affordance (issue #43 removed the on-card text button — never
+  reintroduce one; a repeat click focuses the session's existing tab).
 - **Tabs** — each session stacks its own workspace tab
   (`odins-throne-session-<sessionId>`); a repeat click focuses the
   existing tab (dedupe); older hosts without `host.openWorkspace` fall
@@ -75,8 +77,9 @@ flowchart TD
   pin and cancel are native buttons; falling ghosts ignore keys.
 - **Screen-reader semantics** — `role="tree"` on the tree root,
   `role="treeitem"` + `aria-expanded`/`aria-selected` on lanterns and
-  cards, `aria-label` on every lantern, card, and action (open/focus,
-  pin/unpin, cancel), `aria-pressed` on the pin toggle, the strand's
+  cards, `aria-label` on every lantern, card, and action (pin/unpin,
+  cancel — open/focus is the card body itself, not an on-card action),
+  `aria-pressed` on the pin toggle, the strand's
   scroller labelled as the open world's tasks group.
 - **Focus rings** — `:focus-visible` outlines on lanterns, card bodies and
   card actions (teal against the painting), so keyboard focus is always
@@ -88,9 +91,13 @@ Coverage: `test/smoke.mjs` renders the built bundle against a stubbed API
 and asserts the seating (no glass-disc chrome on the lantern, the
 screen-blended light, task pips = task count with the `+N` chip and the
 offline glyph fallback), the accordion (one-open, collapse, regrow, orphan-closing),
-the vine (growth, hang order running → failed → pending → succeeded), the
-tabs (open, focus dedupe, re-open after close), cancel → tremble →
-tab-close, and the full keyboard/ARIA contract above. `test/tree-seats.mjs`
+the vine (growth, hang order running → failed → pending → succeeded),
+the tabs (open, focus dedupe, re-open after close), cancel → tremble →
+tab-close, and the full keyboard/ARIA contract above — and (issue #55) the
+hall server's SPA-entry cache-bust: `Cache-Control: no-store` on `/`,
+`/index.html` and the SPA fallback, immutable cache on hashed
+`/assets/*`, asserted against the real Hono app imported from source.
+`test/tree-seats.mjs`
 locks the pip-row contract for every seat and count: in-scene, on the side
 away from the vine, never crossed by the strand.
 

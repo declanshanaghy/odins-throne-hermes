@@ -6,15 +6,17 @@
 //
 //   ⚒  Issue #12 · port the ballad pages        ← title + status dot
 //      s-run-1 · Issue #12 · FiremanDecko       ← session · issue # · agent
-//      [focus] [unpin] [cancel]                 ← on-card actions
+//      [📌] [✕]                                 ← icon-only on-card actions
 //
 // The status sigil follows the taskIcon contract (namespaceIcons.ts):
 // hammer while running, dice while pending, raven for failure, ring when
 // succeeded — remote <img> with an inline-glyph fallback offline (TreeIcon).
 //
 // Actions, all local to the card:
-//   • open/focus — the card body click opens the session's tab; a session
-//     whose tab is already open reads "focus" and never stacks a duplicate.
+//   • open/focus — THE CARD BODY CLICK (issue #43 removed the on-card
+//     text button — never reintroduce one): the body click opens the
+//     session's tab; a session whose tab is already open is focused
+//     (fronted), never duplicated.
 //   • pin/unpin  — toggles right on the card (is-on styling when pinned).
 //   • cancel     — Ragnarök; rendered ONLY while the job is cancellable
 //     (running or pending). The tremble→fall→purge choreography lives in
