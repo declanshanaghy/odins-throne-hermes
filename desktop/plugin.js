@@ -331,13 +331,15 @@ var styles_default = `.odins-throne-root .odins-throne-root {
 @media (prefers-reduced-motion: reduce) {
   .odins-throne-root .theme-btn { transition: none; }
 }
-/* \u2500\u2500 Namespace drilldown tree (issue:4) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
-/* Each namespace is a top-level root node; its tasks branch directly beneath
- * it with drawn connector rails + elbow connectors, so the two levels read
- * apart at a glance. Nodes carry icons from shanaghy.com with inline emoji
- * fallbacks (TreeIcon). The tree IS the panel body now (the old flat job
- * list is gone): it stretches to fill the sidebar's full vertical height
- * and scrolls internally, so every namespace is reachable. */
+/* \u2500\u2500 Namespace lantern tree (issue:11, garden pattern) \u2500\u2500\u2500 */
+/* Each namespace is a LANTERN seated on the painted backdrop at its
+ * runtime-assigned seat (lib/treeSeats.ts): frost-glass node, curated
+ * shanaghy.com icon inside (inline glyph fallback offline via TreeIcon),
+ * status-tinted glow, stats berries beside the seat, hover label with the
+ * world name + full summary line. Strict accordion: one world's branch is
+ * open at a time; the branch (job cards on connector rails) renders beneath
+ * the scene. The tree IS the panel body (the old flat job list is gone): it
+ * stretches to fill the sidebar's full height and scrolls internally. */
 .odins-throne-root .ns-tree {
   margin-top: 0.5rem;
   font-family: 'JetBrains Mono', monospace;
@@ -348,110 +350,250 @@ var styles_default = `.odins-throne-root .odins-throne-root {
   overflow-y: auto;
   overflow-x: hidden;
 }
-.odins-throne-root .ns-tree__roots {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-.odins-throne-root .ns-tree__chevron {
-  color: var(--gold);
-  flex-shrink: 0;
-  font-size: 0.6rem;
-  width: 0.85em;
-  text-align: center;
-}
 .odins-throne-root .ns-tree__list {
   list-style: none;
   margin: 0.15rem 0 0;
   padding: 0;
 }
-/* Namespace root nodes sit at the top level \u2014 no rail above them. */
-.odins-throne-root .ns-tree__item {
-  min-width: 0;
-}
-.odins-throne-root .ns-tree__row {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.15rem;
-  min-width: 0;
-}
-.odins-throne-root .ns-tree__chevron-btn {
-  flex-shrink: 0;
-  width: 1.1em;
-  padding: 0.2rem 0;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--text-void);
-  font-size: inherit;
-  line-height: 1.2;
-}
-.odins-throne-root .ns-tree__chevron-btn:hover {
-  color: var(--gold);
-}
-.odins-throne-root .ns-tree__select {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.2rem 0.3rem;
-  background: none;
-  border: none;
-  border-radius: 3px;
-  color: var(--text-rune);
-  cursor: pointer;
-  text-align: left;
-  font-size: inherit;
-  font-family: inherit;
-}
-.odins-throne-root .ns-tree__labels {
+
+/* \u2500\u2500 the painted scene \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+.odins-throne-root .ns-tree--lanterns {
   display: flex;
   flex-direction: column;
-  gap: 0.05rem;
-  min-width: 0;
-  flex: 1;
+  gap: 0.4rem;
+  padding-bottom: 0.5rem;
 }
-.odins-throne-root .ns-tree__select:hover,
-.odins-throne-root .ns-tree__select:focus {
-  background: var(--chain);
-  color: var(--text-saga);
-}
-.odins-throne-root .ns-tree__item--active > .ns-tree__row .ns-tree__select {
-  background: var(--chain);
-  color: var(--gold);
-  box-shadow: inset 2px 0 0 var(--gold);
-}
-.odins-throne-root .ns-tree__label {
-  font-size: 0.68rem;
-  color: var(--text-saga);
-  white-space: nowrap;
+.odins-throne-root .ns-tree__scene {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 896 / 1200; /* TREE_SCENE \u2014 the painting's composed ratio */
+  max-height: 56vh;        /* keep the branch reachable below the painting */
+  border-radius: 6px;
+  border: 1px solid var(--rune-border);
   overflow: hidden;
-  text-overflow: ellipsis;
+  background-image: var(--tree-backdrop);
+  background-size: cover;
+  background-position: top center;
+  flex-shrink: 0;
 }
-.odins-throne-root .ns-tree__summary {
-  font-size: 0.58rem;
+.odins-throne-root .ns-tree__roots {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none; /* lanterns opt back in */
+}
+/* every namespace is a top-level root node \u2014 no rail above them; in the
+ * scene each item pins to its seat (compact rows stay ordinary list items) */
+.odins-throne-root .ns-tree__scene .ns-tree__item {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+/* \u2500\u2500 the lantern \u2014 a namespace node seated on the painting \u2500\u2500 */
+/* night-garden palette, scoped to the tree (the painting is dark in both
+ * themes): moon glow default, teal ring when selected, ember tint when the
+ * world holds a failed job, moss tint when all-clear. */
+.odins-throne-root .ns-tree--lanterns {
+  --lg-moon: rgba(176, 196, 201, 0.30);
+  --lg-teal: rgba(21, 184, 166, 0.55);
+  --lg-ember: rgba(224, 122, 63, 0.42);
+  --lg-moss: rgba(121, 179, 86, 0.36);
+  --lg: var(--lg-moon);
+  --berry-succeeded: #79b356;
+  --berry-running: #6fb7d8;
+  --berry-failed: #e07a3f;
+  --glabel-bg: rgba(5, 7, 10, 0.88);
+  --glabel-border: rgba(176, 196, 201, 0.14);
+  --glabel-frost: #d9e6ea;
+}
+.odins-throne-root .ns-tree__lantern {
+  pointer-events: auto;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: 50% 50% 50% 7px;
+  rotate: 40deg;
+  border: 1px solid rgba(214, 236, 240, 0.42);
+  background: radial-gradient(circle at 32% 26%, rgba(226, 240, 244, 0.34), rgba(10, 16, 20, 0.84));
+  backdrop-filter: blur(1.5px);
+  font-size: 19px;
+  cursor: pointer;
+  box-shadow: 0 0 18px 4px var(--lg),
+              0 4px 12px rgba(0, 0, 0, 0.5),
+              inset 0 1px 2px rgba(255, 255, 255, 0.18);
+  transition: box-shadow 0.2s, border-color 0.2s, scale 0.2s;
+}
+/* the stem it hangs by */
+.odins-throne-root .ns-tree__lantern::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: -16px;
+  width: 1.5px;
+  height: 16px;
+  background: linear-gradient(180deg, transparent, rgba(176, 196, 201, 0.6));
+}
+.odins-throne-root .ns-tree__lantern:hover {
+  scale: 1.1;
+  border-color: var(--teal-asgard);
+}
+.odins-throne-root .ns-tree__lantern:focus-visible {
+  outline: 2px solid var(--teal-asgard);
+  outline-offset: 2px;
+}
+/* selected \u2014 the teal ring */
+.odins-throne-root .ns-tree__lantern--active {
+  border-color: var(--teal-asgard);
+  --lg: var(--lg-teal);
+  box-shadow: 0 0 0 3px rgba(21, 184, 166, 0.45),
+              0 0 30px 6px var(--lg-teal),
+              0 4px 12px rgba(0, 0, 0, 0.5);
+}
+/* summary unavailable \u2014 the dimmed seat */
+.odins-throne-root .ns-tree__lantern--dim {
+  opacity: 0.55;
+  filter: saturate(0.6);
+}
+/* glow tints \u2014 ember for a failed job in the world, moss when all-clear */
+.odins-throne-root .ns-tree__lantern--failed { --lg: var(--lg-ember); }
+.odins-throne-root .ns-tree__lantern--ok     { --lg: var(--lg-moss); }
+/* the curated icon sits upright inside the tilted lantern */
+.odins-throne-root .ns-tree__icon--lantern {
+  width: 26px;
+  height: 26px;
+  rotate: -40deg;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.7));
+  border-radius: 0;
+}
+.odins-throne-root .ns-tree__icon--lantern.ns-tree__icon--fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+/* Extended sidebar seats bigger lanterns with roomier glyphs. */
+.odins-throne-root .ns-tree--extended .ns-tree__lantern {
+  width: 52px;
+  height: 52px;
+  font-size: 23px;
+}
+.odins-throne-root .ns-tree--extended .ns-tree__icon--lantern {
+  width: 30px;
+  height: 30px;
+}
+.odins-throne-root .ns-tree--extended .ns-tree__icon--lantern.ns-tree__icon--fallback {
+  font-size: 1.3rem;
+}
+
+/* \u2500\u2500 stats berries \u2014 the summary counts beside each seat \u2500\u2500 */
+.odins-throne-root .ns-tree__fruit {
+  position: absolute;
+  top: calc(50% + 28px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+.odins-throne-root .ns-tree__berry {
+  width: 11px;
+  height: 11px;
+  border-radius: 50% 50% 50% 4px;
+  display: inline-block;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.35), 0 0 6px currentColor;
+  rotate: 45deg;
+  background: currentColor;
+}
+.odins-throne-root .ns-tree__berry[data-on="0"] { opacity: 0.28; }
+.odins-throne-root .ns-tree__berry--succeeded { color: var(--berry-succeeded); }
+.odins-throne-root .ns-tree__berry--running   { color: var(--berry-running); }
+.odins-throne-root .ns-tree__berry--failed    { color: var(--berry-failed); }
+/* counts appear only in extended mode */
+.odins-throne-root .ns-tree__fruit-counts {
+  display: none;
+  gap: 5px;
+  font-size: 10.5px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.odins-throne-root .ns-tree--extended .ns-tree__fruit-counts { display: flex; }
+.odins-throne-root .ns-tree__fruit-count {
+  font-style: normal;
+  display: inline-flex;
+  gap: 3px;
+  align-items: center;
+}
+.odins-throne-root .ns-tree__fruit-count::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.odins-throne-root .ns-tree__fruit-count--succeeded { color: var(--berry-succeeded); }
+.odins-throne-root .ns-tree__fruit-count--running   { color: var(--berry-running); }
+.odins-throne-root .ns-tree__fruit-count--failed    { color: var(--berry-failed); }
+
+/* \u2500\u2500 hover label \u2014 the garden's .g-label pattern \u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+.odins-throne-root .ns-tree__glabel {
+  position: absolute;
+  bottom: calc(50% + 30px);
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: none;
+  background: var(--glabel-bg);
+  border: 1px solid var(--glabel-border);
+  border-left: 2px solid var(--teal-asgard);
+  border-radius: 6px;
+  padding: 5px 9px;
+  font-size: 11.5px;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.15s;
+  text-align: left;
+  z-index: 2;
+}
+.odins-throne-root .ns-tree__glabel--on { opacity: 1; }
+.odins-throne-root .ns-tree__glabel-name {
+  display: block;
+  font-size: 12.5px;
+  letter-spacing: 0.3px;
+  color: var(--glabel-frost);
+}
+.odins-throne-root .ns-tree__glabel-line {
+  color: var(--text-rune);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10.5px;
+}
+.odins-throne-root .ns-tree__glabel--err .ns-tree__glabel-line {
+  color: var(--error-strong);
+}
+.odins-throne-root .ns-tree__glabel--load .ns-tree__glabel-line {
   color: var(--text-void);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.odins-throne-root .ns-tree__summary--error {
   font-style: italic;
 }
-/* Extended sidebar: summary text gets a bit more room and color. */
-.odins-throne-root .ns-tree--extended .ns-tree__summary { color: var(--text-rune); }
 
 /* \u2500\u2500 Task children: drawn connector lines \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
-/* Each task li draws a vertical rail (::before) and an elbow (::after) so
- * the two tree levels are unmistakable:
+/* The open world's branch (drill) renders beneath the scene; each task li
+ * draws a vertical rail (::before) and an elbow (::after) so the branch
+ * reads as a bough off the painting:
  *
- *   \u25BE Fenrir Ledger Agents     \u2190 namespace root (no rail)
- *   \u2502
- *   \u251C\u2500 \u2692 s-run-1               \u2190 rail + elbow
+ *   \u25D6o\u25D7 Fenrir Ledger Agents    \u2190 lantern at its seat (no rail)
+ *   \u254E
+ *   \u251C\u2500 \u2692 s-run-1                \u2190 rail + elbow
  *   \u2514\u2500 \u{1F426} s-fail-1              \u2190 last child's rail stops at its elbow
  */
+.odins-throne-root .ns-tree__drill {
+  margin: 0 0.5rem;
+}
 .odins-throne-root .ns-tree__tasks {
   list-style: none;
   margin: 0.05rem 0 0.25rem;
@@ -576,6 +718,10 @@ var styles_default = `.odins-throne-root .odins-throne-root {
 .odins-throne-root .ns-tree--compact .ns-tree__row:focus {
   background: var(--chain);
   color: var(--text-saga);
+}
+.odins-throne-root .ns-tree--compact .ns-tree__item--active .ns-tree__row {
+  color: var(--gold);
+  border-color: var(--gold);
 }
 .odins-throne-root .ns-tree--compact .ns-tree__icon--task { width: 10px; height: 10px; }
 .odins-throne-root .ns-tree__compact-initials { color: var(--gold); letter-spacing: 0.04em; }
@@ -7427,10 +7573,10 @@ var pluginPlatform = {
 };
 
 // src/targets/plugin/pane.tsx
-import { useMemo as useMemo3, useState as useState19, useSyncExternalStore as useSyncExternalStore4 } from "react";
+import { useMemo as useMemo4, useState as useState19, useSyncExternalStore as useSyncExternalStore4 } from "react";
 
 // src/ui/components/Sidebar.tsx
-import { useState as useState13, useRef as useRef7, useEffect as useEffect7 } from "react";
+import { useState as useState13, useRef as useRef7, useEffect as useEffect8 } from "react";
 
 // src/ui/components/ThemeSwitcher.tsx
 import { jsx as jsx11, jsxs as jsxs8 } from "react/jsx-runtime";
@@ -7648,7 +7794,7 @@ function StatusBadge({ state }) {
 }
 
 // src/ui/components/NamespaceTree.tsx
-import { useState as useState12 } from "react";
+import { useEffect as useEffect7, useMemo as useMemo2, useState as useState12 } from "react";
 
 // src/ui/hooks/useNamespaceSummaries.ts
 import { useCallback as useCallback6, useEffect as useEffect5, useRef as useRef6, useState as useState8 } from "react";
@@ -7926,19 +8072,27 @@ var TREE_SCENE = {
   /** The scene box ratio the painting is composed for (width / height). */
   aspectRatio: 896 / 1200
 };
-var WORLD_SEATS = {
-  fenrir: { x: 17, y: 28, dir: 1 },
-  // Fenrir Ledger Agents
-  hills: { x: 41, y: 20, dir: 1 },
-  // Summer Hills Watch
-  sayso: { x: 59, y: 19, dir: 1 },
-  // SaySo Agents
-  hearth: { x: 85, y: 28, dir: -1 }
-  // Mossy Hearth Agents
-};
-var NAMESPACE_WORLD = {
-  "fenrir-agents": "fenrir",
-  "say-so-agents": "sayso"
+var SEAT_POOL = [
+  { x: 8, y: 52 },
+  { x: 17, y: 28 },
+  { x: 25, y: 22 },
+  { x: 41, y: 20 },
+  { x: 59, y: 19 },
+  { x: 57, y: 37 },
+  { x: 76, y: 23 },
+  { x: 85, y: 28 }
+];
+var CURATED_SEATS = {
+  "fenrir-agents": 1,
+  // 17,28 — the wolf's lantern on the left bough
+  "shanaghy-com-agents": 3,
+  // 41,20
+  "say-so-agents": 4,
+  // 59,19
+  "odins-throne-hermes-agents": 5,
+  // 57,37
+  "re-goatmower-agents": 7
+  // 85,28 — the right bough's edge lantern
 };
 function hashKey2(key) {
   let h = 5381;
@@ -7947,20 +8101,47 @@ function hashKey2(key) {
   }
   return Math.abs(h);
 }
-function fallbackSeat(nsId) {
-  const h = hashKey2(nsId);
-  return {
-    x: 8 + h % 78,
-    // 8–86 % — clear of both panel edges
-    y: 16 + Math.floor(h / 32) % 14,
-    // 16–30 % — the lantern bough band
-    dir: h % 2 === 0 ? 1 : -1
-  };
+function dirFor(x) {
+  return x > 66 ? -1 : 1;
 }
-function namespaceSeat(nsId) {
-  const world = NAMESPACE_WORLD[nsId];
-  const seat = world ? WORLD_SEATS[world] : void 0;
-  return seat ?? fallbackSeat(nsId);
+var TERRACE_COLUMNS = 4;
+var TERRACE_COLUMN_STEP = 24;
+var TERRACE_COLUMN_ORIGIN = 15;
+var TERRACE_ROW_ORIGIN = 64;
+var TERRACE_ROW_STEP = 10;
+function terraceSeat(overflowIndex) {
+  const row = Math.floor(overflowIndex / TERRACE_COLUMNS);
+  const col = overflowIndex % TERRACE_COLUMNS;
+  const x = TERRACE_COLUMN_ORIGIN + col * TERRACE_COLUMN_STEP;
+  return { x, y: TERRACE_ROW_ORIGIN + row * TERRACE_ROW_STEP, dir: dirFor(x) };
+}
+function assignSeats(nsIds) {
+  const taken = /* @__PURE__ */ new Set();
+  const poolLen = SEAT_POOL.length;
+  const seats = /* @__PURE__ */ new Map();
+  for (const id of nsIds) {
+    const idx = CURATED_SEATS[id];
+    if (idx != null && !Number.isNaN(idx) && !taken.has(idx)) {
+      taken.add(idx);
+      const painted = SEAT_POOL[idx];
+      seats.set(id, { x: painted.x, y: painted.y, dir: dirFor(painted.x) });
+    }
+  }
+  let overflow = 0;
+  for (const id of nsIds) {
+    if (seats.has(id)) continue;
+    if (taken.size < poolLen) {
+      let i = hashKey2(id) % poolLen;
+      while (taken.has(i)) i = (i + 1) % poolLen;
+      taken.add(i);
+      const painted = SEAT_POOL[i];
+      seats.set(id, { x: painted.x, y: painted.y, dir: dirFor(painted.x) });
+    } else {
+      seats.set(id, terraceSeat(overflow));
+      overflow += 1;
+    }
+  }
+  return seats;
 }
 
 // src/ui/assets/tree-backdrop.jpg
@@ -7971,11 +8152,12 @@ import { useState as useState10 } from "react";
 import { jsx as jsx13 } from "react/jsx-runtime";
 function TreeIcon({ src, fallback, size = "ns" }) {
   const [failed, setFailed] = useState10(false);
+  const cls = ["ns-tree__icon", size === "task" ? "ns-tree__icon--task" : "", size === "lantern" ? "ns-tree__icon--lantern" : ""].filter(Boolean).join(" ");
   if (failed) {
     return /* @__PURE__ */ jsx13(
       "span",
       {
-        className: size === "task" ? "ns-tree__icon ns-tree__icon--task ns-tree__icon--fallback" : "ns-tree__icon ns-tree__icon--fallback",
+        className: [cls, "ns-tree__icon--fallback"].filter(Boolean).join(" "),
         "aria-hidden": "true",
         "data-icon-fallback": fallback,
         children: fallback
@@ -7985,7 +8167,7 @@ function TreeIcon({ src, fallback, size = "ns" }) {
   return /* @__PURE__ */ jsx13(
     "img",
     {
-      className: size === "task" ? "ns-tree__icon ns-tree__icon--task" : "ns-tree__icon",
+      className: cls,
       src,
       alt: "",
       "aria-hidden": "true",
@@ -8392,6 +8574,11 @@ function tasksOf(summaryJobs) {
   if (!summaryJobs) return [];
   return summaryJobs.filter((job) => job.status !== "purged").map(parseJob).sort(sortJobs);
 }
+function labelLineOf(summary) {
+  if (!summary) return "\u2026";
+  if (summary.error) return "summary unavailable";
+  return summaryLine(summary);
+}
 function NamespaceTree({
   namespace,
   namespaces,
@@ -8407,16 +8594,23 @@ function NamespaceTree({
   terminatingSessionIds
 }) {
   const isCompact = displayMode === "compact";
-  const [expandedNs, setExpandedNs] = useState12(() => /* @__PURE__ */ new Set([namespace]));
+  const seats = useMemo2(
+    () => assignSeats(namespaces.map((ns) => ns.id)),
+    [namespaces]
+  );
+  const [openNs, setOpenNs] = useState12(namespace);
+  const [hoveredNs, setHoveredNs] = useState12(null);
   const [compactOpen, setCompactOpen] = useState12(false);
-  const toggleExpanded = (nsId) => {
-    setExpandedNs((prev) => {
-      const next = new Set(prev);
-      if (next.has(nsId)) next.delete(nsId);
-      else next.add(nsId);
-      return next;
-    });
+  useEffect7(() => {
+    setOpenNs((prev) => prev && namespaces.some((ns) => ns.id === prev) ? prev : null);
+  }, [namespaces]);
+  const selectWorld = (nsId) => {
+    onNamespaceChange(nsId);
+    setOpenNs((prev) => prev === nsId ? null : nsId);
   };
+  const openWorld = namespaces.find((ns) => ns.id === openNs) ?? null;
+  const openSummary = openNs ? summaries[openNs] : void 0;
+  const openTasks = useMemo2(() => tasksOf(openSummary?.jobs), [openSummary]);
   if (isCompact) {
     const active = namespaces.find((n) => n.id === namespace);
     const activeSummary = summaries[namespace];
@@ -8437,15 +8631,16 @@ function NamespaceTree({
       ),
       compactOpen && /* @__PURE__ */ jsx15("ul", { className: "ns-tree__list", role: "tree", "aria-label": "All namespaces", children: namespaces.map((ns) => {
         const summary = summaries[ns.id];
+        const seat = seats.get(ns.id);
         return /* @__PURE__ */ jsx15(
           "li",
           {
             role: "treeitem",
             "aria-selected": ns.id === namespace,
             "data-namespace": ns.id,
-            "data-seat-x": namespaceSeat(ns.id).x,
-            "data-seat-y": namespaceSeat(ns.id).y,
-            "data-seat-dir": namespaceSeat(ns.id).dir,
+            "data-seat-x": seat?.x,
+            "data-seat-y": seat?.y,
+            "data-seat-dir": seat?.dir,
             className: ns.id === namespace ? "ns-tree__item ns-tree__item--active" : "ns-tree__item",
             children: /* @__PURE__ */ jsxs11(
               "button",
@@ -8477,104 +8672,119 @@ function NamespaceTree({
       }) })
     ] });
   }
-  const rootClass = displayMode === "extended" ? "ns-tree ns-tree--extended" : "ns-tree";
-  return /* @__PURE__ */ jsx15(
+  const rootClass = displayMode === "extended" ? "ns-tree ns-tree--lanterns ns-tree--extended" : "ns-tree ns-tree--lanterns";
+  return /* @__PURE__ */ jsxs11(
     "div",
     {
       className: rootClass,
       role: "tree",
       "aria-label": "Namespace tree",
       style: treeBackdropStyle(),
-      children: /* @__PURE__ */ jsx15("ul", { className: "ns-tree__roots", children: namespaces.map((ns) => {
-        const summary = summaries[ns.id];
-        const isActive = ns.id === namespace;
-        const nsExpanded = expandedNs.has(ns.id);
-        const seat = namespaceSeat(ns.id);
-        const line = summary ? summary.error ? "summary unavailable" : summaryLine(summary) : "\u2026";
-        const tasks = nsExpanded ? tasksOf(summary?.jobs) : [];
-        return /* @__PURE__ */ jsxs11(
-          "li",
-          {
-            role: "treeitem",
-            "aria-expanded": nsExpanded,
-            "aria-selected": isActive,
-            "data-namespace": ns.id,
-            "data-seat-x": seat.x,
-            "data-seat-y": seat.y,
-            "data-seat-dir": seat.dir,
-            className: isActive ? "ns-tree__item ns-tree__item--active" : "ns-tree__item",
-            children: [
-              /* @__PURE__ */ jsxs11("div", { className: "ns-tree__row", children: [
+      children: [
+        /* @__PURE__ */ jsx15("div", { className: "ns-tree__scene", children: /* @__PURE__ */ jsx15("ul", { className: "ns-tree__roots", children: namespaces.map((ns) => {
+          const summary = summaries[ns.id];
+          const isActive = ns.id === namespace;
+          const isOpen = openNs === ns.id;
+          const seat = seats.get(ns.id);
+          const line = labelLineOf(summary);
+          const failed = summary?.counts.failed ?? 0;
+          const total = summary?.total ?? 0;
+          const lanternClass = [
+            "ns-tree__select",
+            "ns-tree__lantern",
+            isActive ? "ns-tree__lantern--active" : "",
+            summary?.error ? "ns-tree__lantern--dim" : "",
+            failed > 0 ? "ns-tree__lantern--failed" : total > 0 ? "ns-tree__lantern--ok" : ""
+          ].filter(Boolean).join(" ");
+          const glabelClass = [
+            "ns-tree__glabel",
+            !summary ? "ns-tree__glabel--load" : "",
+            summary?.error ? "ns-tree__glabel--err" : "",
+            hoveredNs === ns.id ? "ns-tree__glabel--on" : ""
+          ].filter(Boolean).join(" ");
+          return /* @__PURE__ */ jsxs11(
+            "li",
+            {
+              "data-namespace": ns.id,
+              "data-seat-x": seat.x,
+              "data-seat-y": seat.y,
+              "data-seat-dir": seat.dir,
+              className: "ns-tree__item",
+              style: { left: `${seat.x}%`, top: `${seat.y}%` },
+              children: [
                 /* @__PURE__ */ jsx15(
                   "button",
                   {
                     type: "button",
-                    className: "ns-tree__chevron-btn",
-                    "aria-label": nsExpanded ? `Collapse ${ns.label} tasks` : `Expand ${ns.label} tasks`,
-                    onClick: () => toggleExpanded(ns.id),
-                    tabIndex: -1,
-                    children: /* @__PURE__ */ jsx15(
-                      "span",
-                      {
-                        className: nsExpanded ? "ns-tree__chevron ns-tree__chevron--open" : "ns-tree__chevron",
-                        "aria-hidden": "true",
-                        children: nsExpanded ? "\u25BE" : "\u25B8"
-                      }
-                    )
+                    className: lanternClass,
+                    role: "treeitem",
+                    "aria-expanded": isOpen,
+                    "aria-selected": isActive,
+                    "aria-label": `${ns.label} \u2014 ${line}`,
+                    title: `${ns.label} \u2014 ${line}`,
+                    onClick: () => selectWorld(ns.id),
+                    onMouseEnter: () => setHoveredNs(ns.id),
+                    onMouseLeave: () => setHoveredNs((prev) => prev === ns.id ? null : prev),
+                    onFocus: () => setHoveredNs(ns.id),
+                    onBlur: () => setHoveredNs((prev) => prev === ns.id ? null : prev),
+                    children: /* @__PURE__ */ jsx15(TreeIcon, { src: namespaceIcon(ns.id), fallback: NAMESPACE_ICON_FALLBACK, size: "lantern" })
                   }
                 ),
-                /* @__PURE__ */ jsxs11(
-                  "button",
-                  {
-                    type: "button",
-                    className: "ns-tree__select",
-                    title: `${ns.label} \u2014 ${line}`,
-                    onClick: () => {
-                      onNamespaceChange(ns.id);
-                      setExpandedNs((prev) => new Set(prev).add(ns.id));
-                    },
-                    children: [
-                      /* @__PURE__ */ jsx15(TreeIcon, { src: namespaceIcon(ns.id), fallback: NAMESPACE_ICON_FALLBACK }),
-                      /* @__PURE__ */ jsxs11("span", { className: "ns-tree__labels", children: [
-                        /* @__PURE__ */ jsx15("span", { className: "ns-tree__label", children: ns.label }),
-                        /* @__PURE__ */ jsx15("span", { className: summary?.error ? "ns-tree__summary ns-tree__summary--error" : "ns-tree__summary", children: line })
-                      ] })
-                    ]
-                  }
-                )
-              ] }),
-              nsExpanded && /* @__PURE__ */ jsx15("ul", { className: "ns-tree__tasks", role: "group", "aria-label": `${ns.label} tasks`, children: summary && !summary.error ? tasks.length > 0 ? tasks.map((job) => {
-                const isTaskActive = job.sessionId === activeSessionId;
-                return /* @__PURE__ */ jsx15(
-                  "li",
-                  {
-                    role: "treeitem",
-                    "aria-selected": isTaskActive,
-                    "data-session": job.sessionId,
-                    className: isTaskActive ? "ns-tree__task ns-tree__task--active" : "ns-tree__task",
-                    children: /* @__PURE__ */ jsx15(
-                      JobCard,
-                      {
-                        job,
-                        isActive: isTaskActive,
-                        onClick: () => onSelectTask(ns.id, job.sessionId, job),
-                        onAvatarClick,
-                        isPinned: pinnedSessionIds?.has(job.sessionId) ?? false,
-                        onTogglePin: onTogglePinSession ? () => onTogglePinSession(job.sessionId) : void 0,
-                        onCancelJob,
-                        displayMode,
-                        isTerminating: terminatingSessionIds?.has(job.sessionId) ?? false
-                      }
-                    )
-                  },
-                  job.sessionId
-                );
-              }) : /* @__PURE__ */ jsx15("li", { className: "ns-tree__task ns-tree__task--empty", children: "no tasks in this world" }) : /* @__PURE__ */ jsx15("li", { className: "ns-tree__task ns-tree__task--empty", children: summary ? "summary unavailable" : "loading\u2026" }) })
-            ]
-          },
-          ns.id
-        );
-      }) })
+                /* @__PURE__ */ jsxs11("div", { className: "ns-tree__fruit", "aria-hidden": "true", children: [
+                  /* @__PURE__ */ jsx15("b", { className: "ns-tree__berry ns-tree__berry--succeeded", "data-on": summary ? summary.counts.succeeded > 0 ? "1" : "0" : "0" }),
+                  /* @__PURE__ */ jsx15("b", { className: "ns-tree__berry ns-tree__berry--running", "data-on": summary ? summary.counts.running > 0 ? "1" : "0" : "0" }),
+                  /* @__PURE__ */ jsx15("b", { className: "ns-tree__berry ns-tree__berry--failed", "data-on": failed > 0 ? "1" : "0" }),
+                  /* @__PURE__ */ jsxs11("span", { className: "ns-tree__fruit-counts", children: [
+                    summary && summary.counts.succeeded > 0 && /* @__PURE__ */ jsx15("i", { className: "ns-tree__fruit-count ns-tree__fruit-count--succeeded", children: summary.counts.succeeded }),
+                    summary && summary.counts.running > 0 && /* @__PURE__ */ jsx15("i", { className: "ns-tree__fruit-count ns-tree__fruit-count--running", children: summary.counts.running }),
+                    summary && failed > 0 && /* @__PURE__ */ jsx15("i", { className: "ns-tree__fruit-count ns-tree__fruit-count--failed", children: failed })
+                  ] })
+                ] }),
+                /* @__PURE__ */ jsxs11("div", { className: glabelClass, "aria-hidden": "true", children: [
+                  /* @__PURE__ */ jsx15("b", { className: "ns-tree__glabel-name", children: ns.label }),
+                  /* @__PURE__ */ jsx15("span", { className: "ns-tree__glabel-line", children: line })
+                ] })
+              ]
+            },
+            ns.id
+          );
+        }) }) }),
+        openWorld && /* @__PURE__ */ jsx15(
+          "ul",
+          {
+            className: "ns-tree__tasks ns-tree__drill",
+            role: "group",
+            "aria-label": `${openWorld.label} tasks`,
+            children: !openSummary ? /* @__PURE__ */ jsx15("li", { className: "ns-tree__task ns-tree__task--empty", children: "fetching the world's work\u2026" }) : openSummary.error ? /* @__PURE__ */ jsx15("li", { className: "ns-tree__task ns-tree__task--empty", children: "summary unavailable" }) : openTasks.length === 0 ? /* @__PURE__ */ jsx15("li", { className: "ns-tree__task ns-tree__task--empty", children: "no tasks in this world" }) : openTasks.map((job) => {
+              const isTaskActive = job.sessionId === activeSessionId;
+              return /* @__PURE__ */ jsx15(
+                "li",
+                {
+                  role: "treeitem",
+                  "aria-selected": isTaskActive,
+                  "data-session": job.sessionId,
+                  className: isTaskActive ? "ns-tree__task ns-tree__task--active" : "ns-tree__task",
+                  children: /* @__PURE__ */ jsx15(
+                    JobCard,
+                    {
+                      job,
+                      isActive: isTaskActive,
+                      onClick: () => onSelectTask(openWorld.id, job.sessionId, job),
+                      onAvatarClick,
+                      isPinned: pinnedSessionIds?.has(job.sessionId) ?? false,
+                      onTogglePin: onTogglePinSession ? () => onTogglePinSession(job.sessionId) : void 0,
+                      onCancelJob,
+                      displayMode,
+                      isTerminating: terminatingSessionIds?.has(job.sessionId) ?? false
+                    }
+                  )
+                },
+                job.sessionId
+              );
+            })
+          }
+        )
+      ]
     }
   );
 }
@@ -8591,7 +8801,7 @@ function Sidebar({ jobs, activeSessionId, quote, wsState, onAvatarClick, onOdinC
   const { theme, setTheme: setTheme2 } = useTheme();
   const [width, setWidth] = useState13(DEFAULT_WIDTH);
   const navRef = useRef7(null);
-  useEffect7(() => {
+  useEffect8(() => {
     const nav = navRef.current;
     if (!nav) return;
     const ro = new ResizeObserver((entries) => {
@@ -8671,7 +8881,7 @@ function Sidebar({ jobs, activeSessionId, quote, wsState, onAvatarClick, onOdinC
 }
 
 // src/ui/components/AgentProfileModal.tsx
-import { useEffect as useEffect8, useRef as useRef8 } from "react";
+import { useEffect as useEffect9, useRef as useRef8 } from "react";
 import { jsx as jsx17, jsxs as jsxs13 } from "react/jsx-runtime";
 var ELDER_FUTHARK = "\u16A0 \u16A2 \u16A6 \u16A8 \u16B1 \u16B2 \u16B7 \u16B9 \u16BA \u16BE \u16C1 \u16C3 \u16C7 \u16C8 \u16C9 \u16CA \u16CF \u16D2 \u16D6 \u16D7 \u16DA \u16DC \u16DE \u16DF";
 function AgentProfileModal({ agentKey, theme, onClose }) {
@@ -8685,16 +8895,16 @@ function AgentProfileModal({ agentKey, theme, onClose }) {
   const accent = AGENT_COLORS[agentKey] ?? "var(--gold)";
   const primaryVariant = theme === "light" ? "light" : "dark";
   const portrait = avatarUrl(agentKey, primaryVariant) ?? avatarUrl(agentKey, primaryVariant === "light" ? "dark" : "light");
-  useEffect8(() => {
+  useEffect9(() => {
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = "";
     };
   }, []);
-  useEffect8(() => {
+  useEffect9(() => {
     closeButtonRef.current?.focus();
   }, []);
-  useEffect8(() => {
+  useEffect9(() => {
     const handleKeyDown = (e) => {
       if (e.key === "Escape") onClose();
     };
@@ -8783,17 +8993,17 @@ function AgentProfileModal({ agentKey, theme, onClose }) {
 }
 
 // src/ui/components/RagnarokDialog.tsx
-import { useEffect as useEffect9, useRef as useRef9, useState as useState14 } from "react";
+import { useEffect as useEffect10, useRef as useRef9, useState as useState14 } from "react";
 import { jsx as jsx18, jsxs as jsxs14 } from "react/jsx-runtime";
 function RagnarokDialog({ sessionId, jobTitle, onConfirm, onCancel }) {
   const [isLoading, setIsLoading] = useState14(false);
   const [error, setError] = useState14(null);
   const confirmRef = useRef9(null);
   const cancelRef = useRef9(null);
-  useEffect9(() => {
+  useEffect10(() => {
     cancelRef.current?.focus();
   }, []);
-  useEffect9(() => {
+  useEffect10(() => {
     const onKey = (e) => {
       if (e.key === "Escape" && !isLoading) onCancel();
     };
@@ -8874,11 +9084,11 @@ function RagnarokDialog({ sessionId, jobTitle, onConfirm, onCancel }) {
 }
 
 // src/ui/components/Toast.tsx
-import { useEffect as useEffect10, useState as useState15 } from "react";
+import { useEffect as useEffect11, useState as useState15 } from "react";
 import { jsx as jsx19, jsxs as jsxs15 } from "react/jsx-runtime";
 function Toast({ message, onDismiss, duration = 4e3 }) {
   const [exiting, setExiting] = useState15(false);
-  useEffect10(() => {
+  useEffect11(() => {
     const exitTimer = setTimeout(() => setExiting(true), duration - 400);
     const dismissTimer = setTimeout(onDismiss, duration);
     return () => {
@@ -8961,10 +9171,10 @@ function ThroneOverlays() {
 }
 
 // src/ui/App.tsx
-import { useCallback as useCallback9, useEffect as useEffect12, useMemo as useMemo2, useState as useState17 } from "react";
+import { useCallback as useCallback9, useEffect as useEffect13, useMemo as useMemo3, useState as useState17 } from "react";
 
 // src/ui/hooks/useNamespace.ts
-import { useState as useState16, useCallback as useCallback8, useEffect as useEffect11 } from "react";
+import { useState as useState16, useCallback as useCallback8, useEffect as useEffect12 } from "react";
 var STORAGE_KEY2 = "hlidskjalf:namespace";
 var DEFAULT_NAMESPACE = "fenrir-agents";
 function loadNamespace() {
@@ -8990,7 +9200,7 @@ function useNamespace() {
     { id: "shanaghy-com-agents", label: "Shanaghy.com Agents" },
     { id: "re-goatmower-agents", label: "Re-Goatmower Agents" }
   ]);
-  useEffect11(() => {
+  useEffect12(() => {
     getPlatform().restFetch("/api/namespaces").then((res) => res.json()).then((data) => {
       if (Array.isArray(data.namespaces) && data.namespaces.length > 0) {
         setNamespaces(data.namespaces);
@@ -9016,18 +9226,18 @@ function useNamespace() {
 
 // src/ui/App.tsx
 function App() {
-  const quote = useMemo2(() => randomQuote(), []);
+  const quote = useMemo3(() => randomQuote(), []);
   const { theme } = useTheme();
   const { namespace, namespaces, setNamespace } = useNamespace();
   const [profileAgent, setProfileAgent] = useState17(null);
   const [cancelTarget, setCancelTarget] = useState17(null);
   const { jobs, handleMessage: handleJobsMessage, refreshCached } = useJobs();
-  const jobsActivityKey = useMemo2(
+  const jobsActivityKey = useMemo3(
     () => jobs.map((j) => `${j.sessionId}:${j.status}`).join("|"),
     [jobs]
   );
   const namespaceSummaries = useNamespaceSummaries(namespaces, namespace, jobsActivityKey);
-  useEffect12(() => {
+  useEffect13(() => {
     migrateRemoveDuplicateLogs();
     evictExpiredLogs();
   }, []);
@@ -9065,7 +9275,7 @@ function App() {
     },
     [namespace, jobs, setNamespace]
   );
-  const pinnedSessionIds = useMemo2(
+  const pinnedSessionIds = useMemo3(
     () => new Set(jobs.filter((j) => isPinned(j.sessionId)).map((j) => j.sessionId)),
     [jobs]
   );
@@ -9158,7 +9368,7 @@ function App() {
     dismissToast: () => setToast(null),
     storageWarning
   };
-  useEffect12(() => {
+  useEffect13(() => {
     throneStore.publish(snapshot2);
   });
   return null;
@@ -9398,7 +9608,7 @@ function ThronePane() {
   const settingsOpen = useSettingsOpen();
   useSyncExternalStore4(subscribeSession, sessionSnapshot, sessionSnapshot);
   const { theme } = useTheme();
-  const bridge = useMemo3(() => /* @__PURE__ */ jsx22(App, {}), []);
+  const bridge = useMemo4(() => /* @__PURE__ */ jsx22(App, {}), []);
   return /* @__PURE__ */ jsxs19(
     "div",
     {

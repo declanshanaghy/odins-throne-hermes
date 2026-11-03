@@ -1,18 +1,22 @@
-// Lantern seat data for the painted tree scene (issue:10 — wave-0 slice of the
-// garden pattern, epic #7).
+// Lantern seat data for the painted tree scene (issues #10 + #11 — garden
+// pattern waves 0-1, epic #7).
 //
 // The tree display's approved contract is the interactive prototype on the
-// design-tree-display branch (design/tree-display/tree-display-prototype.html):
-// a painted backdrop (src/ui/assets/tree-backdrop.jpg — the identical JPEG
-// embedded in that prototype) with JSON-mapped overlays. Each namespace is a
-// "world" whose lantern hangs at a vision-mapped seat on the painting,
-// expressed as PERCENT-OF-SCENE coordinates so the mapping survives any
-// rendered scene size (432px sidebar in the prototype, fluid in the pane).
+// design-tree-display branch (design/tree-display/tree-display-prototype.html,
+// commit 727a108): a painted backdrop (src/ui/assets/tree-backdrop.jpg — the
+// identical JPEG embedded in that prototype) with the world's lanterns seated
+// at vision-mapped spots on the painting. Seats are expressed as
+// PERCENT-OF-SCENE coordinates so the mapping survives any rendered scene size.
 //
-// This module is the single source of truth for those seats — components read
-// it via namespaceSeat() and never hard-code layout constants in JSX. Seat
-// values MUST match the prototype's WORLDS array verbatim; re-mapping after a
-// repaint means editing WORLD_SEATS here (see src/ui/assets/README.md).
+// Per the issue #11 amendment, the world list is READ FROM THE BACKEND API at
+// runtime — never hardcoded — so seats are ASSIGNED at runtime over whatever
+// the API returns: curated namespace ids claim their painted lanterns first,
+// and unknown worlds take a deterministic djb2-hashed seat from the painted
+// pool (the same hash pattern as namespaceIcons.ts). This module is the
+// single source of truth for that seating; components call assignSeats() and
+// never hard-code layout constants in JSX. Seat values MUST match the
+// prototype's SEAT_POOL / CURATED_SEATS verbatim; re-mapping after a repaint
+// means editing them here (see src/ui/assets/README.md).
 
 /** A lantern's seat on the painted scene, in percent of scene box. */
 export interface LanternSeat {
@@ -38,27 +42,42 @@ export const TREE_SCENE = {
   aspectRatio: 896 / 1200,
 } as const;
 
-/**
- * Vision-mapped lantern seats for the prototype's four worlds — copied
- * VERBATIM from the prototype's WORLDS array (percent-of-scene, per world).
- * Keys are the prototype's world ids; the repo's live namespace ids are
- * bridged by NAMESPACE_WORLD below.
- */
-export const WORLD_SEATS: Record<string, LanternSeat> = {
-  fenrir: { x: 17, y: 28, dir: 1 }, // Fenrir Ledger Agents
-  hills: { x: 41, y: 20, dir: 1 }, // Summer Hills Watch
-  sayso: { x: 59, y: 19, dir: 1 }, // SaySo Agents
-  hearth: { x: 85, y: 28, dir: -1 }, // Mossy Hearth Agents
-};
+/** A painted lantern spot on the backdrop, in percent of scene box. */
+export interface PaintedSeat {
+  x: number;
+  y: number;
+}
 
 /**
- * Repo namespace id → prototype world id. Curated like the icon map in
- * namespaceIcons.ts; a namespace without an entry gets a deterministic
- * fallback seat (below) until its lantern is vision-mapped onto the painting.
+ * The painted lantern seat pool — copied VERBATIM from the prototype's
+ * SEAT_POOL (percent-of-scene, in paint order). Worlds claim seats from this
+ * pool at runtime; it holds more seats than the prototype's four demo worlds
+ * so a backend list of up to eight worlds still seats everyone on a painted
+ * lantern.
  */
-const NAMESPACE_WORLD: Record<string, string> = {
-  "fenrir-agents": "fenrir",
-  "say-so-agents": "sayso",
+export const SEAT_POOL: readonly PaintedSeat[] = [
+  { x: 8, y: 52 },
+  { x: 17, y: 28 },
+  { x: 25, y: 22 },
+  { x: 41, y: 20 },
+  { x: 59, y: 19 },
+  { x: 57, y: 37 },
+  { x: 76, y: 23 },
+  { x: 85, y: 28 },
+];
+
+/**
+ * Curated namespace id → painted seat index (the prototype's CURATED_SEATS,
+ * verbatim). Claimed FIRST at runtime, so a namespace appearing later in the
+ * API list — or an unknown one hashing into the same index — can never steal
+ * a curated world's painted lantern.
+ */
+export const CURATED_SEATS: Record<string, number> = {
+  "fenrir-agents": 1, // 17,28 — the wolf's lantern on the left bough
+  "shanaghy-com-agents": 3, // 41,20
+  "say-so-agents": 4, // 59,19
+  "odins-throne-hermes-agents": 5, // 57,37
+  "re-goatmower-agents": 7, // 85,28 — the right bough's edge lantern
 };
 
 /** djb2 — same hash as namespaceIcons.ts: small, fast, stable across runs. */
@@ -70,27 +89,84 @@ function hashKey(key: string): number {
   return Math.abs(h);
 }
 
-/**
- * Deterministic fallback seat for namespaces not yet vision-mapped: a stable
- * pseudo-random spot inside the painted bough band (roughly the upper fifth
- * to third of the scene, where the prototype's lanterns hang). Identical on
- * every render and refresh, like the icon hash fallback.
+/** A lantern's hang direction: rightward until the right bough, then left. */
+function dirFor(x: number): 1 | -1 {
+  return x > 66 ? -1 : 1;
+}
+
+/*
+ * Overflow terrace — more worlds than painted seats. The painting has eight
+ * lanterns; a longer backend list stacks deterministically BELOW the painted
+ * band (4 per row, API order, 10% rows marching down from 64%) so every
+ * world still lands on a stable, in-scene seat. The scene scrolls, so the
+ * terrace extends as far as the list needs. Constants live here, not in JSX.
  */
-function fallbackSeat(nsId: string): LanternSeat {
-  const h = hashKey(nsId);
-  return {
-    x: 8 + (h % 78), // 8–86 % — clear of both panel edges
-    y: 16 + (Math.floor(h / 32) % 14), // 16–30 % — the lantern bough band
-    dir: h % 2 === 0 ? 1 : -1,
-  };
+const TERRACE_COLUMNS = 4;
+const TERRACE_COLUMN_STEP = 24; // % x between terrace columns
+const TERRACE_COLUMN_ORIGIN = 15; // % x of the leftmost terrace column
+const TERRACE_ROW_ORIGIN = 64; // % y of the first terrace row
+const TERRACE_ROW_STEP = 10; // % y between terrace rows
+
+function terraceSeat(overflowIndex: number): LanternSeat {
+  const row = Math.floor(overflowIndex / TERRACE_COLUMNS);
+  const col = overflowIndex % TERRACE_COLUMNS;
+  const x = TERRACE_COLUMN_ORIGIN + col * TERRACE_COLUMN_STEP;
+  return { x, y: TERRACE_ROW_ORIGIN + row * TERRACE_ROW_STEP, dir: dirFor(x) };
 }
 
 /**
- * The lantern seat for a namespace — curated prototype mapping first,
- * deterministic fallback for worlds not yet mapped onto the painting.
+ * Assign a lantern seat to every namespace id, in API order:
+ *
+ *   1. Curated claims first — reserved painted lanterns, never stealable.
+ *   2. Remaining worlds take the djb2-hashed painted seat, walking forward
+ *      past already-taken seats (deterministic for a given list).
+ *   3. Worlds beyond the painted pool stack on the terrace below the boughs.
+ *
+ * A namespace added in the backend config simply appears here with a seat —
+ * zero code changes. Duplicate ids in the list keep one seat (Map semantics).
+ */
+export function assignSeats(nsIds: readonly string[]): Map<string, LanternSeat> {
+  const taken = new Set<number>();
+  const poolLen = SEAT_POOL.length;
+  const seats = new Map<string, LanternSeat>();
+
+  // Pass 1 — curated claims (first claimant in API order wins a seat index;
+  // two namespaces curated onto the same painted lantern is a config error
+  // the second one recovers from via the hash pass below).
+  for (const id of nsIds) {
+    const idx = CURATED_SEATS[id];
+    if (idx != null && !Number.isNaN(idx) && !taken.has(idx)) {
+      taken.add(idx);
+      const painted = SEAT_POOL[idx]!;
+      seats.set(id, { x: painted.x, y: painted.y, dir: dirFor(painted.x) });
+    }
+  }
+
+  // Pass 2 — hashed claims from the remaining pool, then terrace overflow.
+  let overflow = 0;
+  for (const id of nsIds) {
+    if (seats.has(id)) continue;
+    if (taken.size < poolLen) {
+      let i = hashKey(id) % poolLen;
+      while (taken.has(i)) i = (i + 1) % poolLen;
+      taken.add(i);
+      const painted = SEAT_POOL[i]!;
+      seats.set(id, { x: painted.x, y: painted.y, dir: dirFor(painted.x) });
+    } else {
+      seats.set(id, terraceSeat(overflow));
+      overflow += 1;
+    }
+  }
+
+  return seats;
+}
+
+/**
+ * Convenience seat lookup for a single namespace (compact rows, one-off
+ * queries). For seating a full API list always prefer assignSeats() — it
+ * guarantees curated claims and collision-walked hash seats across the whole
+ * list. A curated id gets its painted lantern either way.
  */
 export function namespaceSeat(nsId: string): LanternSeat {
-  const world = NAMESPACE_WORLD[nsId];
-  const seat = world ? WORLD_SEATS[world] : undefined;
-  return seat ?? fallbackSeat(nsId);
+  return assignSeats([nsId]).get(nsId)!;
 }

@@ -65,6 +65,8 @@ const NS_FIXTURES = [
   { id: "mytruthfinder-agents", label: "MyTruthFinder Agents" },
   { id: "shanaghy-com-agents", label: "Shanaghy.com Agents" },
   { id: "re-goatmower-agents", label: "Re-Goatmower Agents" },
+  // summary fetch fails for this world → the dimmed-seat "summary unavailable" state
+  { id: "broken-vista-agents", label: "Broken Vista Agents" },
 ];
 // REST fixtures mirror the REAL endpoint payload: raw K8s AgentJobs
 // ({ name, status, startTime, completionTime, labels, annotations }) — NOT
@@ -117,6 +119,7 @@ globalThis.fetch = async (input, init) => {
   const m = url.match(/\/api\/jobs\?namespace=([^&]+)/);
   if (m) {
     const ns = decodeURIComponent(m[1]);
+    if (ns === "broken-vista-agents") return jsonResponse({ error: "upstream gone" }, 503);
     const jobs = JOBS_BY_NS[ns] ?? [];
     return jsonResponse({ jobs, count: jobs.length });
   }
@@ -180,6 +183,11 @@ const paneRoot = createRoot(document.getElementById("pane"));
 paneRoot.render(byId.jobs.render());
 await flush();
 await flush();
+// The API namespace list resolves asynchronously (vendored list → API list),
+// and each API-added world's summary is one fetch hop behind that — give the
+// chain an extra cycle before asserting the lantern scene.
+await flush();
+await flush();
 
 const paneHtml = document.getElementById("pane").innerHTML;
 assert.ok(paneHtml.includes("odins-throne-root"), "pane root mounted");
@@ -204,20 +212,22 @@ for (const ns of [
   assert.ok(paneHtml.includes(ns), `namespace option present: ${ns}`);
 }
 
-// ── namespace drilldown tree (issue:4) ──────────────────────────────────────
-// Each namespace is a TOP-LEVEL root node (no wrapper root); its tasks branch
-// directly beneath it. Summary lines + status stats from issue:2 are kept.
-// Connector rails + elbows are CSS-only; icons are remote <img src> markup
-// (jsdom never fetches — no real network in this test).
+// ── namespace lantern tree (issues #4 + #11) ────────────────────────────────
+// Each namespace is a LANTERN (role=treeitem) seated on the painted backdrop
+// at its runtime-assigned seat; the world list is read live from the API.
+// Strict accordion: one world's branch is open at a time (the active world
+// starts pre-drilled). Hover labels carry name + full summary line; berries
+// carry the status counts; icons are remote <img src> markup (jsdom never
+// fetches — no real network in this test).
 assert.ok(document.querySelector('.ns-tree[aria-label="Namespace tree"]'), "namespace tree mounted");
 assert.ok(!paneHtml.includes("All namespaces"), "no wrapper root — namespaces are the top-level roots");
-assert.equal(document.querySelectorAll(".ns-tree__item[data-namespace]").length, 5, "all five namespaces are top-level root nodes");
+assert.equal(document.querySelectorAll(".ns-tree__item[data-namespace]").length, 6, "all six API namespaces are top-level root nodes");
 assert.ok(document.querySelector('.ns-tree__item[data-namespace="fenrir-agents"]'), "fenrir-agents root node present");
 
-// ── tree scene assets (issue:10) ─────────────────────────────────────────────
-// The painted backdrop lands as --tree-backdrop on the tree root, and each
-// namespace node carries its lantern seat (percent-of-scene, typed data from
-// src/ui/lib/treeSeats.ts — matching the prototype's WORLDS mapping).
+// ── tree scene assets (issues #10 + #11) ─────────────────────────────────────
+// The painted backdrop lands as --tree-backdrop on the tree root; each
+// namespace lantern is seated on the painting (percent-of-scene, typed data
+// from src/ui/lib/treeSeats.ts — matching the prototype's SEAT_POOL mapping).
 const treeRootEl = document.querySelector('.ns-tree[aria-label="Namespace tree"]');
 const treeStyle = treeRootEl.getAttribute("style") ?? "";
 assert.ok(treeStyle.includes("--tree-backdrop"), "tree root exposes the --tree-backdrop custom property");
@@ -225,10 +235,13 @@ assert.ok(
   treeStyle.includes("data:image/jpeg;base64,"),
   "the painted backdrop (inlined JPEG) is the --tree-backdrop value",
 );
+assert.ok(document.querySelector(".ns-tree__scene"), "the painted scene mounts as the tree's stage");
 const fenrirRoot = document.querySelector('.ns-tree__item[data-namespace="fenrir-agents"]');
 assert.equal(fenrirRoot.getAttribute("data-seat-x"), "17", "fenrir lantern seat x matches the prototype mapping");
 assert.equal(fenrirRoot.getAttribute("data-seat-y"), "28", "fenrir lantern seat y matches the prototype mapping");
 assert.equal(fenrirRoot.getAttribute("data-seat-dir"), "1", "fenrir vine hangs rightward (dir 1)");
+assert.equal(fenrirRoot.style.left, "17%", "fenrir lantern is pinned to its seat coordinate");
+assert.equal(fenrirRoot.style.top, "28%", "fenrir lantern is pinned to its seat coordinate");
 const saysoRoot = document.querySelector('.ns-tree__item[data-namespace="say-so-agents"]');
 assert.equal(saysoRoot.getAttribute("data-seat-x"), "59", "say-so lantern seat x matches the prototype mapping");
 assert.equal(saysoRoot.getAttribute("data-seat-y"), "19", "say-so lantern seat y matches the prototype mapping");
@@ -239,20 +252,66 @@ for (const item of document.querySelectorAll(".ns-tree__item[data-namespace]")) 
   assert.ok(x > 0 && x <= 100, `namespace ${item.dataset.namespace} has an in-scene seat x (got ${x})`);
   assert.ok(y > 0 && y <= 100, `namespace ${item.dataset.namespace} has an in-scene seat y (got ${y})`);
   assert.ok(dir === "1" || dir === "-1", `namespace ${item.dataset.namespace} has a valid hang dir`);
+  assert.ok(item.querySelector(".ns-tree__lantern"), `namespace ${item.dataset.namespace} has a lantern button`);
+  // stats berries render per seat with the summary counts
+  const fruit = item.querySelector(".ns-tree__fruit");
+  assert.ok(fruit, `namespace ${item.dataset.namespace} carries stats berries at its seat`);
+  assert.equal(fruit.querySelectorAll(".ns-tree__berry").length, 3, `namespace ${item.dataset.namespace} has succeeded/running/failed berries`);
 }
+assert.equal(
+  fenrirRoot.querySelector(".ns-tree__berry--succeeded").getAttribute("data-on"),
+  "1",
+  "fenrir's succeeded berry lights up (8 succeeded jobs)",
+);
+assert.equal(
+  fenrirRoot.querySelector(".ns-tree__berry--failed").getAttribute("data-on"),
+  "1",
+  "fenrir's failed berry lights up (1 failed job)",
+);
+assert.equal(
+  saysoRoot.querySelector(".ns-tree__berry--failed").getAttribute("data-on"),
+  "0",
+  "say-so's failed berry stays dim (all-clear world)",
+);
+assert.ok(fenrirRoot.querySelector(".ns-tree__lantern--failed"), "fenrir lantern tints ember (a failed job in the world)");
+assert.ok(saysoRoot.querySelector(".ns-tree__lantern--ok"), "say-so lantern tints moss (all-clear world)");
+
+// Hover labels reveal world name + full summary line (garden .g-label pattern).
+const fenrirGlabel = fenrirRoot.querySelector(".ns-tree__glabel");
+assert.ok(fenrirGlabel, "each lantern carries a hover label");
+assert.ok(fenrirGlabel.textContent.includes("Fenrir Ledger Agents"), "hover label names the world");
 assert.ok(
   paneHtml.includes("12 tasks · 2 running · 1 pending · 1 failed · 8 succeeded"),
-  "fenrir-agents node keeps its task summary with status counts",
+  "fenrir-agents keeps its full summary line with status counts",
 );
 assert.ok(
   paneHtml.includes("8 tasks · 8 succeeded"),
-  "say-so-agents node shows task summary",
+  "say-so-agents shows its summary line",
 );
 assert.ok(paneHtml.includes("0 tasks"), "empty namespace shows a zero-task summary");
+
+// Summary-unavailable world: dimmed seat + "summary unavailable" line.
+const brokenRoot = document.querySelector('.ns-tree__item[data-namespace="broken-vista-agents"]');
+assert.ok(brokenRoot, "broken-vista-agents root node present");
+assert.ok(brokenRoot.querySelector(".ns-tree__lantern--dim"), "unavailable summary dims the seat");
+assert.ok(paneHtml.includes("summary unavailable"), "unavailable summary states so in the label");
+
+// Tree semantics: role=tree on the root, treeitem + aria-expanded/selected on
+// the lanterns (the active world starts pre-drilled).
 assert.equal(
-  document.querySelector('.ns-tree__item[data-namespace="fenrir-agents"]').getAttribute("aria-selected"),
+  fenrirRoot.querySelector(".ns-tree__lantern").getAttribute("role"),
+  "treeitem",
+  "lantern is a treeitem",
+);
+assert.equal(
+  fenrirRoot.querySelector(".ns-tree__lantern").getAttribute("aria-selected"),
   "true",
-  "active namespace node is marked selected",
+  "active namespace lantern is marked selected",
+);
+assert.equal(
+  fenrirRoot.querySelector(".ns-tree__lantern").getAttribute("aria-expanded"),
+  "true",
+  "active world starts pre-drilled (branch open)",
 );
 
 // Guide-line CSS: drawn rails + elbow connectors make the levels distinct.
@@ -267,12 +326,14 @@ assert.ok(
 );
 
 // Task children: the active namespace starts pre-drilled — its 12 tasks
-// (purged excluded; none in the fixture) branch under the node.
+// (purged excluded; none in the fixture) branch beneath the scene in the
+// strict-accordion drill (exactly one open world).
+assert.ok(document.querySelector(".ns-tree__drill"), "the open world's branch (drill) mounts beneath the scene");
 const fenrirTasks = document.querySelectorAll(
-  '.ns-tree__item[data-namespace="fenrir-agents"] .ns-tree__task[data-session]',
+  '.ns-tree__drill .ns-tree__task[data-session]',
 );
-assert.equal(fenrirTasks.length, 12, "fenrir-agents node branches its 12 tasks");
-assert.ok(document.querySelector('.ns-tree__task[data-session="issue-1200-step1-firemandecko-1a2b3c4d"]'), "task node present under its namespace root (sessionId derived from labels)");
+assert.equal(fenrirTasks.length, 12, "the pre-drilled world branches its 12 tasks");
+assert.ok(document.querySelector('.ns-tree__task[data-session="issue-1200-step1-firemandecko-1a2b3c4d"]'), "task node present in the open branch (sessionId derived from labels)");
 assert.ok(paneHtml.includes("issue-1203-step1-heimdall-4d5e6f7a"), "failed task branched beneath its namespace");
 
 // REST AgentJob → wire Job mapping (lib/restJobs.ts) must fully resolve job
@@ -312,13 +373,13 @@ assert.ok(
 );
 assert.equal(
   document.querySelectorAll(
-    '.ns-tree__item[data-namespace="fenrir-agents"] .ns-tree__task .card-status-lead',
+    '.ns-tree__drill .ns-tree__task .card-status-lead',
   ).length,
   12,
   "every task card carries its leading status icon",
 );
 assert.equal(
-  document.querySelectorAll('.ns-tree__item[data-namespace="fenrir-agents"] .ns-tree__task .card').length,
+  document.querySelectorAll('.ns-tree__drill .ns-tree__task .card').length,
   12,
   "every branched task is a full job card",
 );
@@ -420,12 +481,16 @@ assert.equal(
   "re-open after close is a new tab, not a focus",
 );
 
-// Icons from shanaghy.com's icon library sit on the namespace rows only —
+// Icons from shanaghy.com's icon library sit SEATED INSIDE the lanterns —
 // task rows are job cards with their own avatars/status icons (assert src
 // attributes only; jsdom never fetches — no real network in this test).
 const iconImgs = Array.from(document.querySelectorAll(".ns-tree__icon"));
-assert.equal(iconImgs.length, 5, "each of the five namespace rows carries one small icon");
+assert.equal(iconImgs.length, 6, "each of the six lanterns seats one icon");
 for (const img of iconImgs) {
+  assert.ok(
+    img.classList.contains("ns-tree__icon--lantern"),
+    "seated icons use the lantern size (counter-rotated against the tilt)",
+  );
   assert.ok(
     (img.getAttribute("src") ?? "").startsWith("https://www.shanaghy.com/assets/icons/"),
     `icon src points at the shanaghy.com icon library: ${img.getAttribute("src")}`,
@@ -452,32 +517,50 @@ assert.ok(
   "failed remote img is unmounted",
 );
 
-// Selecting a namespace root still switches the active namespace (persisted
-// to the same localStorage key the flat dropdown used) — and drills into it.
-document.querySelector('.ns-tree__item[data-namespace="say-so-agents"] .ns-tree__select').click();
+// ── the strict accordion (issue #11) ─────────────────────────────────────────
+// Clicking a lantern SELECTS the world (persisted to the same localStorage key
+// the flat dropdown used) and opens its branch, retracting the previous one.
+document.querySelector('.ns-tree__item[data-namespace="say-so-agents"] .ns-tree__lantern').click();
 await flush();
 await flush();
 assert.equal(
   localStorage.getItem("hlidskjalf:namespace"),
   "say-so-agents",
-  "clicking a namespace root sets the active namespace",
+  "clicking a lantern sets the active namespace",
 );
 assert.equal(
-  document.querySelector('.ns-tree__item[data-namespace="say-so-agents"]').getAttribute("aria-selected"),
+  document.querySelector('.ns-tree__item[data-namespace="say-so-agents"] .ns-tree__lantern').getAttribute("aria-selected"),
   "true",
-  "newly selected namespace node is marked active",
+  "newly selected lantern is marked active",
 );
 assert.equal(
-  document.querySelectorAll('.ns-tree__item[data-namespace="say-so-agents"] .ns-tree__task[data-session]').length,
+  document.querySelector('.ns-tree__item[data-namespace="say-so-agents"] .ns-tree__lantern').getAttribute("aria-expanded"),
+  "true",
+  "clicked lantern's branch is open",
+);
+assert.equal(
+  document.querySelector('.ns-tree__item[data-namespace="fenrir-agents"] .ns-tree__lantern').getAttribute("aria-expanded"),
+  "false",
+  "the previously open world retracted (accordion)",
+);
+assert.equal(
+  document.querySelectorAll('.ns-tree__drill .ns-tree__task[data-session]').length,
   8,
-  "selecting a namespace drills into its tasks",
+  "selecting a lantern drills into its tasks",
 );
 
 // Cross-world task click: a task in a non-active namespace switches the
-// namespace AND opens the session's own tab — captured against the task's
-// world, so the pane's later namespace moves never rewire the tab's socket.
-document.querySelector('.ns-tree__item[data-namespace="re-goatmower-agents"] .ns-tree__chevron-btn').click();
+// namespace, keeps that session selected (pending-select flow in App) AND
+// opens the session's own tab — captured against the task's world, so the
+// pane's later namespace moves never rewire the tab's socket. Opening the
+// other world's lantern retracts say-so's branch first (strict accordion).
+document.querySelector('.ns-tree__item[data-namespace="re-goatmower-agents"] .ns-tree__lantern').click();
 await flush();
+assert.equal(
+  document.querySelectorAll('.ns-tree__drill .ns-tree__task[data-session]').length,
+  2,
+  "re-goatmower's branch opens with its 2 tasks",
+);
 document.querySelector('.ns-tree__task[data-session="issue-4400-step1-firemandecko-5e6f7a8b"] .card').click();
 await flush();
 await flush();
@@ -497,11 +580,45 @@ assert.equal(
 );
 
 // Empty namespace drills into an explicit empty state.
-document.querySelector('.ns-tree__item[data-namespace="shanaghy-com-agents"] .ns-tree__chevron-btn').click();
+document.querySelector('.ns-tree__item[data-namespace="shanaghy-com-agents"] .ns-tree__lantern').click();
 await flush();
 assert.ok(
   document.getElementById("pane").innerHTML.includes("no tasks in this world"),
   "empty namespace shows the no-tasks leaf",
+);
+
+// Summary-unavailable world drills into its dimmed empty state.
+document.querySelector('.ns-tree__item[data-namespace="broken-vista-agents"] .ns-tree__lantern').click();
+await flush();
+await flush();
+assert.ok(
+  document.getElementById("pane").innerHTML.includes("summary unavailable"),
+  "unavailable-summary world shows the summary-unavailable leaf",
+);
+
+// Clicking the OPEN lantern collapses the branch; reopening regrows it —
+// no orphan states.
+document.querySelector('.ns-tree__item[data-namespace="broken-vista-agents"] .ns-tree__lantern').click();
+await flush();
+assert.ok(
+  !document.querySelector(".ns-tree__drill"),
+  "clicking the open lantern collapses the branch entirely",
+);
+assert.equal(
+  document.querySelector('.ns-tree__item[data-namespace="broken-vista-agents"] .ns-tree__lantern').getAttribute("aria-expanded"),
+  "false",
+  "collapsed lantern is aria-expanded=false",
+);
+document.querySelector('.ns-tree__item[data-namespace="shanaghy-com-agents"] .ns-tree__lantern').click();
+await flush();
+assert.ok(
+  document.getElementById("pane").innerHTML.includes("no tasks in this world"),
+  "reopening a world regrows its branch",
+);
+assert.equal(
+  document.querySelector('.ns-tree__item[data-namespace="shanaghy-com-agents"] .ns-tree__lantern').getAttribute("aria-expanded"),
+  "true",
+  "reopened lantern is aria-expanded=true",
 );
 
 const pageRoot = createRoot(document.getElementById("page"));
@@ -610,5 +727,5 @@ for (const s of ["rapid-a", "rapid-b", "rapid-c"]) {
   );
 }
 
-console.log("SMOKE PASS — pane + page render, namespace drilldown tree (top-level roots, job-card task branches, old flat list gone, shanaghy.com icons + fallback, connector lines), CSS scoped, theme plugin-local, overlays wired, per-session workspace tabs (issue:6: open per click, focus dedupe, cancel + strip-close teardown, cross-world capture)");
+console.log("SMOKE PASS — pane + page render, namespace lantern tree (lanterns seated on the painting, shanaghy.com icons + fallback, hover labels + stats berries, strict one-open accordion, job-card branches, old flat list gone), CSS scoped, theme plugin-local, overlays wired, per-session workspace tabs (issue:6: open per click, focus dedupe, cancel + strip-close teardown, cross-world capture)");
 process.exit(0);

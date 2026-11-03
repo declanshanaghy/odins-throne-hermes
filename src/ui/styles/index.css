@@ -321,13 +321,15 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .theme-btn { transition: none; }
 }
-/* ── Namespace drilldown tree (issue:4) ──────────── */
-/* Each namespace is a top-level root node; its tasks branch directly beneath
- * it with drawn connector rails + elbow connectors, so the two levels read
- * apart at a glance. Nodes carry icons from shanaghy.com with inline emoji
- * fallbacks (TreeIcon). The tree IS the panel body now (the old flat job
- * list is gone): it stretches to fill the sidebar's full vertical height
- * and scrolls internally, so every namespace is reachable. */
+/* ── Namespace lantern tree (issue:11, garden pattern) ─── */
+/* Each namespace is a LANTERN seated on the painted backdrop at its
+ * runtime-assigned seat (lib/treeSeats.ts): frost-glass node, curated
+ * shanaghy.com icon inside (inline glyph fallback offline via TreeIcon),
+ * status-tinted glow, stats berries beside the seat, hover label with the
+ * world name + full summary line. Strict accordion: one world's branch is
+ * open at a time; the branch (job cards on connector rails) renders beneath
+ * the scene. The tree IS the panel body (the old flat job list is gone): it
+ * stretches to fill the sidebar's full height and scrolls internally. */
 .ns-tree {
   margin-top: 0.5rem;
   font-family: 'JetBrains Mono', monospace;
@@ -338,110 +340,250 @@ body {
   overflow-y: auto;
   overflow-x: hidden;
 }
-.ns-tree__roots {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-.ns-tree__chevron {
-  color: var(--gold);
-  flex-shrink: 0;
-  font-size: 0.6rem;
-  width: 0.85em;
-  text-align: center;
-}
 .ns-tree__list {
   list-style: none;
   margin: 0.15rem 0 0;
   padding: 0;
 }
-/* Namespace root nodes sit at the top level — no rail above them. */
-.ns-tree__item {
-  min-width: 0;
-}
-.ns-tree__row {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.15rem;
-  min-width: 0;
-}
-.ns-tree__chevron-btn {
-  flex-shrink: 0;
-  width: 1.1em;
-  padding: 0.2rem 0;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--text-void);
-  font-size: inherit;
-  line-height: 1.2;
-}
-.ns-tree__chevron-btn:hover {
-  color: var(--gold);
-}
-.ns-tree__select {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.2rem 0.3rem;
-  background: none;
-  border: none;
-  border-radius: 3px;
-  color: var(--text-rune);
-  cursor: pointer;
-  text-align: left;
-  font-size: inherit;
-  font-family: inherit;
-}
-.ns-tree__labels {
+
+/* ── the painted scene ───────────────────────────────── */
+.ns-tree--lanterns {
   display: flex;
   flex-direction: column;
-  gap: 0.05rem;
-  min-width: 0;
-  flex: 1;
+  gap: 0.4rem;
+  padding-bottom: 0.5rem;
 }
-.ns-tree__select:hover,
-.ns-tree__select:focus {
-  background: var(--chain);
-  color: var(--text-saga);
-}
-.ns-tree__item--active > .ns-tree__row .ns-tree__select {
-  background: var(--chain);
-  color: var(--gold);
-  box-shadow: inset 2px 0 0 var(--gold);
-}
-.ns-tree__label {
-  font-size: 0.68rem;
-  color: var(--text-saga);
-  white-space: nowrap;
+.ns-tree__scene {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 896 / 1200; /* TREE_SCENE — the painting's composed ratio */
+  max-height: 56vh;        /* keep the branch reachable below the painting */
+  border-radius: 6px;
+  border: 1px solid var(--rune-border);
   overflow: hidden;
-  text-overflow: ellipsis;
+  background-image: var(--tree-backdrop);
+  background-size: cover;
+  background-position: top center;
+  flex-shrink: 0;
 }
-.ns-tree__summary {
-  font-size: 0.58rem;
+.ns-tree__roots {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none; /* lanterns opt back in */
+}
+/* every namespace is a top-level root node — no rail above them; in the
+ * scene each item pins to its seat (compact rows stay ordinary list items) */
+.ns-tree__scene .ns-tree__item {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+/* ── the lantern — a namespace node seated on the painting ── */
+/* night-garden palette, scoped to the tree (the painting is dark in both
+ * themes): moon glow default, teal ring when selected, ember tint when the
+ * world holds a failed job, moss tint when all-clear. */
+.ns-tree--lanterns {
+  --lg-moon: rgba(176, 196, 201, 0.30);
+  --lg-teal: rgba(21, 184, 166, 0.55);
+  --lg-ember: rgba(224, 122, 63, 0.42);
+  --lg-moss: rgba(121, 179, 86, 0.36);
+  --lg: var(--lg-moon);
+  --berry-succeeded: #79b356;
+  --berry-running: #6fb7d8;
+  --berry-failed: #e07a3f;
+  --glabel-bg: rgba(5, 7, 10, 0.88);
+  --glabel-border: rgba(176, 196, 201, 0.14);
+  --glabel-frost: #d9e6ea;
+}
+.ns-tree__lantern {
+  pointer-events: auto;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: 50% 50% 50% 7px;
+  rotate: 40deg;
+  border: 1px solid rgba(214, 236, 240, 0.42);
+  background: radial-gradient(circle at 32% 26%, rgba(226, 240, 244, 0.34), rgba(10, 16, 20, 0.84));
+  backdrop-filter: blur(1.5px);
+  font-size: 19px;
+  cursor: pointer;
+  box-shadow: 0 0 18px 4px var(--lg),
+              0 4px 12px rgba(0, 0, 0, 0.5),
+              inset 0 1px 2px rgba(255, 255, 255, 0.18);
+  transition: box-shadow 0.2s, border-color 0.2s, scale 0.2s;
+}
+/* the stem it hangs by */
+.ns-tree__lantern::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: -16px;
+  width: 1.5px;
+  height: 16px;
+  background: linear-gradient(180deg, transparent, rgba(176, 196, 201, 0.6));
+}
+.ns-tree__lantern:hover {
+  scale: 1.1;
+  border-color: var(--teal-asgard);
+}
+.ns-tree__lantern:focus-visible {
+  outline: 2px solid var(--teal-asgard);
+  outline-offset: 2px;
+}
+/* selected — the teal ring */
+.ns-tree__lantern--active {
+  border-color: var(--teal-asgard);
+  --lg: var(--lg-teal);
+  box-shadow: 0 0 0 3px rgba(21, 184, 166, 0.45),
+              0 0 30px 6px var(--lg-teal),
+              0 4px 12px rgba(0, 0, 0, 0.5);
+}
+/* summary unavailable — the dimmed seat */
+.ns-tree__lantern--dim {
+  opacity: 0.55;
+  filter: saturate(0.6);
+}
+/* glow tints — ember for a failed job in the world, moss when all-clear */
+.ns-tree__lantern--failed { --lg: var(--lg-ember); }
+.ns-tree__lantern--ok     { --lg: var(--lg-moss); }
+/* the curated icon sits upright inside the tilted lantern */
+.ns-tree__icon--lantern {
+  width: 26px;
+  height: 26px;
+  rotate: -40deg;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.7));
+  border-radius: 0;
+}
+.ns-tree__icon--lantern.ns-tree__icon--fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+/* Extended sidebar seats bigger lanterns with roomier glyphs. */
+.ns-tree--extended .ns-tree__lantern {
+  width: 52px;
+  height: 52px;
+  font-size: 23px;
+}
+.ns-tree--extended .ns-tree__icon--lantern {
+  width: 30px;
+  height: 30px;
+}
+.ns-tree--extended .ns-tree__icon--lantern.ns-tree__icon--fallback {
+  font-size: 1.3rem;
+}
+
+/* ── stats berries — the summary counts beside each seat ── */
+.ns-tree__fruit {
+  position: absolute;
+  top: calc(50% + 28px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+.ns-tree__berry {
+  width: 11px;
+  height: 11px;
+  border-radius: 50% 50% 50% 4px;
+  display: inline-block;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.35), 0 0 6px currentColor;
+  rotate: 45deg;
+  background: currentColor;
+}
+.ns-tree__berry[data-on="0"] { opacity: 0.28; }
+.ns-tree__berry--succeeded { color: var(--berry-succeeded); }
+.ns-tree__berry--running   { color: var(--berry-running); }
+.ns-tree__berry--failed    { color: var(--berry-failed); }
+/* counts appear only in extended mode */
+.ns-tree__fruit-counts {
+  display: none;
+  gap: 5px;
+  font-size: 10.5px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.ns-tree--extended .ns-tree__fruit-counts { display: flex; }
+.ns-tree__fruit-count {
+  font-style: normal;
+  display: inline-flex;
+  gap: 3px;
+  align-items: center;
+}
+.ns-tree__fruit-count::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.ns-tree__fruit-count--succeeded { color: var(--berry-succeeded); }
+.ns-tree__fruit-count--running   { color: var(--berry-running); }
+.ns-tree__fruit-count--failed    { color: var(--berry-failed); }
+
+/* ── hover label — the garden's .g-label pattern ─────── */
+.ns-tree__glabel {
+  position: absolute;
+  bottom: calc(50% + 30px);
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: none;
+  background: var(--glabel-bg);
+  border: 1px solid var(--glabel-border);
+  border-left: 2px solid var(--teal-asgard);
+  border-radius: 6px;
+  padding: 5px 9px;
+  font-size: 11.5px;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.15s;
+  text-align: left;
+  z-index: 2;
+}
+.ns-tree__glabel--on { opacity: 1; }
+.ns-tree__glabel-name {
+  display: block;
+  font-size: 12.5px;
+  letter-spacing: 0.3px;
+  color: var(--glabel-frost);
+}
+.ns-tree__glabel-line {
+  color: var(--text-rune);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10.5px;
+}
+.ns-tree__glabel--err .ns-tree__glabel-line {
+  color: var(--error-strong);
+}
+.ns-tree__glabel--load .ns-tree__glabel-line {
   color: var(--text-void);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.ns-tree__summary--error {
   font-style: italic;
 }
-/* Extended sidebar: summary text gets a bit more room and color. */
-.ns-tree--extended .ns-tree__summary { color: var(--text-rune); }
 
 /* ── Task children: drawn connector lines ───────── */
-/* Each task li draws a vertical rail (::before) and an elbow (::after) so
- * the two tree levels are unmistakable:
+/* The open world's branch (drill) renders beneath the scene; each task li
+ * draws a vertical rail (::before) and an elbow (::after) so the branch
+ * reads as a bough off the painting:
  *
- *   ▾ Fenrir Ledger Agents     ← namespace root (no rail)
- *   │
- *   ├─ ⚒ s-run-1               ← rail + elbow
+ *   ◖o◗ Fenrir Ledger Agents    ← lantern at its seat (no rail)
+ *   ╎
+ *   ├─ ⚒ s-run-1                ← rail + elbow
  *   └─ 🐦 s-fail-1              ← last child's rail stops at its elbow
  */
+.ns-tree__drill {
+  margin: 0 0.5rem;
+}
 .ns-tree__tasks {
   list-style: none;
   margin: 0.05rem 0 0.25rem;
@@ -566,6 +708,10 @@ body {
 .ns-tree--compact .ns-tree__row:focus {
   background: var(--chain);
   color: var(--text-saga);
+}
+.ns-tree--compact .ns-tree__item--active .ns-tree__row {
+  color: var(--gold);
+  border-color: var(--gold);
 }
 .ns-tree--compact .ns-tree__icon--task { width: 10px; height: 10px; }
 .ns-tree__compact-initials { color: var(--gold); letter-spacing: 0.04em; }
