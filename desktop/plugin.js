@@ -8954,6 +8954,7 @@ function openSessionTab(sessionId, opts) {
       pluginCtx.register({
         id: `odins-throne-session-${sessionId}`,
         area: ROUTES_AREA,
+        title,
         data: { path: `/odins-throne/${sessionId}` },
         render: () => /* @__PURE__ */ jsx18(ThronePage, { sessionId, tabNamespace: namespace, jobSnapshot: job })
       });
