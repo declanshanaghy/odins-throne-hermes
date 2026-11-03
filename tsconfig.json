@@ -10,5 +10,6 @@
     "skipLibCheck": true,
     "isolatedModules": true
   },
-  "include": ["src", "server"]
+  "include": ["src", "server"],
+  "exclude": ["src/targets/web/vite.config.ts"]
 }

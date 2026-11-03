@@ -6,5 +6,7 @@ workspace page (LogViewer) plus ⌘K commands, and installs the plugin platform 
 vendored core; src/ui/store.ts holds the StoreBridge snapshot; src/targets/plugin/upstream.ts
 configures the monitor URL and the otFetch relay (/api/ → /bot/api + bearer). build/build.mjs
 esbuild-bundles the plugin into one ESM file (desktop/plugin.js, CSS scoped :root →
-.odins-throne-root) and the web target into build/web/app.js + app.css. Gates: tsc + build +
+.odins-throne-root). The web target is Vite's (issue #18): `npm run build:web` builds
+src/targets/web/ (index.html + main.tsx + the web adapter) into dist-ui/ from the same
+src/ui/ core, CSS unscoped. Gates: tsc (both targets) + build + build:web +
 smoke + `hermes plugins validate .`.

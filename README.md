@@ -89,6 +89,21 @@ Gates: `npx tsc --noEmit` (type check) and `npm run build` (bundle must
 build). Before committing UI changes, run `npm run build` so the committed
 `desktop/plugin.js` matches `src/`.
 
+## Web target (Vite)
+
+The same `src/ui/` core also builds as the full-page web monitor:
+
+```bash
+npm run build:web   # tsc (web program) + vite build → dist-ui/
+npm run dev:web     # vite dev server on :3002, /api + /ws proxied to :3001
+```
+
+`dist-ui/` holds the serving bundle (index.html + hashed assets + the
+`/profiles/*.png` portraits from `src/assets/`, which the web adapter's
+same-origin avatar URLs resolve against). CSS ships unscoped — on the web
+the page owns the document; the esbuild `:root` → `.odins-throne-root`
+scoping applies only to the plugin bundle.
+
 ## Session log formats
 
 The log terminal parses **both harnesses'** output into the same structured

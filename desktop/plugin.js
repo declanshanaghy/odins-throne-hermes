@@ -5471,7 +5471,7 @@ function getDisplayMode(width) {
   if (width <= 400) return "normal";
   return "extended";
 }
-function Sidebar({ jobs, activeSessionId, quote, wsState, onSelectSession, onAvatarClick, onOdinClick, onTogglePinSession, pinnedSessionIds, onCancelJob, terminatingSessionIds, namespace, namespaces, onNamespaceChange, namespaceSummaries, onSelectTask }) {
+function Sidebar({ jobs, activeSessionId, quote, wsState, onAvatarClick, onOdinClick, onTogglePinSession, pinnedSessionIds, onCancelJob, terminatingSessionIds, namespace, namespaces, onNamespaceChange, namespaceSummaries, onSelectTask }) {
   const { theme, setTheme: setTheme2 } = useTheme();
   const [width, setWidth] = useState7(DEFAULT_WIDTH);
   const navRef = useRef3(null);
