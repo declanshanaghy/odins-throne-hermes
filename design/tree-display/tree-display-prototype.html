@@ -14,6 +14,9 @@
      are icon-only, overlapping the bottom border, flush right.
      v3.1: the frosted-glass lantern bubbles are struck (#39 parity) —
      transparent hit areas over the painted lanterns, screen-blended glow.
+     v3.2: the task-icon strip is ONE row growing left→right (hang order)
+     like a progress bar beneath the status counts — and expanding hides
+     the ENTIRE indicator cluster (strip + counts) under the open lantern.
      Nocturnal garden house palette:
      night #05070a–#0f1419, moss #4a5d23, canopy #0f2e0f, moon #b0c4c9,
      spore gold #ffcc66, teal selection.
@@ -265,13 +268,17 @@
   .anchor-ic--terminating { --anc: rgba(176,196,201,.8); animation: tremble .5s ease-in-out infinite; }
   .anchor-ic.pop-in { animation: sprout .4s cubic-bezier(.2,1.3,.4,1) backwards; }
 
-  /* v3 — task pips beneath a COLLAPSED lantern: one small icon per task.
-     When the world expands, the row pops down the vine — each icon landing
-     on its job's anchor point (.anchor-ic) — so the open world shows no
-     row beneath its lantern. */
+  /* v3.2 — ONE row, never wrapping: the task-icon strip grows LEFT→RIGHT
+     in hang order (running → failed → pending → succeeded) like a progress
+     bar, seated BELOW the status counts row — never overlapping it. The
+     strip is positioned in px by JS: left-anchored under the lantern's
+     left edge, clamped so it never clips the scene. When the world
+     EXPANDS, the whole indicator cluster under its lantern disappears —
+     strip AND status counts — because the jobs themselves hang on the
+     vine (their icons seated at the vine anchors). */
   .piprow {
     position: absolute; z-index: 6; pointer-events: none;
-    display: flex; flex-wrap: wrap; gap: 2px; width: 44px;
+    display: flex; flex-wrap: nowrap; gap: 2px;
   }
   .piprow .pip-slot {
     width: 9px; height: 9px; flex: none;
@@ -555,7 +562,7 @@
 <!-- ═══ prototype furniture ═══ -->
 <div class="deck">
   <span class="deck__title"><b>ᛟ</b> Odin's Throne — tree display redesign · issue #7 prototype · <b>v3</b></span>
-  <span class="deck__note">icons pop down to each job's vine anchor (out of the card) · task pips under collapsed lanterns · icon-only actions clasp the card's bottom border, flush right</span>
+  <span class="deck__note">icons pop down to each job's vine anchor (out of the card) · single-row progress-bar pips under the status counts, hidden while expanded · icon-only actions clasp the card's bottom border, flush right</span>
   <span class="deck__sep"></span>
   <div class="deck__group">
     <span class="deck__lbl">mode</span>
@@ -626,9 +633,9 @@
       <li><span class="k">world list</span> read live from the backend service API (/api/namespaces) — never hardcoded; lantern seats assigned by curated id, djb2-hashed for unknown worlds</li>
       <li><span class="k">trunk</span> the tree display's root — grows from the panel floor</li>
       <li><span class="k">lantern</span> one namespace (a world) — the painted lantern carries its icon</li>
-      <li><span class="k">berries</span> namespace stats: succeeded · running · failed</li>
+      <li><span class="k">berries</span> status counts — succeeded · running · failed; hidden on the open world (its work is on the vine)</li>
       <li><span class="k">vine</span> one world open at a time — its job cards hang along a curved vine that extends as work grows</li>
-      <li><span class="k">task pips</span> beneath a collapsed lantern, one small icon per task; expanding pops them down the strand, each landing on its job's anchor</li>
+      <li><span class="k">task pips</span> ONE row under a collapsed lantern's status counts, growing left→right in hang order (running → failed → pending → succeeded) like a progress bar, +N past 8 — expanding hides the whole cluster, the icons popping down to the vine anchors</li>
       <li><span class="k">anchor icon</span> each job's status sigil seats ON the vine where its card ties on — the title box carries text only, no icon inside</li>
       <li><span class="k">job card</span> name, title, issue #, agent — actions are icon-only (📌 ✕, tooltip explains), clasping the bottom border flush right</li>
       <li><span class="k">spores</span> drift gold while the WS feed is live</li>
@@ -950,18 +957,23 @@ function renderScene() {
     lantern.addEventListener("blur", () => showLabel(w.id, false));
     overlay.appendChild(lantern);
 
-    /* stats fruit */
-    const fruit = document.createElement("div");
-    fruit.className = "fruit";
-    fruit.style.left = w.lantern.x + "%"; fruit.style.top = (w.lantern.y + 4) + "%";
-    const bc = (c, on) => `<b style="background:${c};color:${c};${on ? "" : "opacity:.28"}"></b>`;
-    fruit.innerHTML = bc("#79b356", s.succeeded > 0) + bc("#6fb7d8", s.running > 0) + bc("#e07a3f", s.failed > 0)
-      + `<span class="fruit__counts">`
-      + (s.succeeded ? `<i style="color:#79b356">${s.succeeded}</i>` : "")
-      + (s.running ? `<i style="color:#6fb7d8">${s.running}</i>` : "")
-      + (s.failed ? `<i style="color:#e07a3f">${s.failed}</i>` : "")
-      + `</span>`;
-    overlay.appendChild(fruit);
+    /* v3.2 — status counts (the berries + numbers): COLLAPSED worlds only.
+       An expanded world hides its ENTIRE indicator cluster — counts AND
+       pip strip — because its jobs themselves hang on the vine; the open
+       lantern shows nothing but its icon (and glow). */
+    if (!isExpanded && mode !== "compact") {
+      const fruit = document.createElement("div");
+      fruit.className = "fruit";
+      fruit.style.left = w.lantern.x + "%"; fruit.style.top = (w.lantern.y + 4) + "%";
+      const bc = (c, on) => `<b style="background:${c};color:${c};${on ? "" : "opacity:.28"}"></b>`;
+      fruit.innerHTML = bc("#79b356", s.succeeded > 0) + bc("#6fb7d8", s.running > 0) + bc("#e07a3f", s.failed > 0)
+        + `<span class="fruit__counts">`
+        + (s.succeeded ? `<i style="color:#79b356">${s.succeeded}</i>` : "")
+        + (s.running ? `<i style="color:#6fb7d8">${s.running}</i>` : "")
+        + (s.failed ? `<i style="color:#e07a3f">${s.failed}</i>` : "")
+        + `</span>`;
+      overlay.appendChild(fruit);
+    }
 
     /* hover label */
     const label = document.createElement("div");
@@ -973,27 +985,41 @@ function renderScene() {
     label.id = "lbl-" + w.id;
     overlay.appendChild(label);
 
-    /* v3 — task pips beneath the lantern while COLLAPSED: one small status
-       icon per task (hang order, capped at 8 with a +N chip), on the side
-       away from the vine. Expanding pops them down the strand — each icon
-       lands on its job's ANCHOR point (.anchor-ic, rendered with the vine)
-       — so the open world shows no row beneath its lantern. */
+    /* v3.2 — the task-icon strip beneath a COLLAPSED lantern: ONE single
+       row, growing LEFT→RIGHT in hang order (running → failed → pending →
+       succeeded) like a progress bar. SPEC for the agent:
+         • single line — flex-wrap: nowrap, NEVER a grid/wrapped rows
+         • order left→right = the hang order (live work first, quiet green last)
+         • positioned BELOW the status counts row (berries + numbers),
+           never overlapping them
+         • left-anchored at the lantern's left edge; new tasks append to
+           the RIGHT end (the strip grows like a progress bar)
+         • capped at 8 icons; the overflow becomes a trailing "+N" chip
+         • clamped to the scene edges — never clips
+         • hidden entirely while the world is EXPANDED (its icons pop down
+           to the vine anchors instead), reappearing on collapse */
     if (!isExpanded && mode !== "compact" && isLoaded && !isUnavail) {
       const pjs = orderedJobs(w.id);
       if (pjs.length) {
+        const shown = pjs.slice(0, 8);
+        const hasChip = pjs.length > 8;
+        const slots = shown.length + (hasChip ? 1 : 0);
+        const rowW = shown.length * 9 + Math.max(0, shown.length - 1) * 2 + (hasChip ? 14 : 0);
+        const sceneW = scene.clientWidth;
+        let rowLeft = (w.lantern.x / 100) * sceneW - 26; /* the lantern's left edge */
+        rowLeft = Math.max(4, Math.min(rowLeft, sceneW - 4 - rowW));
         const row = document.createElement("div");
         row.className = "piprow";
         row.dataset.count = pjs.length;
-        row.style.left = w.lantern.x + "%";
-        row.style.top = (w.lantern.y + 5) + "%";
-        row.style.transform = w.dir === 1 ? "translate(calc(-100% - 2px), 0)" : "translate(2px, 0)";
-        for (const j of pjs.slice(0, 8)) {
+        row.style.left = rowLeft + "px";
+        row.style.top = (w.lantern.y + 7.5) + "%";
+        for (const j of shown) {
           const slot = document.createElement("span");
           slot.className = "pip-slot pip-slot--" + j.status;
           slot.appendChild(iconImg(ICON_BASE + (TASK_ICON[j.status] || "scroll.png"), TASK_ICON_FB[j.status] || "▪", "pip"));
           row.appendChild(slot);
         }
-        if (pjs.length > 8) {
+        if (hasChip) {
           const more = document.createElement("span");
           more.className = "more";
           more.textContent = "+" + (pjs.length - 8);
