@@ -1,18 +1,22 @@
 // Advanced upstream configuration dialog — plugin chrome, not part of the
 // ported SPA. Opened from the ⌘K palette ("Odin's Throne: Configure
-// upstream") or the connect card. Default auth is the Google sign-in (see
-// guest.ts); a bot token here switches to the monitor's /bot surface, and the
-// URL override points at a local dev monitor.
+// upstream") or the connect card. Auth is Google OAuth only (see guest.ts) —
+// no session means no data; the sole setting is the upstream URL, overridden
+// for local dev servers (which run without oauth2-proxy).
 
 import { useState, type CSSProperties } from "react";
 import { useSyncExternalStore } from "react";
 import { host } from "@hermes/plugin-sdk";
 import {
   DEFAULT_UPSTREAM_URL,
-  getBotToken,
   getUpstreamUrl,
   setUpstreamConfig,
 } from "./upstream";
+import {
+  guestStatus,
+  reauth,
+  subscribeGuestStatus,
+} from "./guest";
 import { requestReload } from "./pluginCtx";
 
 let open = false;
@@ -56,12 +60,12 @@ const inputStyle: CSSProperties = {
 
 export function ThroneSettings() {
   const [url, setUrl] = useState(getUpstreamUrl());
-  const [token, setToken] = useState(getBotToken());
   const [saving, setSaving] = useState(false);
+  const status = useSyncExternalStore(subscribeGuestStatus, guestStatus, guestStatus);
 
   async function save(): Promise<void> {
     setSaving(true);
-    setUpstreamConfig(url, token);
+    setUpstreamConfig(url);
     const reloaded = await requestReload();
     if (!reloaded) {
       host.notify({
@@ -87,11 +91,13 @@ export function ThroneSettings() {
       <div className="throne-settings" style={{ maxWidth: 440 }}>
         <h2>Bind the Bifröst</h2>
         <p className="throne-settings-hint">
-          Default auth is the <strong>Google sign-in</strong> (the same login
-          the web version uses — press “Sign in with Google” on the pane).
-          These are the fallbacks: a bot token switches to the monitor's
-          <code>/bot</code> surface, and the URL override points at a local dev
-          monitor.
+          <strong>Google OAuth is the only way in</strong> — the same login the
+          web version uses; no session, no data. The only setting is the
+          upstream URL, overridden for a local dev monitor (which runs without
+          oauth2-proxy).
+        </p>
+        <p className="throne-settings-hint">
+          Session: <strong>{status === "authed" ? "signed in ✓" : status}</strong>
         </p>
         <label>
           Upstream URL
@@ -102,20 +108,15 @@ export function ThroneSettings() {
             onChange={(e) => setUrl(e.target.value)}
           />
         </label>
-        <label>
-          Bot token (optional for local dev)
-          <input
-            style={inputStyle}
-            type="password"
-            value={token}
-            placeholder="paste ODINS_THRONE_BOT_TOKEN"
-            onChange={(e) => setToken(e.target.value)}
-          />
-        </label>
         <div className="throne-settings-row">
           <button className="throne-settings-btn" onClick={() => settingsUi.close()}>
             Cancel
           </button>
+          {status !== "authed" && (
+            <button className="throne-settings-btn" onClick={() => reauth()}>
+              Sign in with Google
+            </button>
+          )}
           <button
             className="throne-settings-btn primary"
             disabled={saving}

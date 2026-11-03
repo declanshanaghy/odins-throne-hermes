@@ -3245,10 +3245,6 @@ import { useEffect as useEffect10, useMemo as useMemo2, useRef as useRef8, useSy
 
 // src/upstream.ts
 var URL_KEY = "hlidskjalf:upstream-url";
-var TOKEN_KEY = "hlidskjalf:bot-token";
-function authMode() {
-  return getBotToken() === "" ? "guest-oauth" : "token";
-}
 var DEFAULT_UPSTREAM_URL = "https://odins-throne.fenrirledger.com";
 function getUpstreamUrl() {
   try {
@@ -3257,49 +3253,18 @@ function getUpstreamUrl() {
     return DEFAULT_UPSTREAM_URL;
   }
 }
-function getBotToken() {
-  try {
-    return localStorage.getItem(TOKEN_KEY) || "";
-  } catch {
-    return "";
-  }
-}
-function setUpstreamConfig(url, token) {
+function setUpstreamConfig(url) {
   try {
     localStorage.setItem(URL_KEY, url.trim() || DEFAULT_UPSTREAM_URL);
-    if (token.trim()) localStorage.setItem(TOKEN_KEY, token.trim());
-    else localStorage.removeItem(TOKEN_KEY);
   } catch {
   }
 }
 function isConfigured() {
   if (getUpstreamUrl() !== DEFAULT_UPSTREAM_URL) return true;
-  if (authMode() === "token") return true;
   return guestStatus() === "authed";
 }
 async function otFetch(path, init) {
-  if (authMode() === "token") return fetch(restUrl(path), authInit(init));
   return guestFetch(path, init);
-}
-function restUrl(path) {
-  const base2 = getUpstreamUrl().replace(/\/+$/, "");
-  if (path.startsWith("/api/")) return `${base2}/bot${path}`;
-  return `${base2}${path}`;
-}
-function authInit(init) {
-  const headers = new Headers(init?.headers);
-  const token = getBotToken();
-  if (token) headers.set("Authorization", `Bearer ${token}`);
-  return { ...init, headers };
-}
-function wsUrl(namespace) {
-  const base2 = getUpstreamUrl().replace(/\/+$/, "");
-  const proto = base2.startsWith("https") ? "wss" : "ws";
-  const host4 = base2.replace(/^https?:\/\//, "");
-  const params = new URLSearchParams({ namespace });
-  const token = getBotToken();
-  if (token) params.set("token", token);
-  return `${proto}://${host4}/bot/ws?${params.toString()}`;
 }
 
 // src/guest.ts
@@ -5238,7 +5203,7 @@ function useWebSocket(onMessage, namespace = "fenrir-agents") {
       wsRef.current = null;
       connectedNamespaceRef.current = null;
     }
-    const ws = authMode() === "token" ? new WebSocket(wsUrl(ns)) : openGuestSocket(ns);
+    const ws = openGuestSocket(ns);
     wsRef.current = ws;
     connectedNamespaceRef.current = ns;
     setState("connecting");
@@ -6271,11 +6236,11 @@ var inputStyle = {
 };
 function ThroneSettings() {
   const [url, setUrl] = useState11(getUpstreamUrl());
-  const [token, setToken] = useState11(getBotToken());
   const [saving, setSaving] = useState11(false);
+  const status2 = useSyncExternalStore3(subscribeGuestStatus, guestStatus, guestStatus);
   async function save() {
     setSaving(true);
-    setUpstreamConfig(url, token);
+    setUpstreamConfig(url);
     const reloaded = await requestReload();
     if (!reloaded) {
       host2.notify({
@@ -6299,11 +6264,12 @@ function ThroneSettings() {
       children: /* @__PURE__ */ jsxs12("div", { className: "throne-settings", style: { maxWidth: 440 }, children: [
         /* @__PURE__ */ jsx11("h2", { children: "Bind the Bifr\xF6st" }),
         /* @__PURE__ */ jsxs12("p", { className: "throne-settings-hint", children: [
-          "Default auth is the ",
-          /* @__PURE__ */ jsx11("strong", { children: "Google sign-in" }),
-          " (the same login the web version uses \u2014 press \u201CSign in with Google\u201D on the pane). These are the fallbacks: a bot token switches to the monitor's",
-          /* @__PURE__ */ jsx11("code", { children: "/bot" }),
-          " surface, and the URL override points at a local dev monitor."
+          /* @__PURE__ */ jsx11("strong", { children: "Google OAuth is the only way in" }),
+          " \u2014 the same login the web version uses; no session, no data. The only setting is the upstream URL, overridden for a local dev monitor (which runs without oauth2-proxy)."
+        ] }),
+        /* @__PURE__ */ jsxs12("p", { className: "throne-settings-hint", children: [
+          "Session: ",
+          /* @__PURE__ */ jsx11("strong", { children: status2 === "authed" ? "signed in \u2713" : status2 })
         ] }),
         /* @__PURE__ */ jsxs12("label", { children: [
           "Upstream URL",
@@ -6317,21 +6283,9 @@ function ThroneSettings() {
             }
           )
         ] }),
-        /* @__PURE__ */ jsxs12("label", { children: [
-          "Bot token (optional for local dev)",
-          /* @__PURE__ */ jsx11(
-            "input",
-            {
-              style: inputStyle,
-              type: "password",
-              value: token,
-              placeholder: "paste ODINS_THRONE_BOT_TOKEN",
-              onChange: (e) => setToken(e.target.value)
-            }
-          )
-        ] }),
         /* @__PURE__ */ jsxs12("div", { className: "throne-settings-row", children: [
           /* @__PURE__ */ jsx11("button", { className: "throne-settings-btn", onClick: () => settingsUi.close(), children: "Cancel" }),
+          status2 !== "authed" && /* @__PURE__ */ jsx11("button", { className: "throne-settings-btn", onClick: () => reauth(), children: "Sign in with Google" }),
           /* @__PURE__ */ jsx11(
             "button",
             {

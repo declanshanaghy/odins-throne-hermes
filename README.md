@@ -31,7 +31,7 @@ src/
   entry.tsx              # register(ctx): pane + route + nav + ⌘K commands
   pane.tsx / page.tsx    # the two surfaces (Sidebar / LogViewer)
   App.tsx (ui/)          # StoreBridge — the ported App publishes to src/store.ts
-  upstream.ts            # /bot surface mapping, URL + bot-token config
+  upstream.ts            # upstream URL config + OAuth-only otFetch relay
   settings.tsx           # first-run "Bind the Bifröst" dialog (⌘K)
   ui/                    # vendored from fenrir-ledger/development/odins-throne/ui
   assets/profiles/       # agent portraits (inlined as data URLs at build)
@@ -54,12 +54,11 @@ version does. The cookie persists across restarts; all REST + WS traffic runs
 inside the guest, same-origin on the human routes (`/api/*`, `/ws`), and the
 host relays frames in and out. No tokens, no CORS, no backend changes.
 
-> **Fallback auth:** the monitor also exposes a token-gated bot surface —
-> REST under `/bot/api/*` (`Authorization: Bearer`) and the multiplexed stream
-> at `/bot/ws` (`?token=`). Paste a bot token into ⌘K → "Odin's Throne:
-> Configure upstream" to switch to it (curl/CI friendly). Local dev servers
-> (`pnpm dev` in `development/odins-throne`) serve both surfaces without
-> oauth2-proxy.
+> **There is no other way in.** No session, no data — the monitor 403s
+> everything until the Google login completes. The only setting is the
+> upstream URL (⌘K → "Odin's Throne: Configure upstream"), overridden for
+> local dev servers (`pnpm dev` in `development/odins-throne`, which run
+> without oauth2-proxy).
 
 ## Dev loop (live reload)
 

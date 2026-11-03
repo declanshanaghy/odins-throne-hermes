@@ -1,6 +1,5 @@
 import { useEffect, useRef, useCallback, useState } from "react";
 import type { ServerMessage, ClientMessage } from "../lib/types";
-import { wsUrl, authMode } from "../../upstream";
 import { openGuestSocket, type ThroneSocket } from "../../guest";
 
 type WsState = "connecting" | "open" | "closed" | "error";
@@ -36,14 +35,10 @@ export function useWebSocket(onMessage: (msg: ServerMessage) => void, namespace 
       connectedNamespaceRef.current = null;
     }
 
-    // Desktop port: default auth is the web version's own — the stream dials
-    // the monitor's same-origin /ws from inside the signed-in webview guest
-    // (cookie-authenticated). With a bot token configured it dials the
-    // token-gated /bot/ws mirror instead. Protocol/backoff unchanged.
-    const ws: ThroneSocket =
-      authMode() === "token"
-        ? (new WebSocket(wsUrl(ns)) as unknown as ThroneSocket)
-        : openGuestSocket(ns);
+    // Desktop port: the stream dials the monitor's same-origin /ws from
+    // inside the signed-in webview (cookie-authenticated — no session, no
+    // stream). Protocol, reconnect and backoff are unchanged from the SPA.
+    const ws: ThroneSocket = openGuestSocket(ns);
     wsRef.current = ws;
     connectedNamespaceRef.current = ns;
     setState("connecting");
