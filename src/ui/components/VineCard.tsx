@@ -35,8 +35,6 @@ interface Props {
   job: DisplayJob;
   /** The session's tab is the active one — teal ring + selected semantics. */
   isActive: boolean;
-  /** The session's tab is already open — the open action reads "focus". */
-  isOpen: boolean;
   isPinned: boolean;
   /** Terminating (cancel confirmed) — the tremble plays until the purge. */
   isTerminating: boolean;
@@ -66,7 +64,6 @@ export function isCancellable(status: DisplayJob["status"]): boolean {
 export function VineCard({
   job,
   isActive,
-  isOpen,
   isPinned,
   isTerminating,
   side,
@@ -141,19 +138,6 @@ export function VineCard({
           <span className="jcard__acts">
             <button
               type="button"
-              className="jact jact--open"
-              data-act="open"
-              title={isOpen ? "focus its tab" : "open in a tab"}
-              aria-label={isOpen ? `Focus session ${job.sessionId} tab` : `Open session ${job.sessionId} in a tab`}
-              onClick={(e) => {
-                e.stopPropagation();
-                onOpen();
-              }}
-            >
-              {isOpen ? "focus" : "open"}
-            </button>
-            <button
-              type="button"
               className={`jact jact--pin${isPinned ? " is-on" : ""}`}
               data-act="pin"
               title={isPinned ? "unpin session" : "pin session"}
@@ -164,7 +148,7 @@ export function VineCard({
                 onTogglePin();
               }}
             >
-              {isPinned ? "unpin" : "pin"}
+              📌
             </button>
             {cancellable && (
               <button
@@ -178,7 +162,7 @@ export function VineCard({
                   onCancel();
                 }}
               >
-                cancel
+                ✕
               </button>
             )}
           </span>

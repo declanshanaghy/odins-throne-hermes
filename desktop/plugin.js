@@ -789,19 +789,18 @@ var styles_default = `.odins-throne-root .odins-throne-root {
   border-radius: 5px;
   background: rgba(10, 16, 20, 0.85);
   color: #8a9ca6;
-  font-size: 9.5px;
-  font-family: 'JetBrains Mono', monospace;
-  padding: 2px 6px;
-  line-height: 1.3;
+  font-size: 13px;
+  line-height: 1;
+  min-width: 24px;
+  min-height: 24px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
   transition: border-color 0.15s, color 0.15s;
 }
 .odins-throne-root .jact:hover { border-color: var(--teal-asgard); color: #d9f4ef; }
-.odins-throne-root .jact--open {
-  border-color: rgba(78, 205, 196, 0.5);
-  color: #d9f4ef;
-  background: rgba(21, 184, 166, 0.14);
-}
 .odins-throne-root .jact--pin.is-on { border-color: #ffcc66; color: #ffcc66; }
 .odins-throne-root .jact--cancel:hover { border-color: #e07a3f; color: #f0a279; }
 .odins-throne-root .jact:focus-visible { outline: 1.5px solid var(--teal-asgard); outline-offset: 1px; }
@@ -8562,7 +8561,6 @@ function isCancellable(status) {
 function VineCard({
   job,
   isActive,
-  isOpen,
   isPinned: isPinned2,
   isTerminating,
   side,
@@ -8629,21 +8627,6 @@ function VineCard({
                 "button",
                 {
                   type: "button",
-                  className: "jact jact--open",
-                  "data-act": "open",
-                  title: isOpen ? "focus its tab" : "open in a tab",
-                  "aria-label": isOpen ? `Focus session ${job.sessionId} tab` : `Open session ${job.sessionId} in a tab`,
-                  onClick: (e) => {
-                    e.stopPropagation();
-                    onOpen();
-                  },
-                  children: isOpen ? "focus" : "open"
-                }
-              ),
-              /* @__PURE__ */ jsx14(
-                "button",
-                {
-                  type: "button",
                   className: `jact jact--pin${isPinned2 ? " is-on" : ""}`,
                   "data-act": "pin",
                   title: isPinned2 ? "unpin session" : "pin session",
@@ -8653,7 +8636,7 @@ function VineCard({
                     e.stopPropagation();
                     onTogglePin();
                   },
-                  children: isPinned2 ? "unpin" : "pin"
+                  children: "\u{1F4CC}"
                 }
               ),
               cancellable && /* @__PURE__ */ jsx14(
@@ -8668,7 +8651,7 @@ function VineCard({
                     e.stopPropagation();
                     onCancel();
                   },
-                  children: "cancel"
+                  children: "\u2715"
                 }
               )
             ] })
@@ -8910,7 +8893,6 @@ function NamespaceTree({
                   {
                     job,
                     isActive: isTaskActive,
-                    isOpen: job.sessionId === activeSessionId,
                     isPinned: pinnedSessionIds?.has(job.sessionId) ?? false,
                     isTerminating: terminatingSessionIds?.has(job.sessionId) ?? false,
                     side: box.side,
@@ -8929,7 +8911,6 @@ function NamespaceTree({
                 {
                   job: g.job,
                   isActive: false,
-                  isOpen: false,
                   isPinned: false,
                   isTerminating: true,
                   side: g.side,
