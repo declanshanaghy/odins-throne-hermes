@@ -50,6 +50,58 @@ FakeWebSocket.instances = [];
 globalThis.WebSocket = FakeWebSocket;
 dom.window.WebSocket = FakeWebSocket;
 
+// Deterministic upstream: the pane's REST calls (namespace list + the
+// per-namespace job summaries that back the namespace tree) hit a stub so no
+// test run touches the deployed monitor.
+const NS_FIXTURES = [
+  { id: "fenrir-agents", label: "Fenrir Ledger Agents" },
+  { id: "say-so-agents", label: "SaySo Agents" },
+  { id: "mytruthfinder-agents", label: "MyTruthFinder Agents" },
+  { id: "shanaghy-com-agents", label: "Shanaghy.com Agents" },
+  { id: "re-goatmower-agents", label: "Re-Goatmower Agents" },
+];
+const fixtureJob = (sessionId, status) => ({
+  sessionId,
+  name: `job-${sessionId}`,
+  issueNumber: 1,
+  agent: "fireman",
+  step: 1,
+  status,
+  startedAt: null,
+  completedAt: null,
+  podName: null,
+  issueTitle: null,
+  branchName: null,
+});
+const JOBS_BY_NS = {
+  "fenrir-agents": [
+    fixtureJob("s-run-1", "running"),
+    fixtureJob("s-run-2", "running"),
+    fixtureJob("s-pend-1", "pending"),
+    fixtureJob("s-fail-1", "failed"),
+    ...Array.from({ length: 8 }, (_, i) => fixtureJob(`s-ok-${i}`, "succeeded")),
+  ],
+  "say-so-agents": Array.from({ length: 8 }, (_, i) => fixtureJob(`ss-ok-${i}`, "succeeded")),
+  "mytruthfinder-agents": [fixtureJob("mt-run-1", "running")],
+  "shanaghy-com-agents": [],
+  "re-goatmower-agents": [fixtureJob("rg-fail-1", "failed"), fixtureJob("rg-ok-1", "succeeded")],
+};
+function jsonResponse(body, status = 200) {
+  return { ok: status >= 200 && status < 300, status, json: async () => body };
+}
+globalThis.fetch = async (input) => {
+  const url = String(input);
+  if (url.includes("/api/namespaces")) return jsonResponse({ namespaces: NS_FIXTURES });
+  const m = url.match(/\/api\/jobs\?namespace=([^&]+)/);
+  if (m) {
+    const ns = decodeURIComponent(m[1]);
+    const jobs = JOBS_BY_NS[ns] ?? [];
+    return jsonResponse({ jobs, count: jobs.length });
+  }
+  return jsonResponse({ error: `no stub for ${url}` }, 404);
+};
+dom.window.fetch = globalThis.fetch;
+
 globalThis.__stubNavigations = [];
 globalThis.__stubNotifications = [];
 
@@ -127,6 +179,55 @@ for (const ns of [
   assert.ok(paneHtml.includes(ns), `namespace option present: ${ns}`);
 }
 
+// ── namespace tree (issue:2) ────────────────────────────────────────────────
+// All namespaces as a browseable tree, each node with a task summary and
+// per-status counts sourced from the stubbed per-namespace /api/jobs fetches.
+assert.ok(document.querySelector('.ns-tree[aria-label="Namespace tree"]'), "namespace tree mounted");
+assert.ok(paneHtml.includes("All namespaces"), "tree root node rendered");
+assert.equal(document.querySelectorAll(".ns-tree__item[data-namespace]").length, 5, "all five namespaces are tree nodes");
+assert.ok(document.querySelector('.ns-tree__item[data-namespace="fenrir-agents"]'), "fenrir-agents node present");
+assert.ok(
+  paneHtml.includes("12 tasks · 2 running · 1 pending · 1 failed · 8 succeeded"),
+  "fenrir-agents node shows task summary with status counts",
+);
+assert.ok(
+  paneHtml.includes("8 tasks · 8 succeeded"),
+  "say-so-agents node shows task summary",
+);
+assert.ok(paneHtml.includes("0 tasks"), "empty namespace shows a zero-task summary");
+assert.ok(
+  document.querySelector('.ns-tree__item[data-namespace="fenrir-agents"]').getAttribute("aria-selected") === "true",
+  "active namespace node is marked selected",
+);
+
+// Selecting a namespace node still switches the active namespace (persisted
+// to the same localStorage key the flat dropdown used).
+document.querySelector('.ns-tree__item[data-namespace="say-so-agents"] .ns-tree__select').click();
+await flush();
+await flush();
+assert.equal(
+  localStorage.getItem("hlidskjalf:namespace"),
+  "say-so-agents",
+  "clicking a tree node sets the active namespace",
+);
+assert.equal(
+  document.querySelector('.ns-tree__item[data-namespace="say-so-agents"]').getAttribute("aria-selected"),
+  "true",
+  "newly selected namespace node is marked active",
+);
+
+// Expanding a namespace node reveals its per-status breakdown children.
+document.querySelector('.ns-tree__item[data-namespace="say-so-agents"] .ns-tree__chevron-btn').click();
+await flush();
+assert.ok(
+  document.querySelectorAll('.ns-tree__item[data-namespace="say-so-agents"] .ns-tree__status').length > 0,
+  "expanded namespace node shows status breakdown",
+);
+assert.ok(
+  document.getElementById("pane").innerHTML.includes("succeeded"),
+  "status breakdown lists job statuses",
+);
+
 const pageRoot = createRoot(document.getElementById("page"));
 pageRoot.render(byId.page.render());
 await flush();
@@ -150,5 +251,5 @@ assert.equal(
 );
 assert.equal(dom.window.document.documentElement.getAttribute("data-theme"), null, "app <html> untouched");
 
-console.log("SMOKE PASS — 19 assertions: pane + page render, CSS scoped, theme plugin-local, overlays wired");
+console.log("SMOKE PASS — pane + page render, namespace tree with summaries, CSS scoped, theme plugin-local, overlays wired");
 process.exit(0);

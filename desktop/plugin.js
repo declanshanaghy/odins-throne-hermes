@@ -322,44 +322,165 @@ var styles_default = `.odins-throne-root .odins-throne-root {
 @media (prefers-reduced-motion: reduce) {
   .odins-throne-root .theme-btn { transition: none; }
 }
-/* \u2500\u2500 Namespace selector \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
-.odins-throne-root .namespace-selector {
+/* \u2500\u2500 Namespace tree (issue:2) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+/* Browseable tree of all namespaces: root node toggles the namespace list,
+ * each namespace row shows a one-line task summary + status counts, and a
+ * chevron expands a per-status breakdown. */
+.odins-throne-root .ns-tree {
   margin-top: 0.5rem;
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-.odins-throne-root .namespace-selector__label {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.65rem;
-  color: var(--text-void);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  flex-shrink: 0;
-}
-.odins-throne-root .namespace-selector__select {
-  flex: 1;
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.7rem;
+  min-width: 0;
+}
+.odins-throne-root .ns-tree__root {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  width: 100%;
+  padding: 0.2rem 0.3rem;
   background: var(--chain);
   color: var(--text-rune);
   border: 1px solid var(--rune-border);
   border-radius: 3px;
-  padding: 0.2rem 0.3rem;
   cursor: pointer;
-  outline: none;
+  text-align: left;
   min-width: 0;
 }
-.odins-throne-root .namespace-selector__select:hover,
-.odins-throne-root .namespace-selector__select:focus {
+.odins-throne-root .ns-tree__root:hover,
+.odins-throne-root .ns-tree__root:focus {
   border-color: var(--gold);
   color: var(--text-saga);
 }
-.odins-throne-root .namespace-selector--compact {
-  justify-content: center;
+.odins-throne-root .ns-tree__root-label {
+  color: var(--text-saga);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.odins-throne-root .ns-tree__root-stats {
+  color: var(--text-void);
+  font-size: 0.6rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+.odins-throne-root .ns-tree__chevron {
+  color: var(--gold);
+  flex-shrink: 0;
+  font-size: 0.6rem;
+  width: 0.85em;
+  text-align: center;
+}
+.odins-throne-root .ns-tree__list {
+  list-style: none;
+  margin: 0.15rem 0 0;
+  padding: 0;
+}
+.odins-throne-root .ns-tree__item {
+  border-left: 1px solid var(--rune-border);
+  margin-left: 0.55rem;
+  padding-left: 0.25rem;
+}
+.odins-throne-root .ns-tree__row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.15rem;
+  min-width: 0;
+}
+.odins-throne-root .ns-tree__chevron-btn {
+  flex-shrink: 0;
+  width: 1.1em;
+  padding: 0.2rem 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-void);
+  font-size: inherit;
+  line-height: 1.2;
+}
+.odins-throne-root .ns-tree__chevron-btn:hover {
+  color: var(--gold);
+}
+.odins-throne-root .ns-tree__select {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+  padding: 0.2rem 0.3rem;
+  background: none;
+  border: none;
+  border-radius: 3px;
+  color: var(--text-rune);
+  cursor: pointer;
+  text-align: left;
+  font-size: inherit;
+  font-family: inherit;
+}
+.odins-throne-root .ns-tree__select:hover,
+.odins-throne-root .ns-tree__select:focus {
+  background: var(--chain);
+  color: var(--text-saga);
+}
+.odins-throne-root .ns-tree__item--active > .ns-tree__row .ns-tree__select {
+  background: var(--chain);
+  color: var(--gold);
+  box-shadow: inset 2px 0 0 var(--gold);
+}
+.odins-throne-root .ns-tree__label {
+  font-size: 0.68rem;
+  color: var(--text-saga);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.odins-throne-root .ns-tree__summary {
+  font-size: 0.58rem;
+  color: var(--text-void);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.odins-throne-root .ns-tree__summary--error {
+  font-style: italic;
+}
+/* Extended sidebar: summary text gets a bit more room and color. */
+.odins-throne-root .ns-tree--extended .ns-tree__summary { color: var(--text-rune); }
+
+/* Per-status breakdown children (expanded namespace node) */
+.odins-throne-root .ns-tree__statuses {
+  list-style: none;
+  margin: 0.1rem 0 0.2rem;
+  padding: 0 0 0 1.4rem;
+}
+.odins-throne-root .ns-tree__status {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.6rem;
+  color: var(--text-void);
+  padding: 0.05rem 0.3rem;
+}
+.odins-throne-root .ns-tree__status-name { text-transform: uppercase; letter-spacing: 0.05em; }
+.odins-throne-root .ns-tree__status-name--running   { color: var(--teal-asgard); }
+.odins-throne-root .ns-tree__status-name--pending   { color: var(--gold-bright); }
+.odins-throne-root .ns-tree__status-name--failed    { color: var(--error-text); }
+.odins-throne-root .ns-tree__status-name--succeeded { color: var(--success-strong); }
+.odins-throne-root .ns-tree__status-name--cached    { color: var(--kildare-blue-bright); }
+.odins-throne-root .ns-tree__status-name--purged    { color: var(--text-void); }
+.odins-throne-root .ns-tree__status-count { color: var(--text-rune); }
+
+/* Compact sidebar: collapse to an initials chip + on-demand mini-tree */
+.odins-throne-root .ns-tree--compact {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   margin-top: 0.4rem;
 }
-.odins-throne-root .namespace-selector__initials {
+.odins-throne-root .ns-tree__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.6rem;
   color: var(--gold);
@@ -368,7 +489,43 @@ var styles_default = `.odins-throne-root .odins-throne-root {
   border-radius: 3px;
   padding: 0.1rem 0.25rem;
   letter-spacing: 0.04em;
+  cursor: pointer;
 }
+.odins-throne-root .ns-tree__chip:hover, .odins-throne-root .ns-tree__chip:focus { border-color: var(--gold); }
+.odins-throne-root .ns-tree__chip-count {
+  font-size: 0.55rem;
+  color: var(--text-void);
+}
+.odins-throne-root .ns-tree--compact .ns-tree__list {
+  width: 100%;
+  margin-top: 0.3rem;
+}
+.odins-throne-root .ns-tree--compact .ns-tree__item {
+  border-left: none;
+  margin-left: 0;
+  padding-left: 0;
+}
+.odins-throne-root .ns-tree--compact .ns-tree__row {
+  width: 100%;
+}
+.odins-throne-root .ns-tree--compact .ns-tree__select,
+.odins-throne-root .ns-tree--compact .ns-tree__row > button {
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 0.15rem 0.25rem;
+  background: none;
+  border: none;
+  border-radius: 3px;
+  color: var(--text-rune);
+  cursor: pointer;
+  text-align: left;
+  font-size: inherit;
+  font-family: inherit;
+}
+.odins-throne-root .ns-tree__compact-initials { color: var(--gold); letter-spacing: 0.04em; }
+.odins-throne-root .ns-tree__compact-count { color: var(--text-void); font-size: 0.55rem; }
 
 .odins-throne-root .card-list { flex: 1; overflow-y: auto; padding: 0.5rem; }
 
@@ -3241,7 +3398,7 @@ var styles_default = `.odins-throne-root .odins-throne-root {
 `;
 
 // src/pane.tsx
-import { useMemo as useMemo2, useState as useState12, useSyncExternalStore as useSyncExternalStore4 } from "react";
+import { useMemo as useMemo2, useState as useState14, useSyncExternalStore as useSyncExternalStore4 } from "react";
 
 // src/ui/components/ErrorBoundary.tsx
 import { Component } from "react";
@@ -3307,7 +3464,7 @@ var ErrorBoundary = class extends Component {
 };
 
 // src/ui/components/Sidebar.tsx
-import { useState as useState3, useRef as useRef2, useEffect as useEffect3 } from "react";
+import { useState as useState5, useRef as useRef3, useEffect as useEffect4 } from "react";
 
 // src/ui/hooks/useTheme.ts
 import { useSyncExternalStore } from "react";
@@ -4692,27 +4849,232 @@ function StatusBadge({ state }) {
   ] });
 }
 
-// src/ui/components/NamespaceSelector.tsx
+// src/ui/components/NamespaceTree.tsx
+import { useState as useState4 } from "react";
+
+// src/ui/hooks/useNamespaceSummaries.ts
+import { useCallback as useCallback2, useEffect as useEffect3, useRef as useRef2, useState as useState3 } from "react";
+var JOB_STATUSES = [
+  "running",
+  "pending",
+  "failed",
+  "succeeded",
+  "cached",
+  "purged"
+];
+var REFRESH_MS = 3e4;
+var ACTIVITY_DEBOUNCE_MS = 1e3;
+function emptyCounts() {
+  return { pending: 0, running: 0, succeeded: 0, failed: 0, purged: 0, cached: 0 };
+}
+function summarizeJobs(jobs) {
+  const counts = emptyCounts();
+  for (const job of jobs) {
+    if (job.status in counts) counts[job.status] += 1;
+  }
+  return { total: jobs.length, counts, error: null };
+}
+function summaryLine(summary) {
+  const parts = [`${summary.total} task${summary.total !== 1 ? "s" : ""}`];
+  for (const status of JOB_STATUSES) {
+    const n = summary.counts[status];
+    if (n > 0) parts.push(`${n} ${status}`);
+  }
+  return parts.join(" \xB7 ");
+}
+function useNamespaceSummaries(namespaces, activeNamespace, activityKey) {
+  const [summaries, setSummaries] = useState3({});
+  const mountedRef = useRef2(true);
+  const inflightRef = useRef2(/* @__PURE__ */ new Set());
+  useEffect3(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+  const fetchOne = useCallback2(async (nsId) => {
+    if (inflightRef.current.has(nsId)) return;
+    inflightRef.current.add(nsId);
+    try {
+      const res = await otFetch(`/api/jobs?namespace=${encodeURIComponent(nsId)}`);
+      if (!mountedRef.current) return;
+      if (!res.ok) {
+        setSummaries((prev) => ({
+          ...prev,
+          [nsId]: { total: 0, counts: emptyCounts(), error: `HTTP ${res.status}` }
+        }));
+        return;
+      }
+      const data = await res.json();
+      if (!mountedRef.current) return;
+      const summary = summarizeJobs(Array.isArray(data.jobs) ? data.jobs : []);
+      setSummaries((prev) => ({ ...prev, [nsId]: summary }));
+    } catch {
+      if (!mountedRef.current) return;
+      setSummaries((prev) => ({
+        ...prev,
+        [nsId]: { total: 0, counts: emptyCounts(), error: "unreachable" }
+      }));
+    } finally {
+      inflightRef.current.delete(nsId);
+    }
+  }, []);
+  const fetchAll = useCallback2(() => {
+    for (const ns of namespaces) void fetchOne(ns.id);
+  }, [namespaces, fetchOne]);
+  useEffect3(() => {
+    fetchAll();
+    const timer = setInterval(fetchAll, REFRESH_MS);
+    return () => clearInterval(timer);
+  }, [fetchAll]);
+  const firstRunRef = useRef2(true);
+  useEffect3(() => {
+    if (firstRunRef.current) {
+      firstRunRef.current = false;
+      return;
+    }
+    const timer = setTimeout(() => void fetchOne(activeNamespace), ACTIVITY_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [activityKey, activeNamespace, fetchOne]);
+  return summaries;
+}
+
+// src/ui/components/NamespaceTree.tsx
 import { jsx as jsx6, jsxs as jsxs6 } from "react/jsx-runtime";
-function NamespaceSelector({ namespace, namespaces, onNamespaceChange, isCompact }) {
+function initialsOf(label) {
+  return label.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
+}
+function NamespaceTree({ namespace, namespaces, summaries, onNamespaceChange, displayMode }) {
+  const isCompact = displayMode === "compact";
+  const [expanded, setExpanded] = useState4(!isCompact);
+  const [expandedNs, setExpandedNs] = useState4(null);
+  const [compactOpen, setCompactOpen] = useState4(false);
+  const grandTotal = namespaces.reduce(
+    (sum, ns) => sum + (summaries[ns.id]?.total ?? 0),
+    0
+  );
+  const loadedCount = namespaces.filter((ns) => summaries[ns.id] && !summaries[ns.id].error).length;
   if (isCompact) {
     const active = namespaces.find((n) => n.id === namespace);
-    const initials = active?.label.split(" ").map((w) => w[0]).join("").slice(0, 2) ?? "NS";
-    return /* @__PURE__ */ jsx6("div", { className: "namespace-selector namespace-selector--compact", title: active?.label ?? namespace, children: /* @__PURE__ */ jsx6("span", { className: "namespace-selector__initials", children: initials }) });
+    const activeSummary = summaries[namespace];
+    return /* @__PURE__ */ jsxs6("div", { className: "ns-tree ns-tree--compact", children: [
+      /* @__PURE__ */ jsxs6(
+        "button",
+        {
+          type: "button",
+          className: "ns-tree__chip",
+          onClick: () => setCompactOpen((v) => !v),
+          "aria-expanded": compactOpen,
+          title: active ? `${active.label}${activeSummary ? ` \u2014 ${summaryLine(activeSummary)}` : ""}` : namespace,
+          children: [
+            active ? initialsOf(active.label) : "NS",
+            activeSummary ? /* @__PURE__ */ jsx6("span", { className: "ns-tree__chip-count", children: activeSummary.total }) : null
+          ]
+        }
+      ),
+      compactOpen && /* @__PURE__ */ jsx6("ul", { className: "ns-tree__list", role: "tree", "aria-label": "All namespaces", children: namespaces.map((ns) => {
+        const summary = summaries[ns.id];
+        return /* @__PURE__ */ jsx6(
+          "li",
+          {
+            role: "treeitem",
+            "aria-selected": ns.id === namespace,
+            "data-namespace": ns.id,
+            className: ns.id === namespace ? "ns-tree__item ns-tree__item--active" : "ns-tree__item",
+            children: /* @__PURE__ */ jsxs6(
+              "button",
+              {
+                type: "button",
+                className: "ns-tree__row",
+                title: ns.label,
+                onClick: () => {
+                  onNamespaceChange(ns.id);
+                  setCompactOpen(false);
+                },
+                children: [
+                  /* @__PURE__ */ jsx6("span", { className: "ns-tree__compact-initials", children: initialsOf(ns.label) }),
+                  /* @__PURE__ */ jsx6("span", { className: "ns-tree__compact-count", children: summary?.total ?? "\u2026" })
+                ]
+              }
+            )
+          },
+          ns.id
+        );
+      }) })
+    ] });
   }
-  return /* @__PURE__ */ jsxs6("div", { className: "namespace-selector", role: "group", "aria-label": "Select namespace", children: [
-    /* @__PURE__ */ jsx6("label", { className: "namespace-selector__label", htmlFor: "namespace-select", children: "Namespace" }),
-    /* @__PURE__ */ jsx6(
-      "select",
+  const rootClass = isCompact ? "ns-tree ns-tree--compact" : displayMode === "extended" ? "ns-tree ns-tree--extended" : "ns-tree";
+  return /* @__PURE__ */ jsxs6("div", { className: rootClass, role: "tree", "aria-label": "Namespace tree", children: [
+    /* @__PURE__ */ jsxs6(
+      "button",
       {
-        id: "namespace-select",
-        className: "namespace-selector__select",
-        value: namespace,
-        onChange: (e) => onNamespaceChange(e.target.value),
-        "aria-label": "Select agent namespace",
-        children: namespaces.map((ns) => /* @__PURE__ */ jsx6("option", { value: ns.id, children: ns.label }, ns.id))
+        type: "button",
+        className: "ns-tree__root",
+        "aria-expanded": expanded,
+        onClick: () => setExpanded((v) => !v),
+        children: [
+          /* @__PURE__ */ jsx6("span", { className: expanded ? "ns-tree__chevron ns-tree__chevron--open" : "ns-tree__chevron", "aria-hidden": "true", children: expanded ? "\u25BE" : "\u25B8" }),
+          /* @__PURE__ */ jsx6("span", { className: "ns-tree__root-label", children: "All namespaces" }),
+          /* @__PURE__ */ jsx6("span", { className: "ns-tree__root-stats", children: loadedCount > 0 ? `${namespaces.length} worlds \xB7 ${grandTotal} tasks` : `${namespaces.length} worlds \xB7 \u2026` })
+        ]
       }
-    )
+    ),
+    expanded && /* @__PURE__ */ jsx6("ul", { className: "ns-tree__list", children: namespaces.map((ns) => {
+      const summary = summaries[ns.id];
+      const isActive = ns.id === namespace;
+      const nsExpanded = expandedNs === ns.id;
+      const line = summary ? summary.error ? "summary unavailable" : summaryLine(summary) : "\u2026";
+      return /* @__PURE__ */ jsxs6(
+        "li",
+        {
+          role: "treeitem",
+          "aria-expanded": nsExpanded,
+          "aria-selected": isActive,
+          "data-namespace": ns.id,
+          className: isActive ? "ns-tree__item ns-tree__item--active" : "ns-tree__item",
+          children: [
+            /* @__PURE__ */ jsxs6("div", { className: "ns-tree__row", children: [
+              /* @__PURE__ */ jsx6(
+                "button",
+                {
+                  type: "button",
+                  className: "ns-tree__chevron-btn",
+                  "aria-label": nsExpanded ? `Collapse ${ns.label} stats` : `Expand ${ns.label} stats`,
+                  onClick: () => setExpandedNs(nsExpanded ? null : ns.id),
+                  tabIndex: -1,
+                  children: /* @__PURE__ */ jsx6(
+                    "span",
+                    {
+                      className: nsExpanded ? "ns-tree__chevron ns-tree__chevron--open" : "ns-tree__chevron",
+                      "aria-hidden": "true",
+                      children: nsExpanded ? "\u25BE" : "\u25B8"
+                    }
+                  )
+                }
+              ),
+              /* @__PURE__ */ jsxs6(
+                "button",
+                {
+                  type: "button",
+                  className: "ns-tree__select",
+                  title: `${ns.label} \u2014 ${line}`,
+                  onClick: () => onNamespaceChange(ns.id),
+                  children: [
+                    /* @__PURE__ */ jsx6("span", { className: "ns-tree__label", children: ns.label }),
+                    /* @__PURE__ */ jsx6("span", { className: summary?.error ? "ns-tree__summary ns-tree__summary--error" : "ns-tree__summary", children: line })
+                  ]
+                }
+              )
+            ] }),
+            nsExpanded && /* @__PURE__ */ jsx6("ul", { className: "ns-tree__statuses", role: "group", "aria-label": `${ns.label} status breakdown`, children: summary && !summary.error ? JOB_STATUSES.map((status) => /* @__PURE__ */ jsxs6("li", { className: "ns-tree__status", children: [
+              /* @__PURE__ */ jsx6("span", { className: `ns-tree__status-name ns-tree__status-name--${status}`, children: status }),
+              /* @__PURE__ */ jsx6("span", { className: "ns-tree__status-count", children: summary.counts[status] })
+            ] }, status)) : /* @__PURE__ */ jsx6("li", { className: "ns-tree__status ns-tree__status--empty", children: summary ? "summary unavailable" : "loading\u2026" }) })
+          ]
+        },
+        ns.id
+      );
+    }) })
   ] });
 }
 
@@ -4724,11 +5086,11 @@ function getDisplayMode(width) {
   if (width <= 400) return "normal";
   return "extended";
 }
-function Sidebar({ jobs, activeSessionId, quote, wsState, onSelectSession, onAvatarClick, onOdinClick, onTogglePinSession, pinnedSessionIds, onCancelJob, terminatingSessionIds, namespace, namespaces, onNamespaceChange }) {
+function Sidebar({ jobs, activeSessionId, quote, wsState, onSelectSession, onAvatarClick, onOdinClick, onTogglePinSession, pinnedSessionIds, onCancelJob, terminatingSessionIds, namespace, namespaces, onNamespaceChange, namespaceSummaries }) {
   const { theme, setTheme: setTheme2 } = useTheme();
-  const [width, setWidth] = useState3(DEFAULT_WIDTH);
-  const navRef = useRef2(null);
-  useEffect3(() => {
+  const [width, setWidth] = useState5(DEFAULT_WIDTH);
+  const navRef = useRef3(null);
+  useEffect4(() => {
     const nav = navRef.current;
     if (!nav) return;
     const ro = new ResizeObserver((entries) => {
@@ -4787,12 +5149,13 @@ function Sidebar({ jobs, activeSessionId, quote, wsState, onSelectSession, onAva
             ] })
           ] }),
           /* @__PURE__ */ jsx7(
-            NamespaceSelector,
+            NamespaceTree,
             {
               namespace,
               namespaces,
+              summaries: namespaceSummaries,
               onNamespaceChange,
-              isCompact
+              displayMode
             }
           )
         ] }),
@@ -4828,12 +5191,12 @@ function Sidebar({ jobs, activeSessionId, quote, wsState, onSelectSession, onAva
 }
 
 // src/ui/components/AgentProfileModal.tsx
-import { useEffect as useEffect4, useRef as useRef3 } from "react";
+import { useEffect as useEffect5, useRef as useRef4 } from "react";
 import { jsx as jsx8, jsxs as jsxs8 } from "react/jsx-runtime";
 var ELDER_FUTHARK = "\u16A0 \u16A2 \u16A6 \u16A8 \u16B1 \u16B2 \u16B7 \u16B9 \u16BA \u16BE \u16C1 \u16C3 \u16C7 \u16C8 \u16C9 \u16CA \u16CF \u16D2 \u16D6 \u16D7 \u16DA \u16DC \u16DE \u16DF";
 function AgentProfileModal({ agentKey, theme, onClose }) {
-  const closeButtonRef = useRef3(null);
-  const backdropRef = useRef3(null);
+  const closeButtonRef = useRef4(null);
+  const backdropRef = useRef4(null);
   const name = AGENT_NAMES[agentKey] ?? agentKey;
   const title = AGENT_TITLES[agentKey] ?? "";
   const runes = AGENT_RUNE_NAMES[agentKey] ?? AGENT_RUNE_NAMES._fallback ?? "";
@@ -4841,16 +5204,16 @@ function AgentProfileModal({ agentKey, theme, onClose }) {
   const description = AGENT_DESCRIPTIONS[agentKey] ?? "";
   const accent = AGENT_COLORS[agentKey] ?? "var(--gold)";
   const portrait = theme === "light" ? AGENT_LIGHT_AVATARS[agentKey] ?? AGENT_AVATARS[agentKey] : AGENT_AVATARS[agentKey] ?? AGENT_LIGHT_AVATARS[agentKey];
-  useEffect4(() => {
+  useEffect5(() => {
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = "";
     };
   }, []);
-  useEffect4(() => {
+  useEffect5(() => {
     closeButtonRef.current?.focus();
   }, []);
-  useEffect4(() => {
+  useEffect5(() => {
     const handleKeyDown = (e) => {
       if (e.key === "Escape") onClose();
     };
@@ -4939,17 +5302,17 @@ function AgentProfileModal({ agentKey, theme, onClose }) {
 }
 
 // src/ui/components/RagnarokDialog.tsx
-import { useEffect as useEffect5, useRef as useRef4, useState as useState4 } from "react";
+import { useEffect as useEffect6, useRef as useRef5, useState as useState6 } from "react";
 import { jsx as jsx9, jsxs as jsxs9 } from "react/jsx-runtime";
 function RagnarokDialog({ sessionId, jobTitle, onConfirm, onCancel }) {
-  const [isLoading, setIsLoading] = useState4(false);
-  const [error, setError] = useState4(null);
-  const confirmRef = useRef4(null);
-  const cancelRef = useRef4(null);
-  useEffect5(() => {
+  const [isLoading, setIsLoading] = useState6(false);
+  const [error, setError] = useState6(null);
+  const confirmRef = useRef5(null);
+  const cancelRef = useRef5(null);
+  useEffect6(() => {
     cancelRef.current?.focus();
   }, []);
-  useEffect5(() => {
+  useEffect6(() => {
     const onKey = (e) => {
       if (e.key === "Escape" && !isLoading) onCancel();
     };
@@ -5030,11 +5393,11 @@ function RagnarokDialog({ sessionId, jobTitle, onConfirm, onCancel }) {
 }
 
 // src/ui/components/Toast.tsx
-import { useEffect as useEffect6, useState as useState5 } from "react";
+import { useEffect as useEffect7, useState as useState7 } from "react";
 import { jsx as jsx10, jsxs as jsxs10 } from "react/jsx-runtime";
 function Toast({ message, onDismiss, duration = 4e3 }) {
-  const [exiting, setExiting] = useState5(false);
-  useEffect6(() => {
+  const [exiting, setExiting] = useState7(false);
+  useEffect7(() => {
     const exitTimer = setTimeout(() => setExiting(true), duration - 400);
     const dismissTimer = setTimeout(onDismiss, duration);
     return () => {
@@ -5081,23 +5444,23 @@ function ErrorBanner({ message }) {
 }
 
 // src/ui/App.tsx
-import { useCallback as useCallback6, useEffect as useEffect9, useMemo, useRef as useRef7, useState as useState10 } from "react";
+import { useCallback as useCallback7, useEffect as useEffect10, useMemo, useRef as useRef8, useState as useState12 } from "react";
 import { host } from "@hermes/plugin-sdk";
 
 // src/ui/hooks/useWebSocket.ts
-import { useEffect as useEffect7, useRef as useRef5, useCallback as useCallback2, useState as useState6 } from "react";
+import { useEffect as useEffect8, useRef as useRef6, useCallback as useCallback3, useState as useState8 } from "react";
 var MAX_RECONNECT = 10;
 var BASE_DELAY_MS = 1e3;
 function useWebSocket(onMessage, namespace = "fenrir-agents") {
-  const wsRef = useRef5(null);
-  const reconnectCount = useRef5(0);
-  const reconnectTimer = useRef5(null);
-  const onMessageRef = useRef5(onMessage);
+  const wsRef = useRef6(null);
+  const reconnectCount = useRef6(0);
+  const reconnectTimer = useRef6(null);
+  const onMessageRef = useRef6(onMessage);
   onMessageRef.current = onMessage;
-  const connectedNamespaceRef = useRef5(null);
-  const [state, setState] = useState6("connecting");
-  const [error, setError] = useState6(null);
-  const connect = useCallback2((ns) => {
+  const connectedNamespaceRef = useRef6(null);
+  const [state, setState] = useState8("connecting");
+  const [error, setError] = useState8(null);
+  const connect = useCallback3((ns) => {
     if (connectedNamespaceRef.current === ns && (wsRef.current?.readyState === WebSocket.OPEN || wsRef.current?.readyState === WebSocket.CONNECTING)) return;
     if (wsRef.current) {
       wsRef.current.onclose = null;
@@ -5134,9 +5497,9 @@ function useWebSocket(onMessage, namespace = "fenrir-agents") {
       setError("WebSocket connection lost \u2014 reconnecting\u2026");
     });
   }, []);
-  const namespaceRef = useRef5(namespace);
+  const namespaceRef = useRef6(namespace);
   namespaceRef.current = namespace;
-  const scheduleReconnect = useCallback2(() => {
+  const scheduleReconnect = useCallback3(() => {
     if (reconnectCount.current >= MAX_RECONNECT) {
       setError(`WebSocket failed after ${MAX_RECONNECT} attempts. Reload to retry.`);
       return;
@@ -5148,12 +5511,12 @@ function useWebSocket(onMessage, namespace = "fenrir-agents") {
       connect(namespaceRef.current);
     }, delay);
   }, [connect]);
-  const send = useCallback2((msg) => {
+  const send = useCallback3((msg) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify(msg));
     }
   }, []);
-  useEffect7(() => {
+  useEffect8(() => {
     reconnectCount.current = 0;
     connect(namespace);
     return () => {
@@ -5170,7 +5533,7 @@ function useWebSocket(onMessage, namespace = "fenrir-agents") {
 }
 
 // src/ui/hooks/useNamespace.ts
-import { useState as useState7, useCallback as useCallback3, useEffect as useEffect8 } from "react";
+import { useState as useState9, useCallback as useCallback4, useEffect as useEffect9 } from "react";
 var STORAGE_KEY2 = "hlidskjalf:namespace";
 var DEFAULT_NAMESPACE = "fenrir-agents";
 function loadNamespace() {
@@ -5188,15 +5551,15 @@ function saveNamespace(ns) {
   }
 }
 function useNamespace() {
-  const [namespace, setNamespaceState] = useState7(loadNamespace);
-  const [namespaces, setNamespaces] = useState7([
+  const [namespace, setNamespaceState] = useState9(loadNamespace);
+  const [namespaces, setNamespaces] = useState9([
     { id: "fenrir-agents", label: "Fenrir Ledger Agents" },
     { id: "say-so-agents", label: "SaySo Agents" },
     { id: "mytruthfinder-agents", label: "MyTruthFinder Agents" },
     { id: "shanaghy-com-agents", label: "Shanaghy.com Agents" },
     { id: "re-goatmower-agents", label: "Re-Goatmower Agents" }
   ]);
-  useEffect8(() => {
+  useEffect9(() => {
     otFetch("/api/namespaces").then((res) => res.json()).then((data) => {
       if (Array.isArray(data.namespaces) && data.namespaces.length > 0) {
         setNamespaces(data.namespaces);
@@ -5213,7 +5576,7 @@ function useNamespace() {
     }).catch(() => {
     });
   }, []);
-  const setNamespace = useCallback3((ns) => {
+  const setNamespace = useCallback4((ns) => {
     saveNamespace(ns);
     setNamespaceState(ns);
   }, []);
@@ -5221,7 +5584,7 @@ function useNamespace() {
 }
 
 // src/ui/hooks/useJobs.ts
-import { useState as useState8, useCallback as useCallback4 } from "react";
+import { useState as useState10, useCallback as useCallback5 } from "react";
 var STATUS_PRIORITY = {
   running: 0,
   pending: 1,
@@ -5281,10 +5644,10 @@ function buildCachedJobs(liveIds) {
   return result;
 }
 function useJobs() {
-  const [jobs, setJobs] = useState8(() => {
+  const [jobs, setJobs] = useState10(() => {
     return buildCachedJobs(/* @__PURE__ */ new Set());
   });
-  const handleMessage = useCallback4((msg) => {
+  const handleMessage = useCallback5((msg) => {
     if (msg.type === "jobs-snapshot" || msg.type === "jobs-updated") {
       const live = (msg.jobs || []).filter((j) => j.status !== "purged").map(parseJob);
       const liveIds = new Set(live.map((j) => j.sessionId));
@@ -5293,7 +5656,7 @@ function useJobs() {
       setJobs(all);
     }
   }, []);
-  const refreshCached = useCallback4(() => {
+  const refreshCached = useCallback5(() => {
     setJobs((prev) => {
       const liveIds = new Set(
         prev.filter((j) => j.status !== "cached").map((j) => j.sessionId)
@@ -5307,7 +5670,7 @@ function useJobs() {
 }
 
 // src/ui/hooks/useLogStream.ts
-import { useState as useState9, useCallback as useCallback5, useRef as useRef6 } from "react";
+import { useState as useState11, useCallback as useCallback6, useRef as useRef7 } from "react";
 
 // src/ui/lib/jsonl.ts
 function stripK8sTimestamp(line) {
@@ -5607,36 +5970,36 @@ var TTL_ERROR_PATTERN = /TTL expired|cleaned up/i;
 var NODE_UNREACHABLE_PATTERN = /Node unreachable|kubelet timeout/i;
 var POD_NOT_READY_PATTERN = /HTTP-Code:\s*400|is not running|container.*not running/i;
 function useLogStream() {
-  const [entries, setEntries] = useState9([]);
-  const [activeSessionId, _setActiveSessionId] = useState9(null);
-  const activeSessionIdRef = useRef6(null);
-  const [streamError, setStreamError] = useState9(null);
-  const [streamEnded, setStreamEnded] = useState9(false);
-  const [replayedFromCache, setReplayedFromCache] = useState9(false);
-  const [isConnecting, _setIsConnecting] = useState9(false);
-  const isConnectingRef = useRef6(false);
-  const [isPodStarting, _setIsPodStarting] = useState9(false);
-  const isPodStartingRef = useRef6(false);
-  const replayFromCacheRef = useRef6(null);
-  const taskPromptBuffer = useRef6([]);
-  const inTaskPrompt = useRef6(false);
-  const inEntrypoint = useRef6(false);
-  const hasEmittedTaskPrompt = useRef6(false);
-  const seenAssistantTurn = useRef6(false);
-  const liveSkipRef = useRef6(0);
-  const setIsConnecting = useCallback5((v) => {
+  const [entries, setEntries] = useState11([]);
+  const [activeSessionId, _setActiveSessionId] = useState11(null);
+  const activeSessionIdRef = useRef7(null);
+  const [streamError, setStreamError] = useState11(null);
+  const [streamEnded, setStreamEnded] = useState11(false);
+  const [replayedFromCache, setReplayedFromCache] = useState11(false);
+  const [isConnecting, _setIsConnecting] = useState11(false);
+  const isConnectingRef = useRef7(false);
+  const [isPodStarting, _setIsPodStarting] = useState11(false);
+  const isPodStartingRef = useRef7(false);
+  const replayFromCacheRef = useRef7(null);
+  const taskPromptBuffer = useRef7([]);
+  const inTaskPrompt = useRef7(false);
+  const inEntrypoint = useRef7(false);
+  const hasEmittedTaskPrompt = useRef7(false);
+  const seenAssistantTurn = useRef7(false);
+  const liveSkipRef = useRef7(0);
+  const setIsConnecting = useCallback6((v) => {
     isConnectingRef.current = v;
     _setIsConnecting(v);
   }, []);
-  const setIsPodStarting = useCallback5((v) => {
+  const setIsPodStarting = useCallback6((v) => {
     isPodStartingRef.current = v;
     _setIsPodStarting(v);
   }, []);
-  const setActiveSessionId = useCallback5((id) => {
+  const setActiveSessionId = useCallback6((id) => {
     activeSessionIdRef.current = id;
     _setActiveSessionId(id);
   }, []);
-  const clearEntries = useCallback5(() => {
+  const clearEntries = useCallback6(() => {
     setEntries([]);
     entryCounter = 0;
     liveSkipRef.current = 0;
@@ -5652,10 +6015,10 @@ function useLogStream() {
     setIsPodStarting(false);
     setIsConnecting(true);
   }, [setIsConnecting, setIsPodStarting]);
-  const setLiveSkipCount = useCallback5((n) => {
+  const setLiveSkipCount = useCallback6((n) => {
     liveSkipRef.current = n;
   }, []);
-  const processEvent = useCallback5((ev) => {
+  const processEvent = useCallback6((ev) => {
     if (ev.type === "system") {
       let detail = ev.subtype || "";
       if (ev.subtype === "init") {
@@ -5829,7 +6192,7 @@ function useLogStream() {
       { id: nextId(), type: "raw", text: JSON.stringify(ev).slice(0, 200) }
     ]);
   }, []);
-  const processRawLogLine = useCallback5((line) => {
+  const processRawLogLine = useCallback6((line) => {
     const ev = parseJsonlLine(line);
     if (!ev) {
       if (line.trim()) {
@@ -5906,7 +6269,7 @@ function useLogStream() {
     }
     processEvent(ev);
   }, [processEvent]);
-  const handleMessage = useCallback5((msg) => {
+  const handleMessage = useCallback6((msg) => {
     if (msg.type === "log-line") {
       const line = msg.line;
       if (liveSkipRef.current > 0) {
@@ -5964,7 +6327,7 @@ function useLogStream() {
       ]);
     }
   }, [processRawLogLine, setIsConnecting, setIsPodStarting]);
-  const showPodStartTimeout = useCallback5(() => {
+  const showPodStartTimeout = useCallback6(() => {
     setIsPodStarting(false);
     setIsConnecting(false);
     const msg = "Agent pod failed to start \u2014 check cluster status";
@@ -5974,7 +6337,7 @@ function useLogStream() {
       { id: nextId(), type: "error", message: msg }
     ]);
   }, [setIsConnecting, setIsPodStarting]);
-  const replayFromCache = useCallback5((sessionId) => {
+  const replayFromCache = useCallback6((sessionId) => {
     const content = getCachedLog(sessionId);
     if (!content) return;
     if (isConnectingRef.current) {
@@ -5992,7 +6355,7 @@ function useLogStream() {
     ]);
   }, [processRawLogLine, setIsConnecting]);
   replayFromCacheRef.current = replayFromCache;
-  const replayFromTempLog = useCallback5((sessionId) => {
+  const replayFromTempLog = useCallback6((sessionId) => {
     const content = getLog(sessionId);
     if (!content) return 0;
     const lines = content.split("\n").filter((l) => l.trim());
@@ -6060,9 +6423,14 @@ function App() {
   const quote = useMemo(() => randomQuote(), []);
   const { theme } = useTheme();
   const { namespace, namespaces, setNamespace } = useNamespace();
-  const [profileAgent, setProfileAgent] = useState10(null);
-  const [cancelTarget, setCancelTarget] = useState10(null);
+  const [profileAgent, setProfileAgent] = useState12(null);
+  const [cancelTarget, setCancelTarget] = useState12(null);
   const { jobs, handleMessage: handleJobsMessage, refreshCached } = useJobs();
+  const jobsActivityKey = useMemo(
+    () => jobs.map((j) => `${j.sessionId}:${j.status}`).join("|"),
+    [jobs]
+  );
+  const namespaceSummaries = useNamespaceSummaries(namespaces, namespace, jobsActivityKey);
   const {
     entries,
     activeSessionId,
@@ -6080,14 +6448,14 @@ function App() {
     isPodStarting,
     showPodStartTimeout
   } = useLogStream();
-  const subscribedSessionRef = useRef7(null);
-  const backgroundSubsRef = useRef7(/* @__PURE__ */ new Set());
-  useEffect9(() => {
+  const subscribedSessionRef = useRef8(null);
+  const backgroundSubsRef = useRef8(/* @__PURE__ */ new Set());
+  useEffect10(() => {
     migrateRemoveDuplicateLogs();
     evictExpiredLogs();
   }, []);
-  const prevNamespaceRef = useRef7(namespace);
-  useEffect9(() => {
+  const prevNamespaceRef = useRef8(namespace);
+  useEffect10(() => {
     if (prevNamespaceRef.current === namespace) return;
     prevNamespaceRef.current = namespace;
     if (subscribedSessionRef.current) {
@@ -6097,12 +6465,12 @@ function App() {
     setActiveSessionId(null);
     clearEntries();
   }, [namespace, setActiveSessionId, clearEntries]);
-  const [isFixture, setIsFixture] = useState10(false);
-  const [pinnedSessionId, setPinnedSessionId] = useState10(null);
-  const [storageWarning, setStorageWarning] = useState10(null);
-  const [toast, setToast] = useState10(null);
-  const [terminatingSessionIds, setTerminatingSessionIds] = useState10(/* @__PURE__ */ new Set());
-  useEffect9(() => {
+  const [isFixture, setIsFixture] = useState12(false);
+  const [pinnedSessionId, setPinnedSessionId] = useState12(null);
+  const [storageWarning, setStorageWarning] = useState12(null);
+  const [toast, setToast] = useState12(null);
+  const [terminatingSessionIds, setTerminatingSessionIds] = useState12(/* @__PURE__ */ new Set());
+  useEffect10(() => {
     if (activeSessionId) {
       setPinnedSessionId(isPinned(activeSessionId) ? activeSessionId : null);
     } else {
@@ -6114,7 +6482,7 @@ function App() {
     () => new Set(jobs.filter((j) => isPinned(j.sessionId)).map((j) => j.sessionId)),
     [jobs]
   );
-  const onMessage = useCallback6(
+  const onMessage = useCallback7(
     (msg) => {
       handleJobsMessage(msg);
       if (msg.type === "fixture-start" && "sessionId" in msg && msg.sessionId === activeSessionId) {
@@ -6138,7 +6506,7 @@ function App() {
     [handleJobsMessage, handleLogMessage, activeSessionId]
   );
   const { state: wsState, error: wsError, send } = useWebSocket(onMessage, namespace);
-  const handleSelectSession = useCallback6(
+  const handleSelectSession = useCallback7(
     (sessionId) => {
       const currentSub = subscribedSessionRef.current;
       if (currentSub !== null && currentSub !== sessionId) {
@@ -6178,7 +6546,7 @@ function App() {
     },
     [send, setActiveSessionId, clearEntries, replayFromCache, replayFromTempLog, setLiveSkipCount, jobs]
   );
-  useEffect9(() => {
+  useEffect10(() => {
     return () => {
       if (subscribedSessionRef.current) {
         send({ type: "unsubscribe", sessionId: subscribedSessionRef.current });
@@ -6188,12 +6556,12 @@ function App() {
       }
     };
   }, [send]);
-  const isTtlExpiredRef = useRef7(isTtlExpired);
+  const isTtlExpiredRef = useRef8(isTtlExpired);
   isTtlExpiredRef.current = isTtlExpired;
-  const isNodeUnreachableRef = useRef7(isNodeUnreachable);
+  const isNodeUnreachableRef = useRef8(isNodeUnreachable);
   isNodeUnreachableRef.current = isNodeUnreachable;
-  const prevWsState = useRef7(wsState);
-  useEffect9(() => {
+  const prevWsState = useRef8(wsState);
+  useEffect10(() => {
     const wasDisconnected = prevWsState.current !== "open";
     prevWsState.current = wsState;
     if (wsState === "open" && wasDisconnected && activeSessionId && !isTtlExpiredRef.current && !isNodeUnreachableRef.current) {
@@ -6208,8 +6576,8 @@ function App() {
       send({ type: "subscribe", sessionId: activeSessionId });
     }
   }, [wsState, activeSessionId, send, clearEntries, replayFromTempLog, setLiveSkipCount, jobs]);
-  const podStartBeginRef = useRef7(null);
-  useEffect9(() => {
+  const podStartBeginRef = useRef8(null);
+  useEffect10(() => {
     if (!isPodStarting || !activeSessionId) {
       podStartBeginRef.current = null;
       return;
@@ -6229,7 +6597,7 @@ function App() {
     return () => clearInterval(intervalId);
   }, [isPodStarting, activeSessionId, send, showPodStartTimeout]);
   const activeJob = jobs.find((j) => j.sessionId === activeSessionId) || null;
-  const handleTogglePinForSession = useCallback6(
+  const handleTogglePinForSession = useCallback7(
     (sessionId) => {
       const job = jobs.find((j) => j.sessionId === sessionId);
       if (!job) return;
@@ -6267,11 +6635,11 @@ function App() {
     },
     [jobs, activeSessionId, refreshCached, send]
   );
-  const handleTogglePin = useCallback6(() => {
+  const handleTogglePin = useCallback7(() => {
     if (!activeSessionId) return;
     handleTogglePinForSession(activeSessionId);
   }, [activeSessionId, handleTogglePinForSession]);
-  const handleOpenCancelDialog = useCallback6(
+  const handleOpenCancelDialog = useCallback7(
     (sessionId) => {
       const job = jobs.find((j) => j.sessionId === sessionId);
       if (!job || job.status !== "running") return;
@@ -6280,7 +6648,7 @@ function App() {
     },
     [jobs]
   );
-  const handleConfirmCancel = useCallback6(async () => {
+  const handleConfirmCancel = useCallback7(async () => {
     if (!cancelTarget) return;
     const res = await otFetch(`/api/jobs/${encodeURIComponent(cancelTarget.sessionId)}`, { method: "DELETE" });
     if (!res.ok) {
@@ -6309,6 +6677,7 @@ function App() {
     namespace,
     namespaces,
     setNamespace,
+    namespaceSummaries,
     entries,
     activeJob,
     isFixture,
@@ -6341,7 +6710,7 @@ function App() {
     dismissToast: () => setToast(null),
     storageWarning
   };
-  useEffect9(() => {
+  useEffect10(() => {
     throneStore.publish(snapshot2);
   });
   return null;
@@ -6370,7 +6739,7 @@ async function openExternal(url) {
 }
 
 // src/settings.tsx
-import { useState as useState11, useSyncExternalStore as useSyncExternalStore3 } from "react";
+import { useState as useState13, useSyncExternalStore as useSyncExternalStore3 } from "react";
 import { host as host2 } from "@hermes/plugin-sdk";
 import { jsx as jsx11, jsxs as jsxs12 } from "react/jsx-runtime";
 var open = false;
@@ -6409,8 +6778,8 @@ var inputStyle = {
   fontSize: "0.78rem"
 };
 function ThroneSettings() {
-  const [url, setUrl] = useState11(getUpstreamUrl());
-  const [saving, setSaving] = useState11(false);
+  const [url, setUrl] = useState13(getUpstreamUrl());
+  const [saving, setSaving] = useState13(false);
   const paired = isConfigured();
   async function save() {
     setSaving(true);
@@ -6494,7 +6863,8 @@ function SidebarConnected() {
       terminatingSessionIds: snap.terminatingSessionIds,
       namespace: snap.namespace,
       namespaces: snap.namespaces,
-      onNamespaceChange: snap.setNamespace
+      onNamespaceChange: snap.setNamespace,
+      namespaceSummaries: snap.namespaceSummaries
     }
   );
 }
@@ -6532,10 +6902,10 @@ function ThroneOverlays() {
   ] });
 }
 function PairingCard() {
-  const [code, setCode] = useState12("");
-  const [error, setError] = useState12(null);
-  const [busy, setBusy] = useState12(false);
-  const [opened, setOpened] = useState12(false);
+  const [code, setCode] = useState14("");
+  const [error, setError] = useState14(null);
+  const [busy, setBusy] = useState14(false);
+  const [opened, setOpened] = useState14(false);
   async function openBrowser() {
     setError(null);
     const ok = await openExternal(pairingUrl());
@@ -6620,13 +6990,13 @@ function ThronePane() {
 }
 
 // src/ui/components/LogViewer.tsx
-import { useEffect as useEffect10, useRef as useRef8, useState as useState15, useCallback as useCallback7, useMemo as useMemo3 } from "react";
+import { useEffect as useEffect11, useRef as useRef9, useState as useState17, useCallback as useCallback8, useMemo as useMemo3 } from "react";
 
 // src/ui/components/ToolBlock.tsx
-import { useState as useState13 } from "react";
+import { useState as useState15 } from "react";
 import { jsx as jsx13, jsxs as jsxs14 } from "react/jsx-runtime";
 function ToolBlock({ entry, collapseCount }) {
-  const [open2, setOpen] = useState13(false);
+  const [open2, setOpen] = useState15(false);
   const cls = toolBadgeClass(entry.toolName || "");
   let parsedInput;
   try {
@@ -7029,7 +7399,7 @@ function NorseVerdictInscription({ text, agentKey, agentName }) {
 }
 
 // src/ui/components/DecreeBlock.tsx
-import { useState as useState14 } from "react";
+import { useState as useState16 } from "react";
 import { Fragment as Fragment5, jsx as jsx16, jsxs as jsxs17 } from "react/jsx-runtime";
 var DECREE_START_RE = /᛭᛭᛭\s*DECREE COMPLETE\s*᛭᛭᛭/;
 var DECREE_END_RE = /᛭᛭᛭\s*END DECREE\s*᛭᛭᛭/;
@@ -7200,8 +7570,8 @@ function DecreeBlock({ text, agentKey: jobAgentKey, onAvatarClick }) {
   const agentColor = AGENT_COLORS[agentKey] ?? "#c9920a";
   const avatarMap = theme === "light" ? AGENT_LIGHT_AVATARS : AGENT_AVATARS;
   const avatar = avatarMap[agentKey];
-  const [summaryOpen, setSummaryOpen] = useState14(true);
-  const [checksOpen, setChecksOpen] = useState14(true);
+  const [summaryOpen, setSummaryOpen] = useState16(true);
+  const [checksOpen, setChecksOpen] = useState16(true);
   const isPass = /^(PASS|DONE|DELIVERED|APPROVED|SECURED)$/i.test(decree.verdict);
   const isFail = /^FAIL$/i.test(decree.verdict);
   const verdictColor = isFail ? "var(--error-strong)" : isPass ? "var(--gold-bright)" : "var(--text-rune)";
@@ -7521,10 +7891,10 @@ function groupConsecutiveEntries(entries) {
 }
 function SessionHeader({ job, isPinned: isPinned2 = false, onTogglePin, showPin = true, replayedFromCache = false, onCancelJob }) {
   const displayTitle = resolveSessionTitle(job);
-  const [confirmingUnpin, setConfirmingUnpin] = useState15(false);
+  const [confirmingUnpin, setConfirmingUnpin] = useState17(false);
   const { theme } = useTheme();
   const statusColorMap = theme === "light" ? STATUS_COLORS_LIGHT : STATUS_COLORS;
-  useEffect10(() => {
+  useEffect11(() => {
     setConfirmingUnpin(false);
   }, [isPinned2]);
   return /* @__PURE__ */ jsxs18(
@@ -7647,13 +8017,13 @@ function SessionHeader({ job, isPinned: isPinned2 = false, onTogglePin, showPin 
   );
 }
 function LogViewer({ entries, activeJob, isFixture, isTtlExpired, isNodeUnreachable, streamError, onSetSpeed, isPinned: isPinned2, onTogglePin, onAvatarClick, replayedFromCache, isConnecting, isPodStarting, onCancelJob }) {
-  const termRef = useRef8(null);
-  const [fixtureSpeed, setFixtureSpeed] = useState15(1);
-  const [fixturePaused, setFixturePaused] = useState15(false);
-  const [autoScroll, setAutoScroll] = useState15(true);
-  const programmaticScrollRef = useRef8(false);
+  const termRef = useRef9(null);
+  const [fixtureSpeed, setFixtureSpeed] = useState17(1);
+  const [fixturePaused, setFixturePaused] = useState17(false);
+  const [autoScroll, setAutoScroll] = useState17(true);
+  const programmaticScrollRef = useRef9(false);
   const lastEntryId = entries[entries.length - 1]?.id;
-  useEffect10(() => {
+  useEffect11(() => {
     if (autoScroll && termRef.current) {
       programmaticScrollRef.current = true;
       requestAnimationFrame(() => {
@@ -7663,11 +8033,11 @@ function LogViewer({ entries, activeJob, isFixture, isTtlExpired, isNodeUnreacha
       });
     }
   }, [entries.length, lastEntryId, autoScroll]);
-  useEffect10(() => {
+  useEffect11(() => {
     setAutoScroll(true);
     programmaticScrollRef.current = false;
   }, [activeJob?.sessionId]);
-  const handleScroll = useCallback7(() => {
+  const handleScroll = useCallback8(() => {
     if (programmaticScrollRef.current) {
       programmaticScrollRef.current = false;
       return;
@@ -7681,7 +8051,7 @@ function LogViewer({ entries, activeJob, isFixture, isTtlExpired, isNodeUnreacha
       setAutoScroll(false);
     }
   }, []);
-  const toggleAutoScroll = useCallback7(() => {
+  const toggleAutoScroll = useCallback8(() => {
     setAutoScroll((prev) => {
       if (!prev && termRef.current) {
         programmaticScrollRef.current = true;
@@ -8011,25 +8381,25 @@ function AgentBubble({
   ] });
 }
 function ToolBatchGroup({ entry, autoScroll, isLatestBatch }) {
-  const [open2, setOpen] = useState15(() => !autoScroll || !!isLatestBatch);
+  const [open2, setOpen] = useState17(() => !autoScroll || !!isLatestBatch);
   const hasError = entry.children?.some((c) => c.toolIsError) ?? false;
-  const prevCompleteRef = useRef8(entry.complete);
-  const prevIsLatestRef = useRef8(isLatestBatch);
-  const prevAutoScrollRef = useRef8(autoScroll);
-  useEffect10(() => {
+  const prevCompleteRef = useRef9(entry.complete);
+  const prevIsLatestRef = useRef9(isLatestBatch);
+  const prevAutoScrollRef = useRef9(autoScroll);
+  useEffect11(() => {
     if (entry.complete && !prevCompleteRef.current) {
       prevCompleteRef.current = true;
       setOpen(false);
     }
   }, [entry.complete]);
-  useEffect10(() => {
+  useEffect11(() => {
     const wasLatest = prevIsLatestRef.current;
     prevIsLatestRef.current = isLatestBatch;
     if (wasLatest && !isLatestBatch && autoScroll) {
       setOpen(false);
     }
   }, [isLatestBatch, autoScroll]);
-  useEffect10(() => {
+  useEffect11(() => {
     const wasAutoScroll = prevAutoScrollRef.current;
     prevAutoScrollRef.current = autoScroll;
     if (!wasAutoScroll && autoScroll && !isLatestBatch) {
@@ -8218,7 +8588,7 @@ function DecreeSectionBody({ body }) {
   return /* @__PURE__ */ jsx17(Fragment6, { children: elements });
 }
 function DecreeSection({ glyph, title, body, defaultOpen, wide }) {
-  const [open2, setOpen] = useState15(defaultOpen);
+  const [open2, setOpen] = useState17(defaultOpen);
   return /* @__PURE__ */ jsxs18("div", { className: `decree-section ${open2 ? "open" : ""}${wide ? " decree-wide" : ""}`, children: [
     /* @__PURE__ */ jsxs18(
       "div",
@@ -8245,8 +8615,8 @@ function DecreeSection({ glyph, title, body, defaultOpen, wide }) {
   ] });
 }
 function NorseTablet({ text, autoScroll }) {
-  const [open2, setOpen] = useState15(true);
-  const [hasBeenCollapsed, setHasBeenCollapsed] = useState15(false);
+  const [open2, setOpen] = useState17(true);
+  const [hasBeenCollapsed, setHasBeenCollapsed] = useState17(false);
   const agentMatch = /^You are (\w+)/m.exec(text);
   const agent = agentMatch?.[1] ?? "Agent";
   const agentKey = agent.toLowerCase();
@@ -8258,7 +8628,7 @@ function NorseTablet({ text, autoScroll }) {
   const agentColor = AGENT_COLORS[agentKey] ?? "#888";
   const agentTitle = AGENT_TITLES[agentKey] ?? "Agent";
   const agentDisplayName = AGENT_NAMES[agentKey] ?? agent;
-  useEffect10(() => {
+  useEffect11(() => {
     if (!autoScroll || hasBeenCollapsed) return;
     const timer = setTimeout(() => {
       setOpen(false);
@@ -8390,7 +8760,7 @@ function CheckIcon() {
   return /* @__PURE__ */ jsx17("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "none", "aria-hidden": "true", children: /* @__PURE__ */ jsx17("path", { d: "M2 7l4 4 6-6", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" }) });
 }
 function CopySessionIdButton({ sessionId }) {
-  const [copied, setCopied] = useState15(false);
+  const [copied, setCopied] = useState17(false);
   async function handleCopy() {
     try {
       await navigator.clipboard.writeText(sessionId);
@@ -8434,7 +8804,7 @@ function DownloadSessionButton({ sessionId }) {
   );
 }
 function StartupBlock({ group }) {
-  const [open2, setOpen] = useState15(false);
+  const [open2, setOpen] = useState17(false);
   const modelEntry = group.metaEntries.find((e) => /^Model:\s*/.test(e.text ?? ""));
   const sessionEntry = group.metaEntries.find((e) => /^Session:\s*/.test(e.text ?? ""));
   const model = modelEntry?.text?.replace(/^Model:\s*/, "").trim() ?? "";
@@ -8475,8 +8845,8 @@ function StartupBlock({ group }) {
   ] });
 }
 function EntrypointGroup({ entry }) {
-  const [open2, setOpen] = useState15(false);
-  const [noiseOpen, setNoiseOpen] = useState15(false);
+  const [open2, setOpen] = useState17(false);
+  const [noiseOpen, setNoiseOpen] = useState17(false);
   const children = entry.children ?? [];
   const infoItems = children.filter((c) => c.type === "entrypoint-info");
   const okItems = children.filter((c) => c.type === "entrypoint-ok");

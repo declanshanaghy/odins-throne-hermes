@@ -2,10 +2,11 @@ import { useState, useRef, useEffect } from "react";
 import type { DisplayJob } from "../lib/types";
 import { useTheme } from "../hooks/useTheme";
 import type { NamespaceOption } from "../hooks/useNamespace";
+import type { NamespaceSummaries } from "../hooks/useNamespaceSummaries";
 import { JobCard } from "./JobCard";
 import { ThemeSwitcher } from "./ThemeSwitcher";
 import { StatusBadge } from "./StatusBadge";
-import { NamespaceSelector } from "./NamespaceSelector";
+import { NamespaceTree } from "./NamespaceTree";
 import odinLight from "../../assets/profiles/odin-light.png";
 import odinDark from "../../assets/profiles/odin-dark.png";
 
@@ -37,9 +38,10 @@ interface Props {
   namespace: string;
   namespaces: NamespaceOption[];
   onNamespaceChange: (ns: string) => void;
+  namespaceSummaries: NamespaceSummaries;
 }
 
-export function Sidebar({ jobs, activeSessionId, quote, wsState, onSelectSession, onAvatarClick, onOdinClick, onTogglePinSession, pinnedSessionIds, onCancelJob, terminatingSessionIds, namespace, namespaces, onNamespaceChange }: Props) {
+export function Sidebar({ jobs, activeSessionId, quote, wsState, onSelectSession, onAvatarClick, onOdinClick, onTogglePinSession, pinnedSessionIds, onCancelJob, terminatingSessionIds, namespace, namespaces, onNamespaceChange, namespaceSummaries }: Props) {
   const { theme, setTheme } = useTheme();
   const [width, setWidth] = useState<number>(DEFAULT_WIDTH);
   const navRef = useRef<HTMLElement | null>(null);
@@ -100,11 +102,12 @@ export function Sidebar({ jobs, activeSessionId, quote, wsState, onSelectSession
             </div>
           </>
         )}
-        <NamespaceSelector
+        <NamespaceTree
           namespace={namespace}
           namespaces={namespaces}
+          summaries={namespaceSummaries}
           onNamespaceChange={onNamespaceChange}
-          isCompact={isCompact}
+          displayMode={displayMode}
         />
       </div>
       <div className="card-list" role="list" aria-label="Job sessions">
