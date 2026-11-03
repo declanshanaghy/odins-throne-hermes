@@ -5126,7 +5126,10 @@ function useNamespace() {
   const [namespace, setNamespaceState] = useState7(loadNamespace);
   const [namespaces, setNamespaces] = useState7([
     { id: "fenrir-agents", label: "Fenrir Ledger Agents" },
-    { id: "say-so-agents", label: "SaySo Agents" }
+    { id: "say-so-agents", label: "SaySo Agents" },
+    { id: "mytruthfinder-agents", label: "MyTruthFinder Agents" },
+    { id: "shanaghy-com-agents", label: "Shanaghy.com Agents" },
+    { id: "re-goatmower-agents", label: "Re-Goatmower Agents" }
   ]);
   useEffect8(() => {
     fetch(restUrl("/api/namespaces"), authInit()).then((res) => res.json()).then((data) => {

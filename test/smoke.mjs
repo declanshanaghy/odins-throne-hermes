@@ -114,6 +114,17 @@ assert.ok(document.querySelector(".brand-wss-badge"), "WSS status badge rendered
 assert.ok(paneHtml.includes("No agent jobs found"), "empty job list state rendered");
 assert.ok(document.querySelector(".quote"), "Odin quote rendered");
 assert.ok(document.querySelector('[aria-label="Agent sessions"]'), "namespace selector present");
+// Vendored fallback must mirror the monitor's full allowlist (fenrir-ledger
+// #2369 + #2373: mytruthfinder, shanaghy.com, re-goatmower seated too).
+for (const ns of [
+  "fenrir-agents",
+  "say-so-agents",
+  "mytruthfinder-agents",
+  "shanaghy-com-agents",
+  "re-goatmower-agents",
+]) {
+  assert.ok(paneHtml.includes(ns), `namespace option present: ${ns}`);
+}
 
 const pageRoot = createRoot(document.getElementById("page"));
 pageRoot.render(byId.page.render());

@@ -32,6 +32,9 @@ export function useNamespace() {
   const [namespaces, setNamespaces] = useState<NamespaceOption[]>([
     { id: "fenrir-agents", label: "Fenrir Ledger Agents" },
     { id: "say-so-agents", label: "SaySo Agents" },
+    { id: "mytruthfinder-agents", label: "MyTruthFinder Agents" },
+    { id: "shanaghy-com-agents", label: "Shanaghy.com Agents" },
+    { id: "re-goatmower-agents", label: "Re-Goatmower Agents" },
   ]);
 
   // Fetch available namespaces from API at startup
