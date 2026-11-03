@@ -9325,7 +9325,7 @@ var entry_default = {
       throneStore.get()?.onSelectSession(sessionId);
       if (typeof host3.openWorkspace === "function") {
         host3.openWorkspace("throne-log", {
-          render: () => /* @__PURE__ */ jsx19(ThronePage, {}),
+          render: () => /* @__PURE__ */ jsx20(ThronePage, {}),
           title: "Odin's Throne",
           minWidth: 480
         });
