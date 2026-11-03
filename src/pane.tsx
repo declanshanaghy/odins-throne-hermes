@@ -1,16 +1,9 @@
 // Right-docked pane: the Hlidskjalf job list (ported Sidebar) plus the hidden
 // StoreBridge (ported App) that owns the WebSocket and all SPA state, plus the
-// window-level overlays (modals, toasts, banners) and plugin chrome (connect
+// window-level overlays (modals, toasts, banners) and plugin chrome (pairing
 // card, settings dialog).
 
-import { useEffect, useMemo, useRef, useSyncExternalStore } from "react";
-import {
-  attachGuest,
-  cancelReauth,
-  guestStatus,
-  reauth,
-  subscribeGuestStatus,
-} from "./guest";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import { ErrorBoundary } from "./ui/components/ErrorBoundary";
 import { Sidebar } from "./ui/components/Sidebar";
 import { AgentProfileModal } from "./ui/components/AgentProfileModal";
@@ -20,7 +13,15 @@ import { ErrorBanner } from "./ui/components/ErrorBanner";
 import { App } from "./ui/App";
 import { useThrone } from "./store";
 import { useTheme } from "./ui/hooks/useTheme";
-import { isConfigured } from "./upstream";
+import {
+  clearSession,
+  isConfigured,
+  pairingUrl,
+  redeemPairing,
+  sessionSnapshot,
+  subscribeSession,
+} from "./upstream";
+import { openExternal } from "./pluginCtx";
 import { ThroneSettings, settingsUi, useSettingsOpen } from "./settings";
 
 function SidebarConnected() {
@@ -78,81 +79,85 @@ function ThroneOverlays() {
   );
 }
 
-function useGuestStatus() {
-  return useSyncExternalStore(subscribeGuestStatus, guestStatus, guestStatus);
-}
+/**
+ * Pairing card — Google's embedded-browser policy blocks credential entry
+ * inside any webview, so the Google login happens in the user's real
+ * browser (the website's own flow) and the plugin receives a one-time code.
+ * No Google login in the browser ⇒ no code ⇒ no data.
+ */
+function PairingCard() {
+  const [code, setCode] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [opened, setOpened] = useState(false);
 
-function ConnectCard() {
-  // Overlay (not in-flow): the Sidebar fills the pane, so anything after it
-  // is invisible. This centers the sign-in affordance over the whole pane.
+  async function openBrowser(): Promise<void> {
+    setError(null);
+    const ok = await openExternal(pairingUrl());
+    if (!ok) setError("Could not open the browser — open this URL manually: " + pairingUrl());
+    else setOpened(true);
+  }
+
+  async function pair(): Promise<void> {
+    setBusy(true);
+    setError(null);
+    const result = await redeemPairing(code);
+    if (!result.ok) setError(result.error ?? "Pairing failed");
+    setBusy(false);
+  }
+
   return (
     <div className="throne-connect-card">
       <p>
         The Throne is sealed — sign in with Google to open the Bifröst (the
         same login the web version uses).
       </p>
-      <button className="throne-settings-btn primary" onClick={() => reauth()}>
+      <button className="throne-settings-btn primary" onClick={() => void openBrowser()}>
         Sign in with Google
       </button>
-      <button className="throne-settings-btn" onClick={() => settingsUi.open()}>
-        Advanced: bot token / URL
-      </button>
-    </div>
-  );
-}
-
-/**
- * The hidden OAuth guest — a real Chromium webview that holds the
- * Google/oauth2-proxy session. Visible only while the user signs in.
- */
-function ThroneGuest() {
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const status = useGuestStatus();
-  useEffect(() => {
-    if (!containerRef.current) return;
-    return attachGuest(containerRef.current);
-  }, []);
-  const visible = status === "signing-in";
-  return (
-    <div
-      style={{
-        position: "absolute",
-        inset: 0,
-        zIndex: 40,
-        pointerEvents: visible ? "auto" : "none",
-        visibility: visible ? "visible" : "hidden",
-        background: "var(--void)",
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
-      {visible && (
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 8,
-            padding: "6px 10px",
-            borderBottom: "1px solid var(--rune-border)",
-            background: "var(--forge)",
-            color: "var(--text-rune)",
-            fontFamily: '"JetBrains Mono", monospace',
-            fontSize: "0.68rem",
-            letterSpacing: "0.02em",
-          }}
-        >
-          <span>sign in → odins-throne.fenrirledger.com</span>
-          <button
-            className="throne-settings-btn"
-            style={{ padding: "0.2rem 0.6rem", fontSize: "0.66rem" }}
-            onClick={() => cancelReauth()}
-          >
-            ✕
+      {opened && (
+        <>
+          <p>The pairing page is open in your browser — enter its code here:</p>
+          <input
+            className="throne-code-input"
+            value={code}
+            placeholder="8-char code"
+            maxLength={8}
+            autoCapitalize="none"
+            spellCheck={false}
+            onChange={(e) => setCode(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") void pair();
+            }}
+            style={{
+              width: "12ch",
+              textAlign: "center",
+              padding: "0.5rem 0.65rem",
+              borderRadius: 6,
+              border: "1px solid var(--gold-dim-border)",
+              background: "var(--void)",
+              color: "var(--gold-bright)",
+              fontFamily: '"JetBrains Mono", monospace',
+              fontSize: "0.95rem",
+              letterSpacing: "0.3em",
+            }}
+          />
+          <button className="throne-settings-btn" disabled={busy} onClick={() => void pair()}>
+            {busy ? "Binding…" : "Pair"}
           </button>
-        </div>
+        </>
       )}
-      <div ref={containerRef} style={{ position: "relative", flex: 1 }} />
+      {error && <p style={{ color: "var(--error-text)" }}>{error}</p>}
+      <button
+        className="throne-settings-btn"
+        style={{ opacity: 0.6 }}
+        onClick={() => {
+          clearSession();
+          settingsUi.open();
+        }}
+      >
+        Advanced: upstream URL
+      </button>
     </div>
   );
 }
@@ -160,7 +165,8 @@ function ThroneGuest() {
 export function ThronePane() {
   const snap = useThrone();
   const settingsOpen = useSettingsOpen();
-  const status = useGuestStatus();
+  // Re-render when the session changes (pair/unpair) so the card toggles.
+  useSyncExternalStore(subscribeSession, sessionSnapshot, sessionSnapshot);
   const { theme } = useTheme();
   // The bridge must NOT re-render when this pane re-renders: every store
   // publish re-renders ThronePane, a fresh <App/> element would re-render the
@@ -182,11 +188,7 @@ export function ThronePane() {
       ) : (
         <div className="throne-boot">Awakening the Allfather…</div>
       )}
-      {/* Sign-in overlay: shown whenever there is no session; hidden while the
-          guest itself is showing the Google login (it sits at z-40, the
-          settings dialog at z-60). */}
-      {!isConfigured() && status !== "signing-in" && <ConnectCard />}
-      <ThroneGuest />
+      {!isConfigured() && <PairingCard />}
       <ThroneOverlays />
       {settingsOpen && <ThroneSettings />}
     </div>

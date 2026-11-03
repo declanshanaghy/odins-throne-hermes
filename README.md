@@ -14,9 +14,11 @@ first-class plugin:
 
 ```mermaid
 flowchart LR
+    U["You, in your real browser"] -->|"1. Google OAuth (the website's login)"| PP["pairing page<br/>/api/handoff"]
+    PP -->|"2. one-time code"| PANE["pairing card<br/>(plugin pane)"]
+    PANE -->|"3. redeem"| BOT["/bot/handoff/redeem<br/>→ 7-day session"]
     GKE["GKE<br/>agent-sandbox Jobs"] --> OT["odins-throne<br/>(fenrir-monitor)"]
-    OT <-->|"same-origin /api + /ws,<br/>Google OAuth session cookie"| GV["hidden webview guest<br/>(persist:odins-throne)"]
-    GV <-->|"relay: guestFetch / GuestSocket"| UI["plugin.js<br/>(renderer)"]
+    OT <-->|"Bearer session (REST)<br/>?token= (WS)"| UI["plugin.js<br/>(renderer)"]
     UI --> RP["right pane:<br/>job list"]
     UI --> MP["workspace page:<br/>log terminal"]
 ```
@@ -46,19 +48,23 @@ hermes plugins install declanshanaghy/odins-throne-hermes
 #   Hermes desktop → Capabilities → Plugins → Odin's Throne
 ```
 
-Then authenticate once: click **"Sign in with Google"** on the pane. The
-login happens inside the app — a hidden `<webview>` guest
-(`persist:odins-throne`) is a real browser client of the monitor, so the
-Google OAuth → oauth2-proxy → session-cookie flow is exactly what the web
-version does. The cookie persists across restarts; all REST + WS traffic runs
-inside the guest, same-origin on the human routes (`/api/*`, `/ws`), and the
-host relays frames in and out. No tokens, no CORS, no backend changes.
+Then pair once: click **"Sign in with Google"** on the pane. Google's
+embedded-browser policy makes in-app Google logins impossible (it blocks the
+credential step inside any webview), so the login runs where Google wants it
+— your real browser:
 
-> **There is no other way in.** No session, no data — the monitor 403s
-> everything until the Google login completes. The only setting is the
-> upstream URL (⌘K → "Odin's Throne: Configure upstream"), overridden for
-> local dev servers (`pnpm dev` in `development/odins-throne`, which run
-> without oauth2-proxy).
+1. The pane opens **your browser** at the monitor's pairing page — behind the
+   website's own Google OAuth. No Google login ⇒ no code.
+2. The page shows a one-time 8-char code (5-minute TTL, single use).
+3. Type it into the pane → the plugin redeems it for a signed, user-scoped
+   session (7 days) and the jobs stream. When it expires, the pairing card
+   simply returns.
+
+> **There is no other way in.** No Google login, no code, no data — and no
+> standing credential either. The only setting is the upstream URL (⌘K →
+> "Odin's Throne: Configure upstream"), overridden for local dev servers
+> (`pnpm dev` in `development/odins-throne`, which run without
+> oauth2-proxy). Server side: `src/handoff.ts` (fenrir-ledger #2377).
 
 ## Dev loop (live reload)
 

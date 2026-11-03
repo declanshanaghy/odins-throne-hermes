@@ -1,22 +1,18 @@
 // Advanced upstream configuration dialog — plugin chrome, not part of the
 // ported SPA. Opened from the ⌘K palette ("Odin's Throne: Configure
-// upstream") or the connect card. Auth is Google OAuth only (see guest.ts) —
-// no session means no data; the sole setting is the upstream URL, overridden
-// for local dev servers (which run without oauth2-proxy).
+// upstream") or the pairing card. Auth is Google OAuth only (browser pairing,
+// see upstream.ts) — no session means no data; the sole setting is the
+// upstream URL, overridden for local dev servers (which run without
+// oauth2-proxy).
 
-import { useState, type CSSProperties } from "react";
-import { useSyncExternalStore } from "react";
+import { useState, useSyncExternalStore, type CSSProperties } from "react";
 import { host } from "@hermes/plugin-sdk";
 import {
   DEFAULT_UPSTREAM_URL,
   getUpstreamUrl,
+  isConfigured,
   setUpstreamConfig,
 } from "./upstream";
-import {
-  guestStatus,
-  reauth,
-  subscribeGuestStatus,
-} from "./guest";
 import { requestReload } from "./pluginCtx";
 
 let open = false;
@@ -61,7 +57,7 @@ const inputStyle: CSSProperties = {
 export function ThroneSettings() {
   const [url, setUrl] = useState(getUpstreamUrl());
   const [saving, setSaving] = useState(false);
-  const status = useSyncExternalStore(subscribeGuestStatus, guestStatus, guestStatus);
+  const paired = isConfigured();
 
   async function save(): Promise<void> {
     setSaving(true);
@@ -92,12 +88,13 @@ export function ThroneSettings() {
         <h2>Bind the Bifröst</h2>
         <p className="throne-settings-hint">
           <strong>Google OAuth is the only way in</strong> — the same login the
-          web version uses; no session, no data. The only setting is the
-          upstream URL, overridden for a local dev monitor (which runs without
+          web version uses, completed in your browser via a one-time pairing
+          code. No session, no data. The only setting is the upstream URL,
+          overridden for a local dev monitor (which runs without
           oauth2-proxy).
         </p>
         <p className="throne-settings-hint">
-          Session: <strong>{status === "authed" ? "signed in ✓" : status}</strong>
+          Session: <strong>{paired ? "paired ✓" : "not paired"}</strong>
         </p>
         <label>
           Upstream URL
@@ -112,11 +109,6 @@ export function ThroneSettings() {
           <button className="throne-settings-btn" onClick={() => settingsUi.close()}>
             Cancel
           </button>
-          {status !== "authed" && (
-            <button className="throne-settings-btn" onClick={() => reauth()}>
-              Sign in with Google
-            </button>
-          )}
           <button
             className="throne-settings-btn primary"
             disabled={saving}

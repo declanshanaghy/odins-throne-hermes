@@ -3241,239 +3241,7 @@ var styles_default = `.odins-throne-root .odins-throne-root {
 `;
 
 // src/pane.tsx
-import { useEffect as useEffect10, useMemo as useMemo2, useRef as useRef8, useSyncExternalStore as useSyncExternalStore4 } from "react";
-
-// src/upstream.ts
-var URL_KEY = "hlidskjalf:upstream-url";
-var DEFAULT_UPSTREAM_URL = "https://odins-throne.fenrirledger.com";
-function getUpstreamUrl() {
-  try {
-    return localStorage.getItem(URL_KEY) || DEFAULT_UPSTREAM_URL;
-  } catch {
-    return DEFAULT_UPSTREAM_URL;
-  }
-}
-function setUpstreamConfig(url) {
-  try {
-    localStorage.setItem(URL_KEY, url.trim() || DEFAULT_UPSTREAM_URL);
-  } catch {
-  }
-}
-function isConfigured() {
-  if (getUpstreamUrl() !== DEFAULT_UPSTREAM_URL) return true;
-  return guestStatus() === "authed";
-}
-async function otFetch(path, init) {
-  return guestFetch(path, init);
-}
-
-// src/guest.ts
-var status = "booting";
-var statusListeners = /* @__PURE__ */ new Set();
-function guestStatus() {
-  return status;
-}
-function subscribeGuestStatus(cb) {
-  statusListeners.add(cb);
-  return () => {
-    statusListeners.delete(cb);
-  };
-}
-function setStatus(next) {
-  if (status === next) return;
-  status = next;
-  for (const l of statusListeners) l();
-}
-var guest = null;
-var ready = null;
-function base() {
-  return getUpstreamUrl().replace(/\/+$/, "");
-}
-function attachGuest(container) {
-  if (guest) {
-    return () => void 0;
-  }
-  const el = document.createElement("webview");
-  el.setAttribute("partition", "persist:odins-throne-v2");
-  el.setAttribute("webpreferences", "backgroundThrottling=false");
-  el.setAttribute(
-    "useragent",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
-  );
-  el.style.position = "absolute";
-  el.style.left = "0";
-  el.style.top = "0";
-  el.style.width = "100%";
-  el.style.height = "100%";
-  el.setAttribute("src", `${base()}/healthz`);
-  container.appendChild(el);
-  guest = el;
-  ready = new Promise((resolve) => {
-    el.addEventListener("dom-ready", () => resolve(), { once: true });
-  });
-  void probeAndSet();
-  return () => {
-    guest = null;
-    ready = null;
-    setStatus("booting");
-    el.remove();
-  };
-}
-async function guestEval(code) {
-  if (!guest || !ready) throw new Error("guest not mounted");
-  await ready;
-  return guest.executeJavaScript(code, false);
-}
-async function probeAndSet() {
-  setStatus("probing");
-  setStatus(await probeAuth() ? "authed" : "needs-login");
-}
-async function probeAuth() {
-  try {
-    const code = 'fetch("/api/namespaces", { credentials: "include" }).then(function (r) { return String(r.status); }).catch(function () { return "0"; })';
-    const result = await guestEval(code);
-    return result === "200";
-  } catch {
-    return false;
-  }
-}
-var reauthPoll = null;
-function parkOnHealthz() {
-  if (!guest) return;
-  guest.setAttribute("src", `${base()}/healthz`);
-  ready = new Promise((resolve) => {
-    guest.addEventListener("dom-ready", () => resolve(), { once: true });
-  });
-}
-function reauth() {
-  if (!guest) return;
-  setStatus("signing-in");
-  guest.setAttribute("src", `${base()}/`);
-  ready = new Promise((resolve) => {
-    guest.addEventListener("dom-ready", () => resolve(), { once: true });
-  });
-  if (reauthPoll !== null) clearInterval(reauthPoll);
-  reauthPoll = setInterval(() => {
-    void probeAuth().then((ok) => {
-      if (!ok) return;
-      if (reauthPoll !== null) clearInterval(reauthPoll);
-      reauthPoll = null;
-      setStatus("authed");
-      parkOnHealthz();
-    });
-  }, 2e3);
-}
-function cancelReauth() {
-  if (reauthPoll !== null) {
-    clearInterval(reauthPoll);
-    reauthPoll = null;
-  }
-  if (guestStatus() === "signing-in") setStatus("needs-login");
-  parkOnHealthz();
-}
-async function guestFetch(path, init) {
-  const opts = JSON.stringify({ method: init?.method ?? "GET", credentials: "include" });
-  const code = `fetch(${JSON.stringify(path)}, ${opts}).then(function (r) { return r.text().then(function (t) {  return JSON.stringify({ status: r.status, body: t });}); }).catch(function (e) { return JSON.stringify({ status: 0, body: String((e && e.message) || e) }); })`;
-  const raw = await guestEval(code);
-  const { status: code_, body } = JSON.parse(raw);
-  return {
-    ok: code_ >= 200 && code_ < 300,
-    status: code_,
-    async text() {
-      return body;
-    },
-    async json() {
-      return JSON.parse(body);
-    }
-  };
-}
-function relayBoot(namespaceJson) {
-  return '(function () {  var w = window;  if (w.__otSock) { try { w.__otSock.close(); } catch (e) {} }  var proto = location.protocol === "https:" ? "wss:" : "ws:";  var url = proto + "//" + location.host + "/ws?namespace=" + encodeURIComponent(' + namespaceJson + ");  var buf = w.__otBuf = [];  var state = w.__otSockState = 0;  var s = w.__otSock = new WebSocket(url);  s.onopen = function () { w.__otSockState = 1; };  s.onclose = function () { w.__otSockState = 3; };  s.onerror = function () { if (w.__otSockState !== 3) w.__otSockState = 4; };  s.onmessage = function (ev) {    buf.push(ev.data);    if (buf.length > 4000) buf.splice(0, buf.length - 4000);  };  w.__otSend = function (m) { try { s.send(m); } catch (e) {} };  w.__otClose = function () { try { s.close(); } catch (e) {} };})();";
-}
-var DRAIN = "(function () { var b = window.__otBuf || []; window.__otBuf = [];  return JSON.stringify({ s: window.__otSockState | 0, m: b }); })()";
-var GuestSocket = class {
-  readyState = 0;
-  onclose = null;
-  onerror = null;
-  handlers = /* @__PURE__ */ new Map();
-  timer = null;
-  errored = false;
-  dead = false;
-  constructor(namespace) {
-    void this.start(namespace);
-  }
-  async start(namespace) {
-    try {
-      await guestEval(relayBoot(JSON.stringify(namespace)));
-    } catch {
-      this.fail();
-      return;
-    }
-    this.timer = setInterval(() => void this.drain(), 120);
-  }
-  fail() {
-    if (this.dead) return;
-    this.dead = true;
-    this.readyState = 3;
-    if (!this.errored) {
-      this.errored = true;
-      this.emit("error", {});
-    }
-    this.emit("close", {});
-    this.stop();
-  }
-  stop() {
-    if (this.timer !== null) clearInterval(this.timer);
-    this.timer = null;
-  }
-  async drain() {
-    if (this.dead) return;
-    let frame;
-    try {
-      frame = JSON.parse(await guestEval(DRAIN));
-    } catch {
-      return;
-    }
-    for (const line of frame.m) {
-      this.emit("message", { data: line });
-    }
-    const next = frame.s === 4 ? 3 : frame.s;
-    if (frame.s === 4 && !this.errored) {
-      this.errored = true;
-      this.emit("error", {});
-    }
-    if (next !== this.readyState) {
-      this.readyState = next;
-      if (next === 1) {
-        this.errored = false;
-        this.emit("open", {});
-      } else if (next === 3) {
-        this.fail();
-      }
-    }
-  }
-  emit(type, ev) {
-    for (const cb of this.handlers.get(type) ?? []) cb(ev);
-  }
-  addEventListener(type, cb) {
-    const list = this.handlers.get(type) ?? [];
-    list.push(cb);
-    this.handlers.set(type, list);
-  }
-  send(data) {
-    const code = `(function () { var f = window.__otSend; if (f) f(${JSON.stringify(data)}); })()`;
-    void guestEval(code).catch(() => void 0);
-  }
-  close() {
-    this.dead = true;
-    this.stop();
-    this.readyState = 3;
-    void guestEval("window.__otClose ? window.__otClose() : undefined").catch(() => void 0);
-  }
-};
-function openGuestSocket(namespace) {
-  return new GuestSocket(namespace);
-}
+import { useMemo as useMemo2, useState as useState12, useSyncExternalStore as useSyncExternalStore4 } from "react";
 
 // src/ui/components/ErrorBoundary.tsx
 import { Component } from "react";
@@ -3817,8 +3585,8 @@ function toolPreview(name, input) {
 
 // src/ui/components/StatusIcon.tsx
 import { jsx as jsx2, jsxs as jsxs2 } from "react/jsx-runtime";
-function StatusIconSvg({ status: status2 }) {
-  switch (status2) {
+function StatusIconSvg({ status }) {
+  switch (status) {
     case "running":
       return /* @__PURE__ */ jsx2(
         "svg",
@@ -4023,6 +3791,123 @@ function resolveSessionTitle(job) {
     return fromSessionId;
   }
   return job.branchName ?? job.sessionId;
+}
+
+// src/upstream.ts
+var URL_KEY = "hlidskjalf:upstream-url";
+var SESSION_KEY = "hlidskjalf:session";
+var CLIENT_KEY = "hlidskjalf:client-id";
+var DEFAULT_UPSTREAM_URL = "https://odins-throne.fenrirledger.com";
+function base() {
+  return getUpstreamUrl().replace(/\/+$/, "");
+}
+function getUpstreamUrl() {
+  try {
+    return localStorage.getItem(URL_KEY) || DEFAULT_UPSTREAM_URL;
+  } catch {
+    return DEFAULT_UPSTREAM_URL;
+  }
+}
+function setUpstreamConfig(url) {
+  try {
+    localStorage.setItem(URL_KEY, url.trim() || DEFAULT_UPSTREAM_URL);
+  } catch {
+  }
+}
+function getClientId() {
+  try {
+    const existing = localStorage.getItem(CLIENT_KEY);
+    if (existing) return existing;
+    const fresh = Array.from(
+      { length: 2 },
+      () => Math.floor(Math.random() * 4294967295).toString(16).padStart(8, "0")
+    ).join("");
+    localStorage.setItem(CLIENT_KEY, fresh);
+    return fresh;
+  } catch {
+    return "ephemeral";
+  }
+}
+var sessionVersion = 0;
+var sessionListeners = /* @__PURE__ */ new Set();
+function subscribeSession(cb) {
+  sessionListeners.add(cb);
+  return () => {
+    sessionListeners.delete(cb);
+  };
+}
+function sessionSnapshot() {
+  return sessionVersion;
+}
+function emitSession() {
+  sessionVersion += 1;
+  for (const l of sessionListeners) l();
+}
+function getSession() {
+  try {
+    return localStorage.getItem(SESSION_KEY) || "";
+  } catch {
+    return "";
+  }
+}
+function clearSession() {
+  try {
+    localStorage.removeItem(SESSION_KEY);
+  } catch {
+  }
+  emitSession();
+}
+function isConfigured() {
+  if (getUpstreamUrl() !== DEFAULT_UPSTREAM_URL) return true;
+  return getSession() !== "";
+}
+function pairingUrl() {
+  return `${base()}/api/handoff?client=${encodeURIComponent(getClientId())}`;
+}
+async function redeemPairing(rawCode) {
+  const code = rawCode.trim().toLowerCase();
+  if (!code) return { ok: false, error: "Enter the code from the pairing page" };
+  try {
+    const res = await fetch(`${base()}/bot/handoff/redeem`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ client: getClientId(), code })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.ok || !data.token) {
+      return { ok: false, error: data.error ?? `Redeem failed (HTTP ${res.status})` };
+    }
+    try {
+      localStorage.setItem(SESSION_KEY, data.token);
+    } catch {
+    }
+    emitSession();
+    return { ok: true, user: data.user };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Network error" };
+  }
+}
+function restUrl(path) {
+  if (path.startsWith("/api/")) return `${base()}/bot${path}`;
+  return `${base()}${path}`;
+}
+function authInit(init) {
+  const headers = new Headers(init?.headers);
+  const token = getSession();
+  if (token) headers.set("Authorization", `Bearer ${token}`);
+  return { ...init, headers };
+}
+function wsUrl(namespace) {
+  const b = base();
+  const proto = b.startsWith("https") ? "wss" : "ws";
+  const host4 = b.replace(/^https?:\/\//, "");
+  const params = new URLSearchParams({ namespace });
+  const token = getSession();
+  if (token) params.set("token", token);
+  return `${proto}://${host4}/bot/ws?${params.toString()}`;
+}
+async function otFetch(path, init) {
+  return fetch(restUrl(path), authInit(init));
 }
 
 // src/ui/lib/localStorageLogs.ts
@@ -5222,7 +5107,7 @@ function useWebSocket(onMessage, namespace = "fenrir-agents") {
       wsRef.current = null;
       connectedNamespaceRef.current = null;
     }
-    const ws = openGuestSocket(ns);
+    const ws = new WebSocket(wsUrl(ns));
     wsRef.current = ws;
     connectedNamespaceRef.current = ns;
     setState("connecting");
@@ -5537,10 +5422,10 @@ function useLogStream() {
     }
     if (ev.type === "rate_limit_event") {
       const info = ev.rate_limit_info;
-      const status2 = String(info?.status ?? "unknown");
+      const status = String(info?.status ?? "unknown");
       const limitType = String(info?.rateLimitType ?? "");
       const resetsAt = info?.resetsAt ? new Date(Number(info.resetsAt) * 1e3).toLocaleTimeString() : "";
-      const detail = `rate limit: ${status2} (${limitType})${resetsAt ? ` \u2014 resets ${resetsAt}` : ""}`;
+      const detail = `rate limit: ${status} (${limitType})${resetsAt ? ` \u2014 resets ${resetsAt}` : ""}`;
       setEntries((prev) => [
         ...prev,
         { id: nextId(), type: "warning", message: detail }
@@ -6197,11 +6082,6 @@ function App() {
   return null;
 }
 
-// src/settings.tsx
-import { useState as useState11 } from "react";
-import { useSyncExternalStore as useSyncExternalStore3 } from "react";
-import { host as host2 } from "@hermes/plugin-sdk";
-
 // src/pluginCtx.ts
 var ctx = null;
 function setCtx(c) {
@@ -6215,8 +6095,18 @@ async function requestReload() {
   }
   return false;
 }
+async function openExternal(url) {
+  try {
+    const ok = await ctx?.os?.openExternal?.(url);
+    return ok !== false && ok !== void 0;
+  } catch {
+    return false;
+  }
+}
 
 // src/settings.tsx
+import { useState as useState11, useSyncExternalStore as useSyncExternalStore3 } from "react";
+import { host as host2 } from "@hermes/plugin-sdk";
 import { jsx as jsx11, jsxs as jsxs12 } from "react/jsx-runtime";
 var open = false;
 var listeners3 = /* @__PURE__ */ new Set();
@@ -6256,7 +6146,7 @@ var inputStyle = {
 function ThroneSettings() {
   const [url, setUrl] = useState11(getUpstreamUrl());
   const [saving, setSaving] = useState11(false);
-  const status2 = useSyncExternalStore3(subscribeGuestStatus, guestStatus, guestStatus);
+  const paired = isConfigured();
   async function save() {
     setSaving(true);
     setUpstreamConfig(url);
@@ -6284,11 +6174,11 @@ function ThroneSettings() {
         /* @__PURE__ */ jsx11("h2", { children: "Bind the Bifr\xF6st" }),
         /* @__PURE__ */ jsxs12("p", { className: "throne-settings-hint", children: [
           /* @__PURE__ */ jsx11("strong", { children: "Google OAuth is the only way in" }),
-          " \u2014 the same login the web version uses; no session, no data. The only setting is the upstream URL, overridden for a local dev monitor (which runs without oauth2-proxy)."
+          " \u2014 the same login the web version uses, completed in your browser via a one-time pairing code. No session, no data. The only setting is the upstream URL, overridden for a local dev monitor (which runs without oauth2-proxy)."
         ] }),
         /* @__PURE__ */ jsxs12("p", { className: "throne-settings-hint", children: [
           "Session: ",
-          /* @__PURE__ */ jsx11("strong", { children: status2 === "authed" ? "signed in \u2713" : status2 })
+          /* @__PURE__ */ jsx11("strong", { children: paired ? "paired \u2713" : "not paired" })
         ] }),
         /* @__PURE__ */ jsxs12("label", { children: [
           "Upstream URL",
@@ -6304,7 +6194,6 @@ function ThroneSettings() {
         ] }),
         /* @__PURE__ */ jsxs12("div", { className: "throne-settings-row", children: [
           /* @__PURE__ */ jsx11("button", { className: "throne-settings-btn", onClick: () => settingsUi.close(), children: "Cancel" }),
-          status2 !== "authed" && /* @__PURE__ */ jsx11("button", { className: "throne-settings-btn", onClick: () => reauth(), children: "Sign in with Google" }),
           /* @__PURE__ */ jsx11(
             "button",
             {
@@ -6377,77 +6266,77 @@ function ThroneOverlays() {
     )
   ] });
 }
-function useGuestStatus() {
-  return useSyncExternalStore4(subscribeGuestStatus, guestStatus, guestStatus);
-}
-function ConnectCard() {
+function PairingCard() {
+  const [code, setCode] = useState12("");
+  const [error, setError] = useState12(null);
+  const [busy, setBusy] = useState12(false);
+  const [opened, setOpened] = useState12(false);
+  async function openBrowser() {
+    setError(null);
+    const ok = await openExternal(pairingUrl());
+    if (!ok) setError("Could not open the browser \u2014 open this URL manually: " + pairingUrl());
+    else setOpened(true);
+  }
+  async function pair() {
+    setBusy(true);
+    setError(null);
+    const result = await redeemPairing(code);
+    if (!result.ok) setError(result.error ?? "Pairing failed");
+    setBusy(false);
+  }
   return /* @__PURE__ */ jsxs13("div", { className: "throne-connect-card", children: [
     /* @__PURE__ */ jsx12("p", { children: "The Throne is sealed \u2014 sign in with Google to open the Bifr\xF6st (the same login the web version uses)." }),
-    /* @__PURE__ */ jsx12("button", { className: "throne-settings-btn primary", onClick: () => reauth(), children: "Sign in with Google" }),
-    /* @__PURE__ */ jsx12("button", { className: "throne-settings-btn", onClick: () => settingsUi.open(), children: "Advanced: bot token / URL" })
-  ] });
-}
-function ThroneGuest() {
-  const containerRef = useRef8(null);
-  const status2 = useGuestStatus();
-  useEffect10(() => {
-    if (!containerRef.current) return;
-    return attachGuest(containerRef.current);
-  }, []);
-  const visible = status2 === "signing-in";
-  return /* @__PURE__ */ jsxs13(
-    "div",
-    {
-      style: {
-        position: "absolute",
-        inset: 0,
-        zIndex: 40,
-        pointerEvents: visible ? "auto" : "none",
-        visibility: visible ? "visible" : "hidden",
-        background: "var(--void)",
-        display: "flex",
-        flexDirection: "column"
-      },
-      children: [
-        visible && /* @__PURE__ */ jsxs13(
-          "div",
-          {
-            style: {
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: 8,
-              padding: "6px 10px",
-              borderBottom: "1px solid var(--rune-border)",
-              background: "var(--forge)",
-              color: "var(--text-rune)",
-              fontFamily: '"JetBrains Mono", monospace',
-              fontSize: "0.68rem",
-              letterSpacing: "0.02em"
-            },
-            children: [
-              /* @__PURE__ */ jsx12("span", { children: "sign in \u2192 odins-throne.fenrirledger.com" }),
-              /* @__PURE__ */ jsx12(
-                "button",
-                {
-                  className: "throne-settings-btn",
-                  style: { padding: "0.2rem 0.6rem", fontSize: "0.66rem" },
-                  onClick: () => cancelReauth(),
-                  children: "\u2715"
-                }
-              )
-            ]
+    /* @__PURE__ */ jsx12("button", { className: "throne-settings-btn primary", onClick: () => void openBrowser(), children: "Sign in with Google" }),
+    opened && /* @__PURE__ */ jsxs13(Fragment3, { children: [
+      /* @__PURE__ */ jsx12("p", { children: "The pairing page is open in your browser \u2014 enter its code here:" }),
+      /* @__PURE__ */ jsx12(
+        "input",
+        {
+          className: "throne-code-input",
+          value: code,
+          placeholder: "8-char code",
+          maxLength: 8,
+          autoCapitalize: "none",
+          spellCheck: false,
+          onChange: (e) => setCode(e.target.value),
+          onKeyDown: (e) => {
+            if (e.key === "Enter") void pair();
+          },
+          style: {
+            width: "12ch",
+            textAlign: "center",
+            padding: "0.5rem 0.65rem",
+            borderRadius: 6,
+            border: "1px solid var(--gold-dim-border)",
+            background: "var(--void)",
+            color: "var(--gold-bright)",
+            fontFamily: '"JetBrains Mono", monospace',
+            fontSize: "0.95rem",
+            letterSpacing: "0.3em"
           }
-        ),
-        /* @__PURE__ */ jsx12("div", { ref: containerRef, style: { position: "relative", flex: 1 } })
-      ]
-    }
-  );
+        }
+      ),
+      /* @__PURE__ */ jsx12("button", { className: "throne-settings-btn", disabled: busy, onClick: () => void pair(), children: busy ? "Binding\u2026" : "Pair" })
+    ] }),
+    error && /* @__PURE__ */ jsx12("p", { style: { color: "var(--error-text)" }, children: error }),
+    /* @__PURE__ */ jsx12(
+      "button",
+      {
+        className: "throne-settings-btn",
+        style: { opacity: 0.6 },
+        onClick: () => {
+          clearSession();
+          settingsUi.open();
+        },
+        children: "Advanced: upstream URL"
+      }
+    )
+  ] });
 }
 function ThronePane() {
   const snap = useThrone();
   const settingsOpen = useSettingsOpen();
-  const status2 = useGuestStatus();
+  useSyncExternalStore4(subscribeSession, sessionSnapshot, sessionSnapshot);
   const { theme } = useTheme();
   const bridge = useMemo2(() => /* @__PURE__ */ jsx12(App, {}), []);
   return /* @__PURE__ */ jsxs13(
@@ -6459,8 +6348,7 @@ function ThronePane() {
       children: [
         bridge,
         snap ? /* @__PURE__ */ jsx12(ErrorBoundary, { children: /* @__PURE__ */ jsx12(SidebarConnected, {}) }) : /* @__PURE__ */ jsx12("div", { className: "throne-boot", children: "Awakening the Allfather\u2026" }),
-        !isConfigured() && status2 !== "signing-in" && /* @__PURE__ */ jsx12(ConnectCard, {}),
-        /* @__PURE__ */ jsx12(ThroneGuest, {}),
+        !isConfigured() && /* @__PURE__ */ jsx12(PairingCard, {}),
         /* @__PURE__ */ jsx12(ThroneOverlays, {}),
         settingsOpen && /* @__PURE__ */ jsx12(ThroneSettings, {})
       ]
@@ -6469,13 +6357,13 @@ function ThronePane() {
 }
 
 // src/ui/components/LogViewer.tsx
-import { useEffect as useEffect11, useRef as useRef9, useState as useState14, useCallback as useCallback7, useMemo as useMemo3 } from "react";
+import { useEffect as useEffect10, useRef as useRef8, useState as useState15, useCallback as useCallback7, useMemo as useMemo3 } from "react";
 
 // src/ui/components/ToolBlock.tsx
-import { useState as useState12 } from "react";
+import { useState as useState13 } from "react";
 import { jsx as jsx13, jsxs as jsxs14 } from "react/jsx-runtime";
 function ToolBlock({ entry, collapseCount }) {
-  const [open2, setOpen] = useState12(false);
+  const [open2, setOpen] = useState13(false);
   const cls = toolBadgeClass(entry.toolName || "");
   let parsedInput;
   try {
@@ -6878,7 +6766,7 @@ function NorseVerdictInscription({ text, agentKey, agentName }) {
 }
 
 // src/ui/components/DecreeBlock.tsx
-import { useState as useState13 } from "react";
+import { useState as useState14 } from "react";
 import { Fragment as Fragment5, jsx as jsx16, jsxs as jsxs17 } from "react/jsx-runtime";
 var DECREE_START_RE = /᛭᛭᛭\s*DECREE COMPLETE\s*᛭᛭᛭/;
 var DECREE_END_RE = /᛭᛭᛭\s*END DECREE\s*᛭᛭᛭/;
@@ -7048,8 +6936,8 @@ function DecreeBlock({ text, agentKey: jobAgentKey, onAvatarClick }) {
   const agentColor = AGENT_COLORS[agentKey] ?? "#c9920a";
   const avatarMap = theme === "light" ? AGENT_LIGHT_AVATARS : AGENT_AVATARS;
   const avatar = avatarMap[agentKey];
-  const [summaryOpen, setSummaryOpen] = useState13(true);
-  const [checksOpen, setChecksOpen] = useState13(true);
+  const [summaryOpen, setSummaryOpen] = useState14(true);
+  const [checksOpen, setChecksOpen] = useState14(true);
   const isPass = /^(PASS|DONE|DELIVERED|APPROVED|SECURED)$/i.test(decree.verdict);
   const isFail = /^FAIL$/i.test(decree.verdict);
   const verdictColor = isFail ? "var(--error-strong)" : isPass ? "var(--gold-bright)" : "var(--text-rune)";
@@ -7369,10 +7257,10 @@ function groupConsecutiveEntries(entries) {
 }
 function SessionHeader({ job, isPinned: isPinned2 = false, onTogglePin, showPin = true, replayedFromCache = false, onCancelJob }) {
   const displayTitle = resolveSessionTitle(job);
-  const [confirmingUnpin, setConfirmingUnpin] = useState14(false);
+  const [confirmingUnpin, setConfirmingUnpin] = useState15(false);
   const { theme } = useTheme();
   const statusColorMap = theme === "light" ? STATUS_COLORS_LIGHT : STATUS_COLORS;
-  useEffect11(() => {
+  useEffect10(() => {
     setConfirmingUnpin(false);
   }, [isPinned2]);
   return /* @__PURE__ */ jsxs18(
@@ -7495,13 +7383,13 @@ function SessionHeader({ job, isPinned: isPinned2 = false, onTogglePin, showPin 
   );
 }
 function LogViewer({ entries, activeJob, isFixture, isTtlExpired, isNodeUnreachable, streamError, onSetSpeed, isPinned: isPinned2, onTogglePin, onAvatarClick, replayedFromCache, isConnecting, isPodStarting, onCancelJob }) {
-  const termRef = useRef9(null);
-  const [fixtureSpeed, setFixtureSpeed] = useState14(1);
-  const [fixturePaused, setFixturePaused] = useState14(false);
-  const [autoScroll, setAutoScroll] = useState14(true);
-  const programmaticScrollRef = useRef9(false);
+  const termRef = useRef8(null);
+  const [fixtureSpeed, setFixtureSpeed] = useState15(1);
+  const [fixturePaused, setFixturePaused] = useState15(false);
+  const [autoScroll, setAutoScroll] = useState15(true);
+  const programmaticScrollRef = useRef8(false);
   const lastEntryId = entries[entries.length - 1]?.id;
-  useEffect11(() => {
+  useEffect10(() => {
     if (autoScroll && termRef.current) {
       programmaticScrollRef.current = true;
       requestAnimationFrame(() => {
@@ -7511,7 +7399,7 @@ function LogViewer({ entries, activeJob, isFixture, isTtlExpired, isNodeUnreacha
       });
     }
   }, [entries.length, lastEntryId, autoScroll]);
-  useEffect11(() => {
+  useEffect10(() => {
     setAutoScroll(true);
     programmaticScrollRef.current = false;
   }, [activeJob?.sessionId]);
@@ -7859,25 +7747,25 @@ function AgentBubble({
   ] });
 }
 function ToolBatchGroup({ entry, autoScroll, isLatestBatch }) {
-  const [open2, setOpen] = useState14(() => !autoScroll || !!isLatestBatch);
+  const [open2, setOpen] = useState15(() => !autoScroll || !!isLatestBatch);
   const hasError = entry.children?.some((c) => c.toolIsError) ?? false;
-  const prevCompleteRef = useRef9(entry.complete);
-  const prevIsLatestRef = useRef9(isLatestBatch);
-  const prevAutoScrollRef = useRef9(autoScroll);
-  useEffect11(() => {
+  const prevCompleteRef = useRef8(entry.complete);
+  const prevIsLatestRef = useRef8(isLatestBatch);
+  const prevAutoScrollRef = useRef8(autoScroll);
+  useEffect10(() => {
     if (entry.complete && !prevCompleteRef.current) {
       prevCompleteRef.current = true;
       setOpen(false);
     }
   }, [entry.complete]);
-  useEffect11(() => {
+  useEffect10(() => {
     const wasLatest = prevIsLatestRef.current;
     prevIsLatestRef.current = isLatestBatch;
     if (wasLatest && !isLatestBatch && autoScroll) {
       setOpen(false);
     }
   }, [isLatestBatch, autoScroll]);
-  useEffect11(() => {
+  useEffect10(() => {
     const wasAutoScroll = prevAutoScrollRef.current;
     prevAutoScrollRef.current = autoScroll;
     if (!wasAutoScroll && autoScroll && !isLatestBatch) {
@@ -8066,7 +7954,7 @@ function DecreeSectionBody({ body }) {
   return /* @__PURE__ */ jsx17(Fragment6, { children: elements });
 }
 function DecreeSection({ glyph, title, body, defaultOpen, wide }) {
-  const [open2, setOpen] = useState14(defaultOpen);
+  const [open2, setOpen] = useState15(defaultOpen);
   return /* @__PURE__ */ jsxs18("div", { className: `decree-section ${open2 ? "open" : ""}${wide ? " decree-wide" : ""}`, children: [
     /* @__PURE__ */ jsxs18(
       "div",
@@ -8093,8 +7981,8 @@ function DecreeSection({ glyph, title, body, defaultOpen, wide }) {
   ] });
 }
 function NorseTablet({ text, autoScroll }) {
-  const [open2, setOpen] = useState14(true);
-  const [hasBeenCollapsed, setHasBeenCollapsed] = useState14(false);
+  const [open2, setOpen] = useState15(true);
+  const [hasBeenCollapsed, setHasBeenCollapsed] = useState15(false);
   const agentMatch = /^You are (\w+)/m.exec(text);
   const agent = agentMatch?.[1] ?? "Agent";
   const agentKey = agent.toLowerCase();
@@ -8106,7 +7994,7 @@ function NorseTablet({ text, autoScroll }) {
   const agentColor = AGENT_COLORS[agentKey] ?? "#888";
   const agentTitle = AGENT_TITLES[agentKey] ?? "Agent";
   const agentDisplayName = AGENT_NAMES[agentKey] ?? agent;
-  useEffect11(() => {
+  useEffect10(() => {
     if (!autoScroll || hasBeenCollapsed) return;
     const timer = setTimeout(() => {
       setOpen(false);
@@ -8238,7 +8126,7 @@ function CheckIcon() {
   return /* @__PURE__ */ jsx17("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "none", "aria-hidden": "true", children: /* @__PURE__ */ jsx17("path", { d: "M2 7l4 4 6-6", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" }) });
 }
 function CopySessionIdButton({ sessionId }) {
-  const [copied, setCopied] = useState14(false);
+  const [copied, setCopied] = useState15(false);
   async function handleCopy() {
     try {
       await navigator.clipboard.writeText(sessionId);
@@ -8282,7 +8170,7 @@ function DownloadSessionButton({ sessionId }) {
   );
 }
 function StartupBlock({ group }) {
-  const [open2, setOpen] = useState14(false);
+  const [open2, setOpen] = useState15(false);
   const modelEntry = group.metaEntries.find((e) => /^Model:\s*/.test(e.text ?? ""));
   const sessionEntry = group.metaEntries.find((e) => /^Session:\s*/.test(e.text ?? ""));
   const model = modelEntry?.text?.replace(/^Model:\s*/, "").trim() ?? "";
@@ -8323,8 +8211,8 @@ function StartupBlock({ group }) {
   ] });
 }
 function EntrypointGroup({ entry }) {
-  const [open2, setOpen] = useState14(false);
-  const [noiseOpen, setNoiseOpen] = useState14(false);
+  const [open2, setOpen] = useState15(false);
+  const [noiseOpen, setNoiseOpen] = useState15(false);
   const children = entry.children ?? [];
   const infoItems = children.filter((c) => c.type === "entrypoint-info");
   const okItems = children.filter((c) => c.type === "entrypoint-ok");
