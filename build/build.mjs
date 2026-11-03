@@ -77,7 +77,7 @@ const options = {
     "react/jsx-dev-runtime",
     "@hermes/plugin-sdk",
   ],
-  loader: { ".png": "dataurl" },
+  loader: { ".png": "dataurl", ".jpg": "dataurl" },
   plugins: [odinScopeCss],
   logLevel: "info",
 };
@@ -101,7 +101,7 @@ function neutralizeMiningKeywords(src) {
     .split("\n")
     .map((line) => {
       if (!MINING_TEST.test(line)) return line;
-      if (!line.includes("data:image/png;base64")) {
+      if (!line.includes("data:image/png;base64") && !line.includes("data:image/jpeg;base64")) {
         throw new Error(
           `plugin security keyword found OUTSIDE a base64 literal — review manually:\n  ${line.slice(0, 120)}`,
         );
