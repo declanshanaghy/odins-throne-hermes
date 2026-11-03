@@ -1,6 +1,8 @@
-// First-run upstream configuration dialog — plugin chrome, not part of the
-// ported SPA. Opened from the ⌘K palette ("Odin's Throne: Configure upstream")
-// or the connect card shown when no bot token is set.
+// Advanced upstream configuration dialog — plugin chrome, not part of the
+// ported SPA. Opened from the ⌘K palette ("Odin's Throne: Configure
+// upstream") or the connect card. Default auth is the Google sign-in (see
+// guest.ts); a bot token here switches to the monitor's /bot surface, and the
+// URL override points at a local dev monitor.
 
 import { useState, type CSSProperties } from "react";
 import { useSyncExternalStore } from "react";
@@ -85,9 +87,11 @@ export function ThroneSettings() {
       <div className="throne-settings" style={{ maxWidth: 440 }}>
         <h2>Bind the Bifröst</h2>
         <p className="throne-settings-hint">
-          Point Hlidskjalf at the Odin's Throne monitor. The deployed instance
-          needs a bot token (mirrored <code>/bot</code> surface); a local dev
-          server needs none.
+          Default auth is the <strong>Google sign-in</strong> (the same login
+          the web version uses — press “Sign in with Google” on the pane).
+          These are the fallbacks: a bot token switches to the monitor's
+          <code>/bot</code> surface, and the URL override points at a local dev
+          monitor.
         </p>
         <label>
           Upstream URL

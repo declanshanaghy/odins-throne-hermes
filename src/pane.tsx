@@ -3,7 +3,13 @@
 // window-level overlays (modals, toasts, banners) and plugin chrome (connect
 // card, settings dialog).
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useSyncExternalStore } from "react";
+import {
+  attachGuest,
+  guestStatus,
+  reauth,
+  subscribeGuestStatus,
+} from "./guest";
 import { ErrorBoundary } from "./ui/components/ErrorBoundary";
 import { Sidebar } from "./ui/components/Sidebar";
 import { AgentProfileModal } from "./ui/components/AgentProfileModal";
@@ -71,17 +77,55 @@ function ThroneOverlays() {
   );
 }
 
+function useGuestStatus() {
+  return useSyncExternalStore(subscribeGuestStatus, guestStatus, guestStatus);
+}
+
 function ConnectCard() {
+  const status = useGuestStatus();
   return (
     <div className="throne-connect-card">
       <p>
-        The Throne is sealed — Hlidskjalf needs a path to the monitor before the
-        ravens can fly.
+        The Throne is sealed — sign in with Google to open the Bifröst (the
+        same login the web version uses).
       </p>
-      <button className="throne-settings-btn primary" onClick={() => settingsUi.open()}>
-        Configure upstream
+      <button className="throne-settings-btn primary" onClick={() => reauth()}>
+        Sign in with Google
+      </button>
+      {status === "signing-in" && (
+        <p>Complete the sign-in inside the frame below…</p>
+      )}
+      <button className="throne-settings-btn" onClick={() => settingsUi.open()}>
+        Advanced: bot token / URL
       </button>
     </div>
+  );
+}
+
+/**
+ * The hidden OAuth guest — a real Chromium webview that holds the
+ * Google/oauth2-proxy session. Visible only while the user signs in.
+ */
+function ThroneGuest() {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const status = useGuestStatus();
+  useEffect(() => {
+    if (!containerRef.current) return;
+    return attachGuest(containerRef.current);
+  }, []);
+  const visible = status === "signing-in";
+  return (
+    <div
+      ref={containerRef}
+      style={{
+        position: "absolute",
+        inset: 0,
+        zIndex: 40,
+        pointerEvents: visible ? "auto" : "none",
+        visibility: visible ? "visible" : "hidden",
+        background: "var(--void)",
+      }}
+    />
   );
 }
 
@@ -98,7 +142,7 @@ export function ThronePane() {
     <div
       className="odins-throne-root"
       data-theme={theme === "light" ? "light" : undefined}
-      style={{ width: "100%", height: "100%" }}
+      style={{ width: "100%", height: "100%", position: "relative", overflow: "hidden" }}
     >
       {/* StoreBridge: the ported App — owns the WS, jobs, log stream, pins */}
       {bridge}
@@ -110,6 +154,7 @@ export function ThronePane() {
         <div className="throne-boot">Awakening the Allfather…</div>
       )}
       {!isConfigured() && <ConnectCard />}
+      <ThroneGuest />
       <ThroneOverlays />
       {settingsOpen && <ThroneSettings />}
     </div>

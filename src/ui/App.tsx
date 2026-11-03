@@ -7,7 +7,7 @@ import { useNamespace } from "./hooks/useNamespace";
 import { useJobs } from "./hooks/useJobs";
 import { useLogStream } from "./hooks/useLogStream";
 import { useTheme } from "./hooks/useTheme";
-import { restUrl, authInit } from "../upstream";
+import { otFetch } from "../upstream";
 import { throneStore, type ThroneSnapshot } from "../store";
 import {
   isPinned as checkIsPinned,
@@ -330,7 +330,7 @@ export function App() {
   /** Confirmed: call DELETE /api/jobs/:sessionId to kill the K8s job. */
   const handleConfirmCancel = useCallback(async () => {
     if (!cancelTarget) return;
-    const res = await fetch(restUrl(`/api/jobs/${encodeURIComponent(cancelTarget.sessionId)}`), authInit({ method: "DELETE" }));
+    const res = await otFetch(`/api/jobs/${encodeURIComponent(cancelTarget.sessionId)}`, { method: "DELETE" });
     if (!res.ok) {
       const body = await res.json().catch(() => ({})) as { error?: string };
       throw new Error(body.error ?? `HTTP ${res.status}`);

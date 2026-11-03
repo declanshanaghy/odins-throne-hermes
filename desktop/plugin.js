@@ -3241,7 +3241,255 @@ var styles_default = `.odins-throne-root .odins-throne-root {
 `;
 
 // src/pane.tsx
-import { useMemo as useMemo2 } from "react";
+import { useEffect as useEffect10, useMemo as useMemo2, useRef as useRef8, useSyncExternalStore as useSyncExternalStore4 } from "react";
+
+// src/upstream.ts
+var URL_KEY = "hlidskjalf:upstream-url";
+var TOKEN_KEY = "hlidskjalf:bot-token";
+function authMode() {
+  return getBotToken() === "" ? "guest-oauth" : "token";
+}
+var DEFAULT_UPSTREAM_URL = "https://odins-throne.fenrirledger.com";
+function getUpstreamUrl() {
+  try {
+    return localStorage.getItem(URL_KEY) || DEFAULT_UPSTREAM_URL;
+  } catch {
+    return DEFAULT_UPSTREAM_URL;
+  }
+}
+function getBotToken() {
+  try {
+    return localStorage.getItem(TOKEN_KEY) || "";
+  } catch {
+    return "";
+  }
+}
+function setUpstreamConfig(url, token) {
+  try {
+    localStorage.setItem(URL_KEY, url.trim() || DEFAULT_UPSTREAM_URL);
+    if (token.trim()) localStorage.setItem(TOKEN_KEY, token.trim());
+    else localStorage.removeItem(TOKEN_KEY);
+  } catch {
+  }
+}
+function isConfigured() {
+  if (getUpstreamUrl() !== DEFAULT_UPSTREAM_URL) return true;
+  if (authMode() === "token") return true;
+  return guestStatus() === "authed";
+}
+async function otFetch(path, init) {
+  if (authMode() === "token") return fetch(restUrl(path), authInit(init));
+  return guestFetch(path, init);
+}
+function restUrl(path) {
+  const base2 = getUpstreamUrl().replace(/\/+$/, "");
+  if (path.startsWith("/api/")) return `${base2}/bot${path}`;
+  return `${base2}${path}`;
+}
+function authInit(init) {
+  const headers = new Headers(init?.headers);
+  const token = getBotToken();
+  if (token) headers.set("Authorization", `Bearer ${token}`);
+  return { ...init, headers };
+}
+function wsUrl(namespace) {
+  const base2 = getUpstreamUrl().replace(/\/+$/, "");
+  const proto = base2.startsWith("https") ? "wss" : "ws";
+  const host4 = base2.replace(/^https?:\/\//, "");
+  const params = new URLSearchParams({ namespace });
+  const token = getBotToken();
+  if (token) params.set("token", token);
+  return `${proto}://${host4}/bot/ws?${params.toString()}`;
+}
+
+// src/guest.ts
+var status = "booting";
+var statusListeners = /* @__PURE__ */ new Set();
+function guestStatus() {
+  return status;
+}
+function subscribeGuestStatus(cb) {
+  statusListeners.add(cb);
+  return () => {
+    statusListeners.delete(cb);
+  };
+}
+function setStatus(next) {
+  if (status === next) return;
+  status = next;
+  for (const l of statusListeners) l();
+}
+var guest = null;
+var ready = null;
+function base() {
+  return getUpstreamUrl().replace(/\/+$/, "");
+}
+function attachGuest(container) {
+  if (guest) {
+    return () => void 0;
+  }
+  const el = document.createElement("webview");
+  el.setAttribute("partition", "persist:odins-throne");
+  el.setAttribute("webpreferences", "backgroundThrottling=false");
+  el.style.position = "absolute";
+  el.style.left = "-9999px";
+  el.style.top = "0";
+  el.style.width = "100%";
+  el.style.height = "100%";
+  el.src = `${base()}/healthz`;
+  container.appendChild(el);
+  guest = el;
+  ready = new Promise((resolve) => {
+    el.addEventListener("dom-ready", () => resolve(), { once: true });
+  });
+  void probeAndSet();
+  return () => {
+    guest = null;
+    ready = null;
+    setStatus("booting");
+    el.remove();
+  };
+}
+async function guestEval(code) {
+  if (!guest || !ready) throw new Error("guest not mounted");
+  await ready;
+  return guest.executeJavaScript(code, false);
+}
+async function probeAndSet() {
+  setStatus("probing");
+  setStatus(await probeAuth() ? "authed" : "needs-login");
+}
+async function probeAuth() {
+  try {
+    const code = 'fetch("/api/namespaces", { credentials: "include" }).then(function (r) { return String(r.status); }).catch(function () { return "0"; })';
+    const result = await guestEval(code);
+    return result === "200";
+  } catch {
+    return false;
+  }
+}
+function reauth() {
+  if (!guest) return;
+  setStatus("signing-in");
+  guest.src = `${base()}/`;
+  ready = new Promise((resolve) => {
+    guest.addEventListener("dom-ready", () => resolve(), { once: true });
+  });
+  const poll = setInterval(() => {
+    void probeAuth().then((ok) => {
+      if (!ok) return;
+      clearInterval(poll);
+      setStatus("authed");
+      if (guest) guest.src = `${base()}/healthz`;
+      ready = new Promise((resolve) => {
+        guest.addEventListener("dom-ready", () => resolve(), { once: true });
+      });
+    });
+  }, 3e3);
+}
+async function guestFetch(path, init) {
+  const opts = JSON.stringify({ method: init?.method ?? "GET", credentials: "include" });
+  const code = `fetch(${JSON.stringify(path)}, ${opts}).then(function (r) { return r.text().then(function (t) {  return JSON.stringify({ status: r.status, body: t });}); }).catch(function (e) { return JSON.stringify({ status: 0, body: String((e && e.message) || e) }); })`;
+  const raw = await guestEval(code);
+  const { status: code_, body } = JSON.parse(raw);
+  return {
+    ok: code_ >= 200 && code_ < 300,
+    status: code_,
+    async text() {
+      return body;
+    },
+    async json() {
+      return JSON.parse(body);
+    }
+  };
+}
+function relayBoot(namespaceJson) {
+  return '(function () {  var w = window;  if (w.__otSock) { try { w.__otSock.close(); } catch (e) {} }  var proto = location.protocol === "https:" ? "wss:" : "ws:";  var url = proto + "//" + location.host + "/ws?namespace=" + encodeURIComponent(' + namespaceJson + ");  var buf = w.__otBuf = [];  var state = w.__otSockState = 0;  var s = w.__otSock = new WebSocket(url);  s.onopen = function () { w.__otSockState = 1; };  s.onclose = function () { w.__otSockState = 3; };  s.onerror = function () { if (w.__otSockState !== 3) w.__otSockState = 4; };  s.onmessage = function (ev) {    buf.push(ev.data);    if (buf.length > 4000) buf.splice(0, buf.length - 4000);  };  w.__otSend = function (m) { try { s.send(m); } catch (e) {} };  w.__otClose = function () { try { s.close(); } catch (e) {} };})();";
+}
+var DRAIN = "(function () { var b = window.__otBuf || []; window.__otBuf = [];  return JSON.stringify({ s: window.__otSockState | 0, m: b }); })()";
+var GuestSocket = class {
+  readyState = 0;
+  onclose = null;
+  onerror = null;
+  handlers = /* @__PURE__ */ new Map();
+  timer = null;
+  errored = false;
+  dead = false;
+  constructor(namespace) {
+    void this.start(namespace);
+  }
+  async start(namespace) {
+    try {
+      await guestEval(relayBoot(JSON.stringify(namespace)));
+    } catch {
+      this.fail();
+      return;
+    }
+    this.timer = setInterval(() => void this.drain(), 120);
+  }
+  fail() {
+    if (this.dead) return;
+    this.dead = true;
+    this.readyState = 3;
+    if (!this.errored) {
+      this.errored = true;
+      this.emit("error", {});
+    }
+    this.emit("close", {});
+    this.stop();
+  }
+  stop() {
+    if (this.timer !== null) clearInterval(this.timer);
+    this.timer = null;
+  }
+  async drain() {
+    if (this.dead) return;
+    let frame;
+    try {
+      frame = JSON.parse(await guestEval(DRAIN));
+    } catch {
+      return;
+    }
+    for (const line of frame.m) {
+      this.emit("message", { data: line });
+    }
+    const next = frame.s === 4 ? 3 : frame.s;
+    if (frame.s === 4 && !this.errored) {
+      this.errored = true;
+      this.emit("error", {});
+    }
+    if (next !== this.readyState) {
+      this.readyState = next;
+      if (next === 1) {
+        this.errored = false;
+        this.emit("open", {});
+      } else if (next === 3) {
+        this.fail();
+      }
+    }
+  }
+  emit(type, ev) {
+    for (const cb of this.handlers.get(type) ?? []) cb(ev);
+  }
+  addEventListener(type, cb) {
+    const list = this.handlers.get(type) ?? [];
+    list.push(cb);
+    this.handlers.set(type, list);
+  }
+  send(data) {
+    const code = `(function () { var f = window.__otSend; if (f) f(${JSON.stringify(data)}); })()`;
+    void guestEval(code).catch(() => void 0);
+  }
+  close() {
+    this.dead = true;
+    this.stop();
+    this.readyState = 3;
+    void guestEval("window.__otClose ? window.__otClose() : undefined").catch(() => void 0);
+  }
+};
+function openGuestSocket(namespace) {
+  return new GuestSocket(namespace);
+}
 
 // src/ui/components/ErrorBoundary.tsx
 import { Component } from "react";
@@ -3585,8 +3833,8 @@ function toolPreview(name, input) {
 
 // src/ui/components/StatusIcon.tsx
 import { jsx as jsx2, jsxs as jsxs2 } from "react/jsx-runtime";
-function StatusIconSvg({ status }) {
-  switch (status) {
+function StatusIconSvg({ status: status2 }) {
+  switch (status2) {
     case "running":
       return /* @__PURE__ */ jsx2(
         "svg",
@@ -3793,56 +4041,6 @@ function resolveSessionTitle(job) {
   return job.branchName ?? job.sessionId;
 }
 
-// src/upstream.ts
-var URL_KEY = "hlidskjalf:upstream-url";
-var TOKEN_KEY = "hlidskjalf:bot-token";
-var DEFAULT_UPSTREAM_URL = "https://odins-throne.fenrirledger.com";
-function getUpstreamUrl() {
-  try {
-    return localStorage.getItem(URL_KEY) || DEFAULT_UPSTREAM_URL;
-  } catch {
-    return DEFAULT_UPSTREAM_URL;
-  }
-}
-function getBotToken() {
-  try {
-    return localStorage.getItem(TOKEN_KEY) || "";
-  } catch {
-    return "";
-  }
-}
-function setUpstreamConfig(url, token) {
-  try {
-    localStorage.setItem(URL_KEY, url.trim() || DEFAULT_UPSTREAM_URL);
-    if (token.trim()) localStorage.setItem(TOKEN_KEY, token.trim());
-    else localStorage.removeItem(TOKEN_KEY);
-  } catch {
-  }
-}
-function isConfigured() {
-  return getBotToken() !== "" || getUpstreamUrl() !== DEFAULT_UPSTREAM_URL;
-}
-function restUrl(path) {
-  const base = getUpstreamUrl().replace(/\/+$/, "");
-  if (path.startsWith("/api/")) return `${base}/bot${path}`;
-  return `${base}${path}`;
-}
-function authInit(init) {
-  const headers = new Headers(init?.headers);
-  const token = getBotToken();
-  if (token) headers.set("Authorization", `Bearer ${token}`);
-  return { ...init, headers };
-}
-function wsUrl(namespace) {
-  const base = getUpstreamUrl().replace(/\/+$/, "");
-  const proto = base.startsWith("https") ? "wss" : "ws";
-  const host4 = base.replace(/^https?:\/\//, "");
-  const params = new URLSearchParams({ namespace });
-  const token = getBotToken();
-  if (token) params.set("token", token);
-  return `${proto}://${host4}/bot/ws?${params.toString()}`;
-}
-
 // src/ui/lib/localStorageLogs.ts
 var LOG_PREFIX = "odin-throne:log:";
 var LOG_TTL_PREFIX = "odin-throne:log-ttl:";
@@ -3912,7 +4110,7 @@ function triggerBlobDownload(content, filename) {
 }
 async function downloadLogFile(sessionId) {
   try {
-    const res = await fetch(restUrl(`/api/logs/${encodeURIComponent(sessionId)}`), authInit());
+    const res = await otFetch(`/api/logs/${encodeURIComponent(sessionId)}`);
     if (res.ok) {
       const content2 = await res.text();
       if (content2) {
@@ -5040,7 +5238,7 @@ function useWebSocket(onMessage, namespace = "fenrir-agents") {
       wsRef.current = null;
       connectedNamespaceRef.current = null;
     }
-    const ws = new WebSocket(wsUrl(ns));
+    const ws = authMode() === "token" ? new WebSocket(wsUrl(ns)) : openGuestSocket(ns);
     wsRef.current = ws;
     connectedNamespaceRef.current = ns;
     setState("connecting");
@@ -5132,7 +5330,7 @@ function useNamespace() {
     { id: "re-goatmower-agents", label: "Re-Goatmower Agents" }
   ]);
   useEffect8(() => {
-    fetch(restUrl("/api/namespaces"), authInit()).then((res) => res.json()).then((data) => {
+    otFetch("/api/namespaces").then((res) => res.json()).then((data) => {
       if (Array.isArray(data.namespaces) && data.namespaces.length > 0) {
         setNamespaces(data.namespaces);
         const ids = data.namespaces.map((n) => n.id);
@@ -5355,10 +5553,10 @@ function useLogStream() {
     }
     if (ev.type === "rate_limit_event") {
       const info = ev.rate_limit_info;
-      const status = String(info?.status ?? "unknown");
+      const status2 = String(info?.status ?? "unknown");
       const limitType = String(info?.rateLimitType ?? "");
       const resetsAt = info?.resetsAt ? new Date(Number(info.resetsAt) * 1e3).toLocaleTimeString() : "";
-      const detail = `rate limit: ${status} (${limitType})${resetsAt ? ` \u2014 resets ${resetsAt}` : ""}`;
+      const detail = `rate limit: ${status2} (${limitType})${resetsAt ? ` \u2014 resets ${resetsAt}` : ""}`;
       setEntries((prev) => [
         ...prev,
         { id: nextId(), type: "warning", message: detail }
@@ -5950,7 +6148,7 @@ function App() {
   );
   const handleConfirmCancel = useCallback6(async () => {
     if (!cancelTarget) return;
-    const res = await fetch(restUrl(`/api/jobs/${encodeURIComponent(cancelTarget.sessionId)}`), authInit({ method: "DELETE" }));
+    const res = await otFetch(`/api/jobs/${encodeURIComponent(cancelTarget.sessionId)}`, { method: "DELETE" });
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
       throw new Error(body.error ?? `HTTP ${res.status}`);
@@ -6101,9 +6299,11 @@ function ThroneSettings() {
       children: /* @__PURE__ */ jsxs12("div", { className: "throne-settings", style: { maxWidth: 440 }, children: [
         /* @__PURE__ */ jsx11("h2", { children: "Bind the Bifr\xF6st" }),
         /* @__PURE__ */ jsxs12("p", { className: "throne-settings-hint", children: [
-          "Point Hlidskjalf at the Odin's Throne monitor. The deployed instance needs a bot token (mirrored ",
+          "Default auth is the ",
+          /* @__PURE__ */ jsx11("strong", { children: "Google sign-in" }),
+          " (the same login the web version uses \u2014 press \u201CSign in with Google\u201D on the pane). These are the fallbacks: a bot token switches to the monitor's",
           /* @__PURE__ */ jsx11("code", { children: "/bot" }),
-          " surface); a local dev server needs none."
+          " surface, and the URL override points at a local dev monitor."
         ] }),
         /* @__PURE__ */ jsxs12("label", { children: [
           "Upstream URL",
@@ -6204,11 +6404,40 @@ function ThroneOverlays() {
     )
   ] });
 }
+function useGuestStatus() {
+  return useSyncExternalStore4(subscribeGuestStatus, guestStatus, guestStatus);
+}
 function ConnectCard() {
+  const status2 = useGuestStatus();
   return /* @__PURE__ */ jsxs13("div", { className: "throne-connect-card", children: [
-    /* @__PURE__ */ jsx12("p", { children: "The Throne is sealed \u2014 Hlidskjalf needs a path to the monitor before the ravens can fly." }),
-    /* @__PURE__ */ jsx12("button", { className: "throne-settings-btn primary", onClick: () => settingsUi.open(), children: "Configure upstream" })
+    /* @__PURE__ */ jsx12("p", { children: "The Throne is sealed \u2014 sign in with Google to open the Bifr\xF6st (the same login the web version uses)." }),
+    /* @__PURE__ */ jsx12("button", { className: "throne-settings-btn primary", onClick: () => reauth(), children: "Sign in with Google" }),
+    status2 === "signing-in" && /* @__PURE__ */ jsx12("p", { children: "Complete the sign-in inside the frame below\u2026" }),
+    /* @__PURE__ */ jsx12("button", { className: "throne-settings-btn", onClick: () => settingsUi.open(), children: "Advanced: bot token / URL" })
   ] });
+}
+function ThroneGuest() {
+  const containerRef = useRef8(null);
+  const status2 = useGuestStatus();
+  useEffect10(() => {
+    if (!containerRef.current) return;
+    return attachGuest(containerRef.current);
+  }, []);
+  const visible = status2 === "signing-in";
+  return /* @__PURE__ */ jsx12(
+    "div",
+    {
+      ref: containerRef,
+      style: {
+        position: "absolute",
+        inset: 0,
+        zIndex: 40,
+        pointerEvents: visible ? "auto" : "none",
+        visibility: visible ? "visible" : "hidden",
+        background: "var(--void)"
+      }
+    }
+  );
 }
 function ThronePane() {
   const snap = useThrone();
@@ -6220,11 +6449,12 @@ function ThronePane() {
     {
       className: "odins-throne-root",
       "data-theme": theme === "light" ? "light" : void 0,
-      style: { width: "100%", height: "100%" },
+      style: { width: "100%", height: "100%", position: "relative", overflow: "hidden" },
       children: [
         bridge,
         snap ? /* @__PURE__ */ jsx12(ErrorBoundary, { children: /* @__PURE__ */ jsx12(SidebarConnected, {}) }) : /* @__PURE__ */ jsx12("div", { className: "throne-boot", children: "Awakening the Allfather\u2026" }),
         !isConfigured() && /* @__PURE__ */ jsx12(ConnectCard, {}),
+        /* @__PURE__ */ jsx12(ThroneGuest, {}),
         /* @__PURE__ */ jsx12(ThroneOverlays, {}),
         settingsOpen && /* @__PURE__ */ jsx12(ThroneSettings, {})
       ]
@@ -6233,7 +6463,7 @@ function ThronePane() {
 }
 
 // src/ui/components/LogViewer.tsx
-import { useEffect as useEffect10, useRef as useRef8, useState as useState14, useCallback as useCallback7, useMemo as useMemo3 } from "react";
+import { useEffect as useEffect11, useRef as useRef9, useState as useState14, useCallback as useCallback7, useMemo as useMemo3 } from "react";
 
 // src/ui/components/ToolBlock.tsx
 import { useState as useState12 } from "react";
@@ -7136,7 +7366,7 @@ function SessionHeader({ job, isPinned: isPinned2 = false, onTogglePin, showPin 
   const [confirmingUnpin, setConfirmingUnpin] = useState14(false);
   const { theme } = useTheme();
   const statusColorMap = theme === "light" ? STATUS_COLORS_LIGHT : STATUS_COLORS;
-  useEffect10(() => {
+  useEffect11(() => {
     setConfirmingUnpin(false);
   }, [isPinned2]);
   return /* @__PURE__ */ jsxs18(
@@ -7259,13 +7489,13 @@ function SessionHeader({ job, isPinned: isPinned2 = false, onTogglePin, showPin 
   );
 }
 function LogViewer({ entries, activeJob, isFixture, isTtlExpired, isNodeUnreachable, streamError, onSetSpeed, isPinned: isPinned2, onTogglePin, onAvatarClick, replayedFromCache, isConnecting, isPodStarting, onCancelJob }) {
-  const termRef = useRef8(null);
+  const termRef = useRef9(null);
   const [fixtureSpeed, setFixtureSpeed] = useState14(1);
   const [fixturePaused, setFixturePaused] = useState14(false);
   const [autoScroll, setAutoScroll] = useState14(true);
-  const programmaticScrollRef = useRef8(false);
+  const programmaticScrollRef = useRef9(false);
   const lastEntryId = entries[entries.length - 1]?.id;
-  useEffect10(() => {
+  useEffect11(() => {
     if (autoScroll && termRef.current) {
       programmaticScrollRef.current = true;
       requestAnimationFrame(() => {
@@ -7275,7 +7505,7 @@ function LogViewer({ entries, activeJob, isFixture, isTtlExpired, isNodeUnreacha
       });
     }
   }, [entries.length, lastEntryId, autoScroll]);
-  useEffect10(() => {
+  useEffect11(() => {
     setAutoScroll(true);
     programmaticScrollRef.current = false;
   }, [activeJob?.sessionId]);
@@ -7625,23 +7855,23 @@ function AgentBubble({
 function ToolBatchGroup({ entry, autoScroll, isLatestBatch }) {
   const [open2, setOpen] = useState14(() => !autoScroll || !!isLatestBatch);
   const hasError = entry.children?.some((c) => c.toolIsError) ?? false;
-  const prevCompleteRef = useRef8(entry.complete);
-  const prevIsLatestRef = useRef8(isLatestBatch);
-  const prevAutoScrollRef = useRef8(autoScroll);
-  useEffect10(() => {
+  const prevCompleteRef = useRef9(entry.complete);
+  const prevIsLatestRef = useRef9(isLatestBatch);
+  const prevAutoScrollRef = useRef9(autoScroll);
+  useEffect11(() => {
     if (entry.complete && !prevCompleteRef.current) {
       prevCompleteRef.current = true;
       setOpen(false);
     }
   }, [entry.complete]);
-  useEffect10(() => {
+  useEffect11(() => {
     const wasLatest = prevIsLatestRef.current;
     prevIsLatestRef.current = isLatestBatch;
     if (wasLatest && !isLatestBatch && autoScroll) {
       setOpen(false);
     }
   }, [isLatestBatch, autoScroll]);
-  useEffect10(() => {
+  useEffect11(() => {
     const wasAutoScroll = prevAutoScrollRef.current;
     prevAutoScrollRef.current = autoScroll;
     if (!wasAutoScroll && autoScroll && !isLatestBatch) {
@@ -7870,7 +8100,7 @@ function NorseTablet({ text, autoScroll }) {
   const agentColor = AGENT_COLORS[agentKey] ?? "#888";
   const agentTitle = AGENT_TITLES[agentKey] ?? "Agent";
   const agentDisplayName = AGENT_NAMES[agentKey] ?? agent;
-  useEffect10(() => {
+  useEffect11(() => {
     if (!autoScroll || hasBeenCollapsed) return;
     const timer = setTimeout(() => {
       setOpen(false);

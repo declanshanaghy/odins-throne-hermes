@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { restUrl, authInit } from "../../upstream";
+import { otFetch } from "../../upstream";
 
 export interface NamespaceOption {
   id: string;
@@ -39,7 +39,7 @@ export function useNamespace() {
 
   // Fetch available namespaces from API at startup
   useEffect(() => {
-    fetch(restUrl("/api/namespaces"), authInit())
+    otFetch("/api/namespaces")
       .then((res) => res.json())
       .then((data: { namespaces?: NamespaceOption[] }) => {
         if (Array.isArray(data.namespaces) && data.namespaces.length > 0) {

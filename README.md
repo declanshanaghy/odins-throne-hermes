@@ -15,7 +15,8 @@ first-class plugin:
 ```mermaid
 flowchart LR
     GKE["GKE<br/>agent-sandbox Jobs"] --> OT["odins-throne<br/>(fenrir-monitor)"]
-    OT <-->|"wss /bot/ws?namespace&token<br/>REST /bot/api/* (Bearer)"| UI["plugin.js<br/>(renderer)"]
+    OT <-->|"same-origin /api + /ws,<br/>Google OAuth session cookie"| GV["hidden webview guest<br/>(persist:odins-throne)"]
+    GV <-->|"relay: guestFetch / GuestSocket"| UI["plugin.js<br/>(renderer)"]
     UI --> RP["right pane:<br/>job list"]
     UI --> MP["workspace page:<br/>log terminal"]
 ```
@@ -45,15 +46,20 @@ hermes plugins install declanshanaghy/odins-throne-hermes
 #   Hermes desktop → Capabilities → Plugins → Odin's Throne
 ```
 
-Then configure the upstream once: **⌘K → "Odin's Throne: Configure
-upstream"** — the deployed monitor's URL (defaults to
-`https://odins-throne.fenrirledger.com`) and a bot token. Local dev servers
-(`pnpm dev` in `development/odins-throne`) need no token.
+Then authenticate once: click **"Sign in with Google"** on the pane. The
+login happens inside the app — a hidden `<webview>` guest
+(`persist:odins-throne`) is a real browser client of the monitor, so the
+Google OAuth → oauth2-proxy → session-cookie flow is exactly what the web
+version does. The cookie persists across restarts; all REST + WS traffic runs
+inside the guest, same-origin on the human routes (`/api/*`, `/ws`), and the
+host relays frames in and out. No tokens, no CORS, no backend changes.
 
-> The deployed instance sits behind Google OAuth; plugins can't hold that
-> session, so the monitor ships a token-gated mirror surface — REST under
-> `/bot/api/*` (`Authorization: Bearer`) and the multiplexed stream at
-> `/bot/ws` (`?token=`). Same protocol, same server logic, zero duplication.
+> **Fallback auth:** the monitor also exposes a token-gated bot surface —
+> REST under `/bot/api/*` (`Authorization: Bearer`) and the multiplexed stream
+> at `/bot/ws` (`?token=`). Paste a bot token into ⌘K → "Odin's Throne:
+> Configure upstream" to switch to it (curl/CI friendly). Local dev servers
+> (`pnpm dev` in `development/odins-throne`) serve both surfaces without
+> oauth2-proxy.
 
 ## Dev loop (live reload)
 

@@ -2,7 +2,7 @@
 // Written as log-lines arrive for live sessions that are NOT pinned.
 // Ephemeral — evicts freely. Pinned sessions skip this buffer entirely.
 
-import { restUrl, authInit } from "../../upstream";
+import { otFetch } from "../../upstream";
 
 const LOG_PREFIX = "odin-throne:log:";
 const LOG_TTL_PREFIX = "odin-throne:log-ttl:";
@@ -135,7 +135,7 @@ function triggerBlobDownload(content: string, filename: string): void {
  */
 export async function downloadLogFile(sessionId: string): Promise<void> {
   try {
-    const res = await fetch(restUrl(`/api/logs/${encodeURIComponent(sessionId)}`), authInit());
+    const res = await otFetch(`/api/logs/${encodeURIComponent(sessionId)}`);
     if (res.ok) {
       const content = await res.text();
       if (content) {

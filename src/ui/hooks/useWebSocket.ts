@@ -1,6 +1,7 @@
 import { useEffect, useRef, useCallback, useState } from "react";
 import type { ServerMessage, ClientMessage } from "../lib/types";
-import { wsUrl } from "../../upstream";
+import { wsUrl, authMode } from "../../upstream";
+import { openGuestSocket, type ThroneSocket } from "../../guest";
 
 type WsState = "connecting" | "open" | "closed" | "error";
 
@@ -8,7 +9,7 @@ const MAX_RECONNECT = 10;
 const BASE_DELAY_MS = 1000;
 
 export function useWebSocket(onMessage: (msg: ServerMessage) => void, namespace = "fenrir-agents") {
-  const wsRef = useRef<WebSocket | null>(null);
+  const wsRef = useRef<ThroneSocket | null>(null);
   const reconnectCount = useRef(0);
   const reconnectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const onMessageRef = useRef(onMessage);
@@ -35,10 +36,14 @@ export function useWebSocket(onMessage: (msg: ServerMessage) => void, namespace 
       connectedNamespaceRef.current = null;
     }
 
-    // Desktop port: the multiplexed stream now dials the deployed monitor's
-    // token-gated surface (wss://…/bot/ws?namespace=…&token=…) instead of the
-    // SPA's same-origin /ws. Protocol, reconnect and backoff are unchanged.
-    const ws = new WebSocket(wsUrl(ns));
+    // Desktop port: default auth is the web version's own — the stream dials
+    // the monitor's same-origin /ws from inside the signed-in webview guest
+    // (cookie-authenticated). With a bot token configured it dials the
+    // token-gated /bot/ws mirror instead. Protocol/backoff unchanged.
+    const ws: ThroneSocket =
+      authMode() === "token"
+        ? (new WebSocket(wsUrl(ns)) as unknown as ThroneSocket)
+        : openGuestSocket(ns);
     wsRef.current = ws;
     connectedNamespaceRef.current = ns;
     setState("connecting");

@@ -107,7 +107,8 @@ await flush();
 
 const paneHtml = document.getElementById("pane").innerHTML;
 assert.ok(paneHtml.includes("odins-throne-root"), "pane root mounted");
-assert.ok(paneHtml.includes("throne-connect-card"), "first-run connect card shown (no bot token)");
+assert.ok(paneHtml.includes("throne-connect-card"), "first-run connect card shown (no session yet)");
+assert.ok(paneHtml.includes("Sign in with Google"), "Google OAuth is the primary auth affordance");
 assert.ok(document.querySelector(".sidebar"), "Hlidskjalf sidebar mounted");
 assert.ok(paneHtml.includes("Hlidskjalf"), "brand title rendered");
 assert.ok(document.querySelector(".brand-wss-badge"), "WSS status badge rendered");
