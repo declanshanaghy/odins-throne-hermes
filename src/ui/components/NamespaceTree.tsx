@@ -269,6 +269,11 @@ export function NamespaceTree({
           className="ns-tree__chip"
           onClick={() => setCompactOpen((v) => !v)}
           aria-expanded={compactOpen}
+          aria-label={
+            active
+              ? `Namespaces: ${active.label}${activeSummary ? ` — ${summaryLine(activeSummary)}` : ""}`
+              : "Namespaces"
+          }
           title={
             active
               ? `${active.label}${activeSummary ? ` — ${summaryLine(activeSummary)}` : ""}`
@@ -298,6 +303,7 @@ export function NamespaceTree({
                     type="button"
                     className="ns-tree__row"
                     title={ns.label}
+                    aria-label={`${ns.label} — ${labelLineOf(summary)}`}
                     onClick={() => {
                       onNamespaceChange(ns.id);
                       setCompactOpen(false);

@@ -93,10 +93,22 @@ export function VineCard({
     .filter(Boolean)
     .join(" ");
 
+  // The card BODY is the treeitem — keyboard-operable like every lantern
+  // button: Tab reaches it, Enter/Space opens the session's tab (the same
+  // path a click takes). Falling ghosts ignore keys with the pointer.
+  const openOnKey = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (ghost) return;
+    if (e.key === "Enter" || e.key === " " || e.key === "Spacebar") {
+      e.preventDefault();
+      onOpen();
+    }
+  };
+
   return (
     <div
       className={cls}
       role="treeitem"
+      tabIndex={ghost ? undefined : 0}
       aria-selected={isActive}
       aria-label={`${job.sessionId} — ${title} — ${sLabel}`}
       title={title}
@@ -105,6 +117,7 @@ export function VineCard({
       data-status={job.status}
       style={style}
       onClick={ghost ? undefined : onOpen}
+      onKeyDown={openOnKey}
     >
       <span className="jcard__sigil" aria-hidden="true">
         <TreeIcon src={taskIcon(job.status)} fallback={taskIconFallback(job.status)} size="task" />

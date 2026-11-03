@@ -424,6 +424,80 @@ assert.ok(
   "a succeeded (non-cancellable) card hides its cancel action",
 );
 
+// ── keyboard operability + screen-reader semantics (issue #9) ───────────────
+// Lanterns are native <button type="button"> — Enter/Space toggle them by
+// default; the tree root + treeitems carry the ARIA tree semantics; card
+// bodies are keyboard-operable (tabIndex 0 + Enter/Space open, same path a
+// click takes); every on-card action is a labelled button; focus rings sit
+// on :focus-visible for lanterns, cards and actions against the painting.
+for (const item of document.querySelectorAll(".ns-tree__item[data-namespace]")) {
+  const lantern = item.querySelector(".ns-tree__lantern");
+  assert.equal(lantern.tagName, "BUTTON", "lantern is a native button — Enter/Space toggle it");
+  assert.equal(lantern.getAttribute("type"), "button", "lantern button never submits a form");
+  assert.equal(lantern.getAttribute("role"), "treeitem", "lantern carries role=treeitem");
+  const fixture = NS_FIXTURES.find((n) => n.id === item.dataset.namespace);
+  assert.ok(
+    fixture && (lantern.getAttribute("aria-label") ?? "").includes(fixture.label),
+    `lantern aria-label names the world: ${lantern.getAttribute("aria-label")}`,
+  );
+  assert.ok(
+    lantern.getAttribute("aria-expanded") === "true" || lantern.getAttribute("aria-expanded") === "false",
+    "lantern exposes its expand/collapse state",
+  );
+  assert.ok(
+    lantern.getAttribute("aria-selected") === "true" || lantern.getAttribute("aria-selected") === "false",
+    "lantern exposes its selected state",
+  );
+}
+assert.equal(
+  document.querySelector(".ns-tree__lanterns, .ns-tree").getAttribute("role"),
+  "tree",
+  "the lantern scene roots a role=tree",
+);
+for (const card of document.querySelectorAll(".ns-tree__canvas .jcard[data-session]")) {
+  assert.equal(card.getAttribute("role"), "treeitem", "card body carries role=treeitem");
+  assert.equal(card.getAttribute("tabIndex"), "0", "card body is Tab-reachable (keyboard operable)");
+  assert.ok(card.getAttribute("aria-label"), "card body carries an aria-label");
+  for (const act of card.querySelectorAll(".jact")) {
+    assert.equal(act.tagName, "BUTTON", "on-card action is a native button");
+    assert.ok(act.getAttribute("aria-label"), "on-card action carries an aria-label");
+  }
+}
+for (const sel of [".jcard:focus-visible", ".ns-tree__lantern:focus-visible", ".jact:focus-visible"]) {
+  assert.ok(css.includes(sel), `keyboard focus ring present in the CSS: ${sel}`);
+}
+
+// Enter on the card body opens the session's tab — the keyboard path through
+// the tree (a Space keypress does the same). No click involved.
+const SID_1202 = "issue-1202-step1-luna-3c4d5e6f";
+const opensBeforeKeys = globalThis.__stubWorkspaceOpens.length;
+const card1202 = document.querySelector(`.jcard[data-session="${SID_1202}"]`);
+card1202.dispatchEvent(new dom.window.KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+await flush();
+await flush();
+assert.equal(
+  globalThis.__stubWorkspaceOpens[globalThis.__stubWorkspaceOpens.length - 1],
+  `odins-throne-session-${SID_1202}`,
+  "Enter on the card body opens the session's tab (keyboard operable)",
+);
+assert.equal(
+  globalThis.__stubWorkspaceOpens.length,
+  opensBeforeKeys + 1,
+  "Enter keypress stacks exactly one tab",
+);
+card1202.dispatchEvent(new dom.window.KeyboardEvent("keydown", { key: " ", bubbles: true }));
+await flush();
+await flush();
+assert.equal(
+  globalThis.__stubWorkspaceOpens.length,
+  opensBeforeKeys + 1,
+  "Space on an already-open session focuses its tab — never a duplicate stack",
+);
+assert.ok(
+  globalThis.__stubWorkspaceFocuses.includes(`odins-throne-session-${SID_1202}`),
+  "Space keypress follows the same open path (focus dedupe applies)",
+);
+
 // ── per-session workspace tabs (issue:6) ────────────────────────────────────
 // A session click must stack a DEDICATED workspace tab (host.openWorkspace —
 // the session-tile door), never navigate the current tab away; a second click
