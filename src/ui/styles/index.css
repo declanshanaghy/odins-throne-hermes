@@ -504,9 +504,9 @@ body {
 }
 
 /* ── task pips — one small task icon per task beneath the lantern ── */
-/* lib/taskPips.ts owns the geometry (TASK_PIPS: 9px pips, 2px gap, 4 per
- * line, 8 slots max with a "+N" chip); the inline `left` puts the row on
- * the side away from the vine, clamped into the scene. */
+/* lib/taskPips.ts owns the geometry (TASK_PIPS: 9px pips, 2px gap, up to 4
+ * per line, 8 slots max with a "+N" chip); the inline `left` + --pip-cols
+ * put the row on the side away from the vine, narrowed to fit the scene. */
 .ns-tree__tasks {
   position: absolute;
   top: calc(50% + 14px);

@@ -55,7 +55,7 @@ import {
   taskIconFallback,
 } from "../lib/namespaceIcons";
 import { assignSeats } from "../lib/treeSeats";
-import { TASK_PIPS, taskPips, pipSlots, pipRowWidth, pipRowOffset } from "../lib/taskPips";
+import { taskPips, pipSlots, pipRowLayout } from "../lib/taskPips";
 import {
   vineFor,
   vineCardBox,
@@ -472,9 +472,7 @@ export function NamespaceTree({
             // (hang order, purged excluded), capped with a "+N" chip
             const pipRow =
               summary && !summary.error ? taskPips(isOpen ? openTasks : tasksOf(summary.jobs)) : null;
-            const pipOffset = pipRow
-              ? pipRowOffset(seat, sceneSize.w, pipRowWidth(pipSlots(pipRow)))
-              : 0;
+            const pipLayout = pipRow ? pipRowLayout(seat, sceneSize.w, pipSlots(pipRow)) : null;
             return (
               <li
                 key={ns.id}
@@ -507,15 +505,15 @@ export function NamespaceTree({
                 {/* task pips — icon count = task count, beneath the lantern on
                     the side away from the vine (the label carries the counts
                     for screen readers) */}
-                {pipRow && pipRow.count > 0 && (
+                {pipRow && pipLayout && pipRow.count > 0 && (
                   <div
                     className="ns-tree__tasks"
                     aria-hidden="true"
                     data-count={pipRow.count}
                     style={
                       {
-                        left: `calc(50% + ${pipOffset.toFixed(1)}px)`,
-                        "--pip-cols": Math.min(pipSlots(pipRow), TASK_PIPS.columns),
+                        left: `calc(50% + ${pipLayout.left.toFixed(1)}px)`,
+                        "--pip-cols": pipLayout.columns,
                       } as CSSProperties
                     }
                   >

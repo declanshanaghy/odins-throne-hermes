@@ -8,8 +8,8 @@
 //
 // The row sits on the side AWAY from the open world's vine strand (the
 // strand and its cards lean toward the seat's dir), so pips never paint
-// over the vine or its first card; it is clamped inside the scene box so
-// seats near the edge never clip it.
+// over the vine or its first card; a seat near the scene edge narrows the
+// row (fewer columns, more lines) so it never clips.
 //
 // Pure functions only — no DOM, no React — so test/tree-seats.mjs can lock
 // the count/overflow and placement contracts. All layout constants live
@@ -74,25 +74,47 @@ export function pipSlots(row: TaskPipRow): number {
   return row.pips.length + (row.overflow > 0 ? 1 : 0);
 }
 
-/** A row's width in px for a slot count (wraps at TASK_PIPS.columns). */
-export function pipRowWidth(slots: number): number {
-  const cols = Math.min(Math.max(slots, 0), TASK_PIPS.columns);
+/** A row's width in px for a column count. */
+export function pipRowWidth(columns: number): number {
+  const cols = Math.max(Math.floor(columns), 0);
   if (cols === 0) return 0;
   return cols * TASK_PIPS.sizePx + (cols - 1) * TASK_PIPS.gapPx;
 }
 
+/** Where a pip row sits under its lantern. */
+export interface PipRowLayout {
+  /** Pips per line (the row wraps onto further lines beyond this). */
+  columns: number;
+  /** The row's width, px. */
+  width: number;
+  /** The row's left edge in px RELATIVE TO THE LANTERN'S CENTER. */
+  left: number;
+}
+
 /**
- * The row's left edge, in px RELATIVE TO THE LANTERN'S CENTER: on the side
- * away from the vine (dir 1 → left of center, dir -1 → right of center),
- * then clamped so the row stays inside the scene. An unmeasured scene
- * (sceneW 0) skips the clamp.
+ * Lay a row of `slots` out beneath a lantern, on the side AWAY from the
+ * vine (dir 1 → left of center, dir -1 → right of center), so it never
+ * paints over the strand or its cards. A seat near the scene edge narrows
+ * the row (fewer columns, more lines) to fit the room on that side; only
+ * when not even one column fits does the row clamp back inside the scene.
+ * An unmeasured scene (sceneW 0) lays out at full width without clamping.
  */
-export function pipRowOffset(seat: LanternSeat, sceneW: number, rowWidth: number): number {
-  const away = seat.dir === 1 ? -TASK_PIPS.clearPx - rowWidth : TASK_PIPS.clearPx;
-  if (!(sceneW > 0)) return away;
+export function pipRowLayout(seat: LanternSeat, sceneW: number, slots: number): PipRowLayout {
+  const want = Math.min(Math.max(Math.floor(slots), 1), TASK_PIPS.columns);
+  const awayLeft = (width: number): number =>
+    seat.dir === 1 ? -TASK_PIPS.clearPx - width : TASK_PIPS.clearPx;
+  if (!(sceneW > 0)) {
+    const width = pipRowWidth(want);
+    return { columns: want, width, left: awayLeft(width) };
+  }
   const seatPx = (seat.x / 100) * sceneW;
+  const room =
+    (seat.dir === 1 ? seatPx : sceneW - seatPx) - TASK_PIPS.clearPx - TASK_PIPS.edgePx;
+  const fit = Math.floor((room + TASK_PIPS.gapPx) / (TASK_PIPS.sizePx + TASK_PIPS.gapPx));
+  const columns = Math.max(1, Math.min(want, fit));
+  const width = pipRowWidth(columns);
   const minLeft = TASK_PIPS.edgePx - seatPx;
-  const maxLeft = sceneW - TASK_PIPS.edgePx - rowWidth - seatPx;
-  if (maxLeft < minLeft) return minLeft;
-  return Math.min(maxLeft, Math.max(minLeft, away));
+  const maxLeft = sceneW - TASK_PIPS.edgePx - width - seatPx;
+  const left = Math.min(Math.max(awayLeft(width), minLeft), Math.max(maxLeft, minLeft));
+  return { columns, width, left };
 }

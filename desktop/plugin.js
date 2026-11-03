@@ -331,11 +331,13 @@ var styles_default = `.odins-throne-root .odins-throne-root {
 @media (prefers-reduced-motion: reduce) {
   .odins-throne-root .theme-btn { transition: none; }
 }
-/* \u2500\u2500 Namespace lantern tree (issues #11 + #12, garden pattern) \u2500\u2500\u2500 */
-/* Each namespace is a LANTERN seated on the painted backdrop at its
- * runtime-assigned seat (lib/treeSeats.ts): frost-glass node, curated
- * shanaghy.com icon inside (inline glyph fallback offline via TreeIcon),
- * status-tinted glow, stats berries beside the seat, hover label with the
+/* \u2500\u2500 Namespace lantern tree (issues #11, #12 + #39, garden pattern) \u2500\u2500\u2500 */
+/* Each namespace is seated on one of the backdrop's PAINTED lanterns at its
+ * runtime-assigned seat (lib/treeSeats.ts): no UI disc over the painting \u2014
+ * a transparent hit area holds the curated shanaghy.com icon (inline glyph
+ * fallback offline via TreeIcon), the active world's painted lantern
+ * brightens with a screen-blended glow, a row of small task icons beneath
+ * counts the world's tasks (lib/taskPips.ts), and a hover label carries the
  * world name + full summary line. Strict accordion: one world's VINE is
  * open at a time \u2014 its job cards hang along a curved strand that extends
  * from the lantern (issue #12), scrolling beneath the rooted painting. The
@@ -398,19 +400,25 @@ var styles_default = `.odins-throne-root .odins-throne-root {
   pointer-events: none;
 }
 
-/* \u2500\u2500 the lantern \u2014 a namespace node seated on the painting \u2500\u2500 */
-/* night-garden palette, scoped to the tree (the painting is dark in both
- * themes): moon glow default, teal ring when selected, ember tint when the
- * world holds a failed job, moss tint when all-clear. */
+/* \u2500\u2500 the lantern \u2014 a namespace seated on a painted lantern \u2500\u2500 */
+/* No glass disc, ring, or stem: the painting's own lantern carries the
+ * display. The button is a transparent hit area centred on the painted
+ * lantern; the world's icon seats in it. Night-garden palette, scoped to the
+ * tree (the painting is dark in both themes): moon glow by default, teal
+ * when selected, ember when the world holds a failed job, moss when
+ * all-clear \u2014 tinting the icon's halo, and (active only) the screen-blended
+ * light that brightens the painted lantern itself. */
 .odins-throne-root .ns-tree--lanterns {
   --lg-moon: rgba(176, 196, 201, 0.30);
   --lg-teal: rgba(21, 184, 166, 0.55);
   --lg-ember: rgba(224, 122, 63, 0.42);
   --lg-moss: rgba(121, 179, 86, 0.36);
   --lg: var(--lg-moon);
-  --berry-succeeded: #79b356;
-  --berry-running: #6fb7d8;
-  --berry-failed: #e07a3f;
+  --lantern-light: rgba(255, 226, 168, 0.62); /* the painted flame, lit */
+  --pip-succeeded: #79b356;
+  --pip-running: #6fb7d8;
+  --pip-failed: #e07a3f;
+  --pip-pending: #d9c27a;
   --glabel-bg: rgba(5, 7, 10, 0.88);
   --glabel-border: rgba(176, 196, 201, 0.14);
   --glabel-frost: #d9e6ea;
@@ -421,136 +429,141 @@ var styles_default = `.odins-throne-root .odins-throne-root {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
+  width: 32px;
+  height: 32px;
   padding: 0;
-  border-radius: 50% 50% 50% 7px;
-  rotate: 40deg;
-  border: 1px solid rgba(214, 236, 240, 0.42);
-  background: radial-gradient(circle at 32% 26%, rgba(226, 240, 244, 0.34), rgba(10, 16, 20, 0.84));
-  backdrop-filter: blur(1.5px);
-  font-size: 19px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
   cursor: pointer;
-  box-shadow: 0 0 18px 4px var(--lg),
-              0 4px 12px rgba(0, 0, 0, 0.5),
-              inset 0 1px 2px rgba(255, 255, 255, 0.18);
-  transition: box-shadow 0.2s, border-color 0.2s, scale 0.2s;
+  transition: scale 0.2s;
 }
-/* the stem it hangs by */
+/* the painted lantern's light \u2014 invisible until hovered/selected; a
+ * screen blend only BRIGHTENS the painting beneath (never covers it) */
 .odins-throne-root .ns-tree__lantern::before {
   content: "";
   position: absolute;
-  left: 50%;
-  top: -16px;
-  width: 1.5px;
-  height: 16px;
-  background: linear-gradient(180deg, transparent, rgba(176, 196, 201, 0.6));
+  inset: -12px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--lantern-light) 0%, var(--lg) 40%, transparent 70%);
+  mix-blend-mode: screen;
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
 }
-.odins-throne-root .ns-tree__lantern:hover {
-  scale: 1.1;
-  border-color: var(--teal-asgard);
-}
+.odins-throne-root .ns-tree__lantern:hover::before { opacity: 0.55; }
 .odins-throne-root .ns-tree__lantern:focus-visible {
   outline: 2px solid var(--teal-asgard);
   outline-offset: 2px;
 }
-/* selected \u2014 the teal ring */
-.odins-throne-root .ns-tree__lantern--active {
-  border-color: var(--teal-asgard);
-  --lg: var(--lg-teal);
-  box-shadow: 0 0 0 3px rgba(21, 184, 166, 0.45),
-              0 0 30px 6px var(--lg-teal),
-              0 4px 12px rgba(0, 0, 0, 0.5);
+.odins-throne-root .ns-tree__lantern:focus-visible::before { opacity: 0.55; }
+/* selected \u2014 the painted lantern lights up teal-warm, its icon brightens */
+.odins-throne-root .ns-tree__lantern--active { --lg: var(--lg-teal); }
+.odins-throne-root .ns-tree__lantern--active::before,
+.odins-throne-root .ns-tree__lantern--active:hover::before { opacity: 1; }
+/* glow tints \u2014 ember for a failed job in the world, moss when all-clear
+ * (the selected world keeps its teal light) */
+.odins-throne-root .ns-tree__lantern--failed:not(.ns-tree__lantern--active) { --lg: var(--lg-ember); }
+.odins-throne-root .ns-tree__lantern--ok:not(.ns-tree__lantern--active)     { --lg: var(--lg-moss); }
+/* the curated icon, seated in the painted lantern: a dark outline + tinted
+ * halo keep it legible on the painting without any disc behind it */
+.odins-throne-root .ns-tree__icon--lantern {
+  position: relative; /* above the ::before light */
+  width: 20px;
+  height: 20px;
+  border-radius: 0;
+  opacity: 0.85;
+  filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.95)) drop-shadow(0 0 4px var(--lg));
+  transition: opacity 0.2s, scale 0.2s, filter 0.2s;
+}
+.odins-throne-root .ns-tree__lantern:hover .ns-tree__icon--lantern,
+.odins-throne-root .ns-tree__lantern:focus-visible .ns-tree__icon--lantern { opacity: 1; }
+.odins-throne-root .ns-tree__lantern--active .ns-tree__icon--lantern {
+  opacity: 1;
+  scale: 1.15;
+  filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.95)) drop-shadow(0 0 7px var(--lg-teal));
 }
 /* summary unavailable \u2014 the dimmed seat */
-.odins-throne-root .ns-tree__lantern--dim {
-  opacity: 0.55;
-  filter: saturate(0.6);
-}
-/* glow tints \u2014 ember for a failed job in the world, moss when all-clear */
-.odins-throne-root .ns-tree__lantern--failed { --lg: var(--lg-ember); }
-.odins-throne-root .ns-tree__lantern--ok     { --lg: var(--lg-moss); }
-/* the curated icon sits upright inside the tilted lantern */
-.odins-throne-root .ns-tree__icon--lantern {
-  width: 26px;
-  height: 26px;
-  rotate: -40deg;
-  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.7));
-  border-radius: 0;
+.odins-throne-root .ns-tree__lantern--dim .ns-tree__icon--lantern {
+  opacity: 0.5;
+  filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.95)) saturate(0.5);
 }
 .odins-throne-root .ns-tree__icon--lantern.ns-tree__icon--fallback {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.1rem;
+  font-size: 1rem;
   line-height: 1;
 }
-/* Extended sidebar seats bigger lanterns with roomier glyphs. */
+/* Extended sidebar seats bigger icons. */
 .odins-throne-root .ns-tree--extended .ns-tree__lantern {
-  width: 52px;
-  height: 52px;
-  font-size: 23px;
+  width: 38px;
+  height: 38px;
 }
 .odins-throne-root .ns-tree--extended .ns-tree__icon--lantern {
-  width: 30px;
-  height: 30px;
+  width: 24px;
+  height: 24px;
 }
 .odins-throne-root .ns-tree--extended .ns-tree__icon--lantern.ns-tree__icon--fallback {
-  font-size: 1.3rem;
+  font-size: 1.2rem;
+}
+@media (prefers-reduced-motion: reduce) {
+  .odins-throne-root .ns-tree__lantern,
+  .odins-throne-root .ns-tree__lantern::before,
+  .odins-throne-root .ns-tree__icon--lantern { transition: none; }
 }
 
-/* \u2500\u2500 stats berries \u2014 the summary counts beside each seat \u2500\u2500 */
-.odins-throne-root .ns-tree__fruit {
+/* \u2500\u2500 task pips \u2014 one small task icon per task beneath the lantern \u2500\u2500 */
+/* lib/taskPips.ts owns the geometry (TASK_PIPS: 9px pips, 2px gap, up to 4
+ * per line, 8 slots max with a "+N" chip); the inline \`left\` + --pip-cols
+ * put the row on the side away from the vine, narrowed to fit the scene. */
+.odins-throne-root .ns-tree__tasks {
   position: absolute;
-  top: calc(50% + 28px);
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 4px;
-  align-items: center;
+  top: calc(50% + 14px);
+  display: grid;
+  grid-template-columns: repeat(var(--pip-cols, 4), 9px);
+  gap: 2px;
+  pointer-events: none;
 }
-.odins-throne-root .ns-tree__berry {
-  width: 11px;
-  height: 11px;
-  border-radius: 50% 50% 50% 4px;
-  display: inline-block;
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.35), 0 0 6px currentColor;
-  rotate: 45deg;
-  background: currentColor;
-}
-.odins-throne-root .ns-tree__berry[data-on="0"] { opacity: 0.28; }
-.odins-throne-root .ns-tree__berry--succeeded { color: var(--berry-succeeded); }
-.odins-throne-root .ns-tree__berry--running   { color: var(--berry-running); }
-.odins-throne-root .ns-tree__berry--failed    { color: var(--berry-failed); }
-/* counts appear only in extended mode */
-.odins-throne-root .ns-tree__fruit-counts {
-  display: none;
-  gap: 5px;
-  font-size: 10.5px;
-  font-family: 'JetBrains Mono', monospace;
-}
-.odins-throne-root .ns-tree--extended .ns-tree__fruit-counts { display: flex; }
-.odins-throne-root .ns-tree__fruit-count {
-  font-style: normal;
+.odins-throne-root .ns-tree--extended .ns-tree__tasks { top: calc(50% + 17px); }
+.odins-throne-root .ns-tree__pip {
   display: inline-flex;
-  gap: 3px;
   align-items: center;
+  justify-content: center;
+  width: 9px;
+  height: 9px;
+  color: var(--pip-succeeded);
+  filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.95)) drop-shadow(0 0 2px currentColor);
 }
-.odins-throne-root .ns-tree__fruit-count::before {
-  content: "";
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: currentColor;
+.odins-throne-root .ns-tree__pip--running   { color: var(--pip-running); }
+.odins-throne-root .ns-tree__pip--failed    { color: var(--pip-failed); }
+.odins-throne-root .ns-tree__pip--pending   { color: var(--pip-pending); }
+.odins-throne-root .ns-tree__icon--pip {
+  width: 9px;
+  height: 9px;
+  border-radius: 0;
 }
-.odins-throne-root .ns-tree__fruit-count--succeeded { color: var(--berry-succeeded); }
-.odins-throne-root .ns-tree__fruit-count--running   { color: var(--berry-running); }
-.odins-throne-root .ns-tree__fruit-count--failed    { color: var(--berry-failed); }
+.odins-throne-root .ns-tree__icon--pip.ns-tree__icon--fallback {
+  font-size: 7px;
+  color: currentColor;
+}
+.odins-throne-root .ns-tree__tasks-more {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  height: 9px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 7.5px;
+  line-height: 1;
+  white-space: nowrap;
+  color: var(--glabel-frost);
+  text-shadow: 0 0 2px #000, 0 0 2px #000;
+}
 
 /* \u2500\u2500 hover label \u2014 the garden's .g-label pattern \u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
 .odins-throne-root .ns-tree__glabel {
   position: absolute;
-  bottom: calc(50% + 30px);
+  bottom: calc(50% + 24px);
   left: 50%;
   transform: translateX(-50%);
   pointer-events: none;
@@ -8354,6 +8367,60 @@ function assignSeats(nsIds) {
   return seats;
 }
 
+// src/ui/lib/taskPips.ts
+var TASK_PIPS = {
+  /** Most slots a row shows (pips + the overflow chip, when present). */
+  cap: 8,
+  /** Pips per line before the row wraps (two lines at the cap). */
+  columns: 4,
+  /** One pip's box, px (matches .ns-tree__icon--pip). */
+  sizePx: 9,
+  /** Gap between pips, px (matches .ns-tree__tasks gap). */
+  gapPx: 2,
+  /** Px kept between the lantern's center line and the row, away from the vine. */
+  clearPx: 3,
+  /** Px kept clear of the scene's edges when clamping. */
+  edgePx: 3
+};
+function taskPips(tasks, cap = TASK_PIPS.cap) {
+  const count = tasks.length;
+  const slots = Math.max(1, Math.floor(cap));
+  if (count <= slots) {
+    return { pips: tasks.map(({ sessionId, status }) => ({ sessionId, status })), overflow: 0, count };
+  }
+  const shown = slots - 1;
+  return {
+    pips: tasks.slice(0, shown).map(({ sessionId, status }) => ({ sessionId, status })),
+    overflow: count - shown,
+    count
+  };
+}
+function pipSlots(row) {
+  return row.pips.length + (row.overflow > 0 ? 1 : 0);
+}
+function pipRowWidth(columns) {
+  const cols = Math.max(Math.floor(columns), 0);
+  if (cols === 0) return 0;
+  return cols * TASK_PIPS.sizePx + (cols - 1) * TASK_PIPS.gapPx;
+}
+function pipRowLayout(seat, sceneW, slots) {
+  const want = Math.min(Math.max(Math.floor(slots), 1), TASK_PIPS.columns);
+  const awayLeft = (width2) => seat.dir === 1 ? -TASK_PIPS.clearPx - width2 : TASK_PIPS.clearPx;
+  if (!(sceneW > 0)) {
+    const width2 = pipRowWidth(want);
+    return { columns: want, width: width2, left: awayLeft(width2) };
+  }
+  const seatPx = seat.x / 100 * sceneW;
+  const room = (seat.dir === 1 ? seatPx : sceneW - seatPx) - TASK_PIPS.clearPx - TASK_PIPS.edgePx;
+  const fit = Math.floor((room + TASK_PIPS.gapPx) / (TASK_PIPS.sizePx + TASK_PIPS.gapPx));
+  const columns = Math.max(1, Math.min(want, fit));
+  const width = pipRowWidth(columns);
+  const minLeft = TASK_PIPS.edgePx - seatPx;
+  const maxLeft = sceneW - TASK_PIPS.edgePx - width - seatPx;
+  const left = Math.min(Math.max(awayLeft(width), minLeft), Math.max(maxLeft, minLeft));
+  return { columns, width, left };
+}
+
 // src/ui/lib/vineGeometry.ts
 var VINE = {
   /** px between card centers — extended sidebar. */
@@ -8459,9 +8526,15 @@ var tree_backdrop_default = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEBLAEsAAD/
 // src/ui/components/TreeIcon.tsx
 import { useState as useState10 } from "react";
 import { jsx as jsx13 } from "react/jsx-runtime";
+var SIZE_CLASS = {
+  ns: "",
+  task: "ns-tree__icon--task",
+  lantern: "ns-tree__icon--lantern",
+  pip: "ns-tree__icon--pip"
+};
 function TreeIcon({ src, fallback, size = "ns" }) {
   const [failed, setFailed] = useState10(false);
-  const cls = ["ns-tree__icon", size === "task" ? "ns-tree__icon--task" : "", size === "lantern" ? "ns-tree__icon--lantern" : ""].filter(Boolean).join(" ");
+  const cls = ["ns-tree__icon", SIZE_CLASS[size]].filter(Boolean).join(" ");
   if (failed) {
     return /* @__PURE__ */ jsx13(
       "span",
@@ -8900,6 +8973,8 @@ function NamespaceTree({
             summary?.error ? "ns-tree__glabel--err" : "",
             hoveredNs === ns.id ? "ns-tree__glabel--on" : ""
           ].filter(Boolean).join(" ");
+          const pipRow = summary && !summary.error ? taskPips(isOpen ? openTasks : tasksOf(summary.jobs)) : null;
+          const pipLayout = pipRow ? pipRowLayout(seat, sceneSize.w, pipSlots(pipRow)) : null;
           return /* @__PURE__ */ jsxs11(
             "li",
             {
@@ -8907,7 +8982,7 @@ function NamespaceTree({
               "data-seat-x": seat.x,
               "data-seat-y": seat.y,
               "data-seat-dir": seat.dir,
-              className: "ns-tree__item",
+              className: isActive ? "ns-tree__item ns-tree__item--active" : "ns-tree__item",
               style: { left: `${seat.x}%`, top: `${seat.y}%` },
               children: [
                 /* @__PURE__ */ jsx15(
@@ -8928,16 +9003,33 @@ function NamespaceTree({
                     children: /* @__PURE__ */ jsx15(TreeIcon, { src: namespaceIcon(ns.id), fallback: NAMESPACE_ICON_FALLBACK, size: "lantern" })
                   }
                 ),
-                /* @__PURE__ */ jsxs11("div", { className: "ns-tree__fruit", "aria-hidden": "true", children: [
-                  /* @__PURE__ */ jsx15("b", { className: "ns-tree__berry ns-tree__berry--succeeded", "data-on": summary ? summary.counts.succeeded > 0 ? "1" : "0" : "0" }),
-                  /* @__PURE__ */ jsx15("b", { className: "ns-tree__berry ns-tree__berry--running", "data-on": summary ? summary.counts.running > 0 ? "1" : "0" : "0" }),
-                  /* @__PURE__ */ jsx15("b", { className: "ns-tree__berry ns-tree__berry--failed", "data-on": failed > 0 ? "1" : "0" }),
-                  /* @__PURE__ */ jsxs11("span", { className: "ns-tree__fruit-counts", children: [
-                    summary && summary.counts.succeeded > 0 && /* @__PURE__ */ jsx15("i", { className: "ns-tree__fruit-count ns-tree__fruit-count--succeeded", children: summary.counts.succeeded }),
-                    summary && summary.counts.running > 0 && /* @__PURE__ */ jsx15("i", { className: "ns-tree__fruit-count ns-tree__fruit-count--running", children: summary.counts.running }),
-                    summary && failed > 0 && /* @__PURE__ */ jsx15("i", { className: "ns-tree__fruit-count ns-tree__fruit-count--failed", children: failed })
-                  ] })
-                ] }),
+                pipRow && pipLayout && pipRow.count > 0 && /* @__PURE__ */ jsxs11(
+                  "div",
+                  {
+                    className: "ns-tree__tasks",
+                    "aria-hidden": "true",
+                    "data-count": pipRow.count,
+                    style: {
+                      left: `calc(50% + ${pipLayout.left.toFixed(1)}px)`,
+                      "--pip-cols": pipLayout.columns
+                    },
+                    children: [
+                      pipRow.pips.map((pip) => /* @__PURE__ */ jsx15(
+                        "span",
+                        {
+                          className: `ns-tree__pip ns-tree__pip--${pip.status}`,
+                          "data-status": pip.status,
+                          children: /* @__PURE__ */ jsx15(TreeIcon, { src: taskIcon(pip.status), fallback: taskIconFallback(pip.status), size: "pip" })
+                        },
+                        pip.sessionId
+                      )),
+                      pipRow.overflow > 0 && /* @__PURE__ */ jsxs11("span", { className: "ns-tree__tasks-more", children: [
+                        "+",
+                        pipRow.overflow
+                      ] })
+                    ]
+                  }
+                ),
                 /* @__PURE__ */ jsxs11("div", { className: glabelClass, "aria-hidden": "true", children: [
                   /* @__PURE__ */ jsx15("b", { className: "ns-tree__glabel-name", children: ns.label }),
                   /* @__PURE__ */ jsx15("span", { className: "ns-tree__glabel-line", children: line })

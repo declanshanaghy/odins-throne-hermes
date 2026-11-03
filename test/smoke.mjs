@@ -216,8 +216,8 @@ for (const ns of [
 // Each namespace is a LANTERN (role=treeitem) seated on the painted backdrop
 // at its runtime-assigned seat; the world list is read live from the API.
 // Strict accordion: one world's branch is open at a time (the active world
-// starts pre-drilled). Hover labels carry name + full summary line; berries
-// carry the status counts; icons are remote <img src> markup (jsdom never
+// starts pre-drilled). Hover labels carry name + full summary line; task
+// pips beneath each lantern carry the count; icons are remote <img src> markup (jsdom never
 // fetches — no real network in this test).
 assert.ok(document.querySelector('.ns-tree[aria-label="Namespace tree"]'), "namespace tree mounted");
 assert.ok(!paneHtml.includes("All namespaces"), "no wrapper root — namespaces are the top-level roots");
@@ -253,25 +253,40 @@ for (const item of document.querySelectorAll(".ns-tree__item[data-namespace]")) 
   assert.ok(y > 0 && y <= 100, `namespace ${item.dataset.namespace} has an in-scene seat y (got ${y})`);
   assert.ok(dir === "1" || dir === "-1", `namespace ${item.dataset.namespace} has a valid hang dir`);
   assert.ok(item.querySelector(".ns-tree__lantern"), `namespace ${item.dataset.namespace} has a lantern button`);
-  // stats berries render per seat with the summary counts
-  const fruit = item.querySelector(".ns-tree__fruit");
-  assert.ok(fruit, `namespace ${item.dataset.namespace} carries stats berries at its seat`);
-  assert.equal(fruit.querySelectorAll(".ns-tree__berry").length, 3, `namespace ${item.dataset.namespace} has succeeded/running/failed berries`);
+  // no stats berries — the task count reads as the pip row (issue #39)
+  assert.equal(item.querySelector(".ns-tree__fruit, .ns-tree__berry"), null, `namespace ${item.dataset.namespace} carries no berry overlay`);
 }
-assert.equal(
-  fenrirRoot.querySelector(".ns-tree__berry--succeeded").getAttribute("data-on"),
-  "1",
-  "fenrir's succeeded berry lights up (8 succeeded jobs)",
+// Task pips (issue #39): one small task icon per task beneath the lantern,
+// in hang order (running → failed → pending → succeeded), capped at 8 slots
+// with a "+N" overflow chip — so visible pips + N always equal the count.
+const fenrirPips = fenrirRoot.querySelector(".ns-tree__tasks");
+assert.ok(fenrirPips, "fenrir carries a task-pip row beneath its lantern");
+assert.equal(fenrirPips.getAttribute("aria-hidden"), "true", "pip row is decorative — the lantern label carries the counts");
+assert.equal(fenrirPips.getAttribute("data-count"), "12", "fenrir's pip row stands for its 12 tasks");
+assert.equal(fenrirPips.querySelectorAll(".ns-tree__pip").length, 7, "fenrir shows 7 pips (cap 8, last slot is the overflow chip)");
+assert.equal(fenrirPips.querySelector(".ns-tree__tasks-more")?.textContent, "+5", "fenrir's overflow chip folds the remaining 5 tasks");
+assert.deepEqual(
+  Array.from(fenrirPips.querySelectorAll(".ns-tree__pip")).map((p) => p.dataset.status),
+  ["running", "running", "failed", "pending", "succeeded", "succeeded", "succeeded"],
+  "pips follow the hang order running → failed → pending → succeeded",
 );
+for (const pip of fenrirPips.querySelectorAll(".ns-tree__pip")) {
+  const icon = pip.querySelector(".ns-tree__icon--pip");
+  assert.ok(icon, "each pip seats a pip-sized task icon");
+  assert.ok(
+    (icon.getAttribute("src") ?? "").startsWith("https://www.shanaghy.com/assets/icons/"),
+    `pip icon is a shanaghy.com status sigil: ${icon.getAttribute("src")}`,
+  );
+}
+const saysoPips = saysoRoot.querySelector(".ns-tree__tasks");
+assert.equal(saysoPips.querySelectorAll(".ns-tree__pip").length, 8, "say-so's 8 tasks show exactly 8 pips (at the cap, no chip)");
+assert.equal(saysoPips.querySelector(".ns-tree__tasks-more"), null, "no overflow chip at or under the cap");
+const goatPips = document.querySelector('.ns-tree__item[data-namespace="re-goatmower-agents"] .ns-tree__tasks');
+assert.equal(goatPips.querySelectorAll(".ns-tree__pip").length, 2, "re-goatmower's 2 tasks show 2 pips");
 assert.equal(
-  fenrirRoot.querySelector(".ns-tree__berry--failed").getAttribute("data-on"),
-  "1",
-  "fenrir's failed berry lights up (1 failed job)",
-);
-assert.equal(
-  saysoRoot.querySelector(".ns-tree__berry--failed").getAttribute("data-on"),
-  "0",
-  "say-so's failed berry stays dim (all-clear world)",
+  document.querySelector('.ns-tree__item[data-namespace="shanaghy-com-agents"] .ns-tree__tasks'),
+  null,
+  "an empty world shows no pip row",
 );
 assert.ok(fenrirRoot.querySelector(".ns-tree__lantern--failed"), "fenrir lantern tints ember (a failed job in the world)");
 assert.ok(saysoRoot.querySelector(".ns-tree__lantern--ok"), "say-so lantern tints moss (all-clear world)");
@@ -295,6 +310,7 @@ const brokenRoot = document.querySelector('.ns-tree__item[data-namespace="broken
 assert.ok(brokenRoot, "broken-vista-agents root node present");
 assert.ok(brokenRoot.querySelector(".ns-tree__lantern--dim"), "unavailable summary dims the seat");
 assert.ok(paneHtml.includes("summary unavailable"), "unavailable summary states so in the label");
+assert.equal(brokenRoot.querySelector(".ns-tree__tasks"), null, "an unavailable summary shows no pip row");
 
 // Tree semantics: role=tree on the root, treeitem + aria-expanded/selected on
 // the lanterns (the active world starts pre-drilled).
@@ -467,6 +483,18 @@ for (const sel of [".jcard:focus-visible", ".ns-tree__lantern:focus-visible", ".
   assert.ok(css.includes(sel), `keyboard focus ring present in the CSS: ${sel}`);
 }
 
+// No glass disc over the painting (issue #39): the lantern button is a
+// transparent hit area — no gradient disc, border, or blur — and the active
+// world's light is a screen blend that only brightens the painted lantern.
+const lanternRule = css.match(/\.ns-tree__lantern\s*\{([^}]*)\}/)?.[1] ?? "";
+assert.ok(lanternRule, "the lantern rule ships in the CSS");
+assert.match(lanternRule, /background:\s*transparent/, "lantern button has a transparent background");
+assert.match(lanternRule, /border:\s*0/, "lantern button has no border ring");
+assert.doesNotMatch(lanternRule, /radial-gradient|backdrop-filter|box-shadow|rotate/, "no glass-disc chrome on the lantern button");
+const lightRule = css.match(/\.ns-tree__lantern::before\s*\{([^}]*)\}/)?.[1] ?? "";
+assert.match(lightRule, /mix-blend-mode:\s*screen/, "the lantern light brightens the painting (screen blend), never covers it");
+assert.match(lightRule, /opacity:\s*0/, "the lantern light is off until hovered/selected");
+
 // Enter on the card body opens the session's tab — the keyboard path through
 // the tree (a Space keypress does the same). No click involved.
 const SID_1202 = "issue-1202-step1-luna-3c4d5e6f";
@@ -619,7 +647,7 @@ assert.equal(iconImgs.length, 6, "each of the six lanterns seats one icon");
 for (const img of iconImgs) {
   assert.ok(
     img.classList.contains("ns-tree__icon--lantern"),
-    "seated icons use the lantern size (counter-rotated against the tilt)",
+    "seated icons use the lantern size (seated in the painted lantern)",
   );
   assert.ok(
     (img.getAttribute("src") ?? "").startsWith("https://www.shanaghy.com/assets/icons/"),
