@@ -164,7 +164,8 @@ assert.ok(paneHtml.includes("Sign in with Google"), "Google OAuth is the primary
 assert.ok(document.querySelector(".sidebar"), "Hlidskjalf sidebar mounted");
 assert.ok(paneHtml.includes("Hlidskjalf"), "brand title rendered");
 assert.ok(document.querySelector(".brand-wss-badge"), "WSS status badge rendered");
-assert.ok(paneHtml.includes("No agent jobs found"), "empty job list state rendered");
+assert.ok(!document.querySelector(".card-list"), "old flat job list removed — jobs live in the tree");
+assert.ok(!paneHtml.includes("No agent jobs found"), "old empty-list state gone with the flat list");
 assert.ok(document.querySelector(".quote"), "Odin quote rendered");
 assert.ok(document.querySelector('[aria-label="Agent sessions"]'), "namespace selector present");
 // Vendored fallback must mirror the monitor's full allowlist (fenrir-ledger
@@ -223,9 +224,20 @@ assert.equal(fenrirTasks.length, 12, "fenrir-agents node branches its 12 tasks")
 assert.ok(document.querySelector('.ns-tree__task[data-session="s-run-1"]'), "task node present under its namespace root");
 assert.ok(paneHtml.includes("s-fail-1"), "failed task branched beneath its namespace");
 
-// Clicking a task node selects that session — the same semantics the job
-// cards use (aria-selected marks the task node).
-document.querySelector('.ns-tree__task[data-session="s-run-1"] .ns-tree__task-btn').click();
+// Task children are the SAME JobCard components the old flat list rendered.
+assert.ok(
+  document.querySelector('.ns-tree__task[data-session="s-run-1"] .card'),
+  "task child renders as a job card",
+);
+assert.equal(
+  document.querySelectorAll('.ns-tree__item[data-namespace="fenrir-agents"] .ns-tree__task .card').length,
+  12,
+  "every branched task is a full job card",
+);
+
+// Clicking a task's job card selects that session — the same semantics the
+// old list had (aria-selected marks the task node).
+document.querySelector('.ns-tree__task[data-session="s-run-1"] .card').click();
 await flush();
 await flush();
 assert.equal(
@@ -234,9 +246,11 @@ assert.equal(
   "clicked task node is marked selected",
 );
 
-// Icons from shanaghy.com's icon library (assert src attributes only).
+// Icons from shanaghy.com's icon library sit on the namespace rows only —
+// task rows are job cards with their own avatars/status icons (assert src
+// attributes only; jsdom never fetches — no real network in this test).
 const iconImgs = Array.from(document.querySelectorAll(".ns-tree__icon"));
-assert.ok(iconImgs.length > 0, "tree nodes carry icons");
+assert.equal(iconImgs.length, 5, "each of the five namespace rows carries one small icon");
 for (const img of iconImgs) {
   assert.ok(
     (img.getAttribute("src") ?? "").startsWith("https://www.shanaghy.com/assets/icons/"),
@@ -247,11 +261,6 @@ assert.equal(
   document.querySelector('.ns-tree__item[data-namespace="fenrir-agents"] .ns-tree__select .ns-tree__icon').getAttribute("src"),
   "https://www.shanaghy.com/assets/icons/wolf-coins.png",
   "fenrir-agents gets its curated icon (wolf-coins)",
-);
-assert.equal(
-  document.querySelector('.ns-tree__task[data-session="s-run-1"] .ns-tree__icon').getAttribute("src"),
-  "https://www.shanaghy.com/assets/icons/hammer.png",
-  "running task node gets the hammer icon",
 );
 
 // Icon fallback: a failed load (error event on the <img>) must swap in the
@@ -294,7 +303,7 @@ assert.equal(
 // namespace AND keeps that session selected (pending-select flow in App).
 document.querySelector('.ns-tree__item[data-namespace="re-goatmower-agents"] .ns-tree__chevron-btn').click();
 await flush();
-document.querySelector('.ns-tree__task[data-session="rg-fail-1"] .ns-tree__task-btn').click();
+document.querySelector('.ns-tree__task[data-session="rg-fail-1"] .card').click();
 await flush();
 await flush();
 assert.equal(
@@ -339,5 +348,5 @@ assert.equal(
 );
 assert.equal(dom.window.document.documentElement.getAttribute("data-theme"), null, "app <html> untouched");
 
-console.log("SMOKE PASS — pane + page render, namespace drilldown tree (top-level roots, task branches, shanaghy.com icons + fallback, connector lines), CSS scoped, theme plugin-local, overlays wired");
+console.log("SMOKE PASS — pane + page render, namespace drilldown tree (top-level roots, job-card task branches, old flat list gone, shanaghy.com icons + fallback, connector lines), CSS scoped, theme plugin-local, overlays wired");
 process.exit(0);

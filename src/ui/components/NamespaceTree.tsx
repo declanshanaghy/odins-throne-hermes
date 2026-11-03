@@ -4,20 +4,22 @@
 //
 //   ▾ ⚖ Fenrir Ledger Agents      12 tasks · 2 running · 1 failed
 //     │ ┌────────────────────────── drawn connector rails + elbows
-//     ├─ ⚒ s-run-1                 RUNNING
-//     ├─ ⚀ s-pend-1                 PENDING
-//     └─ 🐦 s-fail-1                 FAILED
+//     ├─ [job card: s-run-1  RUNNING]  ← the SAME JobCard component the
+//     ├─ [job card: s-pend-1 PENDING]   old flat active-namespace list
+//     └─ [job card: s-fail-1  FAILED]   rendered, slotted in as children
 //   ▸ ⌛ SaySo Agents               8 tasks · all succeeded
 //
 // Clicking a namespace row sets the active namespace (same as the old
-// dropdown: reconnects the live WS feed and filters the job cards). Clicking
-// a TASK node selects that session through the same handler the job cards
-// use — including a cross-world click, which first switches the namespace
-// and re-subscribes once the new socket opens.
+// dropdown: reconnects the live WS feed). Clicking a task's job card
+// selects that session — including a cross-world click, which first
+// switches the namespace and re-subscribes once the new socket opens.
+// The old flat job list below the tree is gone: the cards live IN the
+// tree now, with identical rendering and interactions.
 //
-// Every node carries an icon from https://www.shanaghy.com/assets/icons/
-// (curated per known namespace, deterministic hash for unknown ones; tasks
-// get a per-status sigil) with an inline emoji fallback when offline.
+// Namespace rows carry an icon from https://www.shanaghy.com/assets/icons/
+// (curated per known namespace, deterministic hash for unknown ones) with an
+// inline emoji fallback when offline; task rows are job cards and bring
+// their own agent avatars and status icons.
 //
 // Display modes mirror the sidebar: extended shows full labels + summaries,
 // normal ellipsizes, compact collapses to an initials chip that opens a
@@ -28,14 +30,9 @@ import type { Job } from "../lib/types";
 import type { NamespaceOption } from "../hooks/useNamespace";
 import { summaryLine, type NamespaceSummaries } from "../hooks/useNamespaceSummaries";
 import { parseJob, sortJobs } from "../hooks/useJobs";
-import { resolveSessionTitle } from "../lib/resolveSessionTitle";
-import {
-  namespaceIcon,
-  taskIcon,
-  NAMESPACE_ICON_FALLBACK,
-  taskIconFallback,
-} from "../lib/namespaceIcons";
+import { namespaceIcon, NAMESPACE_ICON_FALLBACK } from "../lib/namespaceIcons";
 import { TreeIcon } from "./TreeIcon";
+import { JobCard } from "./JobCard";
 import type { DisplayMode } from "./Sidebar";
 
 interface Props {
@@ -47,6 +44,13 @@ interface Props {
   onSelectTask: (nsId: string, sessionId: string) => void;
   activeSessionId: string | null;
   displayMode: DisplayMode;
+  /** Job-card interactions, threaded through from the Sidebar exactly as the
+   * old flat job list received them. */
+  onAvatarClick?: (agentKey: string) => void;
+  onTogglePinSession?: (sessionId: string) => void;
+  pinnedSessionIds?: Set<string>;
+  onCancelJob?: (sessionId: string) => void;
+  terminatingSessionIds?: Set<string>;
 }
 
 /** Two-letter initials for compact mode ("Fenrir Ledger Agents" → "FA"). */
@@ -80,6 +84,11 @@ export function NamespaceTree({
   onSelectTask,
   activeSessionId,
   displayMode,
+  onAvatarClick,
+  onTogglePinSession,
+  pinnedSessionIds,
+  onCancelJob,
+  terminatingSessionIds,
 }: Props) {
   const isCompact = displayMode === "compact";
   // Drilldown: any number of namespaces can be expanded; the active one
@@ -225,8 +234,9 @@ export function NamespaceTree({
                     tasks.length > 0 ? (
                       tasks.map((job) => {
                         const isTaskActive = job.sessionId === activeSessionId;
-                        const title = resolveSessionTitle(job);
-                        const taskTitle = `${title} — Issue #${job.issue} · ${job.agentName} · Step ${job.step} · ${job.status}`;
+                        // The task child IS the job card, rendered exactly as
+                        // the old flat (active-namespace) list rendered it —
+                        // same component, same props, same interactions.
                         return (
                           <li
                             key={job.sessionId}
@@ -239,22 +249,17 @@ export function NamespaceTree({
                                 : "ns-tree__task"
                             }
                           >
-                            <button
-                              type="button"
-                              className="ns-tree__task-btn"
-                              title={taskTitle}
+                            <JobCard
+                              job={job}
+                              isActive={isTaskActive}
                               onClick={() => onSelectTask(ns.id, job.sessionId)}
-                            >
-                              <TreeIcon
-                                src={taskIcon(job.status)}
-                                fallback={taskIconFallback(job.status)}
-                                size="task"
-                              />
-                              <span className="ns-tree__task-title">{title}</span>
-                              <span className={`ns-tree__task-status ns-tree__task-status--${job.status}`}>
-                                {job.status}
-                              </span>
-                            </button>
+                              onAvatarClick={onAvatarClick}
+                              isPinned={pinnedSessionIds?.has(job.sessionId) ?? false}
+                              onTogglePin={onTogglePinSession ? () => onTogglePinSession(job.sessionId) : undefined}
+                              onCancelJob={onCancelJob}
+                              displayMode={displayMode}
+                              isTerminating={terminatingSessionIds?.has(job.sessionId) ?? false}
+                            />
                           </li>
                         );
                       })

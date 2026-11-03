@@ -463,53 +463,12 @@ body {
 .ns-tree__task:last-child::before {
   bottom: 50%;
 }
-.ns-tree__task-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
-  width: 100%;
-  min-width: 0;
-  padding: 0.12rem 0.3rem;
-  background: none;
-  border: none;
-  border-radius: 3px;
-  color: var(--text-rune);
-  cursor: pointer;
-  text-align: left;
-  font-size: inherit;
-  font-family: inherit;
+/* Task children are the SAME job cards the old flat list rendered — no
+ * bespoke task-row styling. Just keep them tight inside the branch and let
+ * the connector rail breathe. */
+.ns-tree__tasks .card {
+  margin-bottom: 0.15rem;
 }
-.ns-tree__task-btn:hover,
-.ns-tree__task-btn:focus {
-  background: var(--chain);
-  color: var(--text-saga);
-}
-.ns-tree__task--active > .ns-tree__task-btn {
-  background: var(--chain);
-  color: var(--gold-bright);
-  box-shadow: inset 2px 0 0 var(--gold);
-}
-.ns-tree__task-title {
-  flex: 1;
-  min-width: 0;
-  font-size: 0.62rem;
-  color: var(--text-saga);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.ns-tree__task-status {
-  flex-shrink: 0;
-  font-size: 0.55rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-.ns-tree__task-status--running   { color: var(--teal-asgard); }
-.ns-tree__task-status--pending   { color: var(--gold-bright); }
-.ns-tree__task-status--failed    { color: var(--error-text); }
-.ns-tree__task-status--succeeded { color: var(--success-strong); }
-.ns-tree__task-status--cached    { color: var(--kildare-blue-bright); }
-.ns-tree__task-status--purged    { color: var(--text-void); }
 .ns-tree__task--empty {
   padding: 0.05rem 0.3rem 0.1rem 1.1rem;
   font-size: 0.58rem;
@@ -518,26 +477,27 @@ body {
 }
 
 /* ── Node icons (shanaghy.com, emoji fallback offline) ── */
+/* Icons sit small next to the row labels — accents, not portraits. */
 .ns-tree__icon {
-  width: 16px;
-  height: 16px;
+  width: 13px;
+  height: 13px;
   flex-shrink: 0;
   object-fit: contain;
   border-radius: 2px;
 }
 .ns-tree__icon--task {
-  width: 12px;
-  height: 12px;
+  width: 10px;
+  height: 10px;
   opacity: 0.9;
 }
 .ns-tree__icon--fallback {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.7rem;
+  font-size: 0.58rem;
   line-height: 1;
 }
-.ns-tree__icon--task.ns-tree__icon--fallback { font-size: 0.55rem; }
+.ns-tree__icon--task.ns-tree__icon--fallback { font-size: 0.48rem; }
 
 /* Compact sidebar: collapse to an initials chip + on-demand mini-tree */
 .ns-tree--compact {
@@ -596,7 +556,7 @@ body {
   background: var(--chain);
   color: var(--text-saga);
 }
-.ns-tree--compact .ns-tree__icon--task { width: 13px; height: 13px; }
+.ns-tree--compact .ns-tree__icon--task { width: 10px; height: 10px; }
 .ns-tree__compact-initials { color: var(--gold); letter-spacing: 0.04em; }
 .ns-tree__compact-count { color: var(--text-void); font-size: 0.55rem; margin-left: auto; }
 

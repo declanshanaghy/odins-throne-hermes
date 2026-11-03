@@ -3,7 +3,6 @@ import type { DisplayJob } from "../lib/types";
 import { useTheme } from "../hooks/useTheme";
 import type { NamespaceOption } from "../hooks/useNamespace";
 import type { NamespaceSummaries } from "../hooks/useNamespaceSummaries";
-import { JobCard } from "./JobCard";
 import { ThemeSwitcher } from "./ThemeSwitcher";
 import { StatusBadge } from "./StatusBadge";
 import { NamespaceTree } from "./NamespaceTree";
@@ -112,39 +111,16 @@ export function Sidebar({ jobs, activeSessionId, quote, wsState, onSelectSession
           onSelectTask={onSelectTask}
           activeSessionId={activeSessionId}
           displayMode={displayMode}
+          onAvatarClick={onAvatarClick}
+          onTogglePinSession={onTogglePinSession}
+          pinnedSessionIds={pinnedSessionIds}
+          onCancelJob={onCancelJob}
+          terminatingSessionIds={terminatingSessionIds}
         />
       </div>
-      <div className="card-list" role="list" aria-label="Job sessions">
-        {jobs.length === 0 ? (
-          !isCompact && (
-            <div
-              style={{
-                padding: "1rem",
-                fontSize: "0.8rem",
-                color: "var(--text-void)",
-                fontStyle: "italic",
-              }}
-            >
-              No agent jobs found
-            </div>
-          )
-        ) : (
-          jobs.map((job) => (
-            <JobCard
-              key={job.sessionId}
-              job={job}
-              isActive={job.sessionId === activeSessionId}
-              onClick={() => onSelectSession(job.sessionId)}
-              onAvatarClick={onAvatarClick}
-              isPinned={pinnedSessionIds?.has(job.sessionId) ?? false}
-              onTogglePin={onTogglePinSession ? () => onTogglePinSession(job.sessionId) : undefined}
-              onCancelJob={onCancelJob}
-              displayMode={displayMode}
-              isTerminating={terminatingSessionIds?.has(job.sessionId) ?? false}
-            />
-          ))
-        )}
-      </div>
+      {/* Desktop port: the old flat job list is gone — jobs now live as job
+       * cards branched beneath their namespace in the drilldown tree above,
+       * rendered exactly as the old active-namespace list rendered them. */}
       {/* Desktop port: no in-pane drag handle — the host pane sash resizes us. */}
     </nav>
   );
