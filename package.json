@@ -1,0 +1,20 @@
+{
+  "name": "odins-throne-hermes",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Odin's Throne as a Hermes desktop plugin — right-pane job list, main-pane log viewer (Hlidskjalf ported from fenrir-ledger)",
+  "scripts": {
+    "build": "node build/build.mjs",
+    "dev": "node build/build.mjs --watch --live",
+    "test": "node --import ./test/register.mjs test/smoke.mjs",
+    "verify": "tsc --noEmit && npm run build && npm test",
+    "postinstall": "node build/build.mjs || true"
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.0",
+    "esbuild": "^0.25.0",
+    "postcss": "^8.5.0",
+    "typescript": "^7.0.2"
+  }
+}

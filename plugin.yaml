@@ -1,0 +1,11 @@
+name: odins-throne-hermes
+version: 0.1.0
+description: >-
+  Odin's Throne inside the Hermes desktop app — Hlidskjalf docked as a
+  right-pane job list beside the conversation, with the log terminal as a
+  main workspace page. Monitors GKE agent-sandbox Jobs live (port of the
+  fenrir-ledger odins-throne SPA, UI vendored and bundled).
+author: Declan Shanaghy
+homepage: https://github.com/declanshanaghy/odins-throne-hermes
+license: MIT
+tags: [monitoring, kubernetes, gke, desktop, agents]
