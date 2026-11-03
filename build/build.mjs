@@ -8,6 +8,9 @@
 //      desktop/plugin.js. react/react-jsx-runtime/@hermes/plugin-sdk stay
 //      external (the app provides them). PNG portraits inline as data URLs.
 //
+// The web target moved to Vite (issue #18): `npm run build:web` builds
+// src/targets/web/ into dist-ui/ — this esbuild pipeline is plugin-only now.
+//
 // Flags:  --watch   rebuild on change
 //         --live    also mirror the output into the app's watched
 //                   ~/.hermes/desktop-plugins/odins-throne-hermes/ dir, which
@@ -63,15 +66,11 @@ const odinScopeCss = {
 };
 
 // ── Bundle ──────────────────────────────────────────────────────────────────
-// Two targets, one ui/ core:
+// One esbuild target (the web target is Vite's now — see build:web):
 //
 //   plugin → desktop/plugin.js   single ESM file, CSS scoped to
 //                                .odins-throne-root, react/@hermes stay
 //                                external (the app provides them)
-//   web    → build/web/app.js    full-page shell, CSS unscoped (the page owns
-//                                the document — esbuild emits app.css beside
-//                                it), react/react-dom external (the page's
-//                                import map provides them)
 const pluginOptions = {
   entryPoints: [resolve(ROOT, "src/targets/plugin/entry.tsx")],
   bundle: true,
@@ -88,18 +87,6 @@ const pluginOptions = {
   ],
   loader: { ".png": "dataurl" },
   plugins: [odinScopeCss],
-  logLevel: "info",
-};
-
-const webOptions = {
-  entryPoints: [resolve(ROOT, "src/targets/web/main.tsx")],
-  bundle: true,
-  format: "esm",
-  outfile: resolve(ROOT, "build/web/app.js"),
-  platform: "browser",
-  target: ["es2022"],
-  jsx: "automatic",
-  external: ["react", "react/jsx-runtime", "react/jsx-dev-runtime", "react-dom"],
   logLevel: "info",
 };
 
@@ -179,6 +166,4 @@ if (watch) {
   finalizeBundle(pluginOptions.outfile);
   if (live) mirror();
   console.log(`built → ${pluginOptions.outfile}`);
-  await build(webOptions);
-  console.log(`built → ${webOptions.outfile}`);
 }

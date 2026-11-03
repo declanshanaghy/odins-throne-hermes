@@ -19,7 +19,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const ROOT = resolve(here, "../..");
+const ROOT = resolve(here, "../../..");
 
 export default defineConfig({
   plugins: [react()],
