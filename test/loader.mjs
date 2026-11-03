@@ -10,6 +10,7 @@
 // present so production and test environments stay aligned.
 
 import { existsSync, readFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL as toURL } from "node:url";
 import { transform } from "esbuild";
@@ -64,7 +65,6 @@ export async function load(url, context, next) {
     const filePath = fileURLToPath(url);
     // Synchronously load the CJS module to discover its export names, then
     // generate a static ESM wrapper that re-exports everything.
-    const { createRequire } = await import("node:module");
     const req = createRequire(import.meta.url);
     let exports_obj;
     try { exports_obj = req(filePath); } catch { exports_obj = {}; }
