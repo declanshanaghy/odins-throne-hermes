@@ -4,10 +4,15 @@
 monitor for GKE agent-sandbox Jobs, ported into the Hermes desktop app as a
 first-class plugin:
 
-- **Right pane** — the job list (SessionCards, namespace selector, WSS badge,
-  theme switcher, Odin himself), docked beside the conversation. Clicking a
+- **Right pane** — the job list as a painted tree scene (the "namespace
+  lantern tree"): each namespace a lantern seated on the painting, the
+  open world's work hanging from it as vine-strand job cards (one-open
+  accordion), plus the WSS badge, theme switcher, Odin himself — docked
+  beside the conversation. Clicking a
   job card opens the log terminal in a new workspace tab (or focuses it if
-  it is already open).
+  it is already open). The tree is fully keyboard-operable and
+  screen-reader-labelled — see
+  [`knowledge/tech-designs/tree-display.md`](knowledge/tech-designs/tree-display.md).
 - **Middle pane** — the log terminal (Claude Code JSONL **and** Hermes
   pretty-format streams, tool blocks, Norse tablets, verdict inscriptions) as
   a workspace page at `/odins-throne`.
