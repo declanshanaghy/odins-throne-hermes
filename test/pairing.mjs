@@ -81,7 +81,9 @@ localStorage.removeItem(SESSION_KEY);
 const bare = authInit();
 assert.ok(!bare.headers.get("Authorization"), "no Authorization header when unpaired");
 
-// Paired ws: token rides as a query param on the wss dial.
+// Paired ws: token rides as a query param on the wss dial (default upstream).
+setUpstreamConfig(DEFAULT_BASE);
+localStorage.setItem(SESSION_KEY, "sess-token-123");
 assert.equal(
   wsUrl("fenrir-agents"),
   "wss://odins-throne.fenrirledger.com/bot/ws?namespace=fenrir-agents&token=sess-token-123",
