@@ -102,14 +102,18 @@ node "$SCRIPT_DIR/pack-status.mjs" --move ISSUE_NUMBER up-next
 
 ## Agent chain routing
 
-The type label determines which agent chain runs when `/fire-next-up` picks the issue:
+The type label determines which agent chain runs when `/fire-next-up` picks the issue.
+
+**Loki QA is DISABLED on this repo (decree 2026-11-03):** QA chains are reserved for serious
+public services (fenrir-ledger). Here every chain is single-step — the build agent's PASS decree
+is the merge signal; the orchestrator merges the PR and closes the issue directly on PASS.
 
 | Type label | Step 1 | Step 2 | Step 3 |
 |------------|--------|--------|--------|
-| `bug` | FiremanDecko (fix) | Loki (validate) | -- |
-| `enhancement` | FiremanDecko (implement) | Loki (validate) | -- |
-| `ux` | Luna (wireframes) | FiremanDecko (implement) | Loki (validate) |
-| `security` | Heimdall (fix/audit) | Loki (validate) | -- |
+| `bug` | FiremanDecko (fix) → merge on PASS | -- | -- |
+| `enhancement` | FiremanDecko (implement) → merge on PASS | -- | -- |
+| `ux` | Luna (wireframes) | FiremanDecko (implement) → merge on PASS | -- |
+| `security` | Heimdall (fix/audit) → merge on PASS | -- | -- |
 
 ## Priority ordering
 
