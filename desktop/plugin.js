@@ -697,6 +697,8 @@ var styles_default = `.odins-throne-root .odins-throne-root {
 .odins-throne-root .jcard.pop-in { animation: vine-sprout 0.4s cubic-bezier(0.2, 1.3, 0.4, 1) backwards; }
 /* the purged card falls from the strand, then is swept */
 .odins-throne-root .jcard.fall-out { animation: vine-cardfall 0.9s ease-in forwards; pointer-events: none; }
+/* keyboard focus rings on the card body \u2014 visible against the painting */
+.odins-throne-root .jcard:focus-visible { outline: 2px solid var(--teal-asgard); outline-offset: 2px; }
 
 .odins-throne-root .jcard__sigil {
   width: 20px;
@@ -8516,11 +8518,19 @@ function VineCard({
     ghost ? "fall-out" : "",
     ghost ? "is-dim" : ""
   ].filter(Boolean).join(" ");
+  const openOnKey = (e) => {
+    if (ghost) return;
+    if (e.key === "Enter" || e.key === " " || e.key === "Spacebar") {
+      e.preventDefault();
+      onOpen();
+    }
+  };
   return /* @__PURE__ */ jsxs10(
     "div",
     {
       className: cls,
       role: "treeitem",
+      tabIndex: ghost ? void 0 : 0,
       "aria-selected": isActive,
       "aria-label": `${job.sessionId} \u2014 ${title} \u2014 ${sLabel}`,
       title,
@@ -8529,6 +8539,7 @@ function VineCard({
       "data-status": job.status,
       style,
       onClick: ghost ? void 0 : onOpen,
+      onKeyDown: openOnKey,
       children: [
         /* @__PURE__ */ jsx14("span", { className: "jcard__sigil", "aria-hidden": "true", children: /* @__PURE__ */ jsx14(TreeIcon, { src: taskIcon(job.status), fallback: taskIconFallback(job.status), size: "task" }) }),
         /* @__PURE__ */ jsxs10("div", { className: "jcard__main", children: [
@@ -8725,6 +8736,7 @@ function NamespaceTree({
           className: "ns-tree__chip",
           onClick: () => setCompactOpen((v) => !v),
           "aria-expanded": compactOpen,
+          "aria-label": active ? `Namespaces: ${active.label}${activeSummary ? ` \u2014 ${summaryLine(activeSummary)}` : ""}` : "Namespaces",
           title: active ? `${active.label}${activeSummary ? ` \u2014 ${summaryLine(activeSummary)}` : ""}` : namespace,
           children: [
             active ? initialsOf(active.label) : "NS",
@@ -8751,6 +8763,7 @@ function NamespaceTree({
                 type: "button",
                 className: "ns-tree__row",
                 title: ns.label,
+                "aria-label": `${ns.label} \u2014 ${labelLineOf(summary)}`,
                 onClick: () => {
                   onNamespaceChange(ns.id);
                   setCompactOpen(false);
