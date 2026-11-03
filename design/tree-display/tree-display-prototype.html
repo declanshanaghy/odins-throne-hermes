@@ -501,6 +501,7 @@
   <div class="deck__group">
     <button class="btn" id="btn-live" aria-pressed="true">live growth: on</button>
     <button class="btn" id="btn-map" aria-pressed="false">show lantern mapping</button>
+    <button class="btn" id="btn-newworld">api: new world</button>
   </div>
 </div>
 
@@ -511,7 +512,7 @@
     <div class="sidebar__head">
       <span class="rune">ᛉ</span>
       <span class="name">the world-tree</span>
-      <span class="sub">one world's vine open at a time — its work hangs in state order</span>
+      <span class="sub">worlds read live from the backend API — one vine open at a time</span>
     </div>
 
     <div class="scene" id="scene">
@@ -547,6 +548,7 @@
   <div>
     <h4>what the tree means</h4>
     <ul>
+      <li><span class="k">world list</span> read live from the backend service API (/api/namespaces) — never hardcoded; lantern seats assigned by curated id, djb2-hashed for unknown worlds</li>
       <li><span class="k">trunk</span> the tree display's root — grows from the panel floor</li>
       <li><span class="k">lantern</span> one namespace (a world) — the painted lantern carries its icon</li>
       <li><span class="k">berries</span> namespace stats: succeeded · running · failed</li>
@@ -626,7 +628,7 @@ function iconImg(src, fb, cls) {
 }
 
 const SEED_JOBS = {
-  fenrir: [
+  "fenrir-agents": [
     mkJob("f1", "s-run-1",  "Issue #12 · port the ballad pages",      "decko", "running",   4),
     mkJob("f2", "s-run-2",  "Issue #14 · moss the CI stones",         "loki",  "running",   2),
     mkJob("f3", "s-fail-1", "Issue #9 · the collapsing rath",         "loki",  "failed",    5),
@@ -640,14 +642,14 @@ const SEED_JOBS = {
     mkJob("f11","s-ok-7",   "Issue #4 · the gate's iron hinge",        "decko", "succeeded", 6),
     mkJob("f12","s-ok-8",   "Issue #8 · whitewashing the walls",       "luna",  "succeeded", 6),
   ],
-  hills: [
+  "say-so-agents": [
     mkJob("h1", "g-run-1",  "Hill #3 · far watch — scanning the fleet spores", "heimdall", "running", 3),
     mkJob("h2", "g-ok-1",   "Hill #1 · landing the summer halls",     "decko", "succeeded", 6),
     mkJob("h3", "g-ok-2",   "Hill #2 · the band's ancient games",     "loki",  "succeeded", 6),
     mkJob("h4", "g-ok-3",   "Hill #4 · watchtower runes",              "odin",  "succeeded", 6),
     mkJob("h5", "g-ok-4",   "Hill #5 · watering the watch beacons",   "freya", "succeeded", 6),
   ],
-  sayso: [
+  "odins-throne-hermes-agents": [
     mkJob("y1", "m-ok-1",   "Ballad · the tide at Trá Bhán",          "luna",  "succeeded", 6),
     mkJob("y2", "m-ok-2",   "Ballad · the mossy dekalogue",           "freya", "succeeded", 6),
     mkJob("y3", "m-ok-3",   "Ballad · two ravens on the wire",        "odin",  "succeeded", 6),
@@ -657,37 +659,120 @@ const SEED_JOBS = {
     mkJob("y7", "m-ok-7",   "Ballad · the winter meadow",             "luna",  "succeeded", 6),
     mkJob("y8", "m-ok-8",   "Ballad · the long dusk",                 "freya", "succeeded", 6),
   ],
-  hearth: [],
+  "shanaghy-com-agents": [
+    mkJob("s1", "c-ok-1",   "Site · the living garden grows",          "luna",  "succeeded", 6),
+    mkJob("s2", "c-ok-2",   "Site · moss the ringfort stones",        "freya", "succeeded", 6),
+    mkJob("s3", "c-run-1",  "Site · the towers get their films",      "decko", "running",   2),
+  ],
+  "mytruthfinder-agents": [
+    mkJob("t1", "f-ok-1",   "Truth · the salmon swims the rapids",    "heimdall","succeeded",6),
+    mkJob("t2", "f-run-1",  "Truth · diving for the ninth hazel nut", "loki",  "running",   1),
+  ],
+  "re-goatmower-agents": [],
+  "odins-throne-plugin": [],
 };
 
-/* vision-mapped lantern coordinates (% of scene) — variant-a-1 painting.
-   dir: which way the job cards hang from the vine.
-   icon: curated shanaghy.com sigil (repo's namespaceIcons.ts contract) */
-const WORLDS = [
-  { id: "fenrir", label: "Fenrir Ledger Agents", glyph: "⚖", icon: "wolf-coins.png",
-    lantern: { x: 17, y: 28 }, dir: 1 },
-  { id: "hills",  label: "Summer Hills Watch",  glyph: "🏔", icon: "fianna-watch.png",
-    lantern: { x: 41, y: 20 }, dir: 1 },
-  { id: "sayso",  label: "SaySo Agents",         glyph: "⌛", icon: "horn.png",
-    lantern: { x: 59, y: 19 }, dir: 1 },
-  { id: "hearth", label: "Mossy Hearth Agents",  glyph: "🪵", icon: "moss-quiet.png",
-    lantern: { x: 85, y: 28 }, dir: -1 },
+/* ═══ the backend service API ═══
+   The real plugin reads namespaces from the backend at startup —
+   otFetch("/api/namespaces") in useNamespace.ts — and per-world job summaries
+   via useNamespaceSummaries. Nothing is hardcoded: this mock serves the same
+   contract (snapshot of the live backend's list, simulated latency), so the
+   tree must render whatever the API returns. */
+const SERVICE = {
+  namespaces: [
+    { id: "fenrir-agents",            label: "Fenrir Ledger Agents" },
+    { id: "say-so-agents",            label: "SaySo Agents" },
+    { id: "mytruthfinder-agents",     label: "MyTruthFinder Agents" },
+    { id: "shanaghy-com-agents",      label: "Shanaghy.com Agents" },
+    { id: "re-goatmower-agents",      label: "Re-Goatmower Agents" },
+    { id: "odins-throne-plugin",      label: "Odin's Throne Plugin Agents" },
+    { id: "odins-throne-hermes-agents", label: "Odins Throne Hermes Agents" },
+  ],
+};
+function apiFetchNamespaces() {
+  return new Promise(resolve => setTimeout(() => resolve(JSON.parse(JSON.stringify(SERVICE.namespaces))), 450));
+}
+/* lazy per-world summaries — the summary fetch a drill triggers in the real plugin */
+function apiFetchSummaries(nsId) {
+  return new Promise(resolve => setTimeout(() => resolve(SEED_JOBS[nsId] ?? []), 550));
+}
+
+/* the painted lantern seat pool (vision-mapped, % of scene) — more worlds than
+   seats is fine: curated seats first, deterministic hash for the rest */
+const SEAT_POOL = [
+  { x: 8, y: 52 }, { x: 17, y: 28 }, { x: 25, y: 22 }, { x: 41, y: 20 },
+  { x: 59, y: 19 }, { x: 57, y: 37 }, { x: 76, y: 23 }, { x: 85, y: 28 },
 ];
+const CURATED_SEATS = {
+  "fenrir-agents": 1,
+  "shanaghy-com-agents": 3,
+  "say-so-agents": 4,
+  "odins-throne-hermes-agents": 5,
+  "re-goatmower-agents": 7,
+};
+/* djb2 — verbatim from the repo's namespaceIcons.ts */
+function hashKey(key) {
+  let h = 5381;
+  for (let i = 0; i < key.length; i++) h = ((h << 5) + h + key.charCodeAt(i)) | 0;
+  return Math.abs(h);
+}
+/* namespace icon contract — verbatim from the repo's namespaceIcons.ts */
+const NAMESPACE_CURATED = {
+  "fenrir-agents": "wolf-coins.png",
+  "say-so-agents": "horn.png",
+  "mytruthfinder-agents": "fionn-salmon.png",
+  "shanaghy-com-agents": "webknot.png",
+  "re-goatmower-agents": "mossiah.png",
+};
+const ICON_POOL = ["raven.png","scroll.png","horn.png","moon.png","ring.png","hammer.png","cauldron.png","dice.png","octopi.png","wolf-coins.png","fianna-watch.png","fionn-salmon.png","gleipnir.png","moss-quiet.png","mossiah.png","moinin.png","sean-chai.png","hal9005.png","the-daykeeper.png","candle.png","smith-odin.png","forge-logo.png","webknot.png","backup-keeper.png","deco.png","zigbee2mqtt.png","cyclone-vacuum.png","front-doorbell.png"];
+function namespaceIcon(nsId) {
+  const curated = NAMESPACE_CURATED[nsId];
+  if (curated) return ICON_BASE + curated;
+  return ICON_BASE + ICON_POOL[hashKey(nsId) % ICON_POOL.length];
+}
+/* worlds are BUILT from whatever the API returns — never a hardcoded list.
+   Curated seats are claimed first so hashed worlds can never steal them. */
+function buildWorlds(namespaces) {
+  const taken = new Set();
+  const byId = new Map(namespaces.map(ns => [ns.id, ns]));
+  const seated = new Map();
+  for (const id of byId.keys()) {
+    const seatIdx = CURATED_SEATS[id];
+    if (seatIdx != null && !taken.has(seatIdx)) { seated.set(id, seatIdx); taken.add(seatIdx); }
+  }
+  return namespaces.map(ns => {
+    let seatIdx = seated.get(ns.id);
+    if (seatIdx == null) {
+      let i = hashKey(ns.id) % SEAT_POOL.length;
+      while (taken.has(i)) i = (i + 1) % SEAT_POOL.length;
+      taken.add(i);
+      seatIdx = i;
+    }
+    const seat = SEAT_POOL[seatIdx];
+    return {
+      ...ns,
+      lantern: seat,
+      dir: seat.x > 66 ? -1 : 1,   // right-side worlds hang their vines leftward
+      glyph: "🌐",
+    };
+  });
+}
 
 /* ═══ state ═══ */
 let state = {
   mode: "extended",
-  expanded: new Set(["fenrir"]),
-  selectedWorld: "fenrir",
+  worlds: [],          // built from the backend API — never hardcoded
+  summariesLoaded: new Set(),
+  expanded: new Set(),
+  selectedWorld: null,
   unavailable: new Set(),
-  loading: false,
+  loading: false,      // summary fetch in flight for the selected world
   live: true,
-  jobs: {},           // worldId -> [job]
+  jobs: {},           // worldId -> [job] (arrive via the summary API)
   tabs: [],           // [{jobId, worldId}]
   activeTab: null,    // jobId
   tick: 0,
 };
-for (const w of WORLDS) state.jobs[w.id] = SEED_JOBS[w.id].map(j => ({ ...j }));
 
 const $ = (s) => document.querySelector(s);
 const overlay = $("#overlay"), shootsSvg = $("#shoots"), scene = $("#scene");
@@ -697,7 +782,7 @@ const STATUS_COLOR = { running: "#6fb7d8", succeeded: "#79b356", failed: "#e07a3
 
 /* ═══ stats ═══ */
 function statsOf(worldId) {
-  const js = state.jobs[worldId];
+  const js = state.jobs[worldId] ?? [];
   return {
     total: js.length,
     running: js.filter(j => j.status === "running").length,
@@ -761,10 +846,11 @@ function renderScene() {
   const mode = state.mode;
   let canvasH = 0;
 
-  for (const w of WORLDS) {
+  for (const w of state.worlds) {
     const isActive = w.id === state.selectedWorld;
     const isExpanded = state.expanded.has(w.id) && mode !== "compact";
     const isUnavail = state.unavailable.has(w.id);
+    const isLoaded = state.summariesLoaded.has(w.id);
     const s = statsOf(w.id);
 
     /* lantern — the namespace node */
@@ -779,7 +865,7 @@ function renderScene() {
     lantern.setAttribute("aria-selected", String(isActive));
     lantern.setAttribute("aria-label", `${w.label} — ${isUnavail ? "summary unavailable" : summaryLine(s)}`);
     lantern.dataset.world = w.id;
-    lantern.appendChild(iconImg(ICON_BASE + w.icon, w.glyph, "lantern__ic"));
+    lantern.appendChild(iconImg(namespaceIcon(w.id), w.glyph, "lantern__ic"));
     lantern.addEventListener("click", () => selectWorld(w.id));
     lantern.addEventListener("mouseenter", () => showLabel(w.id, true));
     lantern.addEventListener("focus", () => showLabel(w.id, true));
@@ -804,7 +890,7 @@ function renderScene() {
     const label = document.createElement("div");
     label.className = "glabel";
     label.style.left = w.lantern.x + "%"; label.style.top = (w.lantern.y - 5) + "%";
-    if (state.loading) { label.classList.add("glabel--load"); label.innerHTML = `<b>${w.label}</b><span>…</span>`; }
+    if (!isLoaded) { label.classList.add("glabel--load"); label.innerHTML = `<b>${w.label}</b><span>…</span>`; }
     else if (isUnavail) { label.classList.add("glabel--err"); label.innerHTML = `<b>${w.label}</b><span>summary unavailable</span>`; }
     else label.innerHTML = `<b>${w.label}</b><span>${summaryLine(s)}</span>`;
     label.id = "lbl-" + w.id;
@@ -812,8 +898,17 @@ function renderScene() {
 
     /* the vine + its leaves — flat strand, ordered by status */
     if (isExpanded && !isUnavail) {
-      const js = orderedJobs(w.id);
-      if (js.length === 0) {
+      if (!isLoaded) {
+        const note = document.createElement("div");
+        note.className = "branch-note";
+        const ang = -70 * Math.PI / 180, r = 11;
+        note.style.left = Math.min(88, w.lantern.x + Math.cos(ang) * r) + "%";
+        note.style.top = Math.max(7, w.lantern.y + Math.sin(ang) * r) + "%";
+        note.textContent = "fetching the world's work…";
+        overlay.appendChild(note);
+      }
+      const js = isLoaded ? orderedJobs(w.id) : [];
+      if (isLoaded && js.length === 0) {
         const note = document.createElement("div");
         note.className = "branch-note";
         const ang = (-90 + (w.bias || 0)) * Math.PI / 180, r = 11;
@@ -894,11 +989,11 @@ function showLabel(id, on) {
 
 /* ═══ HUD ═══ */
 function renderHud() {
-  const all = WORLDS.flatMap(w => state.jobs[w.id]);
+  const all = state.worlds.flatMap(w => state.jobs[w.id] ?? []);
   const run = all.filter(j => j.status === "running").length;
   const fail = all.filter(j => j.status === "failed").length;
   $("#hud").innerHTML =
-    `<span><b>${all.length}</b> tasks · <b>${WORLDS.length}</b> worlds</span>` +
+    `<span><b>${all.length}</b> tasks · <b>${state.worlds.length}</b> worlds</span>` +
     `<span><span class="dot" style="background:var(--run)"></span><b>${run}</b> running</span>` +
     `<span><span class="dot" style="background:var(--fail)"></span><b>${fail}</b> failed</span>` +
     `<span style="margin-left:auto">${state.live ? "ws feed live · spores drift" : "ws feed paused"}</span>`;
@@ -907,12 +1002,13 @@ function renderHud() {
 /* ═══ compact mode ═══ */
 function renderCompact() {
   const chip = $("#chipBtn"), list = $("#compactList");
-  const active = WORLDS.find(w => w.id === state.selectedWorld);
-  const s = statsOf(state.selectedWorld);
+  const active = state.worlds.find(w => w.id === state.selectedWorld) ?? state.worlds[0];
+  if (!active) return;
+  const s = statsOf(active.id);
   chip.childNodes[0].nodeValue = initialsOf(active.label);
   $("#chipCount").textContent = s.total;
   list.innerHTML = "";
-  for (const w of WORLDS) {
+  for (const w of state.worlds) {
     const ws = statsOf(w.id);
     const row = document.createElement("button");
     row.className = "compact-row" + (w.id === state.selectedWorld ? " is-active" : "");
@@ -933,11 +1029,23 @@ function selectWorld(id) {
     state.animate = true;
   }
   renderScene();
-  if (state.expanded.size) scroller.scrollTop = 0;   // a fresh vine reads from the lantern
+  if (state.expanded.size) {
+    scroller.scrollTop = 0;   // a fresh vine reads from the lantern
+    if (!state.summariesLoaded.has(id)) {
+      /* the summary fetch a drill triggers — the world's work arrives from the API */
+      apiFetchSummaries(id).then(js => {
+        state.jobs[id] = js.map(j => ({ ...j }));
+        state.summariesLoaded.add(id);
+        state.animate = true;
+        renderScene();
+      });
+    }
+  }
   const s = statsOf(id);
-  const w = WORLDS.find(x => x.id === id);
+  const w = state.worlds.find(x => x.id === id);
   setLogviewerHome({ head: `${w.glyph} ${w.label}`, note: "world selected — click a job card to open its session",
-                 status: state.unavailable.has(id) ? "summary unavailable" : summaryLine(s) });
+                 status: state.unavailable.has(id) ? "summary unavailable"
+                   : state.summariesLoaded.has(id) ? summaryLine(s) : "fetching…" });
 }
 
 /* ═══ tabs — a session hall ═══ */
@@ -1005,7 +1113,7 @@ function jobLog(job) {
   return lines;
 }
 function findJob(jobId) {
-  for (const w of WORLDS) { const j = state.jobs[w.id].find(x => x.id === jobId); if (j) return { job: j, world: w }; }
+  for (const w of state.worlds) { const j = (state.jobs[w.id] ?? []).find(x => x.id === jobId); if (j) return { job: j, world: w }; }
   return {};
 }
 function renderLog(jobId, refreshed) {
@@ -1073,7 +1181,7 @@ $("#chipBtn").addEventListener("click", () => {
 });
 
 $("#btn-fail").addEventListener("click", () => {
-  const candidates = WORLDS.flatMap(w => state.jobs[w.id].map(j => ({ w: w.id, j }))).filter(x => x.j.status === "running");
+  const candidates = state.worlds.flatMap(w => (state.jobs[w.id] ?? []).map(j => ({ w: w.id, j }))).filter(x => x.j.status === "running");
   if (!candidates.length) return;
   const pick = candidates[Math.floor(Math.random() * candidates.length)];
   pick.j.status = "failed";
@@ -1082,10 +1190,10 @@ $("#btn-fail").addEventListener("click", () => {
 });
 $("#btn-sprout").addEventListener("click", () => {
   const wid = state.selectedWorld;
-  const n = state.jobs[wid].length;
-  const job = mkJob(wid[0] + "n" + Date.now(), "s-new-" + (n + 1), "Issue #" + (20 + n) + " · fresh spore on the " + WORLDS.find(w => w.id === wid).label.toLowerCase(),
+  const n = (state.jobs[wid] ?? []).length;
+  const job = mkJob(wid[0] + "n" + Date.now(), "s-new-" + (n + 1), "Issue #" + (20 + n) + " · fresh spore on the " + (state.worlds.find(w => w.id === wid)?.label ?? wid).toLowerCase(),
     ["freya","luna","decko","loki"][n % 4], "pending", 0);
-  state.jobs[wid].push(job);
+  state.jobs[wid] = [...(state.jobs[wid] ?? []), job];
   if (!state.expanded.has(wid)) { state.expanded = new Set([wid]); }
   state.animate = true;
   renderScene();
@@ -1093,22 +1201,32 @@ $("#btn-sprout").addEventListener("click", () => {
 $("#btn-unavail").addEventListener("click", (e) => {
   const on = e.currentTarget.getAttribute("aria-pressed") !== "true";
   e.currentTarget.setAttribute("aria-pressed", String(on));
-  if (on) state.unavailable.add("sayso"); else state.unavailable.delete("sayso");
+  if (on) state.unavailable.add("say-so-agents"); else state.unavailable.delete("say-so-agents");
   renderScene();
 });
 $("#btn-load").addEventListener("click", () => {
-  state.loading = true; renderScene();
-  setTimeout(() => { state.loading = false; state.animate = true; renderScene(); }, 1300);
-});
-$("#btn-reset").addEventListener("click", () => {
-  for (const w of WORLDS) state.jobs[w.id] = SEED_JOBS[w.id].map(j => ({ ...j }));
-  state.unavailable.clear(); state.selectedWorld = "fenrir";
-  state.expanded = new Set(["fenrir"]);
-  state.tabs = [{ jobId: "f1", worldId: "fenrir" }];
-  state.activeTab = "f1";
-  $("#btn-unavail").setAttribute("aria-pressed", "false");
+  const wid = state.selectedWorld;
+  if (!wid) return;
+  state.summariesLoaded.delete(wid);
+  state.jobs[wid] = [];
   state.animate = true;
-  renderScene(); renderLog("f1", false);
+  renderScene();
+  apiFetchSummaries(wid).then(js => {
+    state.jobs[wid] = js.map(j => ({ ...j }));
+    state.summariesLoaded.add(wid);
+    state.animate = true;
+    renderScene();
+  });
+});
+$("#btn-reset").addEventListener("click", () => { boot(); });
+$("#btn-newworld").addEventListener("click", () => {
+  /* the backend list grows — the tree re-reads it and a new lantern takes a seat */
+  const n = SERVICE.namespaces.length + 1;
+  SERVICE.namespaces.push({ id: "new-world-" + n, label: "New World " + n });
+  apiFetchNamespaces().then(nss => {
+    state.worlds = buildWorlds(nss);
+    renderScene();
+  });
 });
 $("#btn-live").addEventListener("click", (e) => {
   state.live = !state.live;
@@ -1138,17 +1256,17 @@ const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 setInterval(() => {
   if (!state.live || reducedMotion) return;
   state.tick++;
-  const running = WORLDS.flatMap(w => state.jobs[w.id].filter(j => j.status === "running").map(j => ({ w: w.id, j })));
+  const running = state.worlds.flatMap(w => (state.jobs[w.id] ?? []).filter(j => j.status === "running").map(j => ({ w: w.id, j })));
   for (const r of running) {
     r.j.step = Math.min(6, r.j.step + 1);
     if (r.j.step >= 6 && state.tick % 2 === 0) {
       r.j.status = Math.random() < 0.85 ? "succeeded" : "failed";
     }
   }
-  if (running.length === 0 && state.tick % 4 === 0) {
-    const wid = ["fenrir", "hills"][state.tick % 2];
-    const n = state.jobs[wid].length;
-    state.jobs[wid].push(mkJob(wid[0] + "g" + state.tick, "s-grow-" + n, "sprouted · a tendril of new work", "luna", "running", 1));
+  if (running.length === 0 && state.tick % 4 === 0 && state.selectedWorld) {
+    const wid = state.selectedWorld;
+    const n = (state.jobs[wid] ?? []).length;
+    state.jobs[wid] = [...(state.jobs[wid] ?? []), mkJob(wid[0] + "g" + state.tick, "s-grow-" + n, "sprouted · a tendril of new work", "luna", "running", 1)];
   }
   if (state.activeTab) renderLog(state.activeTab, true); // live tabs stream
   renderScene();
@@ -1169,18 +1287,29 @@ setInterval(() => {
   }
 })();
 
-/* ═══ boot ═══ */
-state.loading = true;
-renderScene();
-setLogviewerHome({ head: "no session", note: "select a job card to open its session", status: "loading…" });
-setTimeout(() => {
-  state.loading = false;
-  state.animate = true;
-  state.tabs = [{ jobId: "f1", worldId: "fenrir" }];
-  state.activeTab = "f1";
+/* ═══ boot — the world list is READ from the backend service API ═══ */
+function boot() {
+  state.worlds = []; state.jobs = {}; state.tabs = []; state.activeTab = null;
+  state.expanded = new Set(); state.summariesLoaded = new Set();
+  state.unavailable.clear();
+  $("#btn-unavail").setAttribute("aria-pressed", "false");
   renderScene();
-  renderLog("f1", false);
-}, 1400);
+  setLogviewerHome({ head: "connecting", note: "reading the world list from the backend service API…", status: "connecting…" });
+  apiFetchNamespaces().then(nss => {
+    state.worlds = buildWorlds(nss);
+    const first = state.worlds[0]?.id ?? null;
+    state.selectedWorld = first;
+    renderScene();
+    if (first) {
+      selectWorld(first);                       // drills in + lazily fetches its summary
+      setTimeout(() => {                       // the hall opens the world's first session once work lands
+        const js = state.jobs[first];
+        if (js && js.length && !state.activeTab) openJob(first, js[0].id);
+      }, 1500);
+    }
+  });
+}
+boot();
 </script>
 </body>
 </html>
