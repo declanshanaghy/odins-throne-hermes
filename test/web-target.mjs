@@ -160,6 +160,9 @@ dom.window.WebSocket = FakeWebSocket;
 globalThis.fetch = async () => ({ ok: false, status: 404, json: async () => ({}) });
 dom.window.fetch = globalThis.fetch;
 
+// Pre-seed sidebar-width in localStorage so we can verify persistence on load (issue #53).
+dom.window.localStorage.setItem("sidebar-width", "420");
+
 await import(`../dist-ui/assets/${readdirSync(resolve(DIST, "assets")).find((f) => f.endsWith(".js"))}`);
 // Let React mount + the StoreBridge publish its first snapshot.
 await new Promise((r) => setTimeout(r, 800));
@@ -240,6 +243,29 @@ assert.equal(getActiveWebTabId(), null, "no active tab when all closed");
 closeWebSessionLog("sess-nonexistent");
 assert.equal(getWebTabs().length, 0, "closeWebSessionLog is idempotent for unknown session");
 
-console.log("WEB-TARGET PASS — Vite bundle serves from dist-ui/ (same ui core, tree shipped, same-origin /ws + /profiles seams, CSS unscoped, sidebar width fixed, tab contract verified)");
+// ── 8. Draggable sidebar resize handle present + localStorage seed (issue #53) ─
+// The web AppShell reads localStorage("sidebar-width") on first render; since we
+// seeded "420" above the bundle import, the sidebar inline width must reflect it.
+const resizeHandleEl = document.querySelector(".sidebar-resize-handle");
+assert.ok(resizeHandleEl, "sidebar-resize-handle present in web shell (issue #53)");
+assert.equal(
+  resizeHandleEl.getAttribute("role"),
+  "separator",
+  "resize handle has role=separator (issue #53: accessibility)",
+);
+assert.equal(
+  resizeHandleEl.getAttribute("aria-label"),
+  "Resize sidebar",
+  "resize handle has aria-label (issue #53: accessibility)",
+);
+// jsdom does no layout, but the inline style reflects state: seeded 420 → "420px"
+const sidebarElForResize = document.querySelector(".sidebar");
+assert.equal(
+  sidebarElForResize.style.width,
+  "420px",
+  "sidebar inline width reflects localStorage seed of 420 (issue #53: persistence)",
+);
+
+console.log("WEB-TARGET PASS — Vite bundle serves from dist-ui/ (same ui core, tree shipped, same-origin /ws + /profiles seams, CSS unscoped, sidebar width fixed, tab contract verified, resize handle + persistence verified)");
 // React's scheduler keeps the event loop alive; the assertions are done.
 process.exit(0);
