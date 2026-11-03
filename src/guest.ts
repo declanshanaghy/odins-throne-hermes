@@ -39,15 +39,6 @@ function setStatus(next: GuestStatus): void {
 
 // ── guest element lifecycle ─────────────────────────────────────────────────
 
-interface GuestWebview {
-  src: string;
-  style: CSSStyleDeclaration;
-  setAttribute(name: string, value: string): void;
-  addEventListener(type: string, cb: () => void, opts?: { once?: boolean }): void;
-  executeJavaScript(code: string, userGesture?: boolean): Promise<unknown>;
-  remove(): void;
-}
-
 let guest: GuestWebview | null = null;
 let ready: Promise<void> | null = null;
 
@@ -67,12 +58,22 @@ export function attachGuest(container: HTMLElement): () => void {
   const el = document.createElement("webview") as unknown as GuestWebview;
   el.setAttribute("partition", "persist:odins-throne");
   el.setAttribute("webpreferences", "backgroundThrottling=false");
+  // Plain Chrome UA: Google rejects logins from UAs it identifies as
+  // embedded/automation browsers (disallowed_useragent); the webview must
+  // present as the same browser the website flow runs in.
+  el.setAttribute(
+    "useragent",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+  );
+  // Fill the container; the overlay's visibility (ThroneGuest) hides the
+  // frame when not signing in — never position it off-canvas, or the login
+  // page renders out of view.
   el.style.position = "absolute";
-  el.style.left = "-9999px";
+  el.style.left = "0";
   el.style.top = "0";
   el.style.width = "100%";
   el.style.height = "100%";
-  el.src = `${base()}/healthz`;
+  el.setAttribute("src", `${base()}/healthz`);
   container.appendChild(el as unknown as HTMLElement);
   guest = el;
   ready = new Promise((resolve) => {
@@ -112,27 +113,57 @@ export async function probeAuth(): Promise<boolean> {
   }
 }
 
-/** Show the guest and start the Google sign-in flow inside it. */
-export function reauth(): void {
+interface GuestWebview {
+  src: string;
+  style: CSSStyleDeclaration;
+  setAttribute(name: string, value: string): void;
+  addEventListener(type: string, cb: () => void, opts?: { once?: boolean }): void;
+  executeJavaScript(code: string, userGesture?: boolean): Promise<unknown>;
+  remove(): void;
+}
+
+let reauthPoll: ReturnType<typeof setInterval> | null = null;
+
+function parkOnHealthz(): void {
   if (!guest) return;
-  setStatus("signing-in");
-  guest.src = `${base()}/`;
+  guest.setAttribute("src", `${base()}/healthz`);
   ready = new Promise((resolve) => {
     guest!.addEventListener("dom-ready", () => resolve(), { once: true });
   });
-  const poll = setInterval(() => {
+}
+
+/**
+ * Show the guest and start the website's own login flow inside it: oauth2-proxy
+ * serves its "Sign In" click-through page at `/`, the user clicks through to
+ * Google, and the poll flips to authed the moment the session cookie lands.
+ */
+export function reauth(): void {
+  if (!guest) return;
+  setStatus("signing-in");
+  guest.setAttribute("src", `${base()}/`);
+  ready = new Promise((resolve) => {
+    guest!.addEventListener("dom-ready", () => resolve(), { once: true });
+  });
+  if (reauthPoll !== null) clearInterval(reauthPoll);
+  reauthPoll = setInterval(() => {
     void probeAuth().then((ok) => {
       if (!ok) return;
-      clearInterval(poll);
+      if (reauthPoll !== null) clearInterval(reauthPoll);
+      reauthPoll = null;
       setStatus("authed");
-      // Park on the light anchor page — the session cookie stays in the
-      // partition; relays always run against this same origin.
-      if (guest) guest.src = `${base()}/healthz`;
-      ready = new Promise((resolve) => {
-        guest!.addEventListener("dom-ready", () => resolve(), { once: true });
-      });
+      parkOnHealthz();
     });
-  }, 3000);
+  }, 2000);
+}
+
+/** Give up on the in-frame sign-in and show the connect card again. */
+export function cancelReauth(): void {
+  if (reauthPoll !== null) {
+    clearInterval(reauthPoll);
+    reauthPoll = null;
+  }
+  if (guestStatus() === "signing-in") setStatus("needs-login");
+  parkOnHealthz();
 }
 
 // ── REST relay (same-origin, cookie-authenticated fetch inside the guest) ────

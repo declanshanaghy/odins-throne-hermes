@@ -6,6 +6,7 @@
 import { useEffect, useMemo, useRef, useSyncExternalStore } from "react";
 import {
   attachGuest,
+  cancelReauth,
   guestStatus,
   reauth,
   subscribeGuestStatus,
@@ -114,7 +115,6 @@ function ThroneGuest() {
   const visible = status === "signing-in";
   return (
     <div
-      ref={containerRef}
       style={{
         position: "absolute",
         inset: 0,
@@ -122,8 +122,36 @@ function ThroneGuest() {
         pointerEvents: visible ? "auto" : "none",
         visibility: visible ? "visible" : "hidden",
         background: "var(--void)",
+        display: "flex",
+        flexDirection: "column",
       }}
-    />
+    >
+      {visible && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 8,
+            padding: "8px 12px",
+            borderBottom: "1px solid var(--rune-border)",
+            background: "var(--forge)",
+            color: "var(--text-rune)",
+            fontFamily: '"Cinzel", serif',
+            fontSize: "0.72rem",
+          }}
+        >
+          <span>
+            Complete the sign-in for odins-throne.fenrirledger.com in the frame
+            below — exactly the website's login.
+          </span>
+          <button className="throne-settings-btn" onClick={() => cancelReauth()}>
+            Cancel
+          </button>
+        </div>
+      )}
+      <div ref={containerRef} style={{ position: "relative", flex: 1 }} />
+    </div>
   );
 }
 

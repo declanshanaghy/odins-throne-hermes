@@ -3296,12 +3296,16 @@ function attachGuest(container) {
   const el = document.createElement("webview");
   el.setAttribute("partition", "persist:odins-throne");
   el.setAttribute("webpreferences", "backgroundThrottling=false");
+  el.setAttribute(
+    "useragent",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+  );
   el.style.position = "absolute";
-  el.style.left = "-9999px";
+  el.style.left = "0";
   el.style.top = "0";
   el.style.width = "100%";
   el.style.height = "100%";
-  el.src = `${base()}/healthz`;
+  el.setAttribute("src", `${base()}/healthz`);
   container.appendChild(el);
   guest = el;
   ready = new Promise((resolve) => {
@@ -3333,24 +3337,39 @@ async function probeAuth() {
     return false;
   }
 }
-function reauth() {
+var reauthPoll = null;
+function parkOnHealthz() {
   if (!guest) return;
-  setStatus("signing-in");
-  guest.src = `${base()}/`;
+  guest.setAttribute("src", `${base()}/healthz`);
   ready = new Promise((resolve) => {
     guest.addEventListener("dom-ready", () => resolve(), { once: true });
   });
-  const poll = setInterval(() => {
+}
+function reauth() {
+  if (!guest) return;
+  setStatus("signing-in");
+  guest.setAttribute("src", `${base()}/`);
+  ready = new Promise((resolve) => {
+    guest.addEventListener("dom-ready", () => resolve(), { once: true });
+  });
+  if (reauthPoll !== null) clearInterval(reauthPoll);
+  reauthPoll = setInterval(() => {
     void probeAuth().then((ok) => {
       if (!ok) return;
-      clearInterval(poll);
+      if (reauthPoll !== null) clearInterval(reauthPoll);
+      reauthPoll = null;
       setStatus("authed");
-      if (guest) guest.src = `${base()}/healthz`;
-      ready = new Promise((resolve) => {
-        guest.addEventListener("dom-ready", () => resolve(), { once: true });
-      });
+      parkOnHealthz();
     });
-  }, 3e3);
+  }, 2e3);
+}
+function cancelReauth() {
+  if (reauthPoll !== null) {
+    clearInterval(reauthPoll);
+    reauthPoll = null;
+  }
+  if (guestStatus() === "signing-in") setStatus("needs-login");
+  parkOnHealthz();
 }
 async function guestFetch(path, init) {
   const opts = JSON.stringify({ method: init?.method ?? "GET", credentials: "include" });
@@ -6376,18 +6395,43 @@ function ThroneGuest() {
     return attachGuest(containerRef.current);
   }, []);
   const visible = status2 === "signing-in";
-  return /* @__PURE__ */ jsx12(
+  return /* @__PURE__ */ jsxs13(
     "div",
     {
-      ref: containerRef,
       style: {
         position: "absolute",
         inset: 0,
         zIndex: 40,
         pointerEvents: visible ? "auto" : "none",
         visibility: visible ? "visible" : "hidden",
-        background: "var(--void)"
-      }
+        background: "var(--void)",
+        display: "flex",
+        flexDirection: "column"
+      },
+      children: [
+        visible && /* @__PURE__ */ jsxs13(
+          "div",
+          {
+            style: {
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 8,
+              padding: "8px 12px",
+              borderBottom: "1px solid var(--rune-border)",
+              background: "var(--forge)",
+              color: "var(--text-rune)",
+              fontFamily: '"Cinzel", serif',
+              fontSize: "0.72rem"
+            },
+            children: [
+              /* @__PURE__ */ jsx12("span", { children: "Complete the sign-in for odins-throne.fenrirledger.com in the frame below \u2014 exactly the website's login." }),
+              /* @__PURE__ */ jsx12("button", { className: "throne-settings-btn", onClick: () => cancelReauth(), children: "Cancel" })
+            ]
+          }
+        ),
+        /* @__PURE__ */ jsx12("div", { ref: containerRef, style: { position: "relative", flex: 1 } })
+      ]
     }
   );
 }
