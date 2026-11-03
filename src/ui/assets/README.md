@@ -20,14 +20,17 @@ issue #10 — this directory + `src/ui/lib/treeSeats.ts`.
   exposed to CSS as the `--tree-backdrop` custom property on the tree root
   (esbuild inlines it as a data URL, same as the `src/assets/` portraits).
 - Lantern seats live in `src/ui/lib/treeSeats.ts` as TYPED data:
-  `WORLD_SEATS` (percent-of-scene `{ x, y, dir }` per world, copied verbatim
-  from the prototype's `WORLDS` array) and `namespaceSeat(nsId)` — curated
-  prototype mapping first, deterministic djb2-hash fallback for namespaces
-  not yet vision-mapped (same pattern as `namespaceIcons.ts`).
+  `SEAT_POOL` (the painted lantern spots, percent-of-scene, copied verbatim
+  from the prototype's `SEAT_POOL`) and `CURATED_SEATS` (namespace id →
+  painted seat index, the prototype's `CURATED_SEATS`). Seats are ASSIGNED at
+  runtime by `assignSeats(nsIds)` over whatever the backend API returns:
+  curated claims first, deterministic djb2-hash claims for unknown worlds,
+  and a documented terrace stack below the boughs when a list outgrows the
+  painted pool. `namespaceSeat(nsId)` is the single-id convenience.
 - The consumer attaches each namespace's seat to its tree node as
   `data-seat-x` / `data-seat-y` / `data-seat-dir` attributes — no layout
-  constants scattered in JSX. Overlay waves of #7 pin lanterns to the painting
-  with `left: var(--seat-x)%`-style positioning read from these attributes.
+  constants scattered in JSX. The lantern overlay (issue #11) pins each
+  namespace's lantern to the painting with these seats.
 
 ## Regenerating the backdrop
 
@@ -51,8 +54,8 @@ painting moves the boughs. After any repaint:
 
 1. Open the new painting and note each lantern's position as a percentage of
    the image box (x from left edge, y from top edge, plus hang direction).
-2. Update `WORLD_SEATS` in `src/ui/lib/treeSeats.ts` (world ids) and extend
-   `NAMESPACE_WORLD` there if a live namespace needs a curated bridge.
+2. Update `SEAT_POOL` (and `CURATED_SEATS` for curated bridges) in
+   `src/ui/lib/treeSeats.ts`.
 3. `test/tree-seats.mjs` locks the mapping to the prototype's values — update
    it in the same change when the prototype contract itself is revised.
 
