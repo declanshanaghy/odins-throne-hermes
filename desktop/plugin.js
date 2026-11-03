@@ -166,6 +166,8 @@ var styles_default = `.odins-throne-root .odins-throne-root {
   font-family: 'Source Serif 4', serif;
   display: flex;
   flex-direction: column;
+  /* issue #46: content text stays selectable; only interactive chrome opts out below */
+  user-select: text;
   transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
 
@@ -1622,7 +1624,7 @@ var styles_default = `.odins-throne-root .odins-throne-root {
   display: flex; align-items: center; gap: 0.4rem;
   padding: 0.25rem 0.5rem;
   background: var(--forge);
-  cursor: pointer; user-select: none;
+  cursor: pointer; user-select: none; /* issue #46: interactive chrome \u2014 click-to-collapse header */
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.65rem;
 }
@@ -1641,7 +1643,7 @@ var styles_default = `.odins-throne-root .odins-throne-root {
 .odins-throne-root .norse-tablet-header {
   display: flex; align-items: center; gap: 0.5rem;
   padding: 0.5rem 0.75rem;
-  cursor: pointer; user-select: none;
+  cursor: pointer; user-select: none; /* issue #46: interactive chrome \u2014 click-to-collapse header */
   border-bottom: 1px solid var(--gold);
   background: linear-gradient(90deg, var(--norse-tablet-header-bg) 0%, transparent 50%, var(--norse-tablet-header-bg) 100%);
 }
@@ -1731,7 +1733,7 @@ var styles_default = `.odins-throne-root .odins-throne-root {
 .odins-throne-root .decree-section-header {
   display: flex; align-items: center; gap: 0.4rem;
   padding: 0.35rem 0.5rem;
-  cursor: pointer; user-select: none;
+  cursor: pointer; user-select: none; /* issue #46: interactive chrome \u2014 click-to-collapse section header */
   font-family: 'Cinzel', serif;
   font-size: 0.6rem; font-weight: 600;
   color: var(--gold);
@@ -2151,7 +2153,7 @@ var styles_default = `.odins-throne-root .odins-throne-root {
   display: flex; align-items: center; gap: 0.5rem;
   padding: 0.4rem 0.6rem;
   background: var(--forge);
-  cursor: pointer; user-select: none;
+  cursor: pointer; user-select: none; /* issue #46: interactive chrome \u2014 click-to-collapse group header */
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.7rem;
 }
@@ -2226,7 +2228,7 @@ var styles_default = `.odins-throne-root .odins-throne-root {
   display: flex; align-items: center; gap: 0.5rem;
   padding: 0.3rem 0.5rem;
   background: var(--tool-batch-header-bg);
-  cursor: pointer; user-select: none;
+  cursor: pointer; user-select: none; /* issue #46: interactive chrome \u2014 click-to-collapse batch header */
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.6rem;
   justify-content: flex-end;
@@ -2360,7 +2362,7 @@ var styles_default = `.odins-throne-root .odins-throne-root {
 }
 .odins-throne-root .ev-tool-header {
   display: flex; align-items: center; gap: 0.5rem;
-  padding: 0.35rem 0.6rem; cursor: pointer; user-select: none;
+  padding: 0.35rem 0.6rem; cursor: pointer; user-select: none; /* issue #46: interactive chrome \u2014 click-to-collapse tool header */
 }
 .odins-throne-root .ev-tool-header:hover { background: var(--mist-tool-hover); }
 .odins-throne-root .ev-tool-badge {
@@ -2476,7 +2478,6 @@ var styles_default = `.odins-throne-root .odins-throne-root {
   color: #c9920a;
   letter-spacing: 0.3em;
   opacity: 0.5;
-  user-select: none;
   word-break: break-all;
   max-width: 480px;
 }
@@ -2486,7 +2487,6 @@ var styles_default = `.odins-throne-root .odins-throne-root {
   color: #c9920a;
   line-height: 1;
   text-shadow: 0 0 24px rgba(201, 146, 10, 0.6), 0 0 8px rgba(201, 146, 10, 0.3);
-  user-select: none;
 }
 
 .odins-throne-root .net-heading {
@@ -2514,7 +2514,6 @@ var styles_default = `.odins-throne-root .odins-throne-root {
   color: #c9920a;
   letter-spacing: 0.5em;
   opacity: 0.4;
-  user-select: none;
 }
 
 .odins-throne-root .net-body {
@@ -2704,7 +2703,6 @@ var styles_default = `.odins-throne-root .odins-throne-root {
   color: var(--agent-accent, var(--gold));
   letter-spacing: 0.35em;
   opacity: 0.45;
-  user-select: none;
   word-break: break-all;
   text-align: center;
 }
@@ -2725,7 +2723,6 @@ var styles_default = `.odins-throne-root .odins-throne-root {
   text-shadow:
     0 0 32px color-mix(in srgb, var(--agent-accent, var(--gold)) 55%, transparent),
     0 0 10px color-mix(in srgb, var(--agent-accent, var(--gold)) 30%, transparent);
-  user-select: none;
   border: 2px solid var(--agent-accent, var(--gold));
   border-radius: 4px;
   padding: 0.3rem 0.6rem;
@@ -2780,7 +2777,6 @@ var styles_default = `.odins-throne-root .odins-throne-root {
   color: var(--agent-accent, var(--gold));
   letter-spacing: 0.4em;
   opacity: 0.35;
-  user-select: none;
 }
 
 /* \u2500\u2500 Markdown body \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
@@ -2948,7 +2944,6 @@ var styles_default = `.odins-throne-root .odins-throne-root {
   letter-spacing: 0.2em;
   color: var(--agent-accent, var(--gold));
   opacity: 0.5;
-  user-select: none;
   text-align: center;
 }
 
