@@ -179,53 +179,141 @@ for (const ns of [
   assert.ok(paneHtml.includes(ns), `namespace option present: ${ns}`);
 }
 
-// ── namespace tree (issue:2) ────────────────────────────────────────────────
-// All namespaces as a browseable tree, each node with a task summary and
-// per-status counts sourced from the stubbed per-namespace /api/jobs fetches.
+// ── namespace drilldown tree (issue:4) ──────────────────────────────────────
+// Each namespace is a TOP-LEVEL root node (no wrapper root); its tasks branch
+// directly beneath it. Summary lines + status stats from issue:2 are kept.
+// Connector rails + elbows are CSS-only; icons are remote <img src> markup
+// (jsdom never fetches — no real network in this test).
 assert.ok(document.querySelector('.ns-tree[aria-label="Namespace tree"]'), "namespace tree mounted");
-assert.ok(paneHtml.includes("All namespaces"), "tree root node rendered");
-assert.equal(document.querySelectorAll(".ns-tree__item[data-namespace]").length, 5, "all five namespaces are tree nodes");
-assert.ok(document.querySelector('.ns-tree__item[data-namespace="fenrir-agents"]'), "fenrir-agents node present");
+assert.ok(!paneHtml.includes("All namespaces"), "no wrapper root — namespaces are the top-level roots");
+assert.equal(document.querySelectorAll(".ns-tree__item[data-namespace]").length, 5, "all five namespaces are top-level root nodes");
+assert.ok(document.querySelector('.ns-tree__item[data-namespace="fenrir-agents"]'), "fenrir-agents root node present");
 assert.ok(
   paneHtml.includes("12 tasks · 2 running · 1 pending · 1 failed · 8 succeeded"),
-  "fenrir-agents node shows task summary with status counts",
+  "fenrir-agents node keeps its task summary with status counts",
 );
 assert.ok(
   paneHtml.includes("8 tasks · 8 succeeded"),
   "say-so-agents node shows task summary",
 );
 assert.ok(paneHtml.includes("0 tasks"), "empty namespace shows a zero-task summary");
-assert.ok(
-  document.querySelector('.ns-tree__item[data-namespace="fenrir-agents"]').getAttribute("aria-selected") === "true",
+assert.equal(
+  document.querySelector('.ns-tree__item[data-namespace="fenrir-agents"]').getAttribute("aria-selected"),
+  "true",
   "active namespace node is marked selected",
 );
 
-// Selecting a namespace node still switches the active namespace (persisted
-// to the same localStorage key the flat dropdown used).
+// Guide-line CSS: drawn rails + elbow connectors make the levels distinct.
+assert.ok(
+  css.includes(".ns-tree__task::before") && css.includes(".ns-tree__task::after"),
+  "connector rail + elbow pseudo-elements present in the CSS",
+);
+assert.ok(
+  css.includes("border-left: 1px solid var(--rune-border)") &&
+    css.includes("border-top: 1px solid var(--rune-border)"),
+  "connector lines drawn with theme borders",
+);
+
+// Task children: the active namespace starts pre-drilled — its 12 tasks
+// (purged excluded; none in the fixture) branch under the node.
+const fenrirTasks = document.querySelectorAll(
+  '.ns-tree__item[data-namespace="fenrir-agents"] .ns-tree__task[data-session]',
+);
+assert.equal(fenrirTasks.length, 12, "fenrir-agents node branches its 12 tasks");
+assert.ok(document.querySelector('.ns-tree__task[data-session="s-run-1"]'), "task node present under its namespace root");
+assert.ok(paneHtml.includes("s-fail-1"), "failed task branched beneath its namespace");
+
+// Clicking a task node selects that session — the same semantics the job
+// cards use (aria-selected marks the task node).
+document.querySelector('.ns-tree__task[data-session="s-run-1"] .ns-tree__task-btn').click();
+await flush();
+await flush();
+assert.equal(
+  document.querySelector('.ns-tree__task[data-session="s-run-1"]').getAttribute("aria-selected"),
+  "true",
+  "clicked task node is marked selected",
+);
+
+// Icons from shanaghy.com's icon library (assert src attributes only).
+const iconImgs = Array.from(document.querySelectorAll(".ns-tree__icon"));
+assert.ok(iconImgs.length > 0, "tree nodes carry icons");
+for (const img of iconImgs) {
+  assert.ok(
+    (img.getAttribute("src") ?? "").startsWith("https://www.shanaghy.com/assets/icons/"),
+    `icon src points at the shanaghy.com icon library: ${img.getAttribute("src")}`,
+  );
+}
+assert.equal(
+  document.querySelector('.ns-tree__item[data-namespace="fenrir-agents"] .ns-tree__select .ns-tree__icon').getAttribute("src"),
+  "https://www.shanaghy.com/assets/icons/wolf-coins.png",
+  "fenrir-agents gets its curated icon (wolf-coins)",
+);
+assert.equal(
+  document.querySelector('.ns-tree__task[data-session="s-run-1"] .ns-tree__icon').getAttribute("src"),
+  "https://www.shanaghy.com/assets/icons/hammer.png",
+  "running task node gets the hammer icon",
+);
+
+// Icon fallback: a failed load (error event on the <img>) must swap in the
+// inline emoji glyph so the panel never shows a broken image when offline.
+const fenrirIcon = document.querySelector(
+  '.ns-tree__item[data-namespace="fenrir-agents"] .ns-tree__select .ns-tree__icon',
+);
+fenrirIcon.dispatchEvent(new dom.window.Event("error"));
+await flush();
+const fallbackGlyph = document.querySelector("[data-icon-fallback]");
+assert.ok(fallbackGlyph, "icon onError swaps in an inline fallback glyph");
+assert.equal(fallbackGlyph.textContent, "\u{1F310}", "namespace fallback is the world glyph");
+assert.ok(
+  !document.querySelector('.ns-tree__item[data-namespace="fenrir-agents"] .ns-tree__select img'),
+  "failed remote img is unmounted",
+);
+
+// Selecting a namespace root still switches the active namespace (persisted
+// to the same localStorage key the flat dropdown used) — and drills into it.
 document.querySelector('.ns-tree__item[data-namespace="say-so-agents"] .ns-tree__select').click();
 await flush();
 await flush();
 assert.equal(
   localStorage.getItem("hlidskjalf:namespace"),
   "say-so-agents",
-  "clicking a tree node sets the active namespace",
+  "clicking a namespace root sets the active namespace",
 );
 assert.equal(
   document.querySelector('.ns-tree__item[data-namespace="say-so-agents"]').getAttribute("aria-selected"),
   "true",
   "newly selected namespace node is marked active",
 );
+assert.equal(
+  document.querySelectorAll('.ns-tree__item[data-namespace="say-so-agents"] .ns-tree__task[data-session]').length,
+  8,
+  "selecting a namespace drills into its tasks",
+);
 
-// Expanding a namespace node reveals its per-status breakdown children.
-document.querySelector('.ns-tree__item[data-namespace="say-so-agents"] .ns-tree__chevron-btn').click();
+// Cross-world task click: a task in a non-active namespace switches the
+// namespace AND keeps that session selected (pending-select flow in App).
+document.querySelector('.ns-tree__item[data-namespace="re-goatmower-agents"] .ns-tree__chevron-btn').click();
+await flush();
+document.querySelector('.ns-tree__task[data-session="rg-fail-1"] .ns-tree__task-btn').click();
+await flush();
+await flush();
+assert.equal(
+  localStorage.getItem("hlidskjalf:namespace"),
+  "re-goatmower-agents",
+  "cross-world task click switches the active namespace",
+);
+assert.equal(
+  document.querySelector('.ns-tree__task[data-session="rg-fail-1"]').getAttribute("aria-selected"),
+  "true",
+  "cross-world task click selects the session in its world",
+);
+
+// Empty namespace drills into an explicit empty state.
+document.querySelector('.ns-tree__item[data-namespace="shanaghy-com-agents"] .ns-tree__chevron-btn').click();
 await flush();
 assert.ok(
-  document.querySelectorAll('.ns-tree__item[data-namespace="say-so-agents"] .ns-tree__status').length > 0,
-  "expanded namespace node shows status breakdown",
-);
-assert.ok(
-  document.getElementById("pane").innerHTML.includes("succeeded"),
-  "status breakdown lists job statuses",
+  document.getElementById("pane").innerHTML.includes("no tasks in this world"),
+  "empty namespace shows the no-tasks leaf",
 );
 
 const pageRoot = createRoot(document.getElementById("page"));
@@ -251,5 +339,5 @@ assert.equal(
 );
 assert.equal(dom.window.document.documentElement.getAttribute("data-theme"), null, "app <html> untouched");
 
-console.log("SMOKE PASS — pane + page render, namespace tree with summaries, CSS scoped, theme plugin-local, overlays wired");
+console.log("SMOKE PASS — pane + page render, namespace drilldown tree (top-level roots, task branches, shanaghy.com icons + fallback, connector lines), CSS scoped, theme plugin-local, overlays wired");
 process.exit(0);
