@@ -9,6 +9,15 @@
 # DNS or in the Namecheap zone — the script reports it and makes no API write.
 # If it exists with a different value, the record is UPDATED to the target.
 #
+# SAFETY — setHosts is a full zone replace-all:
+#   namecheap.domains.dns.setHosts sends the COMPLETE host list. Any record
+#   omitted from the call is permanently deleted. This script guards against
+#   silent-empty-merge: if the zone XML contains <Host> elements but the
+#   parser yields an empty list, it aborts (exit 1) and prints the raw XML
+#   instead of calling setHosts with a one-record list that would nuke
+#   every other record. See 2026-11-03 incident in knowledge/subsystems/
+#   deployment-gke.md.
+#
 # Environment:
 #   NAMECHEAP_API_USER    Namecheap API username (repo secret)
 #   NAMECHEAP_API_KEY     Namecheap API key (repo secret)
@@ -22,7 +31,7 @@
 #
 # Exit codes:
 #   0  success (created, verified, or already correct)
-#   1  usage / precondition error
+#   1  usage / precondition / safety-guard error
 #   2  Namecheap API error
 #   3  DNS propagation verification timed out
 # --------------------------------------------------------------------------
@@ -172,6 +181,16 @@ if [ "$action" != "none" ]; then
         /^Address=/   {addr=$2}
         /^TTL=/       {ttl=$2; print name "|" type "|" addr "|" (ttl==""?"1800":ttl)}
       ' || true)"
+
+  # Silent-empty-merge guard: setHosts replaces the entire zone, so an empty
+  # parsed list would nuke every record not explicitly in the call. If the raw
+  # XML has <Host> elements but the parser yielded nothing, abort immediately
+  # and print the raw XML so the caller can diagnose the parse failure.
+  raw_host_count="$(printf '%s' "$zone_xml" | grep -c '<Host ' || true)"
+  if [ "${raw_host_count:-0}" -gt 0 ] && [ -z "$hosts_list" ]; then
+    die 1 "empty-merge guard triggered: zone XML contains ${raw_host_count} <Host> element(s) but the parser yielded an empty list — aborting before setHosts to prevent zone nuke. Raw XML follows:
+${zone_xml}"
+  fi
 
   params=()
   n=0
