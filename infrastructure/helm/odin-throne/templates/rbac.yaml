@@ -13,7 +13,7 @@ metadata:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: {{ .Values.namespace }}-agent-reader
+  name: {{ $.Values.namespace }}-agent-reader
   namespace: {{ .Values.rbac.agentsNamespace }}
   labels:
     {{- include "odin-throne.labels" (dict "component" "odins-throne") | nindent 4 }}
@@ -30,14 +30,14 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: {{ .Values.namespace }}-agent-reader
+  name: {{ $.Values.namespace }}-agent-reader
   namespace: {{ .Values.rbac.agentsNamespace }}
   labels:
     {{- include "odin-throne.labels" (dict "component" "odins-throne") | nindent 4 }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: {{ .Values.namespace }}-agent-reader
+  name: {{ $.Values.namespace }}-agent-reader
 subjects:
   - kind: ServiceAccount
     name: {{ .Values.app.serviceAccountName }}
@@ -49,7 +49,7 @@ subjects:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: {{ .Values.namespace }}-agent-reader
+  name: {{ $.Values.namespace }}-agent-reader
   namespace: {{ . }}
   labels:
     {{- include "odin-throne.labels" (dict "component" "odins-throne") | nindent 4 }}
@@ -66,14 +66,14 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: {{ .Values.namespace }}-agent-reader
+  name: {{ $.Values.namespace }}-agent-reader
   namespace: {{ . }}
   labels:
     {{- include "odin-throne.labels" (dict "component" "odins-throne") | nindent 4 }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: {{ .Values.namespace }}-agent-reader
+  name: {{ $.Values.namespace }}-agent-reader
 subjects:
   - kind: ServiceAccount
     name: {{ $.Values.app.serviceAccountName }}
