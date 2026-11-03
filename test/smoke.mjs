@@ -805,10 +805,48 @@ assert.ok(!pageHtml.includes("loki-eb-"), "page did not hit the Loki error bound
 assert.ok(pageHtml.includes('aria-label="Log viewer"'), "log terminal mounted");
 assert.ok(pageHtml.includes("All Nine Worlds await"), "Norse empty state before first selection");
 
-// ── theme switching is plugin-scoped ───────────────────────────────────────
-const switcher = document.querySelector('[aria-pressed]');
-assert.ok(switcher, "theme switcher rendered");
-switcher.click();
+// ── single theme toggle in the header row (issue #47) ──────────────────────
+// The two-button ☀/☽ group is gone: ONE .theme-btn flips light ↔ dark, and
+// it sits in the .brand header row immediately left of the status badge,
+// with the session count left of it (the old .count-row is dissolved).
+const paneEl = document.getElementById("pane");
+assert.equal(paneEl.querySelectorAll(".theme-btn").length, 1, "theme control is ONE toggle button");
+assert.ok(!paneEl.querySelector(".theme-switcher"), "no two-button theme group remains");
+assert.ok(!paneEl.querySelector(".count-row"), "the old count-row below the quote is dissolved");
+assert.ok(!paneEl.querySelector(".sidebar-header .theme-btn ~ .theme-btn"), "no sibling theme button");
+
+const brandRow = paneEl.querySelector(".sidebar-header .brand");
+assert.ok(brandRow, "brand header row present");
+const headerOrder = [...brandRow.children].map((el) => el.className);
+const countIdx = headerOrder.indexOf("count");
+const toggleIdx = headerOrder.indexOf("theme-btn");
+const badgeIdx = headerOrder.indexOf("brand-wss-badge");
+assert.ok(countIdx !== -1, "session count sits inside the brand header row");
+assert.ok(toggleIdx !== -1, "theme toggle sits inside the brand header row");
+assert.ok(badgeIdx !== -1, "status badge sits inside the brand header row");
+assert.ok(
+  headerOrder.indexOf("odin-avatar-btn") < countIdx && headerOrder.indexOf("") < countIdx,
+  "brand (avatar + title) stays on the left",
+);
+assert.ok(
+  countIdx < toggleIdx && toggleIdx < badgeIdx,
+  "header cluster is ordered count → theme toggle → status badge",
+);
+assert.ok(
+  /\d+ sessions?/.test(brandRow.querySelector(".count").textContent),
+  "session count reads from the header row",
+);
+assert.equal(brandRow.querySelector(".count").getAttribute("aria-live"), "polite", "count keeps its polite live region");
+
+// The toggle's accessible label names the theme a click will switch to.
+const toggle = brandRow.querySelector(".theme-btn");
+assert.equal(toggle.tagName, "BUTTON", "theme toggle is a native button");
+assert.equal(toggle.getAttribute("type"), "button", "toggle never submits a form");
+assert.equal(toggle.getAttribute("aria-label"), "Switch to light theme", "label names the target theme (dark is active)");
+assert.equal(toggle.getAttribute("aria-pressed"), "true", "dark active reads as pressed");
+
+// Click flips to light — plugin-scoped, the app <html> is untouched.
+toggle.click();
 await flush();
 await flush();
 assert.equal(
@@ -817,6 +855,18 @@ assert.equal(
   "light theme applied on the plugin root",
 );
 assert.equal(dom.window.document.documentElement.getAttribute("data-theme"), null, "app <html> untouched");
+assert.equal(toggle.getAttribute("aria-label"), "Switch to dark theme", "label follows the flip");
+assert.equal(toggle.getAttribute("aria-pressed"), "false", "light active reads as not pressed");
+
+// A second click flips back to dark — a true toggle, not a one-way button.
+toggle.click();
+await flush();
+await flush();
+assert.equal(
+  document.getElementById("pane").querySelector(".odins-throne-root").getAttribute("data-theme"),
+  "dark",
+  "second click flips back to dark",
+);
 
 // ── openThroneTab seam → per-session workspace tab (issue:6) ───────────────
 // The entry.tsx exports openThroneTab as a test seam; calling it with a

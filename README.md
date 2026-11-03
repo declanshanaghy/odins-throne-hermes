@@ -9,7 +9,9 @@ first-class plugin:
   lanterns (its icon in the painted lantern, which lights up when active,
   and a row of small task icons beneath it — one per task), the
   open world's work hanging from it as vine-strand job cards (one-open
-  accordion), plus the WSS badge, theme switcher, Odin himself — docked
+  accordion), plus the session count, the single light/dark theme toggle,
+  the WSS badge, and Odin himself — all in one right-aligned header row —
+  docked
   beside the conversation. Clicking a
   job card opens the log terminal in a new workspace tab (or focuses it if
   it is already open). The tree is fully keyboard-operable and

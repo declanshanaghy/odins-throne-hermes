@@ -284,19 +284,18 @@ body {
   font-style: italic; font-size: 0.75rem;
   color: var(--text-rune); opacity: 0.8; line-height: 1.4;
 }
-.count-row {
-  display: flex; align-items: center; justify-content: space-between;
-  margin-top: 0.5rem;
-}
+/* Session count sits in the brand header row (issue #47): margin-left:auto
+ * pushes the right-aligned cluster (count → theme toggle → status badge);
+ * the badge keeps its own auto so the cluster still right-aligns in
+ * compact mode, where the count is the first thing to hide. */
 .sidebar-header .count {
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.7rem; color: var(--text-void);
+  margin-left: auto;
+  white-space: nowrap; flex-shrink: 0;
 }
 
-/* ── Theme switcher ────────────────────────────── */
-.theme-switcher {
-  display: flex; gap: 0.2rem;
-}
+/* ── Theme toggle (single button, issue #47) ─────── */
 .theme-btn {
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.75rem;
