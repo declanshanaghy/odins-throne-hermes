@@ -20,7 +20,6 @@ import type { Theme } from "./hooks/useTheme";
 import type { DisplayJob } from "./lib/types";
 
 export interface SessionLogTarget {
-  sessionId: string;
   /** Namespace captured at open time — the viewer's WS dials this, not the pane's. */
   namespace: string;
   /** Job snapshot captured at open time — header fallback until jobs land. */

@@ -40,20 +40,23 @@ export async function resolve(specifier, context, next) {
   // Node ESM needs the explicit extension.
   const parentInSrc = context.parentURL?.includes("/src/") ?? false;
   if (parentInSrc && (specifier.startsWith("./") || specifier.startsWith("../")) && !/\.[a-z]+$/i.test(specifier)) {
-    try {
-      return await next(specifier + ".ts", context);
-    } catch {
-      // fall through to the default resolution
+    for (const ext of [".ts", ".tsx"]) {
+      try {
+        return await next(specifier + ext, context);
+      } catch {
+        // try the next extension / fall through to the default resolution
+      }
     }
   }
   return next(specifier, context);
 }
 
 export async function load(url, context, next) {
-  // Transpile src/**.ts with esbuild (the same compiler the build uses).
-  if (url.startsWith("file:") && url.includes("/src/") && url.endsWith(".ts")) {
+  // Transpile src/**/*.{ts,tsx} with esbuild (the same compiler the build uses).
+  if (url.startsWith("file:") && url.includes("/src/") && (url.endsWith(".ts") || url.endsWith(".tsx"))) {
     const source = readFileSync(fileURLToPath(url), "utf8");
-    const { code } = await transform(source, { loader: "ts", format: "esm", target: "es2022" });
+    const loader = url.endsWith(".tsx") ? "tsx" : "ts";
+    const { code } = await transform(source, { loader, format: "esm", target: "es2022", jsx: "automatic" });
     return { format: "module", source: code, shortCircuit: true };
   }
   // PNG imports inside transpiled modules (the plugin adapter's portraits):
