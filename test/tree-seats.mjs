@@ -11,7 +11,9 @@
 //      curated painted lanterns claimed first (never stealable — not by a
 //      later-arriving namespace, not by an unknown one hashing into the same
 //      index), djb2-hash fallback for unknown worlds, deterministic terrace
-//      stacking beyond the painted pool, every seat in-scene with dir ±1.
+//      stacking beyond the painted pool, every seat in-scene with dir ±1;
+//   4. task pips (issue #39): icon count = task count up to the cap, a "+N"
+//      chip beyond it, the row in-scene on the side away from the vine.
 //
 // Run: npm test   (node --import ./test/register.mjs test/tree-seats.mjs)
 // The bundle assertion requires `npm run build` first (same as smoke.mjs).
@@ -185,6 +187,89 @@ for (const ns of ["mytruthfinder-agents", "brand-new-world", "odins-throne-plugi
   assert.ok(a.dir === 1 || a.dir === -1, `namespaceSeat dir ±1 for "${ns}"`);
 }
 
+// ── task pips beneath the lantern (issue #39) ───────────────────────────────
+// One small task icon per task, capped at TASK_PIPS.cap slots with a "+N"
+// chip; the row sits on the side away from the vine and narrows to fit.
+const { TASK_PIPS, taskPips, pipSlots, pipRowWidth, pipRowLayout } = await import(
+  "../src/ui/lib/taskPips.ts"
+);
+const { vineFor } = await import("../src/ui/lib/vineGeometry.ts");
+const tasksN = (n) =>
+  Array.from({ length: n }, (_, i) => ({ sessionId: `s-${i}`, status: ["running", "failed", "pending", "succeeded"][i % 4] }));
+
+assert.deepEqual(taskPips([]), { pips: [], overflow: 0, count: 0 }, "an empty world has no pips");
+for (let n = 0; n <= 40; n++) {
+  const row = taskPips(tasksN(n));
+  assert.equal(row.count, n, `pip row stands for all ${n} tasks`);
+  assert.equal(row.pips.length + row.overflow, n, `visible pips + overflow = task count (${n})`);
+  assert.ok(pipSlots(row) <= TASK_PIPS.cap, `never more than ${TASK_PIPS.cap} slots (${n} tasks)`);
+  if (n <= TASK_PIPS.cap) {
+    assert.equal(row.overflow, 0, `no overflow chip at or under the cap (${n})`);
+    assert.equal(row.pips.length, n, `icon count = task count under the cap (${n})`);
+  } else {
+    assert.equal(row.pips.length, TASK_PIPS.cap - 1, `over the cap the last slot is the chip (${n})`);
+    assert.equal(row.overflow, n - (TASK_PIPS.cap - 1), `the chip folds the rest (${n})`);
+  }
+}
+assert.deepEqual(
+  taskPips(tasksN(3)).pips.map((p) => p.sessionId),
+  ["s-0", "s-1", "s-2"],
+  "pips keep the caller's hang order",
+);
+assert.equal(taskPips(tasksN(5), 3).overflow, 3, "a custom cap folds past it");
+assert.equal(pipRowWidth(0), 0, "no columns → no width");
+assert.equal(pipRowWidth(1), TASK_PIPS.sizePx, "one column is one pip wide");
+assert.equal(pipRowWidth(4), 4 * TASK_PIPS.sizePx + 3 * TASK_PIPS.gapPx, "columns + gaps");
+
+// Unmeasured scene: full-width row, away from the vine, no clamp.
+assert.deepEqual(
+  pipRowLayout({ x: 50, y: 30, dir: 1 }, 0, 8),
+  { columns: 4, width: pipRowWidth(4), left: -TASK_PIPS.clearPx - pipRowWidth(4) },
+  "dir 1 (vine leans right) → the row sits left of the lantern",
+);
+assert.deepEqual(
+  pipRowLayout({ x: 50, y: 30, dir: -1 }, 0, 2),
+  { columns: 2, width: pipRowWidth(2), left: TASK_PIPS.clearPx },
+  "dir -1 (vine leans left) → the row sits right of the lantern",
+);
+
+// Every seat (painted pool + terrace), both modes, any count: the row stays
+// in-scene, on the side away from the vine, and the strand never crosses it.
+const SCENES = [
+  { w: 432, h: 578, mode: "extended" },
+  { w: 320, h: 428, mode: "normal" },
+];
+const PIP_ROW_TOP = 14; // px below the lantern center (.ns-tree__tasks top)
+const allSeats = [...assignSeats(bigList).values()];
+for (const { w, h, mode } of SCENES) {
+  for (const seat of allSeats) {
+    for (const slots of [1, 3, 4, TASK_PIPS.cap]) {
+      const lay = pipRowLayout(seat, w, slots);
+      const seatX = (seat.x / 100) * w;
+      const seatY = (seat.y / 100) * h;
+      const left = seatX + lay.left;
+      const right = left + lay.width;
+      assert.ok(left >= TASK_PIPS.edgePx - 1e-9 && right <= w - TASK_PIPS.edgePx + 1e-9, `${mode}: pip row in-scene at seat ${seat.x},${seat.y} (${slots} slots)`);
+      assert.ok(seat.dir === 1 ? right <= seatX : left >= seatX, `${mode}: pip row on the side away from the vine at seat ${seat.x},${seat.y}`);
+      const lines = Math.ceil(slots / lay.columns);
+      const top = seatY + PIP_ROW_TOP;
+      const bottom = top + lines * (TASK_PIPS.sizePx + TASK_PIPS.gapPx);
+      for (const count of [1, 5, 20]) {
+        const v = vineFor(seat, count, w, h, mode);
+        const nums = v.d.match(/-?\d+(\.\d+)?/g).map(Number);
+        const [p0x, p0y, c1x, c1y, c2x, c2y, p3x, p3y] = nums;
+        for (let t = 0; t <= 1; t += 0.005) {
+          const u = 1 - t;
+          const x = u * u * u * p0x + 3 * u * u * t * c1x + 3 * u * t * t * c2x + t * t * t * p3x;
+          const y = u * u * u * p0y + 3 * u * u * t * c1y + 3 * u * t * t * c2y + t * t * t * p3y;
+          if (y < top || y > bottom) continue;
+          assert.ok(x < left || x > right, `${mode}: the vine never crosses the pip row at seat ${seat.x},${seat.y} (${count} jobs)`);
+        }
+      }
+    }
+  }
+}
+
 // ── the build inlines the painting into the shipped bundle ───────────────────
 // Same precondition as smoke.mjs: run `npm run build` before `npm test`.
 const bundle = readFileSync(new URL("../desktop/plugin.js", import.meta.url), "utf8");
@@ -193,4 +278,4 @@ assert.ok(
   "painted backdrop is bundled into desktop/plugin.js as an inlined data URL",
 );
 
-console.log("tree-seats: painting + painted seat pool + runtime lantern seating verified (issues #10 + #11)");
+console.log("tree-seats: painting + painted seat pool + runtime lantern seating + task pip rows verified (issues #10, #11 + #39)");

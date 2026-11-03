@@ -5,7 +5,9 @@ monitor for GKE agent-sandbox Jobs, ported into the Hermes desktop app as a
 first-class plugin:
 
 - **Right pane** — the job list as a painted tree scene (the "namespace
-  lantern tree"): each namespace a lantern seated on the painting, the
+  lantern tree"): each namespace seated on one of the painting's own
+  lanterns (its icon in the painted lantern, which lights up when active,
+  and a row of small task icons beneath it — one per task), the
   open world's work hanging from it as vine-strand job cards (one-open
   accordion), plus the WSS badge, theme switcher, Odin himself — docked
   beside the conversation. Clicking a
