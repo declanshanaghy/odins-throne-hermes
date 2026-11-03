@@ -21,7 +21,7 @@ import {
   sessionSnapshot,
   subscribeSession,
 } from "./upstream";
-import { openExternal } from "./pluginCtx";
+import { openExternal, openThroneTab } from "./pluginCtx";
 import { ThroneSettings, settingsUi, useSettingsOpen } from "./settings";
 
 function SidebarConnected() {
@@ -32,7 +32,13 @@ function SidebarConnected() {
       activeSessionId={snap.activeSessionId}
       quote={snap.quote}
       wsState={snap.wsState}
-      onSelectSession={snap.onSelectSession}
+      onSelectSession={(sessionId) => {
+        // Open (or focus) the log terminal tab in the workspace and select the
+        // clicked session. The tab opener wired in entry.tsx calls
+        // snap.onSelectSession before opening the tab so the page renders the
+        // right stream immediately.
+        openThroneTab(sessionId);
+      }}
       onAvatarClick={snap.onAvatarClick}
       onOdinClick={snap.onOdinClick}
       onTogglePinSession={snap.onTogglePinSession}
