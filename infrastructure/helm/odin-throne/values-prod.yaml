@@ -1,0 +1,34 @@
+# --------------------------------------------------------------------------
+# Odin's Throne — Production Overrides
+#
+# Usage: helm upgrade --install odin-throne ./infrastructure/helm/odin-throne \
+#          -f ./infrastructure/helm/odin-throne/values-prod.yaml \
+#          --set app.image.tag=$IMAGE_TAG
+# --------------------------------------------------------------------------
+
+namespace: odins-throne
+
+app:
+  replicaCount: 2
+
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+      ephemeral-storage: "128Mi"
+    limits:
+      cpu: "250m"
+      memory: "256Mi"
+      ephemeral-storage: "256Mi"
+
+ingress:
+  enabled: true
+  hosts:
+    - odins-throne.shanaghy.com
+
+oauth2Proxy:
+  enabled: true
+  redirectUrl: "https://odins-throne.shanaghy.com/oauth2/callback"
+
+rbac:
+  enabled: true
