@@ -128,6 +128,14 @@ and asserts the structured entries end to end.
   re-front) a dedicated workspace tab; on older desktop builds that lack
   `host.openWorkspace` it falls back to `host.navigate("/odins-throne")`.
 
+## Knowledge base
+
+The repo's shared project truth lives in [`knowledge/`](knowledge/README.md) —
+read [`knowledge/INDEX.md`](knowledge/INDEX.md) first for the canonical
+vocabulary (glossary, subsystems, tech-designs). The pack conventions in
+`.claude/` (agents, skills) and `quality/` templates all draw their terms
+from there.
+
 ## Source of truth
 
 The SPA lives in

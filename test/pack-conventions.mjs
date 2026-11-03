@@ -122,7 +122,26 @@ const run = (cmd, args) => execFileSync(cmd, args, { cwd: REPO_ROOT, encoding: "
   }
 }
 
-// ── 7. No dangling symlinks anywhere in the pack ────────────────────────────
+// ── 7. PACK_NAMESPACE env override beats .claude/agents-namespace ──────────
+{
+  const out = run("bash", [
+    "-c",
+    `PACK_NAMESPACE=override-ns-probe '${join(REPO_ROOT, ".claude/skills/fire-next-up/scripts/pack-env.sh")}'`,
+  ]);
+  const env = Object.fromEntries(
+    out.trim().split("\n").map((l) => {
+      const i = l.indexOf("=");
+      return [l.slice(0, i), l.slice(i + 1)];
+    })
+  );
+  assert.equal(
+    env.AGENTS_NS,
+    "override-ns-probe",
+    "PACK_NAMESPACE env must win over the .claude/agents-namespace pin"
+  );
+}
+
+// ── 8. No dangling symlinks anywhere in the pack ────────────────────────────
 {
   const walk = (dir) => {
     for (const e of readdirSync(dir, { withFileTypes: true })) {
