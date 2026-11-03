@@ -77,8 +77,12 @@ export function App() {
   }, []);
 
   // When namespace changes: clear active session, entries, and subscriptions.
-  // The WebSocket hook reconnects automatically to the new namespace.
+  // The WebSocket hook reconnects automatically to the new namespace — except
+  // when a cross-world task click (handleSelectTask below) is pending: then
+  // the clicked session stays selected and the reconnect effect subscribes
+  // to it once the new namespace's socket opens.
   const prevNamespaceRef = useRef(namespace);
+  const pendingSelectRef = useRef<string | null>(null);
   useEffect(() => {
     if (prevNamespaceRef.current === namespace) return;
     prevNamespaceRef.current = namespace;
@@ -87,7 +91,9 @@ export function App() {
       subscribedSessionRef.current = null;
     }
     backgroundSubsRef.current.clear();
-    setActiveSessionId(null);
+    const pending = pendingSelectRef.current;
+    pendingSelectRef.current = null;
+    setActiveSessionId(pending);
     clearEntries();
   }, [namespace, setActiveSessionId, clearEntries]);
 
@@ -205,6 +211,34 @@ export function App() {
       }
     },
     [send, setActiveSessionId, clearEntries, replayFromCache, replayFromTempLog, setLiveSkipCount, jobs]
+  );
+
+  /**
+   * Drilldown tree task click (issue:4) — same selection semantics as the job
+   * cards, but the task may live in another namespace. Within the active
+   * world this is exactly handleSelectSession. Across worlds it switches the
+   * namespace first; the pending session survives the namespace-change reset
+   * and the WS reconnect effect subscribes once the new socket opens.
+   */
+  const handleSelectTask = useCallback(
+    (ns: string, sessionId: string) => {
+      if (ns === namespace) {
+        handleSelectSession(sessionId);
+        return;
+      }
+      pendingSelectRef.current = sessionId;
+      setIsFixture(false);
+      setNamespace(ns);
+      // Desktop port: bring the Hlidskjalf log terminal forward (best-effort).
+      try {
+        if (!window.location.hash.startsWith("#/odins-throne")) {
+          host.navigate("/odins-throne");
+        }
+      } catch {
+        // navigation unavailable — selection still works via the store
+      }
+    },
+    [namespace, handleSelectSession, setNamespace],
   );
 
   // Send unsubscribe when App unmounts (e.g. the pane is closed).
@@ -384,6 +418,7 @@ export function App() {
     isConnecting,
     isPodStarting,
     onSelectSession: handleSelectSession,
+    onSelectTask: handleSelectTask,
     onAvatarClick: setProfileAgent,
     onOdinClick: () => setProfileAgent("odin"),
     onTogglePin: handleTogglePin,
