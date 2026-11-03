@@ -3,17 +3,24 @@ import type { Job, DisplayJob, ServerMessage } from "../lib/types";
 import { AGENT_NAMES } from "../lib/constants";
 import { getCachedSessionIds, getCachedSessionMeta } from "../lib/localStorageLogs";
 
+// The vine-strand hang order (issue #12): live work first, embers next, the
+// unhatched after, then the quiet green — the same order the approved
+// prototype's STATUS_ORDER spells. Cached sessions (Odin's memory) hang
+// below the day's work; purged pods sweep last (and are filtered out
+// before rendering anyway). Shared by the sidebar cards and the tree's
+// vine-strand job cards.
 const STATUS_PRIORITY: Record<DisplayJob["status"], number> = {
   running: 0,
-  pending: 1,
-  failed: 2,
+  failed: 1,
+  pending: 2,
   succeeded: 3,
   cached: 4,
   purged: 5,
 };
 
-/** Shared with the namespace drilldown tree (task children use the same
- * status-then-recency order the sidebar job cards do). */
+/** Shared with the namespace drilldown tree (the open world's vine hangs its
+ * cards in the same running → failed → pending → succeeded order). Within a
+ * status group the order is stable: newest start first. */
 export function sortJobs(a: DisplayJob, b: DisplayJob): number {
   const aPriority = STATUS_PRIORITY[a.status] ?? 99;
   const bPriority = STATUS_PRIORITY[b.status] ?? 99;
