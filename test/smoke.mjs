@@ -859,13 +859,15 @@ assert.equal(toggle.getAttribute("aria-label"), "Switch to dark theme", "label f
 assert.equal(toggle.getAttribute("aria-pressed"), "false", "light active reads as not pressed");
 
 // A second click flips back to dark — a true toggle, not a one-way button.
+// Dark is the plugin root's default: it renders as an ABSENT data-theme
+// (pane.tsx only stamps the attribute for "light").
 toggle.click();
 await flush();
 await flush();
 assert.equal(
   document.getElementById("pane").querySelector(".odins-throne-root").getAttribute("data-theme"),
-  "dark",
-  "second click flips back to dark",
+  null,
+  "second click flips back to dark (the root's default — no data-theme attribute)",
 );
 
 // ── openThroneTab seam → per-session workspace tab (issue:6) ───────────────
