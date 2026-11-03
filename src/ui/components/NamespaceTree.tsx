@@ -405,7 +405,6 @@ export function NamespaceTree({
                     key={job.sessionId}
                     job={job}
                     isActive={isTaskActive}
-                    isOpen={job.sessionId === activeSessionId}
                     isPinned={pinnedSessionIds?.has(job.sessionId) ?? false}
                     isTerminating={terminatingSessionIds?.has(job.sessionId) ?? false}
                     side={box.side}
@@ -428,7 +427,6 @@ export function NamespaceTree({
                 key={`fall-${g.job.sessionId}`}
                 job={g.job}
                 isActive={false}
-                isOpen={false}
                 isPinned={false}
                 isTerminating
                 side={g.side}

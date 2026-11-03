@@ -35,8 +35,6 @@ interface Props {
   job: DisplayJob;
   /** The session's tab is the active one — teal ring + selected semantics. */
   isActive: boolean;
-  /** The session's tab is already open — the open action reads "focus". */
-  isOpen: boolean;
   isPinned: boolean;
   /** Terminating (cancel confirmed) — the tremble plays until the purge. */
   isTerminating: boolean;
@@ -66,7 +64,6 @@ export function isCancellable(status: DisplayJob["status"]): boolean {
 export function VineCard({
   job,
   isActive,
-  isOpen,
   isPinned,
   isTerminating,
   side,

@@ -8566,7 +8566,6 @@ function isCancellable(status) {
 function VineCard({
   job,
   isActive,
-  isOpen,
   isPinned: isPinned2,
   isTerminating,
   side,
@@ -8899,7 +8898,6 @@ function NamespaceTree({
                   {
                     job,
                     isActive: isTaskActive,
-                    isOpen: job.sessionId === activeSessionId,
                     isPinned: pinnedSessionIds?.has(job.sessionId) ?? false,
                     isTerminating: terminatingSessionIds?.has(job.sessionId) ?? false,
                     side: box.side,
@@ -8918,7 +8916,6 @@ function NamespaceTree({
                 {
                   job: g.job,
                   isActive: false,
-                  isOpen: false,
                   isPinned: false,
                   isTerminating: true,
                   side: g.side,
