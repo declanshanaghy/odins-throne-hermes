@@ -39,12 +39,19 @@ interface Props {
   namespaceSummaries: NamespaceSummaries;
   /** Drilldown tree task click — same selection semantics as the job cards. */
   onSelectTask: (nsId: string, sessionId: string) => void;
+  /**
+   * "host-pane" (default): the host pane sash owns the width — use width:100%
+   * so the pane's sash constrains us correctly (desktop plugin).
+   * "fixed": the shell provides no host sash — use DEFAULT_WIDTH so the flex
+   * row leaves room for the log panel (web AppShell).
+   */
+  sizingMode?: "host-pane" | "fixed";
 }
 
 // onSelectSession stays in the Props contract (both shells pass the
 // snapshot's seam through) but the drilldown tree routes all selection
 // through onSelectTask — the component itself no longer reads it.
-export function Sidebar({ jobs, activeSessionId, quote, wsState, onAvatarClick, onOdinClick, onTogglePinSession, pinnedSessionIds, onCancelJob, terminatingSessionIds, namespace, namespaces, onNamespaceChange, namespaceSummaries, onSelectTask }: Props) {
+export function Sidebar({ jobs, activeSessionId, quote, wsState, onAvatarClick, onOdinClick, onTogglePinSession, pinnedSessionIds, onCancelJob, terminatingSessionIds, namespace, namespaces, onNamespaceChange, namespaceSummaries, onSelectTask, sizingMode = "host-pane" }: Props) {
   const { theme, setTheme } = useTheme();
   const [width, setWidth] = useState<number>(DEFAULT_WIDTH);
   const navRef = useRef<HTMLElement | null>(null);
@@ -70,7 +77,7 @@ export function Sidebar({ jobs, activeSessionId, quote, wsState, onAvatarClick, 
       ref={navRef}
       className="sidebar"
       aria-label="Agent sessions"
-      style={{ width: "100%", height: "100%" }}
+      style={{ width: sizingMode === "fixed" ? DEFAULT_WIDTH : "100%", height: "100%" }}
     >
       <div className="sidebar-header">
         <div className="brand">

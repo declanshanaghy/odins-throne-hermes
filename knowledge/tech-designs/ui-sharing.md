@@ -14,10 +14,11 @@ interface, src/ui/platform.ts — the ui/ core imports no target:
 4. Assets — avatarUrl: /profiles/*.png URLs vs imported data-URLs
 5. App shell — shell marker + focusLogView: full-page AppShell (targets/web) vs headless
    StoreBridge (ui/App) whose snapshot the plugin's pane + workspace tabs render
-6. Session log views — openSessionLog/closeSessionLog (issue #6): the plugin stacks one
-   closeable workspace tab per session (host.openWorkspace, older hosts fall back to
-   per-session route pages); the web shell is a no-op — its single terminal follows the
-   store's activeSessionId
+6. Session log views — openSessionLog/closeSessionLog (issue #6, issue #50): the plugin
+   stacks one closeable workspace tab per session (host.openWorkspace, older hosts fall
+   back to per-session route pages); the web shell opens an in-page tab in the shared
+   SessionTabPanel (ui/components/SessionTabPanel.tsx) — same open/focus-dedupe/close
+   contract, same tab-per-session WS isolation, all inside the right panel of AppShell
 
 Since issue #6 the per-session log terminal is a shared core component
 (ui/components/SessionLogViewer.tsx): each mount owns its OWN WebSocket and useLogStream

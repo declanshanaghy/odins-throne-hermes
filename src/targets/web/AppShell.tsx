@@ -3,16 +3,16 @@
 // state (jobs WebSocket, pins, Ragnarök, namespace tree) and publishes the
 // snapshot; this shell renders the Sidebar and the per-session log terminal
 // side by side plus the shared overlays — the original monitor-page layout.
-// The log terminal is the shared SessionLogViewer (issue:6): it owns its own
-// WebSocket and log stream for the selected session, exactly as each desktop
-// workspace tab does.
+// The log panel is the shared SessionTabPanel (seam 6, web flavor): it manages
+// multiple switchable, closeable session tabs, each owning its own WebSocket
+// and log stream, mirroring the desktop plugin's workspace-tab UX.
 
 import { useMemo } from "react";
 import { App } from "../../ui/App";
 import { useThrone } from "../../ui/store";
 import { ErrorBoundary } from "../../ui/components/ErrorBoundary";
 import { Sidebar } from "../../ui/components/Sidebar";
-import { SessionLogViewer, SessionLogViewerEmpty } from "../../ui/components/SessionLogViewer";
+import { SessionTabPanel } from "../../ui/components/SessionTabPanel";
 import { ThroneOverlays } from "../../ui/components/Overlays";
 
 function SidebarSurface() {
@@ -35,22 +35,7 @@ function SidebarSurface() {
       onNamespaceChange={snap.setNamespace}
       namespaceSummaries={snap.namespaceSummaries}
       onSelectTask={snap.onSelectTask}
-    />
-  );
-}
-
-function LogViewerSurface() {
-  const snap = useThrone()!;
-  // The single web terminal follows the selected session; it dials the
-  // active namespace (the web shell has no cross-world open tabs).
-  if (!snap.activeSessionId) {
-    return <SessionLogViewerEmpty />;
-  }
-  return (
-    <SessionLogViewer
-      sessionId={snap.activeSessionId}
-      namespace={snap.namespace}
-      jobSnapshot={snap.jobs.find((j) => j.sessionId === snap.activeSessionId) ?? null}
+      sizingMode="fixed"
     />
   );
 }
@@ -74,7 +59,7 @@ export function AppShell() {
             <SidebarSurface />
           </ErrorBoundary>
           <ErrorBoundary>
-            <LogViewerSurface />
+            <SessionTabPanel />
           </ErrorBoundary>
         </div>
       ) : (
