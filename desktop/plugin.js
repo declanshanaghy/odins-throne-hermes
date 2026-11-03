@@ -421,7 +421,7 @@ var styles_default = `.odins-throne-root .odins-throne-root {
   --pip-running: #6fb7d8;
   --pip-failed: #e07a3f;
   --pip-pending: #d9c27a;
-  --glabel-bg: rgba(5, 7, 10, 0.88);
+  --glabel-bg: rgba(5, 7, 10, 0.97);
   --glabel-border: rgba(176, 196, 201, 0.14);
   --glabel-frost: #d9e6ea;
 }
@@ -670,7 +670,7 @@ var styles_default = `.odins-throne-root .odins-throne-root {
   gap: 8px;
   align-items: center;
   width: 212px;
-  background: linear-gradient(180deg, rgba(226, 240, 244, 0.09), rgba(10, 16, 20, 0.88));
+  background: linear-gradient(180deg, rgba(29, 36, 40, 0.97), rgba(10, 16, 20, 0.98));
   border: 1px solid rgba(214, 236, 240, 0.26);
   border-radius: 10px;
   padding: 6px 8px;
