@@ -674,6 +674,18 @@ assert.ok(
   !document.querySelector('.ns-tree__item[data-namespace="fenrir-agents"] .ns-tree__select img'),
   "failed remote img is unmounted",
 );
+// Task pips share the offline fallback: a failed pip icon swaps in its
+// status glyph (⚒ for running) instead of a broken image.
+const firstPipIcon = document.querySelector(
+  '.ns-tree__item[data-namespace="fenrir-agents"] .ns-tree__pip--running img',
+);
+firstPipIcon.dispatchEvent(new dom.window.Event("error"));
+await flush();
+const pipFallback = document.querySelector(
+  '.ns-tree__item[data-namespace="fenrir-agents"] .ns-tree__pip--running [data-icon-fallback]',
+);
+assert.ok(pipFallback, "pip icon onError swaps in an inline fallback glyph");
+assert.equal(pipFallback.textContent, "\u2692", "running pip falls back to the hammer glyph");
 
 // ── the strict accordion (issue #11) ─────────────────────────────────────────
 // Clicking a lantern SELECTS the world (persisted to the same localStorage key

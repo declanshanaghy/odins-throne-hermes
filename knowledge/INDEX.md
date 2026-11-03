@@ -16,4 +16,4 @@ One line per topic. Pointers, not content.
 
 ## Tech-Designs
 - [UI sharing: vendored ui/](tech-designs/ui-sharing.md) — the ui/ core, the targets/{web,plugin} adapters and the five seam points
-- [Tree display: lanterns, vine strands, and per-session tabs](tech-designs/tree-display.md) — the painted namespace tree, its keyboard/ARIA contract, and the lantern→vine→card→tab flow
+- [Tree display: lanterns, vine strands, and per-session tabs](tech-designs/tree-display.md) — the painted namespace tree (painted-lantern seats, task pips), its keyboard/ARIA contract, and the lantern→vine→card→tab flow
