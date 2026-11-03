@@ -5,3 +5,4 @@ src/generated/
 __pycache__/
 .pytest_cache/
 tmp/
+dist-server/

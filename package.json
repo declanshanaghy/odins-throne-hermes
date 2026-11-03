@@ -3,16 +3,20 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Odin's Throne as a Hermes desktop plugin \u2014 right-pane job list, main-pane log viewer (Hlidskjalf ported from fenrir-ledger)",
+  "description": "Odin's Throne as a Hermes desktop plugin — right-pane job list, main-pane log viewer (Hlidskjalf ported from fenrir-ledger)",
   "scripts": {
     "build": "node build/build.mjs",
+    "build:server": "esbuild server/index.ts --bundle --platform=node --format=esm --packages=external --outfile=dist-server/index.mjs",
     "dev": "node build/build.mjs --watch --live",
+    "start": "node dist-server/index.mjs",
     "test": "node --import ./test/register.mjs test/platform.mjs && node --import ./test/register.mjs test/pack-conventions.mjs && node --import ./test/register.mjs test/pairing.mjs && node --import ./test/register.mjs test/hermes-stream.mjs && node --import ./test/register.mjs test/smoke.mjs",
     "verify": "tsc --noEmit && npm run build && npm test",
     "postinstall": "node build/build.mjs || true"
   },
   "devDependencies": {
+    "@types/node": "^26.6.6",
     "@types/react": "^19.3.0",
+    "@types/ws": "^8.18.2",
     "esbuild": "^0.25.0",
     "postcss": "^8.5.0",
     "typescript": "^7.0.2"
@@ -21,5 +25,11 @@
     "onlyBuiltDependencies": [
       "esbuild"
     ]
+  },
+  "dependencies": {
+    "@hono/node-server": "^2.1.5",
+    "@kubernetes/client-node": "^1.4.0",
+    "hono": "^4.13.16",
+    "ws": "^8.22.1"
   }
 }
