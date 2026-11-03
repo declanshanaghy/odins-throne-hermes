@@ -3294,7 +3294,7 @@ function attachGuest(container) {
     return () => void 0;
   }
   const el = document.createElement("webview");
-  el.setAttribute("partition", "persist:odins-throne");
+  el.setAttribute("partition", "persist:odins-throne-v2");
   el.setAttribute("webpreferences", "backgroundThrottling=false");
   el.setAttribute(
     "useragent",

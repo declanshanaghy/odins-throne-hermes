@@ -56,7 +56,12 @@ export function attachGuest(container: HTMLElement): () => void {
     return () => undefined;
   }
   const el = document.createElement("webview") as unknown as GuestWebview;
-  el.setAttribute("partition", "persist:odins-throne");
+  // v2: Google sticks disallowed_useragent verdicts to the browser PROFILE —
+  // the v1 partition carried the aborted first attempt (Electron UA) and
+  // kept serving the "browser not secure" wall even after the Chrome-UA fix.
+  // A fresh partition + clean UA + clean client hints passes Google's wall
+  // (verified by probe: full sign-in page renders, brands = Chromium only).
+  el.setAttribute("partition", "persist:odins-throne-v2");
   el.setAttribute("webpreferences", "backgroundThrottling=false");
   // Plain Chrome UA: Google rejects logins from UAs it identifies as
   // embedded/automation browsers (disallowed_useragent); the webview must
