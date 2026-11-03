@@ -69,8 +69,8 @@ var webPlatform = {
   },
   // Seam 2: same-origin /ws — the site's own session gates the socket.
   wsUrl(namespace) {
-    const proto = location.protocol === "https:" ? "wss" : "ws";
-    return `${proto}://${location.host}/ws?namespace=${encodeURIComponent(namespace)}`;
+    const proto = window.location.protocol === "https:" ? "wss" : "ws";
+    return `${proto}://${window.location.host}/ws?namespace=${encodeURIComponent(namespace)}`;
   },
   // Seam 3: the SPA's original paths, untouched.
   restFetch(path, init) {
