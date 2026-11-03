@@ -12,7 +12,9 @@ const STATUS_PRIORITY: Record<DisplayJob["status"], number> = {
   purged: 5,
 };
 
-function sortJobs(a: DisplayJob, b: DisplayJob): number {
+/** Shared with the namespace drilldown tree (task children use the same
+ * status-then-recency order the sidebar job cards do). */
+export function sortJobs(a: DisplayJob, b: DisplayJob): number {
   const aPriority = STATUS_PRIORITY[a.status] ?? 99;
   const bPriority = STATUS_PRIORITY[b.status] ?? 99;
   if (aPriority !== bPriority) return aPriority - bPriority;
@@ -22,7 +24,7 @@ function sortJobs(a: DisplayJob, b: DisplayJob): number {
   return bTime - aTime;
 }
 
-function parseJob(job: Job): DisplayJob {
+export function parseJob(job: Job): DisplayJob {
   const agentKey = job.agent || "unknown";
   return {
     sessionId: job.sessionId,
