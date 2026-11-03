@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { AGENT_AVATARS, AGENT_LIGHT_AVATARS, AGENT_COLORS, AGENT_NAMES, AGENT_RUNE_NAMES, AGENT_TITLES } from "../lib/constants";
+import { avatarUrl, AGENT_COLORS, AGENT_NAMES, AGENT_RUNE_NAMES, AGENT_TITLES } from "../lib/constants";
 import { useTheme } from "../hooks/useTheme";
 
 // ── Decree detection ──────────────────────────────────────────────────────────
@@ -267,8 +267,7 @@ export function DecreeBlock({ text, agentKey: jobAgentKey, onAvatarClick }: Decr
   const agentTitle = AGENT_TITLES[agentKey] ?? "";
   const agentRunes = AGENT_RUNE_NAMES[agentKey] ?? "";
   const agentColor = AGENT_COLORS[agentKey] ?? "#c9920a";
-  const avatarMap  = theme === "light" ? AGENT_LIGHT_AVATARS : AGENT_AVATARS;
-  const avatar     = avatarMap[agentKey];
+  const avatar     = avatarUrl(agentKey, theme === "light" ? "light" : "dark");
 
   const [summaryOpen, setSummaryOpen] = useState(true);
   const [checksOpen,  setChecksOpen]  = useState(true);

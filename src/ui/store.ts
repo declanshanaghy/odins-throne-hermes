@@ -7,10 +7,10 @@
 // stays in localStorage exactly as the browser SPA kept it.
 
 import { useSyncExternalStore } from "react";
-import type { DisplayJob } from "./ui/lib/types";
-import type { NamespaceOption } from "./ui/hooks/useNamespace";
-import type { NamespaceSummaries } from "./ui/hooks/useNamespaceSummaries";
-import type { LogEntry } from "./ui/hooks/useLogStream";
+import type { DisplayJob } from "./lib/types";
+import type { NamespaceOption } from "./hooks/useNamespace";
+import type { NamespaceSummaries } from "./hooks/useNamespaceSummaries";
+import type { LogEntry } from "./hooks/useLogStream";
 
 export interface CancelTarget {
   sessionId: string;

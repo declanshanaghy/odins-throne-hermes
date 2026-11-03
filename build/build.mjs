@@ -4,7 +4,7 @@
 //   1. Scope the vendored Norse CSS (3,230 lines) to .odins-throne-root —
 //      every selector is prefixed (an esbuild onLoad plugin, so CSS edits
 //      hot-rebuild in --watch mode).
-//   2. Bundle src/entry.tsx + the vendored SPA into ONE plain-ESM file:
+//   2. Bundle src/targets/plugin/entry.tsx + the vendored SPA into ONE plain-ESM file:
 //      desktop/plugin.js. react/react-jsx-runtime/@hermes/plugin-sdk stay
 //      external (the app provides them). PNG portraits inline as data URLs.
 //
@@ -63,8 +63,17 @@ const odinScopeCss = {
 };
 
 // ── Bundle ──────────────────────────────────────────────────────────────────
-const options = {
-  entryPoints: [resolve(ROOT, "src/entry.tsx")],
+// Two targets, one ui/ core:
+//
+//   plugin → desktop/plugin.js   single ESM file, CSS scoped to
+//                                .odins-throne-root, react/@hermes stay
+//                                external (the app provides them)
+//   web    → build/web/app.js    full-page shell, CSS unscoped (the page owns
+//                                the document — esbuild emits app.css beside
+//                                it), react/react-dom external (the page's
+//                                import map provides them)
+const pluginOptions = {
+  entryPoints: [resolve(ROOT, "src/targets/plugin/entry.tsx")],
   bundle: true,
   format: "esm",
   outfile: resolve(ROOT, "desktop/plugin.js"),
@@ -79,6 +88,18 @@ const options = {
   ],
   loader: { ".png": "dataurl" },
   plugins: [odinScopeCss],
+  logLevel: "info",
+};
+
+const webOptions = {
+  entryPoints: [resolve(ROOT, "src/targets/web/main.tsx")],
+  bundle: true,
+  format: "esm",
+  outfile: resolve(ROOT, "build/web/app.js"),
+  platform: "browser",
+  target: ["es2022"],
+  jsx: "automatic",
+  external: ["react", "react/jsx-runtime", "react/jsx-dev-runtime", "react-dom"],
   logLevel: "info",
 };
 
@@ -131,20 +152,20 @@ function finalizeBundle(outfile) {
 function mirror() {
   const appDir = resolve(homedir(), ".hermes/desktop-plugins/odins-throne-hermes");
   mkdirSync(appDir, { recursive: true });
-  copyFileSync(options.outfile, resolve(appDir, "plugin.js"));
+  copyFileSync(pluginOptions.outfile, resolve(appDir, "plugin.js"));
   console.log(`[live] mirrored → ${appDir}/plugin.js (app hot-reloads it)`);
 }
 
 if (watch) {
   const ctx = await context({
-    ...options,
+    ...pluginOptions,
     plugins: [
-      ...options.plugins,
+      ...pluginOptions.plugins,
       {
         name: "live-mirror",
         setup(b) {
           b.onEnd(() => {
-            finalizeBundle(options.outfile);
+            finalizeBundle(pluginOptions.outfile);
             if (live) mirror();
           });
         },
@@ -154,8 +175,10 @@ if (watch) {
   await ctx.watch();
   console.log("[watch] esbuild watching — save any file to rebuild. Ctrl-C to stop.");
 } else {
-  await build(options);
-  finalizeBundle(options.outfile);
+  await build(pluginOptions);
+  finalizeBundle(pluginOptions.outfile);
   if (live) mirror();
-  console.log(`built → ${options.outfile}`);
+  console.log(`built → ${pluginOptions.outfile}`);
+  await build(webOptions);
+  console.log(`built → ${webOptions.outfile}`);
 }

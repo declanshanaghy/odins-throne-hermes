@@ -3,10 +3,10 @@
 // store published by the pane's StoreBridge; if the pane is closed the page
 // shows a hint instead.
 
-import { ErrorBoundary } from "./ui/components/ErrorBoundary";
-import { LogViewer } from "./ui/components/LogViewer";
-import { useThrone } from "./store";
-import { useTheme } from "./ui/hooks/useTheme";
+import { ErrorBoundary } from "../../ui/components/ErrorBoundary";
+import { LogViewer } from "../../ui/components/LogViewer";
+import { useThrone } from "../../ui/store";
+import { useTheme } from "../../ui/hooks/useTheme";
 
 function LogViewerConnected() {
   const snap = useThrone()!;

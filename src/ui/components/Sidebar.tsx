@@ -6,8 +6,7 @@ import type { NamespaceSummaries } from "../hooks/useNamespaceSummaries";
 import { ThemeSwitcher } from "./ThemeSwitcher";
 import { StatusBadge } from "./StatusBadge";
 import { NamespaceTree } from "./NamespaceTree";
-import odinLight from "../../assets/profiles/odin-light.png";
-import odinDark from "../../assets/profiles/odin-dark.png";
+import { avatarUrl } from "../lib/constants";
 
 // Desktop port: the host pane sash resizes this sidebar; the browser's in-app
 // drag handle is gone. Width is measured via ResizeObserver so the
@@ -79,7 +78,7 @@ export function Sidebar({ jobs, activeSessionId, quote, wsState, onSelectSession
             title="View Odin profile"
           >
             <img
-              src={theme === "light" ? odinLight : odinDark}
+              src={avatarUrl("odin", theme === "light" ? "light" : "dark") ?? ""}
               alt="Odin"
             />
           </button>
