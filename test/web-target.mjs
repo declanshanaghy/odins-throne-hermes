@@ -118,4 +118,63 @@ assert.ok(
 );
 assert.ok(existsSync(resolve(DIST, "odin-dark.png")), "favicon shipped at /odin-dark.png");
 
+// ── 4. render smoke: mount the REAL built bundle into jsdom ─────────────────
+// The bundle is self-contained ESM (react bundled by Vite), so node can
+// execute it against a jsdom document — same shape as test/smoke.mjs's
+// plugin render, but for the built web artifact.
+import jsdomPkg from "jsdom";
+const { JSDOM } = jsdomPkg;
+
+const dom = new JSDOM(`<!doctype html><html><head></head><body><div id="root"></div></body></html>`, {
+  url: "http://localhost/",
+  pretendToBeVisual: true,
+});
+for (const key of ["window", "document", "localStorage", "CustomEvent", "MutationObserver"]) {
+  globalThis[key] = dom.window[key];
+}
+if (globalThis.navigator) {
+  Object.defineProperty(globalThis, "navigator", { value: dom.window.navigator, configurable: true });
+} else {
+  globalThis.navigator = dom.window.navigator;
+}
+class FakeResizeObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+dom.window.ResizeObserver = FakeResizeObserver;
+globalThis.ResizeObserver = FakeResizeObserver;
+// The shell dials same-origin /ws and /api — a never-opening socket and a
+// 404-ing fetch stand in (the static bundle has no backend beside it).
+class FakeWebSocket {
+  constructor() {
+    this.readyState = 0;
+  }
+  addEventListener() {}
+  removeEventListener() {}
+  send() {}
+  close() {}
+}
+globalThis.WebSocket = FakeWebSocket;
+dom.window.WebSocket = FakeWebSocket;
+globalThis.fetch = async () => ({ ok: false, status: 404, json: async () => ({}) });
+dom.window.fetch = globalThis.fetch;
+
+await import(`../dist-ui/assets/${readdirSync(resolve(DIST, "assets")).find((f) => f.endsWith(".js"))}`);
+// Let React mount + the StoreBridge publish its first snapshot.
+await new Promise((r) => setTimeout(r, 800));
+
+const rootEl = document.getElementById("root");
+assert.ok(rootEl && rootEl.children.length > 0, "the built bundle mounts into #root");
+const shellHtml = rootEl.innerHTML;
+assert.ok(shellHtml.includes("odins-throne-root"), "full-page App shell root mounted");
+assert.ok(document.querySelector(".layout"), "sidebar + log terminal layout mounted");
+assert.ok(document.querySelector(".sidebar"), "Hlidskjalf sidebar mounted");
+assert.ok(
+  document.querySelector('.ns-tree, [aria-label="Namespace tree"]'),
+  "namespace drilldown tree renders in the web shell",
+);
+
 console.log("WEB-TARGET PASS — Vite bundle serves from dist-ui/ (same ui core, tree shipped, same-origin /ws + /profiles seams, CSS unscoped)");
+// React's scheduler keeps the event loop alive; the assertions are done.
+process.exit(0);
