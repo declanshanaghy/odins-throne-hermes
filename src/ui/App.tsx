@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { host } from "@hermes/plugin-sdk";
 import type { ServerMessage } from "./lib/types";
 import { randomQuote } from "./lib/constants";
 import { useWebSocket } from "./hooks/useWebSocket";
@@ -8,7 +7,7 @@ import { useNamespaceSummaries } from "./hooks/useNamespaceSummaries";
 import { useJobs } from "./hooks/useJobs";
 import { useLogStream } from "./hooks/useLogStream";
 import { useTheme } from "./hooks/useTheme";
-import { otFetch } from "../targets/plugin/upstream";
+import { getPlatform } from "./platform";
 import { throneStore, type ThroneSnapshot } from "./store";
 import {
   isPinned as checkIsPinned,
@@ -171,16 +170,10 @@ export function App() {
       setIsFixture(false);
       clearEntries();
 
-      // Desktop port: bring the Hlidskjalf log terminal forward so the middle
-      // pane shows the selected job (best-effort; the store already carries
-      // the selection, so this only focuses the page).
-      try {
-        if (!window.location.hash.startsWith("#/odins-throne")) {
-          host.navigate("/odins-throne");
-        }
-      } catch {
-        // navigation unavailable — selection still works via the store
-      }
+      // Bring the log terminal forward so the host shell shows the selected
+      // job (best-effort; the store already carries the selection, so this
+      // only focuses the view — a no-op on the web target).
+      getPlatform().focusLogView();
 
       // Determine if this session is cached-only (pinned, no live pod)
       const selectedJob = jobs.find((j) => j.sessionId === sessionId);
@@ -229,14 +222,8 @@ export function App() {
       pendingSelectRef.current = sessionId;
       setIsFixture(false);
       setNamespace(ns);
-      // Desktop port: bring the Hlidskjalf log terminal forward (best-effort).
-      try {
-        if (!window.location.hash.startsWith("#/odins-throne")) {
-          host.navigate("/odins-throne");
-        }
-      } catch {
-        // navigation unavailable — selection still works via the store
-      }
+      // Bring the log terminal forward (best-effort; no-op on the web).
+      getPlatform().focusLogView();
     },
     [namespace, handleSelectSession, setNamespace],
   );
@@ -374,7 +361,7 @@ export function App() {
   /** Confirmed: call DELETE /api/jobs/:sessionId to kill the K8s job. */
   const handleConfirmCancel = useCallback(async () => {
     if (!cancelTarget) return;
-    const res = await otFetch(`/api/jobs/${encodeURIComponent(cancelTarget.sessionId)}`, { method: "DELETE" });
+    const res = await getPlatform().restFetch(`/api/jobs/${encodeURIComponent(cancelTarget.sessionId)}`, { method: "DELETE" });
     if (!res.ok) {
       const body = await res.json().catch(() => ({})) as { error?: string };
       throw new Error(body.error ?? `HTTP ${res.status}`);

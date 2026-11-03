@@ -10,7 +10,7 @@
 // on an interval and whenever the live feed signals activity.
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { otFetch } from "../../targets/plugin/upstream";
+import { getPlatform } from "../platform";
 import { normalizeRestJobs } from "../lib/restJobs";
 import type { Job } from "../lib/types";
 import type { NamespaceOption } from "./useNamespace";
@@ -96,7 +96,7 @@ export function useNamespaceSummaries(
     if (inflightRef.current.has(nsId)) return;
     inflightRef.current.add(nsId);
     try {
-      const res = await otFetch(`/api/jobs?namespace=${encodeURIComponent(nsId)}`);
+      const res = await getPlatform().restFetch(`/api/jobs?namespace=${encodeURIComponent(nsId)}`);
       if (!mountedRef.current) return;
       if (!res.ok) {
         setSummaries((prev) => ({

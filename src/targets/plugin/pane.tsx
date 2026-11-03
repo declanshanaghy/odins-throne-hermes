@@ -6,10 +6,7 @@
 import { useMemo, useState, useSyncExternalStore } from "react";
 import { ErrorBoundary } from "../../ui/components/ErrorBoundary";
 import { Sidebar } from "../../ui/components/Sidebar";
-import { AgentProfileModal } from "../../ui/components/AgentProfileModal";
-import { RagnarokDialog } from "../../ui/components/RagnarokDialog";
-import { Toast } from "../../ui/components/Toast";
-import { ErrorBanner } from "../../ui/components/ErrorBanner";
+import { ThroneOverlays } from "../../ui/components/Overlays";
 import { App } from "../../ui/App";
 import { useThrone } from "../../ui/store";
 import { useTheme } from "../../ui/hooks/useTheme";
@@ -54,38 +51,9 @@ function SidebarConnected() {
   );
 }
 
-function ThroneOverlays() {
-  const snap = useThrone();
-  if (!snap) return null;
-  return (
-    <>
-      <ErrorBanner message={snap.wsError} />
-      {snap.storageWarning && <ErrorBanner message={snap.storageWarning} />}
-      {snap.profileAgent && (
-        <AgentProfileModal
-          agentKey={snap.profileAgent}
-          theme={snap.theme}
-          onClose={() => snap.setProfileAgent(null)}
-        />
-      )}
-      {snap.cancelTarget && (
-        <RagnarokDialog
-          sessionId={snap.cancelTarget.sessionId}
-          jobTitle={snap.cancelTarget.jobTitle}
-          onConfirm={snap.confirmCancel}
-          onCancel={() => snap.setCancelTarget(null)}
-        />
-      )}
-      {snap.toast && (
-        <Toast
-          key={snap.toast.id}
-          message={snap.toast.message}
-          onDismiss={snap.dismissToast}
-        />
-      )}
-    </>
-  );
-}
+// The window-level overlays moved into the shared ui core
+// (ui/components/Overlays.tsx) so the web target's full-page shell renders
+// the same modal/toast/banner set from the same snapshot.
 
 /**
  * Pairing card — Google's embedded-browser policy blocks credential entry

@@ -12,6 +12,8 @@ import {
 // The vendored Norse stylesheet, scoped to .odins-throne-root by the build
 // (build/build.mjs) — never touches the app's own theme.
 import scopedCss from "../../ui/styles/index.css";
+import { setPlatform } from "../../ui/platform";
+import { pluginPlatform } from "./platform";
 import { ThronePane } from "./pane";
 import { ThronePage } from "./page";
 import { settingsUi } from "./settings";
@@ -20,6 +22,11 @@ import { throneStore } from "../../ui/store";
 
 const FONTS_HREF =
   "https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Cinzel+Decorative:wght@400;700;900&family=Source+Serif+4:wght@300;400;600&family=JetBrains+Mono:wght@400;500;600&display=swap";
+
+// Install the plugin platform adapter BEFORE any ui/ code renders — the
+// shared core resolves every seam (theme root, WS URL, REST mapping,
+// portraits, log-view focus) through it.
+setPlatform(pluginPlatform);
 
 const STYLE_ID = "odins-throne-hermes-style";
 const FONT_ID = "odins-throne-hermes-fonts";
