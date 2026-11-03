@@ -54,6 +54,19 @@ export async function resolve(specifier, context, next) {
       }
     }
   }
+  // server/**.ts uses bundler-style "./x.js" specifiers (the TS convention
+  // that maps to x.ts); Node ESM needs the real .ts file (test/smoke.mjs
+  // imports the Hono app straight from source for the issue #55 cache
+  // header checks).
+  const parentInServer = context.parentURL?.includes("/server/") ?? false;
+  if (parentInServer && specifier.startsWith("./") && specifier.endsWith(".js")) {
+    const tsSpecifier = specifier.slice(0, -3) + ".ts";
+    try {
+      return await next(tsSpecifier, context);
+    } catch {
+      // fall through to the default resolution (a real .js may exist)
+    }
+  }
   return next(specifier, context);
 }
 
@@ -78,7 +91,14 @@ export async function load(url, context, next) {
     return { format: "module", source: wrapper, shortCircuit: true };
   }
   // Transpile src/**/*.{ts,tsx} with esbuild (the same compiler the build uses).
-  if (url.startsWith("file:") && url.includes("/src/") && (url.endsWith(".ts") || url.endsWith(".tsx"))) {
+  // Also server/**/*.ts — plain-node test suites import the Hono app straight
+  // from source (test/smoke.mjs, issue #55 cache-bust checks); importing the
+  // module is side-effect-free (the listener only boots when run as main).
+  if (
+    url.startsWith("file:") &&
+    (url.includes("/src/") || url.includes("/server/")) &&
+    (url.endsWith(".ts") || url.endsWith(".tsx"))
+  ) {
     const source = readFileSync(fileURLToPath(url), "utf8");
     const loader = url.endsWith(".tsx") ? "tsx" : "ts";
     const { code } = await transform(source, { loader, format: "esm", target: "es2022", jsx: "automatic" });
