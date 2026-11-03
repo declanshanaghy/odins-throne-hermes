@@ -403,15 +403,24 @@ assert.ok(
 );
 assert.equal(
   firstCard.querySelectorAll(".jact").length,
-  3,
-  "open · pin · cancel all sit on the card",
+  2,
+  "pin · cancel sit on the card (open is the panel body click — no button duplicate)",
 );
-assert.ok(firstCard.querySelector(".jact--open") && firstCard.querySelector(".jact--pin"), "open + pin actions on the card");
+assert.ok(!firstCard.querySelector(".jact--open"), "no open/focus text button — panel body click is the open affordance");
+assert.ok(firstCard.querySelector(".jact--pin"), "pin action on the card");
 assert.equal(
   firstCard.querySelector(".jact--cancel").getAttribute("title"),
   "cancel job",
   "a running (cancellable) card shows its cancel action",
 );
+// Icon-only buttons carry tooltips and aria-labels; no visible text labels
+assert.ok(firstCard.querySelector(".jact--pin").getAttribute("title"), "pin button has a tooltip (title attribute)");
+assert.ok(firstCard.querySelector(".jact--pin").getAttribute("aria-label"), "pin button has aria-label");
+assert.ok(firstCard.querySelector(".jact--cancel").getAttribute("aria-label"), "cancel button has aria-label");
+const pinText = firstCard.querySelector(".jact--pin").textContent.trim();
+assert.ok(pinText !== "pin" && pinText !== "unpin", "pin button is icon-only — no text label");
+const cancelText = firstCard.querySelector(".jact--cancel").textContent.trim();
+assert.ok(cancelText !== "cancel", "cancel button is icon-only — no text label");
 
 // Status sigils follow the taskIcon contract: hammer/dice/raven/ring.
 const cardByStatus = (status) => [...fenrirCards].find((c) => c.getAttribute("data-status") === status);
@@ -545,15 +554,10 @@ assert.equal(
   "true",
   "clicked task node is marked selected",
 );
-assert.equal(
-  document.querySelector(`.jcard[data-session="${SID_1200}"] .jact--open`).textContent,
-  "focus",
-  "an open session's card reads focus (its tab already exists)",
-);
-assert.equal(
-  document.querySelector(`.jcard[data-session="${SID_1201}"] .jact--open`).textContent,
-  "open",
-  "an un-opened session's card still reads open",
+// Panel body IS the open affordance — no text button duplicate for open/focus
+assert.ok(
+  !document.querySelector(`.jcard[data-session="${SID_1200}"] .jact--open`),
+  "no open/focus button on the card — panel click is the open affordance",
 );
 assert.equal(
   globalThis.__stubWorkspaceOpens[globalThis.__stubWorkspaceOpens.length - 1],
@@ -897,5 +901,5 @@ for (const s of ["rapid-a", "rapid-b", "rapid-c"]) {
   );
 }
 
-console.log("SMOKE PASS — pane + page render, namespace lantern tree (lanterns seated on the painting, vine-strand job cards hung from the open lantern: running → failed → pending → succeeded order, status sigils hammer/dice/raven/ring, on-card open/focus · pin · cancel with terminating tremble, scroller + canvas beneath the rooted painting, old flat list gone), CSS scoped, theme plugin-local, overlays wired, per-session workspace tabs (issue:6: open per click, focus dedupe, cancel + strip-close teardown, cross-world capture)");
+console.log("SMOKE PASS — pane + page render, namespace lantern tree (lanterns seated on the painting, vine-strand job cards hung from the open lantern: running → failed → pending → succeeded order, status sigils hammer/dice/raven/ring, panel-body click opens session tab (issue:43 — no open/focus button duplicate), icon-only pin · cancel actions with tooltips, terminating tremble, scroller + canvas beneath the rooted painting, old flat list gone), CSS scoped, theme plugin-local, overlays wired, per-session workspace tabs (issue:6: open per click, focus dedupe, cancel + strip-close teardown, cross-world capture)");
 process.exit(0);
