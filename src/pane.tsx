@@ -133,20 +133,22 @@ function ThroneGuest() {
             alignItems: "center",
             justifyContent: "space-between",
             gap: 8,
-            padding: "8px 12px",
+            padding: "6px 10px",
             borderBottom: "1px solid var(--rune-border)",
             background: "var(--forge)",
             color: "var(--text-rune)",
-            fontFamily: '"Cinzel", serif',
-            fontSize: "0.72rem",
+            fontFamily: '"JetBrains Mono", monospace',
+            fontSize: "0.68rem",
+            letterSpacing: "0.02em",
           }}
         >
-          <span>
-            Complete the sign-in for odins-throne.fenrirledger.com in the frame
-            below — exactly the website's login.
-          </span>
-          <button className="throne-settings-btn" onClick={() => cancelReauth()}>
-            Cancel
+          <span>sign in → odins-throne.fenrirledger.com</span>
+          <button
+            className="throne-settings-btn"
+            style={{ padding: "0.2rem 0.6rem", fontSize: "0.66rem" }}
+            onClick={() => cancelReauth()}
+          >
+            ✕
           </button>
         </div>
       )}
