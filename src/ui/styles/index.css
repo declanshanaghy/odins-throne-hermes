@@ -321,15 +321,15 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .theme-btn { transition: none; }
 }
-/* ── Namespace lantern tree (issue:11, garden pattern) ─── */
+/* ── Namespace lantern tree (issues #11 + #12, garden pattern) ─── */
 /* Each namespace is a LANTERN seated on the painted backdrop at its
  * runtime-assigned seat (lib/treeSeats.ts): frost-glass node, curated
  * shanaghy.com icon inside (inline glyph fallback offline via TreeIcon),
  * status-tinted glow, stats berries beside the seat, hover label with the
- * world name + full summary line. Strict accordion: one world's branch is
- * open at a time; the branch (job cards on connector rails) renders beneath
- * the scene. The tree IS the panel body (the old flat job list is gone): it
- * stretches to fill the sidebar's full height and scrolls internally. */
+ * world name + full summary line. Strict accordion: one world's VINE is
+ * open at a time — its job cards hang along a curved strand that extends
+ * from the lantern (issue #12), scrolling beneath the rooted painting. The
+ * tree IS the panel body (the old flat job list is gone). */
 .ns-tree {
   margin-top: 0.5rem;
   font-family: 'JetBrains Mono', monospace;
@@ -352,12 +352,17 @@ body {
   flex-direction: column;
   gap: 0.4rem;
   padding-bottom: 0.5rem;
+  /* the scene fills the panel: the painting + lanterns stay rooted while
+   * the vine strand scrolls WITHIN (issue #12) */
+  min-height: 0;
+  flex: 1;
 }
 .ns-tree__scene {
   position: relative;
   width: 100%;
+  flex: 1 1 auto;
+  min-height: 280px; /* the painting stays in view; the strand scrolls inside */
   aspect-ratio: 896 / 1200; /* TREE_SCENE — the painting's composed ratio */
-  max-height: 56vh;        /* keep the branch reachable below the painting */
   border-radius: 6px;
   border: 1px solid var(--rune-border);
   overflow: hidden;
@@ -372,7 +377,7 @@ body {
   padding: 0;
   position: absolute;
   inset: 0;
-  z-index: 1;
+  z-index: 6; /* rooted above the scrolling vine (issue #12) */
   pointer-events: none; /* lanterns opt back in */
 }
 /* every namespace is a top-level root node — no rail above them; in the
@@ -571,62 +576,223 @@ body {
   font-style: italic;
 }
 
-/* ── Task children: drawn connector lines ───────── */
-/* The open world's branch (drill) renders beneath the scene; each task li
- * draws a vertical rail (::before) and an elbow (::after) so the branch
- * reads as a bough off the painting:
- *
- *   ◖o◗ Fenrir Ledger Agents    ← lantern at its seat (no rail)
- *   ╎
- *   ├─ ⚒ s-run-1                ← rail + elbow
- *   └─ 🐦 s-fail-1              ← last child's rail stops at its elbow
- */
-.ns-tree__drill {
-  margin: 0 0.5rem;
+/* ── the vine strand — the open world's job cards (issue #12) ── */
+/* The open world's work hangs from its lantern as a curved bezier strand
+ * (lib/vineGeometry.ts): the painting and the lanterns stay ROOTED — the
+ * lantern overlay sits above — while only the vine + its cards live in the
+ * scroller, so a strand that outgrows the panel scrolls beneath the scene.
+ * No connector rails: the strand IS the connector. */
+.ns-tree__scroller {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  z-index: 4; /* beneath the rooted lantern overlay */
+  scrollbar-width: thin;
+  scrollbar-color: #24313a transparent;
 }
-.ns-tree__tasks {
-  list-style: none;
-  margin: 0.05rem 0 0.25rem;
-  padding: 0;
-}
-.ns-tree__task {
+.ns-tree__canvas {
   position: relative;
-  padding-left: 1.1rem;
+  width: 100%;
+  min-height: 100%;
+}
+.ns-tree__shoots {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+.ns-tree__vine {
+  fill: none;
+  stroke: rgba(138, 163, 86, 0.8);
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 3px rgba(138, 163, 86, 0.45));
+}
+/* an empty world's strand is a bare dashed whisker */
+.ns-tree__vine--bare {
+  stroke: rgba(122, 140, 148, 0.75);
+  stroke-dasharray: 2 5;
+  opacity: 0.4;
+  filter: none;
+}
+/* strand notes — fetching / empty / unavailable states near the seat */
+.ns-tree__note {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  z-index: 7;
+  font-size: 11px;
+  font-style: italic;
+  color: var(--text-rune);
+  background: rgba(5, 7, 10, 0.82);
+  border: 1px dashed rgba(176, 196, 201, 0.22);
+  padding: 4px 9px;
+  border-radius: 12px;
+  pointer-events: none;
+  white-space: nowrap;
+}
+.ns-tree__note--err { color: var(--error-strong); }
+
+/* ── the vine's job cards — full info on the strand, no popups ── */
+/* Every card shows everything: status sigil, title, session · issue # ·
+ * agent, and its own open/focus · pin · cancel actions (prototype .jcard).
+ * The tree positions each card absolutely at its vine anchor. */
+.jcard {
+  position: absolute;
+  transform: translateY(-50%);
+  z-index: 7;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  width: 212px;
+  background: linear-gradient(180deg, rgba(226, 240, 244, 0.09), rgba(10, 16, 20, 0.88));
+  border: 1px solid rgba(214, 236, 240, 0.26);
+  border-radius: 10px;
+  padding: 6px 8px;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5), 0 0 9px var(--card-glow, transparent);
+  transition: border-color 0.18s, box-shadow 0.18s;
+}
+/* the stem tying the card to its anchor on the strand */
+.jcard::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 12px;
+  height: 1.6px;
+  background: rgba(138, 163, 86, 0.85);
+  box-shadow: 0 0 3px rgba(138, 163, 86, 0.6);
+}
+.jcard[data-side="right"]::before { left: -12px; }
+.jcard[data-side="left"]::before  { right: -12px; }
+.jcard:hover {
+  border-color: var(--teal-asgard);
+  box-shadow: 0 0 0 1.5px rgba(78, 205, 196, 0.35), 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+.jcard.is-active {
+  border-color: var(--teal-asgard);
+  box-shadow: 0 0 0 2.5px rgba(78, 205, 196, 0.4), 0 0 22px rgba(21, 184, 166, 0.45),
+    0 4px 10px rgba(0, 0, 0, 0.5);
+}
+.jcard.is-dim { opacity: 0.5; }
+.jcard--running   { --card-glow: rgba(111, 183, 216, 0.35); }
+.jcard--succeeded { --card-glow: rgba(121, 179, 86, 0.28); }
+.jcard--failed    { --card-glow: rgba(224, 122, 63, 0.4); border-color: rgba(224, 122, 63, 0.5); }
+.jcard--pending   { opacity: 0.62; }
+.jcard--cached    { --card-glow: rgba(176, 196, 201, 0.22); }
+/* Ragnarök confirmed — the card trembles until the purge sweeps it */
+.jcard--terminating { animation: vine-tremble 0.5s ease-in-out infinite; }
+/* the sprout plays ON MOUNT only — a live WS update re-renders the same
+ * keyed element, so the animation never replays on a status change */
+.jcard.pop-in { animation: vine-sprout 0.4s cubic-bezier(0.2, 1.3, 0.4, 1) backwards; }
+/* the purged card falls from the strand, then is swept */
+.jcard.fall-out { animation: vine-cardfall 0.9s ease-in forwards; pointer-events: none; }
+
+.jcard__sigil {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6));
+}
+.jcard__sigil .ns-tree__icon { width: 20px; height: 20px; }
+.jcard__sigil .ns-tree__icon--fallback { font-size: 15px; }
+.jcard__main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.jcard__row1 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.jcard__title {
+  font-size: 11.5px;
+  color: #dcebee;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.25;
+  font-family: 'JetBrains Mono', monospace;
+}
+.jcard__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: none;
+  background: rgba(122, 140, 148, 0.5);
+}
+.jcard--running .jcard__dot   { background: #6fb7d8; animation: vine-pulse 1.4s infinite; }
+.jcard--succeeded .jcard__dot { background: #79b356; }
+.jcard--failed .jcard__dot    { background: #e07a3f; animation: vine-flicker 2.4s infinite; }
+.jcard--pending .jcard__dot    { background: #8a9296; }
+.jcard__row2 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+.jcard__meta {
+  font-size: 9.5px;
+  font-family: 'JetBrains Mono', monospace;
+  color: #8a9ca6;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   min-width: 0;
 }
-/* vertical rail — runs the full height of every task but the last */
-.ns-tree__task::before {
-  content: "";
-  position: absolute;
-  left: 0.45rem;
-  top: -0.2rem; /* reach up toward the namespace row */
-  bottom: 0;
-  border-left: 1px solid var(--rune-border);
+.jcard__meta b { color: #c9d8dd; font-weight: 600; }
+
+/* ── the on-card actions (prototype .jact) — no popups anywhere ── */
+.jcard__acts {
+  display: inline-flex;
+  gap: 4px;
+  flex: none;
 }
-/* elbow connector — a short horizontal tee at the task row's centerline */
-.ns-tree__task::after {
-  content: "";
-  position: absolute;
-  left: 0.45rem;
-  top: 50%;
-  width: 0.45rem;
-  border-top: 1px solid var(--rune-border);
+.jact {
+  flex: none;
+  border: 1px solid rgba(176, 196, 201, 0.18);
+  border-radius: 5px;
+  background: rgba(10, 16, 20, 0.85);
+  color: #8a9ca6;
+  font-size: 9.5px;
+  font-family: 'JetBrains Mono', monospace;
+  padding: 2px 6px;
+  line-height: 1.3;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
 }
-/* last task's rail stops at its own elbow */
-.ns-tree__task:last-child::before {
-  bottom: 50%;
+.jact:hover { border-color: var(--teal-asgard); color: #d9f4ef; }
+.jact--open {
+  border-color: rgba(78, 205, 196, 0.5);
+  color: #d9f4ef;
+  background: rgba(21, 184, 166, 0.14);
 }
-/* Task children are the SAME job cards the old flat list rendered — no
- * bespoke task-row styling. Just keep them tight inside the branch and let
- * the connector rail breathe. */
-.ns-tree__tasks .card {
-  margin-bottom: 0;
-}
-.ns-tree__task--empty {
-  padding: 0.05rem 0.3rem 0.1rem 1.1rem;
-  font-size: 0.58rem;
-  font-style: italic;
-  color: var(--text-void);
+.jact--pin.is-on { border-color: #ffcc66; color: #ffcc66; }
+.jact--cancel:hover { border-color: #e07a3f; color: #f0a279; }
+.jact:focus-visible { outline: 1.5px solid var(--teal-asgard); outline-offset: 1px; }
+
+/* normal (non-extended) sidebar: tighter cards, same strand */
+.ns-tree--lanterns:not(.ns-tree--extended) .jcard { width: 190px; padding: 4px 7px; }
+.ns-tree--lanterns:not(.ns-tree--extended) .jcard__title { font-size: 10.5px; }
+.ns-tree--lanterns:not(.ns-tree--extended) .jcard__meta { font-size: 8.5px; }
+
+@keyframes vine-pulse   { 50% { transform: scale(1.35); } }
+@keyframes vine-flicker { 50% { opacity: 0.55; } }
+@keyframes vine-tremble { 50% { translate: 1px -1px; } }
+@keyframes vine-sprout  { from { scale: 0.6; opacity: 0; translate: 0 10px; } }
+@keyframes vine-cardfall { to { translate: 0 60px; opacity: 0; scale: 0.92; } }
+@media (prefers-reduced-motion: reduce) {
+  .jcard__dot,
+  .jcard--failed .jcard__dot,
+  .jcard--terminating { animation: none; }
 }
 
 /* ── Node icons (shanaghy.com, emoji fallback offline) ── */

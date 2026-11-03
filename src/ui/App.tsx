@@ -154,12 +154,13 @@ export function App() {
     [jobs, refreshCached],
   );
 
-  /** Open Ragnarök confirmation dialog for a running job. The card's own
-   *  job object is preferred — the active-namespace list may not carry it. */
+  /** Open Ragnarök confirmation dialog for a cancellable job (its pod still
+   * lives: running or pending). The card's own job object is preferred — the
+   * active-namespace list may not carry it. */
   const handleOpenCancelDialog = useCallback(
     (sessionId: string, jobFromCard?: DisplayJob) => {
       const job = jobFromCard ?? jobs.find((j) => j.sessionId === sessionId);
-      if (!job || job.status !== "running") return;
+      if (!job || (job.status !== "running" && job.status !== "pending")) return;
       const jobTitle = job.issueTitle
         ? `#${job.issue} \u2013 ${job.issueTitle}`
         : `#${job.issue} \u2013 ${job.agentName} Step ${job.step}`;

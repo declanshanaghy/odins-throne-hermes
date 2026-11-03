@@ -314,27 +314,53 @@ assert.equal(
   "active world starts pre-drilled (branch open)",
 );
 
-// Guide-line CSS: drawn rails + elbow connectors make the levels distinct.
+// Vine-strand CSS (issue #12): the open world's work hangs as full cards
+// along a curved SVG strand; the scroller/canvas structure keeps the
+// painting + lanterns rooted while only the vine scrolls beneath.
 assert.ok(
-  css.includes(".ns-tree__task::before") && css.includes(".ns-tree__task::after"),
-  "connector rail + elbow pseudo-elements present in the CSS",
+  css.includes(".ns-tree__scroller") && css.includes(".ns-tree__canvas"),
+  "scroller + canvas structure present in the CSS",
 );
 assert.ok(
-  css.includes("border-left: 1px solid var(--rune-border)") &&
-    css.includes("border-top: 1px solid var(--rune-border)"),
-  "connector lines drawn with theme borders",
+  css.includes(".ns-tree__vine") && css.includes("stroke-dasharray: 2 5"),
+  "the vine strand + bare (empty world) strand styles present",
 );
+assert.ok(css.includes(".jcard") && css.includes(".jact"), "vine job cards + on-card actions present in the CSS");
+assert.ok(
+  css.includes("@keyframes vine-sprout") &&
+    css.includes("@keyframes vine-cardfall") &&
+    css.includes("@keyframes vine-tremble"),
+  "sprout / fall / tremble keyframes present in the CSS",
+);
+assert.ok(css.includes(".jcard.pop-in"), "cards sprout in on mount (never replayed on re-render)");
+assert.ok(css.includes(".jcard--terminating"), "terminating cards tremble (cancel choreography)");
 
-// Task children: the active namespace starts pre-drilled — its 12 tasks
-// (purged excluded; none in the fixture) branch beneath the scene in the
-// strict-accordion drill (exactly one open world).
-assert.ok(document.querySelector(".ns-tree__drill"), "the open world's branch (drill) mounts beneath the scene");
-const fenrirTasks = document.querySelectorAll(
-  '.ns-tree__drill .ns-tree__task[data-session]',
-);
-assert.equal(fenrirTasks.length, 12, "the pre-drilled world branches its 12 tasks");
-assert.ok(document.querySelector('.ns-tree__task[data-session="issue-1200-step1-firemandecko-1a2b3c4d"]'), "task node present in the open branch (sessionId derived from labels)");
-assert.ok(paneHtml.includes("issue-1203-step1-heimdall-4d5e6f7a"), "failed task branched beneath its namespace");
+// The open world's vine: the active namespace starts pre-drilled — its 12
+// tasks (purged excluded; none in the fixture) hang as full cards along the
+// strand in the strict-accordion drill (exactly one open world).
+assert.ok(document.querySelector(".ns-tree__scroller"), "the vine's scroller mounts inside the painted scene");
+const vinePath = document.querySelector(".ns-tree__canvas .ns-tree__vine");
+assert.ok(vinePath, "the vine strand renders as an SVG path on the canvas");
+assert.ok((vinePath.getAttribute("d") ?? "").startsWith("M"), "the strand path carries bezier geometry from the lantern's seat");
+assert.ok(vinePath.closest(".ns-tree__scroller"), "the strand lives in the scrolling layer, beneath the rooted lanterns");
+const fenrirCards = document.querySelectorAll('.ns-tree__canvas .jcard[data-session]');
+assert.equal(fenrirCards.length, 12, "the pre-drilled world hangs its 12 tasks on the vine");
+assert.ok(document.querySelector('.jcard[data-session="issue-1200-step1-firemandecko-1a2b3c4d"]'), "task card present on the open strand (sessionId derived from labels)");
+assert.ok(paneHtml.includes("issue-1203-step1-heimdall-4d5e6f7a"), "failed task hung on the strand");
+
+// Hang order (issue #12): running → failed → pending → succeeded, stable
+// within each status.
+const STATUS_RANK = { running: 0, failed: 1, pending: 2, succeeded: 3, cached: 4, purged: 5 };
+const hangStatuses = [...fenrirCards].map((c) => c.getAttribute("data-status"));
+for (let i = 1; i < hangStatuses.length; i++) {
+  const a = STATUS_RANK[hangStatuses[i - 1]] ?? 9;
+  const b = STATUS_RANK[hangStatuses[i]] ?? 9;
+  assert.ok(b >= a, `vine hang order never regresses at card ${i} (${hangStatuses[i - 1]} → ${hangStatuses[i]})`);
+}
+assert.equal(hangStatuses[0], "running", "live work hangs first on the strand");
+assert.equal(hangStatuses[2], "failed", "embers hang next");
+assert.equal(hangStatuses[3], "pending", "the unhatched after");
+assert.equal(hangStatuses[hangStatuses.length - 1], "succeeded", "the quiet green last");
 
 // REST AgentJob → wire Job mapping (lib/restJobs.ts) must fully resolve job
 // metadata — the exact fields that used to render "Issue #? · unknown · Step ?".
@@ -345,43 +371,57 @@ assert.ok(paneHtml.includes("wire the namespace drilldown tree"), "fenrir/pr-tit
 assert.ok(!paneHtml.includes("Issue #?"), "no unresolved issue fallbacks");
 assert.ok(!paneHtml.includes("Step ?"), "no unresolved step fallbacks");
 
-// Task children are the SAME JobCard components the old flat list rendered.
+// Vine cards show everything ON the card (issue #12 — no popups anywhere):
+// status sigil (taskIcon contract), title, session · issue # · agent, and
+// open/focus · pin · cancel actions.
+const firstCard = document.querySelector('.jcard[data-session="issue-1200-step1-firemandecko-1a2b3c4d"]');
+assert.ok(firstCard, "the vine's first card mounts");
+assert.ok(firstCard.querySelector(".jcard__title"), "card carries its title");
+assert.ok(firstCard.querySelector(".jcard__dot"), "card carries its status dot");
+const firstMeta = firstCard.querySelector(".jcard__meta").textContent;
 assert.ok(
-  document.querySelector('.ns-tree__task[data-session="issue-1200-step1-firemandecko-1a2b3c4d"] .card'),
-  "task child renders as a job card",
+  firstMeta.includes("issue-1200-step1-firemandecko-1a2b3c4d") &&
+    firstMeta.includes("Issue #1200") &&
+    firstMeta.includes("FiremanDecko"),
+  "meta line carries session · issue # · agent",
+);
+assert.equal(
+  firstCard.querySelectorAll(".jact").length,
+  3,
+  "open · pin · cancel all sit on the card",
+);
+assert.ok(firstCard.querySelector(".jact--open") && firstCard.querySelector(".jact--pin"), "open + pin actions on the card");
+assert.equal(
+  firstCard.querySelector(".jact--cancel").getAttribute("title"),
+  "cancel job",
+  "a running (cancellable) card shows its cancel action",
 );
 
-// Squashed card layout (issue: navigate hundreds of jobs): the status icon
-// LEADS the secondary meta line — under the title, beside the avatar column —
-// and the action buttons cluster at the line's right end. The old right-aligned
-// status button (.card-status-icon-btn) is gone.
-const squashedMeta = document.querySelector(
-  '.ns-tree__task[data-session="issue-1200-step1-firemandecko-1a2b3c4d"] .card-meta-new',
-);
-assert.ok(squashedMeta, "job card renders the secondary meta line");
-assert.ok(
-  squashedMeta.firstElementChild.className.includes("card-status-lead"),
-  "status icon leads the meta line (left edge, under the avatar)",
-);
-assert.ok(
-  squashedMeta.querySelector(".card-meta-actions"),
-  "action buttons cluster at the meta line's right end",
-);
-assert.ok(
-  !document.querySelector(".card-status-icon-btn"),
-  "old right-aligned status icon button is gone",
+// Status sigils follow the taskIcon contract: hammer/dice/raven/ring.
+const cardByStatus = (status) => [...fenrirCards].find((c) => c.getAttribute("data-status") === status);
+assert.equal(
+  cardByStatus("running").querySelector(".jcard__sigil .ns-tree__icon").getAttribute("src"),
+  "https://www.shanaghy.com/assets/icons/hammer.png",
+  "running jobs forge with the hammer sigil",
 );
 assert.equal(
-  document.querySelectorAll(
-    '.ns-tree__drill .ns-tree__task .card-status-lead',
-  ).length,
-  12,
-  "every task card carries its leading status icon",
+  cardByStatus("failed").querySelector(".jcard__sigil .ns-tree__icon").getAttribute("src"),
+  "https://www.shanaghy.com/assets/icons/raven.png",
+  "failed jobs fly the raven sigil",
 );
 assert.equal(
-  document.querySelectorAll('.ns-tree__drill .ns-tree__task .card').length,
-  12,
-  "every branched task is a full job card",
+  cardByStatus("pending").querySelector(".jcard__sigil .ns-tree__icon").getAttribute("src"),
+  "https://www.shanaghy.com/assets/icons/dice.png",
+  "pending jobs wait on the dice sigil",
+);
+assert.equal(
+  cardByStatus("succeeded").querySelector(".jcard__sigil .ns-tree__icon").getAttribute("src"),
+  "https://www.shanaghy.com/assets/icons/ring.png",
+  "succeeded jobs seal with the ring sigil",
+);
+assert.ok(
+  !cardByStatus("succeeded").querySelector(".jact--cancel"),
+  "a succeeded (non-cancellable) card hides its cancel action",
 );
 
 // ── per-session workspace tabs (issue:6) ────────────────────────────────────
@@ -395,13 +435,23 @@ const TAB_1200 = `odins-throne-session-${SID_1200}`;
 const TAB_1201 = `odins-throne-session-${SID_1201}`;
 
 const navsBeforeClicks = [...(globalThis.__stubNavigations ?? [])];
-document.querySelector(`.ns-tree__task[data-session="${SID_1200}"] .card`).click();
+document.querySelector(`.jcard[data-session="${SID_1200}"]`).click();
 await flush();
 await flush();
 assert.equal(
-  document.querySelector(`.ns-tree__task[data-session="${SID_1200}"]`).getAttribute("aria-selected"),
+  document.querySelector(`.jcard[data-session="${SID_1200}"]`).getAttribute("aria-selected"),
   "true",
   "clicked task node is marked selected",
+);
+assert.equal(
+  document.querySelector(`.jcard[data-session="${SID_1200}"] .jact--open`).textContent,
+  "focus",
+  "an open session's card reads focus (its tab already exists)",
+);
+assert.equal(
+  document.querySelector(`.jcard[data-session="${SID_1201}"] .jact--open`).textContent,
+  "open",
+  "an un-opened session's card still reads open",
 );
 assert.equal(
   globalThis.__stubWorkspaceOpens[globalThis.__stubWorkspaceOpens.length - 1],
@@ -420,7 +470,7 @@ assert.equal(
 );
 
 // Clicking the same session again focuses the existing tab — no duplicate.
-document.querySelector(`.ns-tree__task[data-session="${SID_1200}"] .card`).click();
+document.querySelector(`.jcard[data-session="${SID_1200}"]`).click();
 await flush();
 await flush();
 assert.ok(
@@ -435,7 +485,7 @@ assert.equal(
 
 // A second, DIFFERENT session stacks another tab — several log terminals at
 // once, one per session.
-document.querySelector(`.ns-tree__task[data-session="${SID_1201}"] .card`).click();
+document.querySelector(`.jcard[data-session="${SID_1201}"]`).click();
 await flush();
 await flush();
 assert.ok(
@@ -444,10 +494,12 @@ assert.ok(
 );
 
 // Ragnarök closes the session's tab with the pod (reference design: "cancel
-// closes its tab"). The dialog lives in the pane overlay; confirm issues
-// DELETE /api/jobs/:sessionId, then the tab must be gone.
+// closes its tab"). The cancel action sits ON the vine card (no popups for
+// the job display — the confirm dialog is the destructive-action guard);
+// confirm issues DELETE /api/jobs/:sessionId, the card trembles
+// (terminating), then the tab must be gone.
 document
-  .querySelector(`.ns-tree__task[data-session="${SID_1201}"] [title^="Invoke Ragnarök"]`)
+  .querySelector(`.jcard[data-session="${SID_1201}"] .jact--cancel`)
   .click();
 await flush();
 assert.ok(document.querySelector(".rdk-backdrop"), "Ragnarök dialog opens from the pane");
@@ -459,6 +511,10 @@ assert.ok(
   "confirmed Ragnarök closes the session's workspace tab",
 );
 assert.ok(
+  document.querySelector(`.jcard[data-session="${SID_1201}"]`)?.classList.contains("jcard--terminating"),
+  "the cancelled card trembles on the strand (terminating state)",
+);
+assert.ok(
   document.getElementById("pane").innerHTML.includes("Ragnarok unleashed"),
   "Ragnarök toast confirms the termination",
 );
@@ -468,7 +524,7 @@ assert.ok(
 globalThis.__stubWorkspaceTabs.get(TAB_1200)?.close();
 await flush();
 assert.ok(!globalThis.__stubWorkspaceTabs.has(TAB_1200), "tab disposer closes the tab");
-document.querySelector(`.ns-tree__task[data-session="${SID_1200}"] .card`).click();
+document.querySelector(`.jcard[data-session="${SID_1200}"]`).click();
 await flush();
 await flush();
 assert.ok(
@@ -482,9 +538,9 @@ assert.equal(
 );
 
 // Icons from shanaghy.com's icon library sit SEATED INSIDE the lanterns —
-// task rows are job cards with their own avatars/status icons (assert src
-// attributes only; jsdom never fetches — no real network in this test).
-const iconImgs = Array.from(document.querySelectorAll(".ns-tree__icon"));
+// the vine cards' status sigils are the taskIcon set (assert src attributes
+// only; jsdom never fetches — no real network in this test).
+const iconImgs = Array.from(document.querySelectorAll(".ns-tree__icon--lantern"));
 assert.equal(iconImgs.length, 6, "each of the six lanterns seats one icon");
 for (const img of iconImgs) {
   assert.ok(
@@ -544,7 +600,7 @@ assert.equal(
   "the previously open world retracted (accordion)",
 );
 assert.equal(
-  document.querySelectorAll('.ns-tree__drill .ns-tree__task[data-session]').length,
+  document.querySelectorAll('.ns-tree__canvas .jcard[data-session]').length,
   8,
   "selecting a lantern drills into its tasks",
 );
@@ -557,11 +613,11 @@ assert.equal(
 document.querySelector('.ns-tree__item[data-namespace="re-goatmower-agents"] .ns-tree__lantern').click();
 await flush();
 assert.equal(
-  document.querySelectorAll('.ns-tree__drill .ns-tree__task[data-session]').length,
+  document.querySelectorAll('.ns-tree__canvas .jcard[data-session]').length,
   2,
   "re-goatmower's branch opens with its 2 tasks",
 );
-document.querySelector('.ns-tree__task[data-session="issue-4400-step1-firemandecko-5e6f7a8b"] .card').click();
+document.querySelector('.jcard[data-session="issue-4400-step1-firemandecko-5e6f7a8b"]').click();
 await flush();
 await flush();
 assert.equal(
@@ -574,7 +630,7 @@ assert.ok(
   "cross-world task click opens the session's tab in its own world",
 );
 assert.equal(
-  document.querySelector('.ns-tree__task[data-session="issue-4400-step1-firemandecko-5e6f7a8b"]').getAttribute("aria-selected"),
+  document.querySelector('.jcard[data-session="issue-4400-step1-firemandecko-5e6f7a8b"]').getAttribute("aria-selected"),
   "true",
   "cross-world task click selects the session in its world",
 );
@@ -601,8 +657,8 @@ assert.ok(
 document.querySelector('.ns-tree__item[data-namespace="broken-vista-agents"] .ns-tree__lantern').click();
 await flush();
 assert.ok(
-  !document.querySelector(".ns-tree__drill"),
-  "clicking the open lantern collapses the branch entirely",
+  !document.querySelector(".ns-tree__canvas .jcard") && !document.querySelector(".ns-tree__vine"),
+  "clicking the open lantern retracts the vine entirely",
 );
 assert.equal(
   document.querySelector('.ns-tree__item[data-namespace="broken-vista-agents"] .ns-tree__lantern').getAttribute("aria-expanded"),
@@ -727,5 +783,5 @@ for (const s of ["rapid-a", "rapid-b", "rapid-c"]) {
   );
 }
 
-console.log("SMOKE PASS — pane + page render, namespace lantern tree (lanterns seated on the painting, shanaghy.com icons + fallback, hover labels + stats berries, strict one-open accordion, job-card branches, old flat list gone), CSS scoped, theme plugin-local, overlays wired, per-session workspace tabs (issue:6: open per click, focus dedupe, cancel + strip-close teardown, cross-world capture)");
+console.log("SMOKE PASS — pane + page render, namespace lantern tree (lanterns seated on the painting, vine-strand job cards hung from the open lantern: running → failed → pending → succeeded order, status sigils hammer/dice/raven/ring, on-card open/focus · pin · cancel with terminating tremble, scroller + canvas beneath the rooted painting, old flat list gone), CSS scoped, theme plugin-local, overlays wired, per-session workspace tabs (issue:6: open per click, focus dedupe, cancel + strip-close teardown, cross-world capture)");
 process.exit(0);
