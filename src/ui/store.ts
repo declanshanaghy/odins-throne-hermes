@@ -9,12 +9,13 @@
 //
 // Per-session log-stream state (entries, subscribe bookkeeping, pod-start
 // retry) deliberately does NOT live here: each session tab owns its own
-// stream (see src/page.tsx), so several sessions can stream at once.
+// stream (see ui/components/SessionLogViewer.tsx), so several sessions can
+// stream at once.
 
 import { useSyncExternalStore } from "react";
-import type { DisplayJob } from "./ui/lib/types";
-import type { NamespaceOption } from "./ui/hooks/useNamespace";
-import type { NamespaceSummaries } from "./ui/hooks/useNamespaceSummaries";
+import type { DisplayJob } from "./lib/types";
+import type { NamespaceOption } from "./hooks/useNamespace";
+import type { NamespaceSummaries } from "./hooks/useNamespaceSummaries";
 
 export interface CancelTarget {
   sessionId: string;

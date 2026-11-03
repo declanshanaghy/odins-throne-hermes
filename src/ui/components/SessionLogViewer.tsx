@@ -1,45 +1,44 @@
-// Per-session workspace surfaces (issue:6).
+// Per-session self-contained log terminal (issue:6).
 //
-// ThronePage renders the ported LogViewer terminal for ONE session:
-//   - as the content of a per-session workspace tab (sessionTabs.tsx passes
-//     sessionId + the namespace/job captured at open time)
-//   - as the static /odins-throne route page (no sessionId → empty state)
-//
-// Every mounted per-session viewer owns its OWN WebSocket connection and
-// useLogStream instance, so several session tabs can stream independently
-// without replacing each other. Subscribe/unsubscribe, temp-log replay,
-// pod-start retry and reconnect all key off this component's sessionId.
+// SessionLogViewer renders the ported LogViewer terminal for ONE session.
+// Every mounted instance owns its OWN WebSocket connection and useLogStream
+// instance, so several sessions can stream independently without replacing
+// each other — the desktop plugin mounts one per workspace tab, the web shell
+// mounts one for the selected session. Subscribe/unsubscribe, temp-log
+// replay, pod-start retry and reconnect all key off this component's
+// sessionId, never off the shared store.
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ErrorBoundary } from "./ui/components/ErrorBoundary";
-import { LogViewer } from "./ui/components/LogViewer";
-import { useThrone } from "./store";
-import { useTheme } from "./ui/hooks/useTheme";
-import { useWebSocket } from "./ui/hooks/useWebSocket";
-import { useLogStream } from "./ui/hooks/useLogStream";
+import { LogViewer } from "./LogViewer";
+import { useThrone } from "../store";
+import { useWebSocket } from "../hooks/useWebSocket";
+import { useLogStream } from "../hooks/useLogStream";
 import {
   isPinned as checkIsPinned,
   pinSession,
   unpinSession,
-  isCacheNearCap,
-} from "./ui/lib/localStorageLogs";
-import type { CachedSessionMeta } from "./ui/lib/localStorageLogs";
-import type { DisplayJob } from "./ui/lib/types";
-import type { ServerMessage } from "./ui/lib/types";
+} from "../lib/localStorageLogs";
+import type { CachedSessionMeta } from "../lib/localStorageLogs";
+import type { DisplayJob, ServerMessage } from "../lib/types";
 
-// ─── per-session self-contained viewer ───────────────────────────────────────
-
-function LogViewerConnected({
-  sessionId,
-  tabNamespace,
-  jobSnapshot,
-}: {
+export interface SessionLogViewerProps {
   sessionId: string;
-  /** Namespace captured at open time — this tab's WS always dials it. */
-  tabNamespace: string;
+  /** Namespace captured at open time — this viewer's WS always dials it. */
+  namespace: string;
   /** Job captured at open time — header fallback until jobs include the session. */
   jobSnapshot: DisplayJob | null;
-}) {
+}
+
+/**
+ * The per-session log terminal. Owns its WebSocket (dialed against the
+ * namespace captured at open time — a pane namespace switch must NOT rewire
+ * it), its useLogStream instance, and its subscribe lifecycle.
+ */
+export function SessionLogViewer({
+  sessionId,
+  namespace: tabNamespace,
+  jobSnapshot,
+}: SessionLogViewerProps) {
   const snap = useThrone();
   const jobs = snap?.jobs ?? [];
 
@@ -90,9 +89,10 @@ function LogViewerConnected({
     [handleLogMessage, sessionId],
   );
 
-  // This tab's socket always dials the namespace the session was opened in —
-  // it must NOT follow the pane's namespace switches (a cross-world click in
-  // the pane must not rewire this tab to a world where its session doesn't exist).
+  // This viewer's socket always dials the namespace the session was opened
+  // in — it must NOT follow the pane's namespace switches (a cross-world
+  // click in the pane must not rewire this viewer to a world where its
+  // session doesn't exist).
   const { state: wsState, send } = useWebSocket(onMessage, tabNamespace);
 
   // Unsubscribe when unmounting (tab closed)
@@ -177,7 +177,7 @@ function LogViewerConnected({
   }, [isPodStarting, sessionId, send, showPodStartTimeout]);
 
   // Header: the live job when this session is in the active namespace's list,
-  // else the snapshot captured when the tab was opened.
+  // else the snapshot captured when the viewer was opened.
   const activeJob = jobs.find((j) => j.sessionId === sessionId) ?? jobSnapshot ?? null;
 
   // Pin toggle: the pane's store action when the session lives in the active
@@ -230,9 +230,11 @@ function LogViewerConnected({
   );
 }
 
-// ─── static landing page at /odins-throne ────────────────────────────────────
-
-function LogViewerEmpty() {
+/**
+ * The empty log terminal — the static /odins-throne landing page in the
+ * plugin, and the web shell's no-session-selected state.
+ */
+export function SessionLogViewerEmpty() {
   const snap = useThrone();
   return (
     <LogViewer
@@ -251,45 +253,5 @@ function LogViewerEmpty() {
       onCancelJob={() => {}}
       onSetSpeed={() => {}}
     />
-  );
-}
-
-// ─── exported page component ──────────────────────────────────────────────────
-
-export function ThronePage({
-  sessionId,
-  tabNamespace,
-  jobSnapshot,
-}: {
-  /** Session this tab/page streams. Absent on the static landing page. */
-  sessionId?: string;
-  /** Namespace captured at open time (tab content); defaults to the pane's. */
-  tabNamespace?: string;
-  /** Job captured at open time (tab content header fallback). */
-  jobSnapshot?: DisplayJob | null;
-}) {
-  const snap = useThrone();
-  const { theme } = useTheme();
-  const namespace = tabNamespace ?? snap?.namespace ?? "fenrir-agents";
-  return (
-    <div
-      className="odins-throne-root"
-      data-theme={theme === "light" ? "light" : undefined}
-      style={{ width: "100%", height: "100%" }}
-    >
-      {sessionId ? (
-        <ErrorBoundary>
-          <LogViewerConnected
-            sessionId={sessionId}
-            tabNamespace={namespace}
-            jobSnapshot={jobSnapshot ?? null}
-          />
-        </ErrorBoundary>
-      ) : (
-        <ErrorBoundary>
-          <LogViewerEmpty />
-        </ErrorBoundary>
-      )}
-    </div>
   );
 }

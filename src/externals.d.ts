@@ -37,7 +37,22 @@ declare module "@hermes/plugin-sdk" {
   };
 }
 
+// The web target's page provides react-dom (its bundle stays external,
+// mirroring how the desktop app provides react for the plugin bundle).
+declare module "react-dom/client" {
+  import type { ReactNode } from "react";
+  export function createRoot(container: Element | DocumentFragment): {
+    render(node: ReactNode): void;
+    unmount(): void;
+  };
+}
+
 declare module "*.png" {
+  const url: string;
+  export default url;
+}
+
+declare module "*.jpg" {
   const url: string;
   export default url;
 }

@@ -15,7 +15,7 @@
 
 import { host, ROUTES_AREA } from "@hermes/plugin-sdk";
 import { ThronePage } from "./page";
-import type { DisplayJob } from "./ui/lib/types";
+import type { DisplayJob } from "../../ui/lib/types";
 
 export interface SessionTab {
   sessionId: string;

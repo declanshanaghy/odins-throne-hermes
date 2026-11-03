@@ -1,15 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { ServerMessage } from "./lib/types";
+import type { ServerMessage, DisplayJob } from "./lib/types";
 import { randomQuote } from "./lib/constants";
 import { useWebSocket } from "./hooks/useWebSocket";
 import { useNamespace } from "./hooks/useNamespace";
 import { useNamespaceSummaries } from "./hooks/useNamespaceSummaries";
 import { useJobs } from "./hooks/useJobs";
 import { useTheme } from "./hooks/useTheme";
-import { otFetch } from "../upstream";
-import { throneStore, type ThroneSnapshot } from "../store";
-import { openSessionTab, closeSessionTab } from "../sessionTabs";
-import type { DisplayJob } from "./lib/types";
+import { getPlatform } from "./platform";
+import { throneStore, type ThroneSnapshot } from "./store";
 import {
   isPinned as checkIsPinned,
   pinSession,
@@ -27,8 +25,8 @@ import type { CachedSessionMeta } from "./lib/localStorageLogs";
  * and publishes a snapshot to the module store instead of rendering JSX. The
  * right-docked pane renders the Sidebar from this snapshot; per-session
  * workspace tabs render the LogViewer from it (issue:6) — each tab owns its
- * own log stream, so this bridge no longer manages per-session entries or
- * subscriptions.
+ * own log stream (ui/components/SessionLogViewer.tsx), so this bridge no
+ * longer manages per-session entries or subscriptions.
  */
 export function App() {
   const quote = useMemo(() => randomQuote(), []);
@@ -76,12 +74,15 @@ export function App() {
   /**
    * Session click: open (or focus) a dedicated workspace tab for this session.
    * Each tab manages its own WS connection and log stream (issue:6); the
-   * current tab is never navigated away.
+   * current tab is never navigated away. The platform adapter decides what
+   * "open the session's log view" means — a stacked workspace tab in the
+   * desktop plugin, a no-op on the web shell where the LogViewer follows the
+   * store's activeSessionId.
    */
   const handleSelectSession = useCallback(
     (sessionId: string) => {
       setActiveSessionId(sessionId);
-      openSessionTab(sessionId, {
+      getPlatform().openSessionLog(sessionId, {
         namespace,
         job: jobs.find((j) => j.sessionId === sessionId) ?? null,
       });
@@ -102,7 +103,7 @@ export function App() {
       if (ns !== namespace) {
         setNamespace(ns);
       }
-      openSessionTab(sessionId, {
+      getPlatform().openSessionLog(sessionId, {
         namespace: ns,
         job: job ?? jobs.find((j) => j.sessionId === sessionId) ?? null,
       });
@@ -171,7 +172,7 @@ export function App() {
    *  pod is gone, so the session's workspace tab closes with it (issue:6). */
   const handleConfirmCancel = useCallback(async () => {
     if (!cancelTarget) return;
-    const res = await otFetch(`/api/jobs/${encodeURIComponent(cancelTarget.sessionId)}`, { method: "DELETE" });
+    const res = await getPlatform().restFetch(`/api/jobs/${encodeURIComponent(cancelTarget.sessionId)}`, { method: "DELETE" });
     if (!res.ok) {
       const body = await res.json().catch(() => ({})) as { error?: string };
       throw new Error(body.error ?? `HTTP ${res.status}`);
@@ -179,7 +180,7 @@ export function App() {
     const { sessionId } = cancelTarget;
     setCancelTarget(null);
     // The pod is gone; its log tab closes with it (reference design).
-    closeSessionTab(sessionId);
+    getPlatform().closeSessionLog(sessionId);
     // Flash the card as terminating, then clear after 3s
     setTerminatingSessionIds((prev) => new Set(prev).add(sessionId));
     setTimeout(() => {

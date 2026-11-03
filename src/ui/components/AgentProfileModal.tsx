@@ -5,8 +5,7 @@ import {
   AGENT_RUNE_NAMES,
   AGENT_QUOTES,
   AGENT_DESCRIPTIONS,
-  AGENT_AVATARS,
-  AGENT_LIGHT_AVATARS,
+  avatarUrl,
   AGENT_COLORS,
 } from "../lib/constants";
 
@@ -28,10 +27,11 @@ export function AgentProfileModal({ agentKey, theme, onClose }: Props) {
   const quote = AGENT_QUOTES[agentKey] ?? AGENT_QUOTES._fallback ?? "";
   const description = AGENT_DESCRIPTIONS[agentKey] ?? "";
   const accent = AGENT_COLORS[agentKey] ?? "var(--gold)";
+  // Prefer the themed portrait; fall back to the other variant (seam 4).
+  const primaryVariant = theme === "light" ? "light" : "dark";
   const portrait =
-    theme === "light"
-      ? (AGENT_LIGHT_AVATARS[agentKey] ?? AGENT_AVATARS[agentKey])
-      : (AGENT_AVATARS[agentKey] ?? AGENT_LIGHT_AVATARS[agentKey]);
+    avatarUrl(agentKey, primaryVariant) ??
+    avatarUrl(agentKey, primaryVariant === "light" ? "dark" : "light");
 
   // Body scroll lock
   useEffect(() => {

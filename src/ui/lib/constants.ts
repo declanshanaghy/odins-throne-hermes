@@ -26,39 +26,16 @@ export const AGENT_TITLES: Record<string, string> = {
   odin: "All-Father",
 };
 
-// Desktop port: portraits are bundled as data URLs (relative /profiles/* paths
-// cannot resolve inside the app's blob-loaded plugin module). Same images,
-// same keys — every consumer keeps working unchanged.
-import avatarFiremandeckoDark from "../../assets/profiles/fireman-decko-dark.png";
-import avatarLokiDark from "../../assets/profiles/loki-dark.png";
-import avatarLunaDark from "../../assets/profiles/luna-dark.png";
-import avatarFreyaDark from "../../assets/profiles/freya-dark.png";
-import avatarHeimdallDark from "../../assets/profiles/heimdall-dark.png";
-import avatarOdinDark from "../../assets/profiles/odin-dark.png";
-import avatarFiremandeckoLight from "../../assets/profiles/fireman-decko-light.png";
-import avatarLokiLight from "../../assets/profiles/loki-light.png";
-import avatarLunaLight from "../../assets/profiles/luna-light.png";
-import avatarFreyaLight from "../../assets/profiles/freya-light.png";
-import avatarHeimdallLight from "../../assets/profiles/heimdall-light.png";
-import avatarOdinLight from "../../assets/profiles/odin-light.png";
+// Seam 4 — portraits: the platform adapter owns how an agent's avatar URL
+// resolves (same-origin /profiles/*.png on the web, bundled data URLs in the
+// plugin, where relative paths cannot resolve inside the app's blob-loaded
+// module). Same images, same keys — unknown agents return undefined and
+// callers render their own fallback.
+import { getPlatform } from "../platform";
 
-export const AGENT_AVATARS: Record<string, string> = {
-  firemandecko: avatarFiremandeckoDark,
-  loki: avatarLokiDark,
-  luna: avatarLunaDark,
-  freya: avatarFreyaDark,
-  heimdall: avatarHeimdallDark,
-  odin: avatarOdinDark,
-};
-
-export const AGENT_LIGHT_AVATARS: Record<string, string> = {
-  firemandecko: avatarFiremandeckoLight,
-  loki: avatarLokiLight,
-  luna: avatarLunaLight,
-  freya: avatarFreyaLight,
-  heimdall: avatarHeimdallLight,
-  odin: avatarOdinLight,
-};
+export function avatarUrl(agentKey: string, variant: "dark" | "light"): string | undefined {
+  return getPlatform().avatarUrl(agentKey, variant);
+}
 
 export const AGENT_COLORS: Record<string, string> = {
   firemandecko: "#4ecdc4",

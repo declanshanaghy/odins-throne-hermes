@@ -26,14 +26,30 @@
 // minimal icon + initials list (task drilldown needs the wider modes).
 
 import { useState } from "react";
+import type { CSSProperties } from "react";
 import type { DisplayJob, Job } from "../lib/types";
 import type { NamespaceOption } from "../hooks/useNamespace";
 import { summaryLine, type NamespaceSummaries } from "../hooks/useNamespaceSummaries";
 import { parseJob, sortJobs } from "../hooks/useJobs";
 import { namespaceIcon, NAMESPACE_ICON_FALLBACK } from "../lib/namespaceIcons";
+import { namespaceSeat } from "../lib/treeSeats";
+import treeBackdrop from "../assets/tree-backdrop.jpg";
 import { TreeIcon } from "./TreeIcon";
 import { JobCard } from "./JobCard";
 import type { DisplayMode } from "./Sidebar";
+
+/**
+ * The painted tree-scene backdrop (issue:10) is exposed as a CSS custom
+ * property on the tree root rather than an <img>: the garden-pattern waves of
+ * epic #7 position the scene and its lantern overlays over it, and a
+ * background-image URL keeps the current list-tree layout untouched until
+ * then. The lantern SEATS meanwhile land as data attributes on each namespace
+ * node (namespaceSeat — typed data, no layout constants in JSX) so the
+ * overlay waves can pin lanterns to the painting without re-mapping.
+ */
+function treeBackdropStyle(): CSSProperties {
+  return { "--tree-backdrop": `url(${JSON.stringify(treeBackdrop)})` } as CSSProperties;
+}
 
 interface Props {
   namespace: string;
@@ -110,7 +126,7 @@ export function NamespaceTree({
     const active = namespaces.find((n) => n.id === namespace);
     const activeSummary = summaries[namespace];
     return (
-      <div className="ns-tree ns-tree--compact">
+      <div className="ns-tree ns-tree--compact" style={treeBackdropStyle()}>
         <button
           type="button"
           className="ns-tree__chip"
@@ -135,6 +151,9 @@ export function NamespaceTree({
                   role="treeitem"
                   aria-selected={ns.id === namespace}
                   data-namespace={ns.id}
+                  data-seat-x={namespaceSeat(ns.id).x}
+                  data-seat-y={namespaceSeat(ns.id).y}
+                  data-seat-dir={namespaceSeat(ns.id).dir}
                   className={ns.id === namespace ? "ns-tree__item ns-tree__item--active" : "ns-tree__item"}
                 >
                   <button
@@ -169,12 +188,18 @@ export function NamespaceTree({
       : "ns-tree";
 
   return (
-    <div className={rootClass} role="tree" aria-label="Namespace tree">
+    <div
+      className={rootClass}
+      role="tree"
+      aria-label="Namespace tree"
+      style={treeBackdropStyle()}
+    >
       <ul className="ns-tree__roots">
         {namespaces.map((ns) => {
           const summary = summaries[ns.id];
           const isActive = ns.id === namespace;
           const nsExpanded = expandedNs.has(ns.id);
+          const seat = namespaceSeat(ns.id);
           const line = summary
             ? summary.error
               ? "summary unavailable"
@@ -188,6 +213,9 @@ export function NamespaceTree({
               aria-expanded={nsExpanded}
               aria-selected={isActive}
               data-namespace={ns.id}
+              data-seat-x={seat.x}
+              data-seat-y={seat.y}
+              data-seat-dir={seat.dir}
               className={
                 isActive
                   ? "ns-tree__item ns-tree__item--active"
