@@ -117,39 +117,35 @@ export function pairingUrl(): string {
   return `${base()}/api/handoff?client=${encodeURIComponent(getClientId())}`;
 }
 
-export interface RedeemResult {
+export interface PairResult {
   ok: boolean;
   user?: string;
   error?: string;
 }
 
-/** Trade the browser-minted pairing code for a session token. */
-export async function redeemPairing(rawCode: string): Promise<RedeemResult> {
-  const code = rawCode.trim().toLowerCase();
-  if (!code) return { ok: false, error: "Enter the code from the pairing page" };
+/**
+ * Accept the pairing key pasted from the browser page (the monitor mints the
+ * signed, user-scoped session directly — nothing to redeem, every replica can
+ * verify the signature). Validates it against the bot surface before
+ * committing; on failure nothing is stored.
+ */
+export async function acceptPairingKey(rawKey: string): Promise<PairResult> {
+  const key = rawKey.trim();
+  if (!key) return { ok: false, error: "Paste the key from the pairing page" };
+  if (!/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(key)) {
+    return { ok: false, error: "That does not look like a pairing key — copy the whole key from the page" };
+  }
   try {
-    const res = await fetch(`${base()}/bot/handoff/redeem`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ client: getClientId(), code }),
-    });
-    const data = (await res.json().catch(() => ({}))) as {
-      ok?: boolean;
-      token?: string;
-      user?: string;
-      error?: string;
-    };
-    if (!res.ok || !data.ok || !data.token) {
-      return { ok: false, error: data.error ?? `Redeem failed (HTTP ${res.status})` };
-    }
-    try {
-      localStorage.setItem(SESSION_KEY, data.token);
-    } catch {
-      // ignore
+    localStorage.setItem(SESSION_KEY, key);
+    const res = await otFetch("/api/namespaces");
+    if (!res.ok) {
+      clearSession();
+      return { ok: false, error: `The key was rejected (HTTP ${res.status}) — copy a fresh one from the pairing page` };
     }
     emitSession();
-    return { ok: true, user: data.user };
+    return { ok: true };
   } catch (err) {
+    clearSession();
     return { ok: false, error: err instanceof Error ? err.message : "Network error" };
   }
 }

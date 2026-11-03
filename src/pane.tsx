@@ -14,10 +14,10 @@ import { App } from "./ui/App";
 import { useThrone } from "./store";
 import { useTheme } from "./ui/hooks/useTheme";
 import {
+  acceptPairingKey,
   clearSession,
   isConfigured,
   pairingUrl,
-  redeemPairing,
   sessionSnapshot,
   subscribeSession,
 } from "./upstream";
@@ -101,7 +101,7 @@ function PairingCard() {
   async function pair(): Promise<void> {
     setBusy(true);
     setError(null);
-    const result = await redeemPairing(code);
+    const result = await acceptPairingKey(code);
     if (!result.ok) setError(result.error ?? "Pairing failed");
     setBusy(false);
   }
@@ -117,29 +117,27 @@ function PairingCard() {
       </button>
       {opened && (
         <>
-          <p>The pairing page is open in your browser — enter its code here:</p>
+          <p>The pairing page is open in your browser — click the key to copy it, then paste it here:</p>
           <input
             className="throne-code-input"
             value={code}
-            placeholder="8-char code"
-            maxLength={8}
+            placeholder="paste the pairing key"
             autoCapitalize="none"
+            autoCorrect="off"
             spellCheck={false}
             onChange={(e) => setCode(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter") void pair();
             }}
             style={{
-              width: "12ch",
-              textAlign: "center",
+              width: "min(90%, 34ch)",
               padding: "0.5rem 0.65rem",
               borderRadius: 6,
               border: "1px solid var(--gold-dim-border)",
               background: "var(--void)",
               color: "var(--gold-bright)",
               fontFamily: '"JetBrains Mono", monospace',
-              fontSize: "0.95rem",
-              letterSpacing: "0.3em",
+              fontSize: "0.72rem",
             }}
           />
           <button className="throne-settings-btn" disabled={busy} onClick={() => void pair()}>

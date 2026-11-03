@@ -54,13 +54,16 @@ credential step inside any webview), so the login runs where Google wants it
 — your real browser:
 
 1. The pane opens **your browser** at the monitor's pairing page — behind the
-   website's own Google OAuth. No Google login ⇒ no code.
-2. The page shows a one-time 8-char code (5-minute TTL, single use).
-3. Type it into the pane → the plugin redeems it for a signed, user-scoped
-   session (7 days) and the jobs stream. When it expires, the pairing card
-   simply returns.
+   website's own Google OAuth. No Google login ⇒ no key.
+2. The page shows a signed, user-scoped pairing key (click to copy).
+3. Paste it into the pane → **Pair** → the jobs stream. It lasts 7 days;
+   when it expires the pairing card simply returns.
 
-> **There is no other way in.** No Google login, no code, no data — and no
+The key is minted directly by the Google-authenticated page and verified
+statelessly by every monitor replica (HMAC over a shared secret) — nothing is
+stored server-side, so it works across the deployment's multiple pods.
+
+> **There is no other way in.** No Google login, no key, no data — and no
 > standing credential either. The only setting is the upstream URL (⌘K →
 > "Odin's Throne: Configure upstream"), overridden for local dev servers
 > (`pnpm dev` in `development/odins-throne`, which run without

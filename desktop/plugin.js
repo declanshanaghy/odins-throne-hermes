@@ -3864,26 +3864,23 @@ function isConfigured() {
 function pairingUrl() {
   return `${base()}/api/handoff?client=${encodeURIComponent(getClientId())}`;
 }
-async function redeemPairing(rawCode) {
-  const code = rawCode.trim().toLowerCase();
-  if (!code) return { ok: false, error: "Enter the code from the pairing page" };
+async function acceptPairingKey(rawKey) {
+  const key = rawKey.trim();
+  if (!key) return { ok: false, error: "Paste the key from the pairing page" };
+  if (!/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(key)) {
+    return { ok: false, error: "That does not look like a pairing key \u2014 copy the whole key from the page" };
+  }
   try {
-    const res = await fetch(`${base()}/bot/handoff/redeem`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ client: getClientId(), code })
-    });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok || !data.ok || !data.token) {
-      return { ok: false, error: data.error ?? `Redeem failed (HTTP ${res.status})` };
-    }
-    try {
-      localStorage.setItem(SESSION_KEY, data.token);
-    } catch {
+    localStorage.setItem(SESSION_KEY, key);
+    const res = await otFetch("/api/namespaces");
+    if (!res.ok) {
+      clearSession();
+      return { ok: false, error: `The key was rejected (HTTP ${res.status}) \u2014 copy a fresh one from the pairing page` };
     }
     emitSession();
-    return { ok: true, user: data.user };
+    return { ok: true };
   } catch (err) {
+    clearSession();
     return { ok: false, error: err instanceof Error ? err.message : "Network error" };
   }
 }
@@ -6280,7 +6277,7 @@ function PairingCard() {
   async function pair() {
     setBusy(true);
     setError(null);
-    const result = await redeemPairing(code);
+    const result = await acceptPairingKey(code);
     if (!result.ok) setError(result.error ?? "Pairing failed");
     setBusy(false);
   }
@@ -6288,31 +6285,29 @@ function PairingCard() {
     /* @__PURE__ */ jsx12("p", { children: "The Throne is sealed \u2014 sign in with Google to open the Bifr\xF6st (the same login the web version uses)." }),
     /* @__PURE__ */ jsx12("button", { className: "throne-settings-btn primary", onClick: () => void openBrowser(), children: "Sign in with Google" }),
     opened && /* @__PURE__ */ jsxs13(Fragment3, { children: [
-      /* @__PURE__ */ jsx12("p", { children: "The pairing page is open in your browser \u2014 enter its code here:" }),
+      /* @__PURE__ */ jsx12("p", { children: "The pairing page is open in your browser \u2014 click the key to copy it, then paste it here:" }),
       /* @__PURE__ */ jsx12(
         "input",
         {
           className: "throne-code-input",
           value: code,
-          placeholder: "8-char code",
-          maxLength: 8,
+          placeholder: "paste the pairing key",
           autoCapitalize: "none",
+          autoCorrect: "off",
           spellCheck: false,
           onChange: (e) => setCode(e.target.value),
           onKeyDown: (e) => {
             if (e.key === "Enter") void pair();
           },
           style: {
-            width: "12ch",
-            textAlign: "center",
+            width: "min(90%, 34ch)",
             padding: "0.5rem 0.65rem",
             borderRadius: 6,
             border: "1px solid var(--gold-dim-border)",
             background: "var(--void)",
             color: "var(--gold-bright)",
             fontFamily: '"JetBrains Mono", monospace',
-            fontSize: "0.95rem",
-            letterSpacing: "0.3em"
+            fontSize: "0.72rem"
           }
         }
       ),
