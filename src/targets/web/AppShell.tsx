@@ -7,7 +7,7 @@
 // multiple switchable, closeable session tabs, each owning its own WebSocket
 // and log stream, mirroring the desktop plugin's workspace-tab UX.
 
-import { useMemo } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { App } from "../../ui/App";
 import { useThrone } from "../../ui/store";
 import { ErrorBoundary } from "../../ui/components/ErrorBoundary";
@@ -15,7 +15,34 @@ import { Sidebar } from "../../ui/components/Sidebar";
 import { SessionTabPanel } from "../../ui/components/SessionTabPanel";
 import { ThroneOverlays } from "../../ui/components/Overlays";
 
-function SidebarSurface() {
+const DEFAULT_SIDEBAR_WIDTH = 300;
+const MIN_SIDEBAR_WIDTH = 200;
+const LS_KEY = "sidebar-width";
+
+function clampWidth(w: number): number {
+  return Math.max(MIN_SIDEBAR_WIDTH, Math.min(w, Math.round(window.innerWidth * 0.5)));
+}
+
+function loadStoredWidth(): number {
+  try {
+    const v = localStorage.getItem(LS_KEY);
+    if (v) {
+      const n = parseInt(v, 10);
+      if (!isNaN(n)) return clampWidth(n);
+    }
+  } catch {
+    // ignore storage errors
+  }
+  return DEFAULT_SIDEBAR_WIDTH;
+}
+
+interface SidebarSurfaceProps {
+  sidebarWidth: number;
+  onResizeMouseDown: (e: React.MouseEvent) => void;
+  onResizeDoubleClick: () => void;
+}
+
+function SidebarSurface({ sidebarWidth, onResizeMouseDown, onResizeDoubleClick }: SidebarSurfaceProps) {
   const snap = useThrone()!;
   return (
     <Sidebar
@@ -36,12 +63,58 @@ function SidebarSurface() {
       namespaceSummaries={snap.namespaceSummaries}
       onSelectTask={snap.onSelectTask}
       sizingMode="fixed"
+      externalWidth={sidebarWidth}
+      onResizeMouseDown={onResizeMouseDown}
+      onResizeDoubleClick={onResizeDoubleClick}
     />
   );
 }
 
 export function AppShell() {
   const snap = useThrone();
+  const [sidebarWidth, setSidebarWidth] = useState<number>(loadStoredWidth);
+
+  const handleResizeMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      const startX = e.clientX;
+      const startWidth = sidebarWidth;
+
+      const onMouseMove = (ev: MouseEvent) => {
+        setSidebarWidth(clampWidth(startWidth + ev.clientX - startX));
+      };
+
+      const onMouseUp = (ev: MouseEvent) => {
+        const finalWidth = clampWidth(startWidth + ev.clientX - startX);
+        setSidebarWidth(finalWidth);
+        try {
+          localStorage.setItem(LS_KEY, String(finalWidth));
+        } catch {
+          // ignore storage errors
+        }
+        document.body.style.cursor = "";
+        document.body.style.userSelect = "";
+        document.removeEventListener("mousemove", onMouseMove);
+        document.removeEventListener("mouseup", onMouseUp);
+      };
+
+      document.body.style.cursor = "col-resize";
+      document.body.style.userSelect = "none";
+      document.addEventListener("mousemove", onMouseMove);
+      document.addEventListener("mouseup", onMouseUp);
+    },
+    [sidebarWidth],
+  );
+
+  const handleResizeDoubleClick = useCallback(() => {
+    setSidebarWidth(DEFAULT_SIDEBAR_WIDTH);
+    try {
+      localStorage.setItem(LS_KEY, String(DEFAULT_SIDEBAR_WIDTH));
+    } catch {
+      // ignore storage errors
+    }
+  }, []);
+
   // Stable element reference — same infinite-publish-loop guard as the pane:
   // every store publish re-renders AppShell, and a fresh <App/> element would
   // re-render the bridge, publishing again.
@@ -56,7 +129,11 @@ export function AppShell() {
       {snap ? (
         <div className="layout">
           <ErrorBoundary>
-            <SidebarSurface />
+            <SidebarSurface
+              sidebarWidth={sidebarWidth}
+              onResizeMouseDown={handleResizeMouseDown}
+              onResizeDoubleClick={handleResizeDoubleClick}
+            />
           </ErrorBoundary>
           <ErrorBoundary>
             <SessionTabPanel />

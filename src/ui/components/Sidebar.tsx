@@ -46,12 +46,18 @@ interface Props {
    * row leaves room for the log panel (web AppShell).
    */
   sizingMode?: "host-pane" | "fixed";
+  /** Width override for sizingMode="fixed" — set by AppShell's drag handler. */
+  externalWidth?: number;
+  /** mousedown handler wired to the drag handle (web AppShell only). */
+  onResizeMouseDown?: (e: React.MouseEvent) => void;
+  /** double-click on the handle resets to DEFAULT_WIDTH (web AppShell only). */
+  onResizeDoubleClick?: () => void;
 }
 
 // onSelectSession stays in the Props contract (both shells pass the
 // snapshot's seam through) but the drilldown tree routes all selection
 // through onSelectTask — the component itself no longer reads it.
-export function Sidebar({ jobs, activeSessionId, quote, wsState, onAvatarClick, onOdinClick, onTogglePinSession, pinnedSessionIds, onCancelJob, terminatingSessionIds, namespace, namespaces, onNamespaceChange, namespaceSummaries, onSelectTask, sizingMode = "host-pane" }: Props) {
+export function Sidebar({ jobs, activeSessionId, quote, wsState, onAvatarClick, onOdinClick, onTogglePinSession, pinnedSessionIds, onCancelJob, terminatingSessionIds, namespace, namespaces, onNamespaceChange, namespaceSummaries, onSelectTask, sizingMode = "host-pane", externalWidth, onResizeMouseDown, onResizeDoubleClick }: Props) {
   const { theme, setTheme } = useTheme();
   const [width, setWidth] = useState<number>(DEFAULT_WIDTH);
   const navRef = useRef<HTMLElement | null>(null);
@@ -77,7 +83,7 @@ export function Sidebar({ jobs, activeSessionId, quote, wsState, onAvatarClick, 
       ref={navRef}
       className="sidebar"
       aria-label="Agent sessions"
-      style={{ width: sizingMode === "fixed" ? DEFAULT_WIDTH : "100%", height: "100%" }}
+      style={{ width: sizingMode === "fixed" ? (externalWidth ?? DEFAULT_WIDTH) : "100%", height: "100%" }}
     >
       <div className="sidebar-header">
         <div className="brand">
@@ -131,6 +137,17 @@ export function Sidebar({ jobs, activeSessionId, quote, wsState, onAvatarClick, 
        * cards branched beneath their namespace in the drilldown tree above,
        * rendered exactly as the old active-namespace list rendered them. */}
       {/* Desktop port: no in-pane drag handle — the host pane sash resizes us. */}
+      {sizingMode === "fixed" && (
+        <div
+          className="sidebar-resize-handle"
+          onMouseDown={onResizeMouseDown}
+          onDoubleClick={onResizeDoubleClick}
+          role="separator"
+          aria-orientation="vertical"
+          aria-label="Resize sidebar"
+          title="Drag to resize · Double-click to reset"
+        />
+      )}
     </nav>
   );
 }
