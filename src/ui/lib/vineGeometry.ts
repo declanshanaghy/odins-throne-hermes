@@ -28,10 +28,10 @@ export interface Pt {
 
 /**
  * Which way the world's display leans. "extended" is the roomy sidebar
- * (bigger cards, wider pitch); "normal" tightens both. Compact mode never
- * renders a vine (initials-chip list instead).
+ * (bigger cards, wider pitch); "normal" tightens both; "compact" is the
+ * dense manual-toggle mode (34px pitch, 142px cards, one-line cards).
  */
-export type VineMode = "extended" | "normal";
+export type VineMode = "extended" | "normal" | "compact";
 
 /**
  * Vine + card sizing, verbatim from the prototype's `vineFor`/`.jcard`.
@@ -43,6 +43,8 @@ export const VINE = {
   pitchExtended: 57,
   /** px between card centers — normal sidebar. */
   pitchNormal: 56,
+  /** px between card centers — compact (dense) mode. */
+  pitchCompact: 34,
   /** Horizontal lean of the control points off the lantern (× dir, px). */
   leanC1: 16,
   leanC2: 30,
@@ -62,6 +64,8 @@ export const VINE = {
   cardWidthExtended: 212,
   /** Card width — normal. */
   cardWidthNormal: 190,
+  /** Card width — compact (dense) mode. */
+  cardWidthCompact: 142,
   /** Card offset past its anchor point (toward the hang side, px). */
   cardOffset: 14,
   /** Px kept clear of the scene's left edge when clamping. */
@@ -72,18 +76,22 @@ export const VINE = {
   bottomPadding: 90,
   /**
    * Guaranteed minimum px between consecutive card centers on the curve —
-   * larger than a card's height in either mode, so cards never overlap.
+   * larger than a card's height in normal/extended mode, so cards never overlap.
    */
   minCenterSpacing: 40,
+  /** Minimum px between card centers in compact mode (compact cards are ~24px tall). */
+  minCenterSpacingCompact: 24,
 } as const;
 
 /** The pitch (px between card centers) for a display mode. */
 export function vinePitch(mode: VineMode): number {
+  if (mode === "compact") return VINE.pitchCompact;
   return mode === "normal" ? VINE.pitchNormal : VINE.pitchExtended;
 }
 
 /** The vine card's width (px) for a display mode. */
 export function vineCardWidth(mode: VineMode): number {
+  if (mode === "compact") return VINE.cardWidthCompact;
   return mode === "normal" ? VINE.cardWidthNormal : VINE.cardWidthExtended;
 }
 

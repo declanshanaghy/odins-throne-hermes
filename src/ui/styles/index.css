@@ -279,6 +279,11 @@ body {
   font-family: 'Cinzel Decorative', serif;
   font-size: 1.1rem;
   color: var(--gold);
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .sidebar-header .quote {
   font-style: italic; font-size: 0.75rem;
@@ -321,6 +326,37 @@ body {
 }
 @media (prefers-reduced-motion: reduce) {
   .theme-btn { transition: none; }
+}
+/* ── Compact-view toggle button (issue #59) ─────────
+   Icon-only 26px button in the sidebar-header brand cluster,
+   left of the theme toggle. « = standard tree showing (enter compact);
+   » = compact active (exit compact). Opaque background, aria-pressed. */
+.compact-toggle-btn {
+  flex: none;
+  width: 26px; height: 26px; padding: 0;
+  border: 1px solid var(--rune-border); border-radius: 7px;
+  background: var(--forge);
+  color: var(--text-rune);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px; line-height: 1;
+  cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+.compact-toggle-btn:hover {
+  border-color: var(--teal-asgard);
+  color: var(--teal-asgard);
+}
+.compact-toggle-btn[aria-pressed="true"] {
+  border-color: var(--teal-asgard);
+  color: var(--teal-asgard);
+  background: rgba(78, 205, 196, 0.12);
+}
+.compact-toggle-btn:focus-visible {
+  outline: 2px solid var(--teal-asgard); outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .compact-toggle-btn { transition: none; }
 }
 /* ── Namespace lantern tree (issues #11, #12 + #39, garden pattern) ─── */
 /* Each namespace is seated on one of the backdrop's PAINTED lanterns at its
@@ -790,9 +826,23 @@ body {
 .jact:focus-visible { outline: 1.5px solid var(--teal-asgard); outline-offset: 1px; }
 
 /* normal (non-extended) sidebar: tighter cards, same strand */
-.ns-tree--lanterns:not(.ns-tree--extended) .jcard { width: 190px; padding: 4px 7px; }
-.ns-tree--lanterns:not(.ns-tree--extended) .jcard__title { font-size: 10.5px; }
-.ns-tree--lanterns:not(.ns-tree--extended) .jcard__meta { font-size: 8.5px; }
+.ns-tree--lanterns:not(.ns-tree--extended):not(.ns-tree--compact) .jcard { width: 190px; padding: 4px 7px; }
+.ns-tree--lanterns:not(.ns-tree--extended):not(.ns-tree--compact) .jcard__title { font-size: 10.5px; }
+.ns-tree--lanterns:not(.ns-tree--extended):not(.ns-tree--compact) .jcard__meta { font-size: 8.5px; }
+
+/* ── compact (dense) lantern tree — issue #59 ──────────────────────────────
+   The manual compact-toggle mode: same vine + anchors + pips + berries + HUD,
+   but denser metrics. Cards squash to ONE line (compact prop strikes meta row
+   and clasps at the JSX level). Count numbers stay standard-only. */
+.ns-tree--lanterns.ns-tree--compact .ns-tree__lantern { width: 40px; height: 40px; }
+.ns-tree--lanterns.ns-tree--compact .ns-tree__icon--lantern { width: 24px; height: 24px; }
+.ns-tree--lanterns.ns-tree--compact .ns-tree__icon--lantern.ns-tree__icon--fallback { font-size: 1rem; }
+/* compact counts: orbs stay, number labels are standard-only (ns-tree--extended) */
+.ns-tree--lanterns.ns-tree--compact .ns-tree__counts { top: calc(50% + 24px); }
+/* compact piprow sits tighter under the smaller lantern */
+.ns-tree--lanterns.ns-tree--compact .piprow { top: calc(50% + 36px); }
+/* compact jcards: 142px wide, 3px 7px padding, title 9.5px */
+.jcard--compact { width: 142px !important; padding: 3px 7px !important; }
 
 @keyframes vine-pulse   { 50% { transform: scale(1.35); } }
 @keyframes vine-flicker { 50% { opacity: 0.55; } }
@@ -942,70 +992,8 @@ body {
 }
 .ns-tree__icon--task.ns-tree__icon--fallback { font-size: 0.48rem; }
 
-/* Compact sidebar: collapse to an initials chip + on-demand mini-tree */
-.ns-tree--compact {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-top: 0.4rem;
-}
-.ns-tree__chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.6rem;
-  color: var(--gold);
-  background: var(--chain);
-  border: 1px solid var(--rune-border);
-  border-radius: 3px;
-  padding: 0.1rem 0.25rem;
-  letter-spacing: 0.04em;
-  cursor: pointer;
-}
-.ns-tree__chip:hover, .ns-tree__chip:focus { border-color: var(--gold); }
-.ns-tree__chip-count {
-  font-size: 0.55rem;
-  color: var(--text-void);
-}
-.ns-tree--compact .ns-tree__list {
-  width: 100%;
-  margin-top: 0.3rem;
-  max-height: 30vh;
-  overflow-y: auto;
-}
-.ns-tree--compact .ns-tree__item {
-  min-width: 0;
-}
-.ns-tree--compact .ns-tree__row {
-  display: flex;
-  flex-direction: row;
-  justify-content: flex-start;
-  align-items: center;
-  gap: 0.25rem;
-  width: 100%;
-  padding: 0.15rem 0.25rem;
-  background: none;
-  border: none;
-  border-radius: 3px;
-  color: var(--text-rune);
-  cursor: pointer;
-  text-align: left;
-  font-size: inherit;
-  font-family: inherit;
-}
-.ns-tree--compact .ns-tree__row:hover,
-.ns-tree--compact .ns-tree__row:focus {
-  background: var(--chain);
-  color: var(--text-saga);
-}
-.ns-tree--compact .ns-tree__item--active .ns-tree__row {
-  color: var(--gold);
-  border-color: var(--gold);
-}
-.ns-tree--compact .ns-tree__icon--task { width: 10px; height: 10px; }
-.ns-tree__compact-initials { color: var(--gold); letter-spacing: 0.04em; }
-.ns-tree__compact-count { color: var(--text-void); font-size: 0.55rem; margin-left: auto; }
+/* .ns-tree--compact is now the dense-lantern-tree class — no chip rail, no initials list.
+   Compact lantern metrics are in the section above (ns-tree--lanterns.ns-tree--compact). */
 
 .card-list { flex: 1; overflow-y: auto; padding: 0.5rem; }
 

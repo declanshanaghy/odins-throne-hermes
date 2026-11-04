@@ -61,7 +61,7 @@ writeFileSync(join(tmp, "useJobs.mjs"), pureUseJobs);
 const { sortJobs } = await import(pathToFileURL(join(tmp, "useJobs.mjs")).href);
 
 // ── scene fixtures ─────────────────────────────────────────────────────────
-const MODES = ["extended", "normal"];
+const MODES = ["extended", "normal", "compact"];
 const SCENE = { w: 432, h: 576 }; // the prototype sidebar's painted box (3:4)
 const seats = assignSeats(["fenrir-agents", "say-so-agents", "a-new-world-x"]);
 const seat = seats.get("fenrir-agents");
@@ -82,8 +82,9 @@ for (const mode of MODES) {
   assert.equal(v.dir, seat.dir, `${mode}: the strand leans off the seat's dir`);
 }
 
-// ── 2. cards never overlap at ANY job count, in either mode ───────────────
+// ── 2. cards never overlap at ANY job count, in every mode ───────────────
 for (const mode of MODES) {
+  const minSpacing = mode === "compact" ? VINE.minCenterSpacingCompact : VINE.minCenterSpacing;
   for (let n = 1; n <= 64; n++) {
     const v = vineFor(seat, n, SCENE.w, SCENE.h, mode);
     let prevY = -Infinity;
@@ -93,8 +94,8 @@ for (const mode of MODES) {
       const dy = p.y - (i === 0 ? v.points[0].y : v.points[i - 1].y);
       if (i > 0) {
         assert.ok(
-          dy >= VINE.minCenterSpacing,
-          `${mode} n=${n}: card ${i} centers ≥ ${VINE.minCenterSpacing}px apart (got ${dy.toFixed(1)}px) — never overlapping`,
+          dy >= minSpacing,
+          `${mode} n=${n}: card ${i} centers ≥ ${minSpacing}px apart (got ${dy.toFixed(1)}px) — never overlapping`,
         );
       }
       prevY = p.y;
@@ -137,7 +138,7 @@ assert.equal(
   "canvas height = vine tip + breathing room",
 );
 
-// ── 5. every hung card stays clamped inside the scene box ─────────────────
+// ── 5. every hung card stays clamped inside the scene box, in every mode ──
 for (const mode of MODES) {
   const cardW = vineCardWidth(mode);
   for (const s of SEAT_POOL) {
@@ -152,6 +153,15 @@ for (const mode of MODES) {
       assert.equal(box.side, v.dir === 1 ? "right" : "left", "side follows the hang direction");
     }
   }
+}
+
+// ── 5b. compact mode: 34px pitch, 142px cards, denser than normal ──────────
+{
+  const vc = vineFor(seat, 2, SCENE.w, SCENE.h, "compact");
+  const vn = vineFor(seat, 2, SCENE.w, SCENE.h, "normal");
+  assert.ok(vc.bottom < vn.bottom, "compact strand is shorter (tighter pitch) than normal at same count");
+  assert.equal(vineCardWidth("compact"), VINE.cardWidthCompact, "compact card width is the dense value");
+  assert.equal(vinePitch("compact"), VINE.pitchCompact, "compact pitch is 34px");
 }
 
 // ── 6. hang order: running → failed → pending → succeeded ──────────────────
@@ -210,5 +220,5 @@ for (const s of ["running", "pending", "failed", "succeeded", "cached", "purged"
   assert.ok(taskIconFallback(s).length > 0, `inline fallback exists for ${s}`);
 }
 
-console.log("VINE PASS — strand geometry (seat-anchored bezier, extends with job count, never-overlapping at any count, clamped in-scene, canvas scrolls), hang order (running → failed → pending → succeeded), status sigils (hammer/dice/raven/ring + fallbacks)");
+console.log("VINE PASS — strand geometry (seat-anchored bezier, extends with job count, never-overlapping at any count in all three modes incl. compact 34px pitch, clamped in-scene, canvas scrolls), hang order (running → failed → pending → succeeded), status sigils (hammer/dice/raven/ring + fallbacks)");
 process.exit(0);
