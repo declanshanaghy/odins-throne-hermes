@@ -742,7 +742,7 @@ function startLogStream(ws, sessionId, namespace, getJobs) {
   return cancel;
 }
 var HEARTBEAT_INTERVAL_MS = 2e4;
-function attachWebSocketServer(server2, labelSelector = "app.kubernetes.io/component=agent-sandbox", allowedNamespaces = ["fenrir-agents"], defaultNamespace = "fenrir-agents") {
+function attachWebSocketServer(server, labelSelector = "app.kubernetes.io/component=agent-sandbox", allowedNamespaces = ["fenrir-agents"], defaultNamespace = "fenrir-agents") {
   const nsContexts = /* @__PURE__ */ new Map();
   function getOrCreateContext(namespace) {
     const existing = nsContexts.get(namespace);
@@ -864,7 +864,7 @@ function attachWebSocketServer(server2, labelSelector = "app.kubernetes.io/compo
   };
   const wss = new WebSocketServer({ noServer: true });
   const botWss = new WebSocketServer({ noServer: true });
-  server2.on("upgrade", (req, socket, head) => {
+  server.on("upgrade", (req, socket, head) => {
     const path = (req.url ?? "").split("?")[0];
     if (path === "/bot/ws") {
       botWss.handleUpgrade(
@@ -882,12 +882,33 @@ function attachWebSocketServer(server2, labelSelector = "app.kubernetes.io/compo
   return wss;
 }
 
+// server/spaEntry.ts
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
+var SPA_ENTRY_CACHE_CONTROL = "no-store";
+function spaEntryHandler(distDir) {
+  return async (c) => {
+    try {
+      const html = await readFile(join(distDir, "index.html"), "utf8");
+      return c.body(html, 200, {
+        "Content-Type": "text/html; charset=utf-8",
+        "Cache-Control": SPA_ENTRY_CACHE_CONTROL
+      });
+    } catch {
+      return c.text("Not found", 404);
+    }
+  };
+}
+
 // server/index.ts
+import { pathToFileURL } from "node:url";
+import { realpathSync } from "node:fs";
 var app = new Hono();
 var PORT = parseInt(process.env.PORT ?? "3001", 10);
 var DEFAULT_NAMESPACE = process.env.K8S_NAMESPACE ?? "fenrir-agents";
 var JOB_LABEL = process.env.JOB_LABEL_SELECTOR ?? "app.kubernetes.io/component=agent-sandbox";
 var WEB_DIST = process.env.WEB_DIST ?? "dist-ui";
+var spaEntry = spaEntryHandler(WEB_DIST);
 var DEFAULT_NAMESPACES = [
   { id: "fenrir-agents", label: "Fenrir Ledger Agents" },
   { id: "say-so-agents", label: "SaySo Agents" },
@@ -1049,12 +1070,29 @@ app.get("/bot/api/namespaces", listNamespaces);
 app.get("/bot/api/jobs", listJobs);
 app.get("/bot/api/logs/:sessionId", downloadLogs);
 app.delete("/bot/api/jobs/:sessionId", deleteJob);
-app.use("/*", serveStatic({ root: WEB_DIST }));
-app.get("/*", serveStatic({ path: `${WEB_DIST}/index.html` }));
-var server = serve({ fetch: app.fetch, port: PORT }, (info) => {
-  console.log(`[odin-throne] Listening on http://localhost:${info.port}`);
+var ASSET_CACHE_CONTROL = "public, max-age=31536000, immutable";
+app.get("/", spaEntry);
+app.get("/index.html", spaEntry);
+app.use("/assets/*", async (c, next) => {
+  c.header("Cache-Control", ASSET_CACHE_CONTROL);
+  await next();
 });
-attachWebSocketServer(server, JOB_LABEL, NAMESPACES.map((n) => n.id), DEFAULT_NAMESPACE);
+app.use("/*", serveStatic({ root: WEB_DIST }));
+app.get("/*", spaEntry);
+function startServer() {
+  const server = serve({ fetch: app.fetch, port: PORT }, (info) => {
+    console.log(`[odin-throne] Listening on http://localhost:${info.port}`);
+  });
+  attachWebSocketServer(server, JOB_LABEL, NAMESPACES.map((n) => n.id), DEFAULT_NAMESPACE);
+}
+var isMainEntry = (() => {
+  try {
+    return process.argv[1] !== void 0 && import.meta.url === pathToFileURL(realpathSync(process.argv[1])).href;
+  } catch {
+    return false;
+  }
+})();
+if (isMainEntry) startServer();
 export {
   app
 };

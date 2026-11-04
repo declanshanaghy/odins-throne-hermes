@@ -11,7 +11,8 @@ import jsdomPkg from "jsdom";
 const { JSDOM } = jsdomPkg;
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
-import { existsSync } from "node:fs";
+import { existsSync, mkdtempSync, mkdirSync, writeFileSync, readdirSync, readFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
@@ -932,5 +933,69 @@ for (const s of ["rapid-a", "rapid-b", "rapid-c"]) {
   );
 }
 
-console.log("SMOKE PASS — pane + page render, namespace lantern tree (lanterns seated on the painting, vine-strand job cards hung from the open lantern: running → failed → pending → succeeded order, status sigils hammer/dice/raven/ring, panel-body click opens session tab (issue:43 — no open/focus button duplicate), icon-only pin · cancel actions with tooltips, terminating tremble, scroller + canvas beneath the rooted painting, old flat list gone), CSS scoped, theme plugin-local, overlays wired, per-session workspace tabs (issue:6: open per click, focus dedupe, cancel + strip-close teardown, cross-world capture)");
+// ── issue #55: SPA entry cache-bust (the hall server, Hono) ─────────────────
+// Odin kept seeing the removed "focus" button on popup job cards while every
+// live surface audited clean — the only surviving explanation was a stale
+// cached pre-#45 bundle in the webview (fenrir-ledger #2380 class). The
+// server now serves the SPA entry with Cache-Control: no-store; hashed
+// /assets/* stay immutable-cached. Asserted against the REAL app, imported
+// straight from source (the listener only boots when run as main, so the
+// import is side-effect-free), with a fixture WEB_DIST.
+{
+  const webDist = mkdtempSync(join(tmpdir(), "odin-spa-"));
+  mkdirSync(join(webDist, "assets"), { recursive: true });
+  writeFileSync(join(webDist, "index.html"), "<!doctype html><title>hall</title>");
+  writeFileSync(join(webDist, "assets", "index-D4SH3D.js"), 'console.log("hashed bundle");');
+
+  process.env.WEB_DIST = webDist;
+  const { app } = await import("../server/index.ts");
+
+  // Every path that hands a browser the entry document carries no-store —
+  // a stale pre-deploy bundle can never persist after a deploy.
+  for (const path of ["/", "/index.html", "/sessions/abc-1200/step1"]) {
+    const res = await app.request(path);
+    assert.equal(res.status, 200, `SPA entry served for ${path}`);
+    assert.ok(
+      (res.headers.get("content-type") ?? "").startsWith("text/html"),
+      `entry content-type is html for ${path}`,
+    );
+    assert.equal(
+      res.headers.get("cache-control"),
+      "no-store",
+      `issue #55: SPA entry ${path} served Cache-Control: no-store`,
+    );
+  }
+
+  // Hashed asset URLs are content-addressed — they stay long-cached.
+  const asset = await app.request("/assets/index-D4SH3D.js");
+  assert.equal(asset.status, 200, "hashed asset served");
+  assert.equal(
+    asset.headers.get("cache-control"),
+    "public, max-age=31536000, immutable",
+    "issue #55: content-hashed /assets/* stay immutable-cached",
+  );
+
+  // The API surface is untouched by the cache policy.
+  const health = await app.request("/healthz");
+  assert.equal(health.status, 200, "healthz still 200");
+  assert.ok((health.headers.get("content-type") ?? "").includes("json"), "healthz still JSON");
+
+  // Bundled-artifact audit: when the real web bundle is built
+  // (npm run build:web → dist-ui/), the served entry and its hashed assets
+  // carry no open/focus text-button straggler — the class #45 removed.
+  const realDist = join(here, "..", "dist-ui");
+  if (existsSync(realDist)) {
+    const built = readdirSync(realDist, { recursive: true }).filter((f) => /\.(html|js|css)$/.test(String(f)));
+    assert.ok(built.length > 0, "issue #55 audit: dist-ui has artifacts to scan");
+    for (const f of built) {
+      const text = readFileSync(join(realDist, String(f)), "utf8");
+      assert.ok(
+        !text.includes("jact--open"),
+        `issue #55 audit: built web artifact ${f} contains no open/focus text button`,
+      );
+    }
+  }
+}
+
+console.log("SMOKE PASS — pane + page render, namespace lantern tree (lanterns seated on the painting, vine-strand job cards hung from the open lantern: running → failed → pending → succeeded order, status sigils hammer/dice/raven/ring, panel-body click opens session tab (issue:43 — no open/focus button duplicate), icon-only pin · cancel actions with tooltips, terminating tremble, scroller + canvas beneath the rooted painting, old flat list gone), CSS scoped, theme plugin-local, overlays wired, per-session workspace tabs (issue:6: open per click, focus dedupe, cancel + strip-close teardown, cross-world capture), SPA entry Cache-Control: no-store + hashed /assets immutable (issue:55 — no stale cached bundle after a deploy)");
 process.exit(0);
