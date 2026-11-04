@@ -34,18 +34,45 @@ issue #10 — this directory + `src/ui/lib/treeSeats.ts`.
 
 ## Regenerating the backdrop
 
-The painting was generated with the `/imagen` generator (Gemini image
-generation). API key: 1Password vault item **"Gemini API"**.
+The painting is generated with the `/imagen` generator (Gemini image
+generation). The skill lives in the pack — `claude-pack/skills/imagen`,
+moved there from `fenrir-ledger/.claude/skills/imagen` on 2026-11-04 — so
+from any pack consumer repo:
 
-1. Retrieve the key from 1Password ("Gemini API") and authenticate with the
-   generator.
-2. Prompt for the dark (default) variant — the moonlit scene:
-   a moonlit tree of life at night, moss-covered trunk, spreading boughs
-   with leaf-shaped lanterns hanging, deep blue-greens, painterly, portrait
-   3:4, no text. Keep boughs in the upper third so lantern seats stay valid.
-3. Request a 3:4 portrait at ~896x1200 or larger; downscale to 896x1200 and
-   export JPEG (quality ~85 — the shipped file is ~725 KB).
-4. Overwrite `tree-backdrop.jpg`.
+    npx tsx .claude/skills/imagen/generate.ts "<prompt>" --size 3:4 --count 4
+
+API key: 1Password vault item **"Gemini API"** (field `credential`), passed
+inline as `GEMINI_API_KEY` — never written to a file. The generator returns
+JPEG bytes under `.png` names: verify with `file <asset>` before any pixel
+work. Ship at 896x1200, JPEG ~q85.
+
+Two compositions stand:
+
+- **Wide (the current shipped `tree-backdrop.jpg`)** — boughs across the top
+  third, lanterns spread wide:
+  a moonlit tree of life at night, moss-covered trunk, spreading boughs
+  with leaf-shaped lanterns hanging, deep blue-greens, painterly, portrait
+  3:4, no text. Keep boughs in the upper third so lantern seats stay valid.
+
+- **Tall vertical (the v3.7 prototype contract on `design-tree-display` —
+  tree in the left third, lanterns climbing the full height, cool palette)**
+  — a moonlit tree of life at night, moss-covered trunk, deep blue-greens,
+  painterly, portrait 3:4, no text. Cool moonlit palette: deep teal and
+  indigo night sky, lanterns glowing pale cool white-blue like moonlight,
+  subtle atmospheric depth, soft edges, no bold swirls, no warm orange
+  light. One tall narrow tree standing in the left third of the frame,
+  roots near the bottom edge, crown near the top edge. Ten pale glowing
+  leaf-shaped lanterns hang from its boughs, ALL within the left 40 percent
+  of the frame's width, spread across the full height from near the roots
+  up to just below the crown. The middle and right of the frame are open
+  starry night sky with a small moon. Keep every lantern in the left third
+  so lantern seats stay valid.
+
+After a repaint, re-map seats as below. Note for the v3.7 contract: the
+prototype stores `SEAT_POOL` in PAINTING percentages and projects them per
+display mode (`projectSeat()` — cover-center crop in standard, `fill` in
+compact), so the interactive lanterns sit on the painted leaf-lanterns at
+any panel width; the port should carry that projection over.
 
 ## Re-mapping seats after a repaint
 
