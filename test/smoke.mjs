@@ -517,14 +517,20 @@ for (const sel of [".jcard:focus-visible", ".ns-tree__lantern:focus-visible", ".
   assert.ok(css.includes(sel), `keyboard focus ring present in the CSS: ${sel}`);
 }
 
-// No glass disc over the painting (issue #39): the lantern button is a
-// transparent hit area — no gradient disc, border, or blur — and the active
-// world's light is a screen blend that only brightens the painted lantern.
+// Stone skin (issue #69 v3.9): the lantern button is a dark-slate stone disc
+// with a radial gradient and glow — active opens (teal ring, translucent
+// center, z7); inactive fades to ghost (opacity 0.5, z4).
 const lanternRule = css.match(/\.ns-tree__lantern\s*\{([^}]*)\}/)?.[1] ?? "";
 assert.ok(lanternRule, "the lantern rule ships in the CSS");
-assert.match(lanternRule, /background:\s*transparent/, "lantern button has a transparent background");
-assert.match(lanternRule, /border:\s*0/, "lantern button has no border ring");
-assert.doesNotMatch(lanternRule, /radial-gradient|backdrop-filter|box-shadow|rotate/, "no glass-disc chrome on the lantern button");
+assert.match(lanternRule, /radial-gradient/, "lantern button has the stone radial gradient");
+assert.match(lanternRule, /border-radius:\s*50%/, "lantern button is a circle (border-radius 50%)");
+const activeLanternRule = css.match(/\.ns-tree__lantern--active\s*\{([^}]*)\}/)?.[1] ?? "";
+assert.ok(activeLanternRule, "active lantern rule ships in the CSS");
+assert.match(activeLanternRule, /z-index:\s*7/, "active lantern floats above (z-index 7)");
+const inactiveLanternRule = css.match(/\.ns-tree__lantern--inactive\s*\{([^}]*)\}/)?.[1] ?? "";
+assert.ok(inactiveLanternRule, "inactive lantern rule ships in the CSS");
+assert.match(inactiveLanternRule, /opacity:\s*0\.5/, "inactive stone fades to 0.5 opacity");
+assert.match(inactiveLanternRule, /z-index:\s*4/, "inactive stone recedes to z-index 4");
 const lightRule = css.match(/\.ns-tree__lantern::before\s*\{([^}]*)\}/)?.[1] ?? "";
 assert.match(lightRule, /mix-blend-mode:\s*screen/, "the lantern light brightens the painting (screen blend), never covers it");
 assert.match(lightRule, /opacity:\s*0/, "the lantern light is off until hovered/selected");

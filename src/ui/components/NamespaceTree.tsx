@@ -1,46 +1,28 @@
-// Namespace lantern tree (issues #11, #12 + #39) — the garden pattern's tree
-// display: each namespace (a "world") is seated on one of the backdrop's
-// PAINTED lanterns at its runtime-assigned seat (lib/treeSeats.ts — curated
-// painted lanterns first, djb2-hash fallback, terrace stack beyond the
-// pool). No UI disc covers the painting: the lantern button is a
-// transparent hit area holding the world's curated shanaghy.com icon
-// (inline glyph fallback offline via TreeIcon); the ACTIVE world's painted
-// lantern brightens with a screen-blended glow. Beneath each lantern a row
-// of small task icons counts the world's tasks — one per task, capped with
-// a "+N" chip (lib/taskPips.ts) — and a hover/focus label shows the world
-// name + full summary line.
+// Namespace stone tree (issues #11, #12, #39, #59, #69) — v3.9
 //
-// The OPEN world's work hangs from its lantern as a VINE STRAND (issue #12,
-// per the approved prototype): a curved bezier cascade that extends from
-// the lantern's seat — growing one pitch per job — with the world's job
-// cards hung along it, evenly spaced and never overlapping, ordered
-// running → failed → pending → succeeded (useJobs.sortJobs). The painting
-// and the lanterns stay ROOTED (static overlay above); only the vine and
-// its cards scroll (the .ns-tree__scroller/.ns-tree__canvas structure) —
-// so a strand that outgrows the panel scrolls beneath the scene.
+// v3.9 (issue #69): the tree becomes a vertical painted tree where each
+// namespace is a visible dark-slate STONE overlaying a painted leaf-lantern.
+// The active (selected) world's stone OPENS (teal ring, translucent, z7);
+// every other stone FADES into the background (ghost-transparent, opacity .5,
+// z4). The whole scene — backdrop + stones + vine + cards — scrolls TOGETHER
+// in one canvas so the task list is ALWAYS attached to its stone.
 //
-//    o   Fenrir Ledger Agents        ← icon in the painted lantern (role=treeitem)
+// Key changes from v3.8:
+//   - `<img class="ns-tree__backdrop">` replaces the CSS background-image
+//     (height pinned to scene by JS so it roots above the extended canvas)
+//   - `ns-tree__roots` lives INSIDE the scrolling canvas (scroll-together)
+//   - Stones carry `--inactive` / `--active` classes (not just `--active`)
+//   - Seats are in PAINTING %; `projectSeat()` maps to scene % before use
+//   - All summaries preload at boot (useNamespaceSummaries already does this)
+//   - Vine curls to branch rail at 44% sceneW, then descends (vineGeometry v3.9)
+//
+//    o   Fenrir Ledger Agents        ← stone overlaying painted lantern (role=treeitem)
 //  ⚒⚒✖⏳ 12 tasks · 2 running · …    ← task pips (+N) + hover label
-//   ╰─⌒─⌒─⌒─⌒─╮                      ← the vine (SVG bezier, from the seat)
-//      [jcard s-run-1 RUNNING]       ← full cards on the strand
-//      [jcard s-fail-1 FAILED]       ← each: sigil · title · meta · actions
+//   ╰─────────╮                       ← vine to branch rail at 44%
+//              [jcard s-run-1 RUNNING] ← full cards on the strand
+//              [jcard s-fail-1 FAILED] ← each: sigil · title · meta · actions
 //
-// STRICT ACCORDION: one world's vine is open at a time. Clicking a lantern
-// selects that world (reconnects the live WS feed, same as the old dropdown)
-// and grows its vine, retracting the previous one; clicking the open
-// lantern collapses it; reopening regrows it. No orphan states — if the open
-// world disappears from the API list the vine closes.
-//
-// Before a world's summary lands its label shows "…" and the vine seat
-// shows "fetching the world's work…"; empty worlds show "no tasks in this
-// world"; a failed summary dims the seat and shows "summary unavailable".
-// Cancelled work: the card trembles while terminating, then falls (the
-// tree renders a falling ghost) and is purged from the strand; its tab
-// closed with the pod.
-//
-// Display modes mirror the sidebar: extended seats bigger icons + roomier
-// pips + wider card pitch, normal shrinks them, compact renders the same
-// lantern tree with dense one-line cards (vine pitch 34px, 142px cards).
+// STRICT ACCORDION: one world's vine is open at a time.
 
 import { useEffect, useMemo, useRef, useState, useLayoutEffect } from "react";
 import type { CSSProperties } from "react";
@@ -54,7 +36,7 @@ import {
   taskIcon,
   taskIconFallback,
 } from "../lib/namespaceIcons";
-import { assignSeats } from "../lib/treeSeats";
+import { assignSeats, projectSeat } from "../lib/treeSeats";
 import { taskPips, pipStripLeft, pipStripWidth } from "../lib/taskPips";
 import {
   vineFor,
@@ -68,15 +50,6 @@ import { TreeIcon } from "./TreeIcon";
 import { VineCard, isCancellable } from "./VineCard";
 import type { DisplayMode } from "./Sidebar";
 
-/**
- * The painted tree-scene backdrop (issue #10) is exposed as a CSS custom
- * property on the tree root: the scene renders it as a cover background and
- * the lantern overlay (issue #11) seats namespaces onto the painting.
- */
-function treeBackdropStyle(): CSSProperties {
-  return { "--tree-backdrop": `url(${JSON.stringify(treeBackdrop)})` } as CSSProperties;
-}
-
 interface Props {
   namespace: string;
   namespaces: NamespaceOption[];
@@ -86,9 +59,7 @@ interface Props {
   onSelectTask: (nsId: string, sessionId: string, job?: DisplayJob) => void;
   activeSessionId: string | null;
   displayMode: DisplayMode;
-  /** Job-card interactions, threaded through from the Sidebar exactly as the
-   * old flat job list received them. (The vine cards carry no avatar — the
-   * sigil is the taskIcon — so this is accepted for interface stability.) */
+  /** Job-card interactions, threaded through from the Sidebar. */
   onAvatarClick?: (agentKey: string) => void;
   onTogglePinSession?: (sessionId: string) => void;
   pinnedSessionIds?: Set<string>;
@@ -99,8 +70,7 @@ interface Props {
 /**
  * The open world's strand: the summary fetch's raw job list, parsed to
  * DisplayJobs and hung in the vine order (running → failed → pending →
- * succeeded). Purged jobs are excluded — their pod is gone, so there is
- * nothing to hang.
+ * succeeded). Purged jobs are excluded.
  */
 function tasksOf(summaryJobs: Job[] | undefined) {
   if (!summaryJobs) return [];
@@ -117,7 +87,7 @@ function labelLineOf(summary: NamespaceSummaries[string] | undefined): string {
   return summaryLine(summary);
 }
 
-/** A note pill's position near the lantern seat, in percent of scene. */
+/** A note pill's position near the seat, in percent of scene. */
 function notePos(seat: { x: number; y: number }, angleDeg: number): CSSProperties {
   const ang = (angleDeg * Math.PI) / 180;
   const r = 11;
@@ -151,19 +121,16 @@ export function NamespaceTree({
   terminatingSessionIds,
 }: Props) {
   const isCompact = displayMode === "compact";
-  // Lantern seats are ASSIGNED at runtime over whatever the API returned —
-  // curated painted lanterns first, never stealable (lib/treeSeats.ts).
+  // Painting-% seats assigned at runtime; projectSeat() maps to scene % before use.
   const seats = useMemo(
     () => assignSeats(namespaces.map((ns) => ns.id)),
     [namespaces],
   );
   // Strict accordion: the one world whose vine is open (null = collapsed).
-  // The active world starts pre-drilled, like the old tree.
   const [openNs, setOpenNs] = useState<string | null>(namespace);
-  // Hover/focus reveals the garden label (name + full summary line).
   const [hoveredNs, setHoveredNs] = useState<string | null>(null);
 
-  // ── scene measurement: the vine geometry needs the painted box in px ──
+  // ── scene measurement: vine geometry + projectSeat need the scene box in px ──
   const sceneRef = useRef<HTMLDivElement | null>(null);
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const [sceneSize, setSceneSize] = useState({ w: 0, h: 0 });
@@ -177,17 +144,14 @@ export function NamespaceTree({
     return () => ro.disconnect();
   }, []);
 
-  // No orphan states: a world gone from the API list closes its vine, and
-  // a vine opened for a since-renamed world tracks the active one.
+  // No orphan states: a world gone from the API list closes its vine.
   useEffect(() => {
     setOpenNs((prev) => (prev && namespaces.some((ns) => ns.id === prev) ? prev : null));
   }, [namespaces]);
 
   /**
-   * Clicking a lantern SELECTS the world (same as the old dropdown) and
-   * toggles the accordion: the open world collapses, any other world grows
-   * its vine and the previous strand retracts. A fresh vine reads from the
-   * lantern (scroll reset).
+   * Clicking a stone SELECTS the world (same as the old dropdown) and toggles
+   * the accordion: the open world collapses, any other world grows its vine.
    */
   const selectWorld = (nsId: string) => {
     onNamespaceChange(nsId);
@@ -199,12 +163,18 @@ export function NamespaceTree({
   const openWorld = namespaces.find((ns) => ns.id === openNs) ?? null;
   const openSummary = openNs ? summaries[openNs] : undefined;
   const openTasks = useMemo(() => tasksOf(openSummary?.jobs), [openSummary]);
-  const openSeat = openWorld ? seats.get(openWorld.id) : undefined;
+  const openPaintSeat = openWorld ? seats.get(openWorld.id) : undefined;
+  // Project the open world's seat for vine geometry (scene % from painting %)
+  const openSeat = useMemo(() => {
+    if (!openPaintSeat || sceneSize.w === 0 || sceneSize.h === 0) return openPaintSeat;
+    const mode = isCompact ? "compact" : "standard";
+    const p = projectSeat(openPaintSeat, mode, sceneSize.w, sceneSize.h);
+    return { x: p.x, y: p.y, dir: openPaintSeat.dir };
+  }, [openPaintSeat, isCompact, sceneSize.w, sceneSize.h]);
   const summaryLoaded = openSummary !== undefined;
   const summaryFailed = openSummary?.error != null;
 
-  // ── the vine: geometry from the open lantern's seat, in scene px ──
-  // compact renders the dense tree with 34px pitch; normal and extended differ in roomy vs tight.
+  // ── the vine: geometry from the open lantern's projected seat ──
   const vineMode: VineMode = displayMode === "compact" ? "compact" : displayMode === "normal" ? "normal" : "extended";
   const vine = useMemo(() => {
     if (!openWorld || !openSeat || summaryFailed) return null;
@@ -213,11 +183,6 @@ export function NamespaceTree({
   const canvasHeight = vine ? vineCanvasHeight(vine, sceneSize.h) : 0;
 
   // ── falling ghosts: a cancelled card's purge plays the fall ──
-  // When a task that was terminating (Ragnarök confirmed) vanishes from
-  // the summary — its pod purged — its card keeps hanging just long enough
-  // to fall (FALL_MS), then is swept. Live WS updates alone (status changes
-  // on surviving tasks) never enter this path, so re-renders never replay
-  // the sprout NOR ghost a living card.
   const [falling, setFalling] = useState<FallingCard[]>([]);
   const prevTasksRef = useRef<DisplayJob[]>([]);
   const prevOpenNsRef = useRef<string | null>(openNs);
@@ -227,8 +192,6 @@ export function NamespaceTree({
     const worldChanged = prevOpenNsRef.current !== openNs;
     prevOpenNsRef.current = openNs;
     if (!vine || worldChanged) {
-      // a retracted vine unmounts its cards at once — no fall choreography
-      // across a world switch, and nothing hangs on a closed world
       setFalling([]);
       return;
     }
@@ -240,8 +203,6 @@ export function NamespaceTree({
     );
     if (newlyFalling.length === 0) return;
     const ghosts: FallingCard[] = newlyFalling.map((job) => {
-      // Re-create the card's last box from the CURRENT vine (count minus the
-      // purged card shifted the anchors; close enough for a 0.9s farewell).
       const idx = Math.max(
         0,
         prev.findIndex((j) => j.sessionId === job.sessionId),
@@ -265,29 +226,175 @@ export function NamespaceTree({
     displayMode === "compact" ? "ns-tree--compact" : "",
   ].filter(Boolean).join(" ");
 
+  // Determine actual canvas height for the scrolling canvas
+  // The backdrop and roots overlay are pinned to the scene height; the canvas
+  // grows below for long vines so the vine + cards extend beyond the scene.
+  const effectiveCanvasHeight = Math.max(canvasHeight, sceneSize.h);
+
   return (
     <div
       className={rootClass}
       role="tree"
       aria-label="Namespace tree"
-      style={treeBackdropStyle()}
     >
-      {/* ── the painted scene: lanterns rooted, the vine scrolls beneath ── */}
+      {/* ── the painted scene ── */}
       <div className="ns-tree__scene" ref={sceneRef}>
-        {/* the scroller: only the vine + its cards move — the painting and
-            the lanterns above stay rooted (prototype's .scroller/.canvas) */}
         <div
           className="ns-tree__scroller"
           ref={scrollerRef}
           role={openWorld ? "group" : undefined}
           aria-label={openWorld ? `${openWorld.label} tasks` : undefined}
         >
-          <div className="ns-tree__canvas" style={{ height: `${canvasHeight}px` }}>
+          {/* v3.9 — ONE scrolling canvas: backdrop + stones + vine + cards scroll together */}
+          <div
+            className="ns-tree__canvas"
+            style={{ height: effectiveCanvasHeight > 0 ? `${effectiveCanvasHeight}px` : undefined }}
+          >
+            {/* backdrop img: pinned to scene height so it stays rooted */}
+            <img
+              className="ns-tree__backdrop"
+              src={treeBackdrop}
+              alt=""
+              aria-hidden="true"
+              style={sceneSize.h > 0 ? { height: `${sceneSize.h}px` } : undefined}
+            />
+
+            {/* stones overlay: pinned to scene height, lives inside canvas (scroll-together) */}
+            <ul
+              className="ns-tree__roots"
+              style={sceneSize.h > 0 ? { height: `${sceneSize.h}px` } : undefined}
+            >
+              {namespaces.map((ns) => {
+                const summary = summaries[ns.id];
+                const isActive = ns.id === namespace;
+                const isOpen = openNs === ns.id;
+                const paintSeat = seats.get(ns.id)!;
+                // Project painting % → scene % for positioning
+                const mode = isCompact ? "compact" : "standard";
+                const projected = projectSeat(paintSeat, mode, sceneSize.w, sceneSize.h);
+                const line = labelLineOf(summary);
+                const failed = summary?.counts.failed ?? 0;
+                const total = summary?.total ?? 0;
+                const lanternClass = [
+                  "ns-tree__select",
+                  "ns-tree__lantern",
+                  isActive ? "ns-tree__lantern--active" : "ns-tree__lantern--inactive",
+                  summary?.error ? "ns-tree__lantern--dim" : "",
+                  failed > 0 ? "ns-tree__lantern--failed" : total > 0 ? "ns-tree__lantern--ok" : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ");
+                const glabelClass = [
+                  "ns-tree__glabel",
+                  !summary ? "ns-tree__glabel--load" : "",
+                  summary?.error ? "ns-tree__glabel--err" : "",
+                  hoveredNs === ns.id ? "ns-tree__glabel--on" : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ");
+                // pip strip: single-row progress-bar for COLLAPSED worlds only
+                const pipRow =
+                  !isOpen && summary && !summary.error
+                    ? taskPips(tasksOf(summary.jobs))
+                    : null;
+                const stripWidth = pipRow && pipRow.count > 0 ? pipStripWidth(pipRow) : 0;
+                const stripLeft = pipRow && pipRow.count > 0
+                  ? pipStripLeft(
+                      { x: projected.x, y: projected.y, dir: paintSeat.dir },
+                      sceneSize.w,
+                      stripWidth,
+                    )
+                  : 0;
+                return (
+                  <li
+                    key={ns.id}
+                    data-namespace={ns.id}
+                    data-seat-x={projected.x}
+                    data-seat-y={projected.y}
+                    data-seat-dir={paintSeat.dir}
+                    className={isActive ? "ns-tree__item ns-tree__item--active" : "ns-tree__item"}
+                    style={{ left: `${projected.x}%`, top: `${projected.y}%` }}
+                  >
+                    {/* stone: visible dark-slate disc overlaying the painted lantern */}
+                    <button
+                      type="button"
+                      className={lanternClass}
+                      role="treeitem"
+                      aria-expanded={isOpen}
+                      aria-selected={isActive}
+                      aria-label={`${ns.label} — ${line}`}
+                      title={`${ns.label} — ${line}`}
+                      onClick={() => selectWorld(ns.id)}
+                      onMouseEnter={() => setHoveredNs(ns.id)}
+                      onMouseLeave={() => setHoveredNs((prev) => (prev === ns.id ? null : prev))}
+                      onFocus={() => setHoveredNs(ns.id)}
+                      onBlur={() => setHoveredNs((prev) => (prev === ns.id ? null : prev))}
+                    >
+                      <TreeIcon src={namespaceIcon(ns.id)} fallback={NAMESPACE_ICON_FALLBACK} size="lantern" />
+                    </button>
+                    {/* status-counts row: orbs beneath COLLAPSED lanterns */}
+                    {!isOpen && summary && !summary.error && summary.total > 0 && (
+                      <div className="ns-tree__counts" aria-hidden="true">
+                        <span
+                          className={`ns-tree__counts__orb ns-tree__counts__orb--succeeded${summary.counts.succeeded > 0 ? "" : " ns-tree__counts__orb--dim"}`}
+                        />
+                        <span
+                          className={`ns-tree__counts__orb ns-tree__counts__orb--running${summary.counts.running > 0 ? "" : " ns-tree__counts__orb--dim"}`}
+                        />
+                        <span
+                          className={`ns-tree__counts__orb ns-tree__counts__orb--failed${summary.counts.failed > 0 ? "" : " ns-tree__counts__orb--dim"}`}
+                        />
+                        <span className="ns-tree__counts__nums">
+                          {summary.counts.succeeded > 0 && (
+                            <i style={{ color: "#79b356" }}>{summary.counts.succeeded}</i>
+                          )}
+                          {summary.counts.running > 0 && (
+                            <i style={{ color: "#6fb7d8" }}>{summary.counts.running}</i>
+                          )}
+                          {summary.counts.failed > 0 && (
+                            <i style={{ color: "#e07a3f" }}>{summary.counts.failed}</i>
+                          )}
+                        </span>
+                      </div>
+                    )}
+                    {/* single-row pip strip: COLLAPSED worlds only */}
+                    {pipRow && pipRow.count > 0 && (
+                      <div
+                        className="piprow"
+                        aria-hidden="true"
+                        data-count={pipRow.count}
+                        style={{ left: `${stripLeft}px` } as CSSProperties}
+                      >
+                        {pipRow.pips.map((pip) => (
+                          <span
+                            key={pip.sessionId}
+                            className={`pip-slot pip-slot--${pip.status}`}
+                            data-status={pip.status}
+                          >
+                            <TreeIcon src={taskIcon(pip.status)} fallback={taskIconFallback(pip.status)} size="pip" />
+                          </span>
+                        ))}
+                        {pipRow.overflow > 0 && (
+                          <span className="piprow__more">+{pipRow.overflow}</span>
+                        )}
+                      </div>
+                    )}
+                    {/* hover/focus label */}
+                    <div className={glabelClass} aria-hidden="true">
+                      <b className="ns-tree__glabel-name">{ns.label}</b>
+                      <span className="ns-tree__glabel-line">{line}</span>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+
+            {/* vine SVG */}
             {vine && (
               <svg
                 className="ns-tree__shoots"
                 width={Math.max(1, sceneSize.w)}
-                height={Math.max(1, canvasHeight)}
+                height={Math.max(1, effectiveCanvasHeight)}
                 aria-hidden="true"
               >
                 <path
@@ -296,7 +403,7 @@ export function NamespaceTree({
                 />
               </svg>
             )}
-            {/* strand states before the work lands (or when it never does) */}
+            {/* strand notes before work lands */}
             {openWorld && openSeat && !summaryLoaded && (
               <div
                 className="ns-tree__note"
@@ -316,8 +423,7 @@ export function NamespaceTree({
                 summary unavailable
               </div>
             )}
-            {/* the vine's cards + anchor icons — hung along the strand in
-                the running → failed → pending → succeeded order */}
+            {/* vine's cards + anchor icons */}
             {vine &&
               openTasks.map((job, i) => {
                 const isTaskActive = job.sessionId === activeSessionId;
@@ -331,8 +437,6 @@ export function NamespaceTree({
                   "pop-in",
                 ].join(" ");
                 return [
-                  /* anchor icon: the status sigil seated ON the vine at this card's
-                     stem tie-on point — decorative (card's aria-label carries status) */
                   <div
                     key={`anc-${job.sessionId}`}
                     className={anchorCls}
@@ -389,130 +493,6 @@ export function NamespaceTree({
             ))}
           </div>
         </div>
-        {/* ── every world's lantern at its seat (rooted above the scroller) ── */}
-        <ul className="ns-tree__roots">
-          {namespaces.map((ns) => {
-            const summary = summaries[ns.id];
-            const isActive = ns.id === namespace;
-            const isOpen = openNs === ns.id;
-            const seat = seats.get(ns.id)!;
-            const line = labelLineOf(summary);
-            const failed = summary?.counts.failed ?? 0;
-            const total = summary?.total ?? 0;
-            const lanternClass = [
-              "ns-tree__select",
-              "ns-tree__lantern",
-              isActive ? "ns-tree__lantern--active" : "",
-              summary?.error ? "ns-tree__lantern--dim" : "",
-              failed > 0 ? "ns-tree__lantern--failed" : total > 0 ? "ns-tree__lantern--ok" : "",
-            ]
-              .filter(Boolean)
-              .join(" ");
-            const glabelClass = [
-              "ns-tree__glabel",
-              !summary ? "ns-tree__glabel--load" : "",
-              summary?.error ? "ns-tree__glabel--err" : "",
-              hoveredNs === ns.id ? "ns-tree__glabel--on" : "",
-            ]
-              .filter(Boolean)
-              .join(" ");
-            // pip strip: single-row progress-bar for COLLAPSED worlds only;
-            // when expanded the icons live at the vine anchors instead
-            const pipRow =
-              !isOpen && summary && !summary.error
-                ? taskPips(tasksOf(summary.jobs))
-                : null;
-            const stripWidth = pipRow && pipRow.count > 0 ? pipStripWidth(pipRow) : 0;
-            const stripLeft = pipRow && pipRow.count > 0
-              ? pipStripLeft(seat, sceneSize.w, stripWidth)
-              : 0;
-            return (
-              <li
-                key={ns.id}
-                data-namespace={ns.id}
-                data-seat-x={seat.x}
-                data-seat-y={seat.y}
-                data-seat-dir={seat.dir}
-                className={isActive ? "ns-tree__item ns-tree__item--active" : "ns-tree__item"}
-                style={{ left: `${seat.x}%`, top: `${seat.y}%` }}
-              >
-                {/* no glass disc: the button is a transparent hit area over
-                    the PAINTED lantern — the icon seats in it, and the active
-                    world's lantern brightens via a screen-blended glow */}
-                <button
-                  type="button"
-                  className={lanternClass}
-                  role="treeitem"
-                  aria-expanded={isOpen}
-                  aria-selected={isActive}
-                  aria-label={`${ns.label} — ${line}`}
-                  title={`${ns.label} — ${line}`}
-                  onClick={() => selectWorld(ns.id)}
-                  onMouseEnter={() => setHoveredNs(ns.id)}
-                  onMouseLeave={() => setHoveredNs((prev) => (prev === ns.id ? null : prev))}
-                  onFocus={() => setHoveredNs(ns.id)}
-                  onBlur={() => setHoveredNs((prev) => (prev === ns.id ? null : prev))}
-                >
-                  <TreeIcon src={namespaceIcon(ns.id)} fallback={NAMESPACE_ICON_FALLBACK} size="lantern" />
-                </button>
-                {/* status-counts row: orbs + numbers beneath COLLAPSED lanterns
-                    (aria-hidden — hover label carries the numbers for AT) */}
-                {!isOpen && summary && !summary.error && summary.total > 0 && (
-                  <div className="ns-tree__counts" aria-hidden="true">
-                    <span
-                      className={`ns-tree__counts__orb ns-tree__counts__orb--succeeded${summary.counts.succeeded > 0 ? "" : " ns-tree__counts__orb--dim"}`}
-                    />
-                    <span
-                      className={`ns-tree__counts__orb ns-tree__counts__orb--running${summary.counts.running > 0 ? "" : " ns-tree__counts__orb--dim"}`}
-                    />
-                    <span
-                      className={`ns-tree__counts__orb ns-tree__counts__orb--failed${summary.counts.failed > 0 ? "" : " ns-tree__counts__orb--dim"}`}
-                    />
-                    <span className="ns-tree__counts__nums">
-                      {summary.counts.succeeded > 0 && (
-                        <i style={{ color: "#79b356" }}>{summary.counts.succeeded}</i>
-                      )}
-                      {summary.counts.running > 0 && (
-                        <i style={{ color: "#6fb7d8" }}>{summary.counts.running}</i>
-                      )}
-                      {summary.counts.failed > 0 && (
-                        <i style={{ color: "#e07a3f" }}>{summary.counts.failed}</i>
-                      )}
-                    </span>
-                  </div>
-                )}
-                {/* single-row pip strip: COLLAPSED worlds only, left-anchored at
-                    the lantern's left edge, capped at 8 + "+N" overflow chip */}
-                {pipRow && pipRow.count > 0 && (
-                  <div
-                    className="piprow"
-                    aria-hidden="true"
-                    data-count={pipRow.count}
-                    style={{ left: `${stripLeft}px` } as CSSProperties}
-                  >
-                    {pipRow.pips.map((pip) => (
-                      <span
-                        key={pip.sessionId}
-                        className={`pip-slot pip-slot--${pip.status}`}
-                        data-status={pip.status}
-                      >
-                        <TreeIcon src={taskIcon(pip.status)} fallback={taskIconFallback(pip.status)} size="pip" />
-                      </span>
-                    ))}
-                    {pipRow.overflow > 0 && (
-                      <span className="piprow__more">+{pipRow.overflow}</span>
-                    )}
-                  </div>
-                )}
-                {/* hover/focus label — garden's .g-label pattern */}
-                <div className={glabelClass} aria-hidden="true">
-                  <b className="ns-tree__glabel-name">{ns.label}</b>
-                  <span className="ns-tree__glabel-line">{line}</span>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
       </div>
     </div>
   );
