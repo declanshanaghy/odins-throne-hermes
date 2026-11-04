@@ -6,15 +6,17 @@
 //
 //   ⚒  Issue #12 · port the ballad pages        ← title + status dot
 //      s-run-1 · Issue #12 · FiremanDecko       ← session · issue # · agent
-//      [focus] [unpin] [cancel]                 ← on-card actions
+//      [📌] [✕]                                 ← icon-only on-card actions
 //
 // The status sigil follows the taskIcon contract (namespaceIcons.ts):
 // hammer while running, dice while pending, raven for failure, ring when
 // succeeded — remote <img> with an inline-glyph fallback offline (TreeIcon).
 //
 // Actions, all local to the card:
-//   • open/focus — the card body click opens the session's tab; a session
-//     whose tab is already open reads "focus" and never stacks a duplicate.
+//   • open/focus — THE CARD BODY CLICK (issue #43 removed the on-card
+//     text button — never reintroduce one): the body click opens the
+//     session's tab; a session whose tab is already open is focused
+//     (fronted), never duplicated.
 //   • pin/unpin  — toggles right on the card (is-on styling when pinned).
 //   • cancel     — Ragnarök; rendered ONLY while the job is cancellable
 //     (running or pending). The tremble→fall→purge choreography lives in
@@ -26,10 +28,8 @@
 
 import type { CSSProperties } from "react";
 import type { DisplayJob } from "../lib/types";
-import { taskIcon, taskIconFallback } from "../lib/namespaceIcons";
 import { resolveSessionTitle } from "../lib/resolveSessionTitle";
 import { STATUS_LABELS } from "../lib/constants";
-import { TreeIcon } from "./TreeIcon";
 
 interface Props {
   job: DisplayJob;
@@ -116,9 +116,6 @@ export function VineCard({
       onClick={ghost ? undefined : onOpen}
       onKeyDown={openOnKey}
     >
-      <span className="jcard__sigil" aria-hidden="true">
-        <TreeIcon src={taskIcon(job.status)} fallback={taskIconFallback(job.status)} size="task" />
-      </span>
       <div className="jcard__main">
         <div className="jcard__row1">
           <span className="jcard__title" title={title}>
@@ -135,39 +132,40 @@ export function VineCard({
             {job.agentName}
             {isPinned ? " · 📌" : ""}
           </span>
-          <span className="jcard__acts">
-            <button
-              type="button"
-              className={`jact jact--pin${isPinned ? " is-on" : ""}`}
-              data-act="pin"
-              title={isPinned ? "unpin session" : "pin session"}
-              aria-label={isPinned ? `Unpin session ${job.sessionId}` : `Pin session ${job.sessionId}`}
-              aria-pressed={isPinned}
-              onClick={(e) => {
-                e.stopPropagation();
-                onTogglePin();
-              }}
-            >
-              📌
-            </button>
-            {cancellable && (
-              <button
-                type="button"
-                className="jact jact--cancel"
-                data-act="cancel"
-                title="cancel job"
-                aria-label={`Cancel job ${job.sessionId}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onCancel();
-                }}
-              >
-                ✕
-              </button>
-            )}
-          </span>
         </div>
       </div>
+      {/* clasp: icon-only actions overlapping the bottom border, flush right */}
+      <span className="jcard__acts">
+        <button
+          type="button"
+          className={`jact jact--pin${isPinned ? " is-on" : ""}`}
+          data-act="pin"
+          title={isPinned ? "unpin session" : "pin session"}
+          aria-label={isPinned ? `Unpin session ${job.sessionId}` : `Pin session ${job.sessionId}`}
+          aria-pressed={isPinned}
+          onClick={(e) => {
+            e.stopPropagation();
+            onTogglePin();
+          }}
+        >
+          📌
+        </button>
+        {cancellable && (
+          <button
+            type="button"
+            className="jact jact--cancel"
+            data-act="cancel"
+            title="cancel job"
+            aria-label={`Cancel job ${job.sessionId}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              onCancel();
+            }}
+          >
+            ✕
+          </button>
+        )}
+      </span>
     </div>
   );
 }

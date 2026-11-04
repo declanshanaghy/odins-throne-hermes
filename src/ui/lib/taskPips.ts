@@ -1,15 +1,14 @@
-// Task pips: the small task icons beneath each painted lantern (issue #39).
+// Task pips: the small task icons beneath each painted lantern (issue #39,
+// issue #54).
 //
-// A namespace's task count reads as a row of tiny status icons under its
-// lantern — one icon per task, in the vine hang order (running → failed →
-// pending → succeeded), each carrying the task's status sigil (taskIcon).
-// Large counts cap: past TASK_PIPS.cap the last slot becomes a "+N"
-// overflow chip, so the row never sprawls across the painting.
+// COLLAPSED world: beneath the lantern TWO rows appear:
+//   1. Status-counts row: colored orbs + numbers (see NamespaceTree).
+//   2. Single-row pip strip: ONE flex-nowrap row of 9px icons, growing
+//      LEFT→RIGHT in hang order (running → failed → pending → succeeded)
+//      like a progress bar, left-anchored at the lantern's left edge, capped
+//      at 8 icons with a trailing "+N" chip.
 //
-// The row sits on the side AWAY from the open world's vine strand (the
-// strand and its cards lean toward the seat's dir), so pips never paint
-// over the vine or its first card; a seat near the scene edge narrows the
-// row (fewer columns, more lines) so it never clips.
+// EXPANDED world: both rows hide — icons live at the vine anchors instead.
 //
 // Pure functions only — no DOM, no React — so test/tree-seats.mjs can lock
 // the count/overflow and placement contracts. All layout constants live
@@ -23,14 +22,16 @@ export const TASK_PIPS = {
   cap: 8,
   /** Pips per line before the row wraps (two lines at the cap). */
   columns: 4,
-  /** One pip's box, px (matches .ns-tree__icon--pip). */
+  /** One pip's box, px (matches .pip-slot size). */
   sizePx: 9,
-  /** Gap between pips, px (matches .ns-tree__tasks gap). */
+  /** Gap between pips, px. */
   gapPx: 2,
   /** Px kept between the lantern's center line and the row, away from the vine. */
   clearPx: 3,
   /** Px kept clear of the scene's edges when clamping. */
   edgePx: 3,
+  /** Approximate width of the "+N" overflow chip in px (including gap). */
+  moreChipPx: 16,
 } as const;
 
 /** One pip: a task's identity + the status its sigil shows. */
@@ -117,4 +118,32 @@ export function pipRowLayout(seat: LanternSeat, sceneW: number, slots: number): 
   const maxLeft = sceneW - TASK_PIPS.edgePx - width - seatPx;
   const left = Math.min(Math.max(awayLeft(width), minLeft), Math.max(maxLeft, minLeft));
   return { columns, width, left };
+}
+
+/**
+ * Width of the single-row pip strip in px: pips + gaps + optional "+N" chip.
+ * Matches the prototype's rowW calculation exactly.
+ */
+export function pipStripWidth(row: TaskPipRow): number {
+  const slots = row.pips.length;
+  if (slots === 0) return 0;
+  const base = slots * TASK_PIPS.sizePx + (slots - 1) * TASK_PIPS.gapPx;
+  return base + (row.overflow > 0 ? TASK_PIPS.gapPx + TASK_PIPS.moreChipPx : 0);
+}
+
+/**
+ * Left offset (px, relative to the li's left edge = lantern's left edge)
+ * for the single-row pip strip. The strip starts at the lantern's left edge
+ * and is clamped so it never clips the scene.
+ * Returns 0 when the scene is unmeasured (sceneW = 0).
+ */
+export function pipStripLeft(seat: LanternSeat, sceneW: number, rowWidth: number): number {
+  if (!(sceneW > 0) || rowWidth <= 0) return 0;
+  const seatPx = (seat.x / 100) * sceneW;
+  // strip starts at li's left edge, which is the lantern's left edge
+  const rawSceneLeft = seatPx;
+  const minSceneLeft = TASK_PIPS.edgePx;
+  const maxSceneLeft = sceneW - TASK_PIPS.edgePx - rowWidth;
+  const clamped = Math.min(Math.max(rawSceneLeft, minSceneLeft), Math.max(maxSceneLeft, minSceneLeft));
+  return clamped - seatPx;
 }

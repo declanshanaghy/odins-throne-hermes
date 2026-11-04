@@ -55,7 +55,7 @@ import {
   taskIconFallback,
 } from "../lib/namespaceIcons";
 import { assignSeats } from "../lib/treeSeats";
-import { taskPips, pipSlots, pipRowLayout } from "../lib/taskPips";
+import { taskPips, pipStripLeft, pipStripWidth } from "../lib/taskPips";
 import {
   vineFor,
   vineCardBox,
@@ -392,7 +392,7 @@ export function NamespaceTree({
                 summary unavailable
               </div>
             )}
-            {/* the vine's cards — full job cards, hung along the strand in
+            {/* the vine's cards + anchor icons — hung along the strand in
                 the running → failed → pending → succeeded order */}
             {vine &&
               openTasks.map((job, i) => {
@@ -400,15 +400,39 @@ export function NamespaceTree({
                 const anchor = vine.points[i];
                 if (!anchor) return null;
                 const box = vineCardBox(anchor, vine.dir, vineCardWidth(vineMode), sceneSize.w);
-                return (
+                const isTerminating = terminatingSessionIds?.has(job.sessionId) ?? false;
+                const anchorCls = [
+                  "anchor-ic",
+                  `anchor-ic--${isTerminating ? "terminating" : job.status}`,
+                  "pop-in",
+                ].join(" ");
+                return [
+                  /* anchor icon: the status sigil seated ON the vine at this card's
+                     stem tie-on point — decorative (card's aria-label carries status) */
+                  <div
+                    key={`anc-${job.sessionId}`}
+                    className={anchorCls}
+                    style={{
+                      left: `${anchor.x}px`,
+                      top: `${anchor.y}px`,
+                      animationDelay: `${60 + i * 50}ms`,
+                    }}
+                    aria-hidden="true"
+                  >
+                    <TreeIcon src={taskIcon(job.status)} fallback={taskIconFallback(job.status)} size="task" />
+                  </div>,
                   <VineCard
                     key={job.sessionId}
                     job={job}
                     isActive={isTaskActive}
                     isPinned={pinnedSessionIds?.has(job.sessionId) ?? false}
-                    isTerminating={terminatingSessionIds?.has(job.sessionId) ?? false}
+                    isTerminating={isTerminating}
                     side={box.side}
-                    style={{ left: `${box.left}px`, top: `${box.top}px` }}
+                    style={{
+                      left: `${box.left}px`,
+                      top: `${box.top}px`,
+                      animationDelay: `${140 + i * 50}ms`,
+                    }}
                     onOpen={() => onSelectTask(openWorld!.id, job.sessionId, job)}
                     onTogglePin={
                       onTogglePinSession ? () => onTogglePinSession(job.sessionId) : () => {}
@@ -418,8 +442,8 @@ export function NamespaceTree({
                         ? () => onCancelJob(job.sessionId, job)
                         : () => {}
                     }
-                  />
-                );
+                  />,
+                ];
               })}
             {/* falling ghosts: cancelled cards play the fall, then sweep */}
             {falling.map((g) => (
@@ -466,11 +490,16 @@ export function NamespaceTree({
             ]
               .filter(Boolean)
               .join(" ");
-            // task pips: one small status icon per task beneath the lantern
-            // (hang order, purged excluded), capped with a "+N" chip
+            // pip strip: single-row progress-bar for COLLAPSED worlds only;
+            // when expanded the icons live at the vine anchors instead
             const pipRow =
-              summary && !summary.error ? taskPips(isOpen ? openTasks : tasksOf(summary.jobs)) : null;
-            const pipLayout = pipRow ? pipRowLayout(seat, sceneSize.w, pipSlots(pipRow)) : null;
+              !isOpen && summary && !summary.error
+                ? taskPips(tasksOf(summary.jobs))
+                : null;
+            const stripWidth = pipRow && pipRow.count > 0 ? pipStripWidth(pipRow) : 0;
+            const stripLeft = pipRow && pipRow.count > 0
+              ? pipStripLeft(seat, sceneSize.w, stripWidth)
+              : 0;
             return (
               <li
                 key={ns.id}
@@ -500,32 +529,52 @@ export function NamespaceTree({
                 >
                   <TreeIcon src={namespaceIcon(ns.id)} fallback={NAMESPACE_ICON_FALLBACK} size="lantern" />
                 </button>
-                {/* task pips — icon count = task count, beneath the lantern on
-                    the side away from the vine (the label carries the counts
-                    for screen readers) */}
-                {pipRow && pipLayout && pipRow.count > 0 && (
+                {/* status-counts row: orbs + numbers beneath COLLAPSED lanterns
+                    (aria-hidden — hover label carries the numbers for AT) */}
+                {!isOpen && summary && !summary.error && summary.total > 0 && (
+                  <div className="ns-tree__counts" aria-hidden="true">
+                    <span
+                      className={`ns-tree__counts__orb ns-tree__counts__orb--succeeded${summary.counts.succeeded > 0 ? "" : " ns-tree__counts__orb--dim"}`}
+                    />
+                    <span
+                      className={`ns-tree__counts__orb ns-tree__counts__orb--running${summary.counts.running > 0 ? "" : " ns-tree__counts__orb--dim"}`}
+                    />
+                    <span
+                      className={`ns-tree__counts__orb ns-tree__counts__orb--failed${summary.counts.failed > 0 ? "" : " ns-tree__counts__orb--dim"}`}
+                    />
+                    <span className="ns-tree__counts__nums">
+                      {summary.counts.succeeded > 0 && (
+                        <i style={{ color: "#79b356" }}>{summary.counts.succeeded}</i>
+                      )}
+                      {summary.counts.running > 0 && (
+                        <i style={{ color: "#6fb7d8" }}>{summary.counts.running}</i>
+                      )}
+                      {summary.counts.failed > 0 && (
+                        <i style={{ color: "#e07a3f" }}>{summary.counts.failed}</i>
+                      )}
+                    </span>
+                  </div>
+                )}
+                {/* single-row pip strip: COLLAPSED worlds only, left-anchored at
+                    the lantern's left edge, capped at 8 + "+N" overflow chip */}
+                {pipRow && pipRow.count > 0 && (
                   <div
-                    className="ns-tree__tasks"
+                    className="piprow"
                     aria-hidden="true"
                     data-count={pipRow.count}
-                    style={
-                      {
-                        left: `calc(50% + ${pipLayout.left.toFixed(1)}px)`,
-                        "--pip-cols": pipLayout.columns,
-                      } as CSSProperties
-                    }
+                    style={{ left: `${stripLeft}px` } as CSSProperties}
                   >
                     {pipRow.pips.map((pip) => (
                       <span
                         key={pip.sessionId}
-                        className={`ns-tree__pip ns-tree__pip--${pip.status}`}
+                        className={`pip-slot pip-slot--${pip.status}`}
                         data-status={pip.status}
                       >
                         <TreeIcon src={taskIcon(pip.status)} fallback={taskIconFallback(pip.status)} size="pip" />
                       </span>
                     ))}
                     {pipRow.overflow > 0 && (
-                      <span className="ns-tree__tasks-more">+{pipRow.overflow}</span>
+                      <span className="piprow__more">+{pipRow.overflow}</span>
                     )}
                   </div>
                 )}

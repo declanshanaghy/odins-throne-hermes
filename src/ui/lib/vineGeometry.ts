@@ -42,7 +42,7 @@ export const VINE = {
   /** px between card centers — extended sidebar. */
   pitchExtended: 57,
   /** px between card centers — normal sidebar. */
-  pitchNormal: 50,
+  pitchNormal: 56,
   /** Horizontal lean of the control points off the lantern (× dir, px). */
   leanC1: 16,
   leanC2: 30,
