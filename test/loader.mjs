@@ -10,6 +10,7 @@
 // present so production and test environments stay aligned.
 
 import { existsSync, readFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL as toURL } from "node:url";
 import { transform } from "esbuild";
@@ -26,14 +27,19 @@ const NODE_MODULES = existsSync(join(HERMES_NODE_MODULES, "react", "index.js"))
 
 const MAP = {
   "@hermes/plugin-sdk": { path: join(here, "sdk-stub.mjs"), format: "module" },
-  react: { path: join(NODE_MODULES, "react", "index.js"), format: "commonjs" },
-  "react/jsx-runtime": { path: join(NODE_MODULES, "react", "jsx-runtime.js"), format: "commonjs" },
-  jsdom: { path: join(NODE_MODULES, "jsdom", "lib", "api.js"), format: "commonjs" },
+  // CJS packages: mapped with format "cjs-wrap" so the load hook generates a
+  // proper ESM wrapper via createRequire. Node.js 20's loader-hook CJS interop
+  // returns an empty object for format:"commonjs" in resolve results; wrapping
+  // ensures named exports (e.g. Component from react, JSDOM from jsdom) work.
+  react: { path: join(NODE_MODULES, "react", "index.js"), format: "cjs-wrap" },
+  "react/jsx-runtime": { path: join(NODE_MODULES, "react", "jsx-runtime.js"), format: "cjs-wrap" },
+  jsdom: { path: join(NODE_MODULES, "jsdom", "lib", "api.js"), format: "cjs-wrap" },
 };
 
 export async function resolve(specifier, context, next) {
   const target = MAP[specifier];
   if (target) {
+    // "cjs-wrap" is handled in the load hook; pass a sentinel format to route it.
     return { url: toURL(target.path).href, format: target.format, shortCircuit: true };
   }
   // Source-tree TS modules use bundler-style extensionless relative imports;
@@ -52,6 +58,25 @@ export async function resolve(specifier, context, next) {
 }
 
 export async function load(url, context, next) {
+  // CJS-wrap: generate an ESM module that uses createRequire to load the CJS
+  // package and re-export its named exports. This is needed because Node.js 20's
+  // loader-hook CJS interop returns an empty {} default for format:"commonjs".
+  if (context.format === "cjs-wrap" && url.startsWith("file:")) {
+    const filePath = fileURLToPath(url);
+    // Synchronously load the CJS module to discover its export names, then
+    // generate a static ESM wrapper that re-exports everything.
+    const req = createRequire(import.meta.url);
+    let exports_obj;
+    try { exports_obj = req(filePath); } catch { exports_obj = {}; }
+    const keys = Object.keys(exports_obj).filter(k => /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(k));
+    const wrapper = [
+      `import { createRequire } from "node:module";`,
+      `const _m = createRequire(import.meta.url)(${JSON.stringify(filePath)});`,
+      `export default _m;`,
+      keys.length ? `export const { ${keys.join(", ")} } = _m;` : "",
+    ].join("\n");
+    return { format: "module", source: wrapper, shortCircuit: true };
+  }
   // Transpile src/**/*.{ts,tsx} with esbuild (the same compiler the build uses).
   if (url.startsWith("file:") && url.includes("/src/") && (url.endsWith(".ts") || url.endsWith(".tsx"))) {
     const source = readFileSync(fileURLToPath(url), "utf8");

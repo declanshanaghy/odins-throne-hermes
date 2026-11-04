@@ -39,12 +39,25 @@ interface Props {
   namespaceSummaries: NamespaceSummaries;
   /** Drilldown tree task click — same selection semantics as the job cards. */
   onSelectTask: (nsId: string, sessionId: string) => void;
+  /**
+   * "host-pane" (default): the host pane sash owns the width — use width:100%
+   * so the pane's sash constrains us correctly (desktop plugin).
+   * "fixed": the shell provides no host sash — use DEFAULT_WIDTH so the flex
+   * row leaves room for the log panel (web AppShell).
+   */
+  sizingMode?: "host-pane" | "fixed";
+  /** Width override for sizingMode="fixed" — set by AppShell's drag handler. */
+  externalWidth?: number;
+  /** mousedown handler wired to the drag handle (web AppShell only). */
+  onResizeMouseDown?: (e: React.MouseEvent) => void;
+  /** double-click on the handle resets to DEFAULT_WIDTH (web AppShell only). */
+  onResizeDoubleClick?: () => void;
 }
 
 // onSelectSession stays in the Props contract (both shells pass the
 // snapshot's seam through) but the drilldown tree routes all selection
 // through onSelectTask — the component itself no longer reads it.
-export function Sidebar({ jobs, activeSessionId, quote, wsState, onAvatarClick, onOdinClick, onTogglePinSession, pinnedSessionIds, onCancelJob, terminatingSessionIds, namespace, namespaces, onNamespaceChange, namespaceSummaries, onSelectTask }: Props) {
+export function Sidebar({ jobs, activeSessionId, quote, wsState, onAvatarClick, onOdinClick, onTogglePinSession, pinnedSessionIds, onCancelJob, terminatingSessionIds, namespace, namespaces, onNamespaceChange, namespaceSummaries, onSelectTask, sizingMode = "host-pane", externalWidth, onResizeMouseDown, onResizeDoubleClick }: Props) {
   const { theme, setTheme } = useTheme();
   const [width, setWidth] = useState<number>(DEFAULT_WIDTH);
   const navRef = useRef<HTMLElement | null>(null);
@@ -70,7 +83,7 @@ export function Sidebar({ jobs, activeSessionId, quote, wsState, onAvatarClick, 
       ref={navRef}
       className="sidebar"
       aria-label="Agent sessions"
-      style={{ width: "100%", height: "100%" }}
+      style={{ width: sizingMode === "fixed" ? (externalWidth ?? DEFAULT_WIDTH) : "100%", height: "100%" }}
     >
       <div className="sidebar-header">
         {/* Header row: brand on the left; right-aligned cluster in order
@@ -124,6 +137,17 @@ export function Sidebar({ jobs, activeSessionId, quote, wsState, onAvatarClick, 
        * cards branched beneath their namespace in the drilldown tree above,
        * rendered exactly as the old active-namespace list rendered them. */}
       {/* Desktop port: no in-pane drag handle — the host pane sash resizes us. */}
+      {sizingMode === "fixed" && (
+        <div
+          className="sidebar-resize-handle"
+          onMouseDown={onResizeMouseDown}
+          onDoubleClick={onResizeDoubleClick}
+          role="separator"
+          aria-orientation="vertical"
+          aria-label="Resize sidebar"
+          title="Drag to resize · Double-click to reset"
+        />
+      )}
     </nav>
   );
 }

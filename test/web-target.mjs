@@ -160,6 +160,9 @@ dom.window.WebSocket = FakeWebSocket;
 globalThis.fetch = async () => ({ ok: false, status: 404, json: async () => ({}) });
 dom.window.fetch = globalThis.fetch;
 
+// Pre-seed sidebar-width in localStorage so we can verify persistence on load (issue #53).
+dom.window.localStorage.setItem("sidebar-width", "420");
+
 await import(`../dist-ui/assets/${readdirSync(resolve(DIST, "assets")).find((f) => f.endsWith(".js"))}`);
 // Let React mount + the StoreBridge publish its first snapshot.
 await new Promise((r) => setTimeout(r, 800));
@@ -175,6 +178,94 @@ assert.ok(
   "namespace drilldown tree renders in the web shell",
 );
 
-console.log("WEB-TARGET PASS — Vite bundle serves from dist-ui/ (same ui core, tree shipped, same-origin /ws + /profiles seams, CSS unscoped)");
+// ── 5. Sidebar does NOT take 100% of the layout row (issue #50 regression) ──
+// jsdom does no layout math, but we can assert the sidebar's inline width
+// style is not "100%" so the flex row is not starved.
+const sidebarEl = document.querySelector(".sidebar");
+assert.ok(sidebarEl, "sidebar element exists for width regression check");
+const sidebarWidth = sidebarEl.style.width;
+assert.notEqual(
+  sidebarWidth,
+  "100%",
+  `sidebar inline width must not be 100% — found "${sidebarWidth}" (issue #50: 100% starves the log panel)`,
+);
+
+// ── 6. Session tab panel rendered in the web shell (issue #50) ─────────────
+// The SessionTabPanel renders inside .content; in the no-jobs empty state it
+// renders SessionLogViewerEmpty inside .content. The .content element (not
+// the sidebar) must exist to confirm the log-panel side of the split.
+assert.ok(
+  document.querySelector(".content"),
+  "log panel .content mounted alongside the sidebar",
+);
+
+// ── 7. Tab contract: openWebSessionLog / closeWebSessionLog (issue #50) ─────
+// The module-level functions are the contract the platform adapter calls.
+// Import the built web bundle already set up the module; now import the
+// SessionTabPanel directly to exercise the tab registry.
+const { openWebSessionLog, closeWebSessionLog, getWebTabs, getActiveWebTabId } =
+  await import("../src/ui/components/SessionTabPanel.tsx");
+
+// Open a new tab
+const fakeJob = {
+  sessionId: "sess-1",
+  issue: "42",
+  issueTitle: "test session",
+  agentName: "fireman-decko",
+  step: "1",
+  name: "test",
+};
+openWebSessionLog("sess-1", "fenrir-agents", fakeJob);
+assert.equal(getWebTabs().length, 1, "openWebSessionLog adds a tab");
+assert.equal(getActiveWebTabId(), "sess-1", "openWebSessionLog activates the new tab");
+
+// Repeat open — must focus, not duplicate
+openWebSessionLog("sess-1", "fenrir-agents", fakeJob);
+assert.equal(getWebTabs().length, 1, "repeat openWebSessionLog does not duplicate the tab");
+assert.equal(getActiveWebTabId(), "sess-1", "repeat open keeps the tab focused");
+
+// Open a second tab
+openWebSessionLog("sess-2", "fenrir-agents", null);
+assert.equal(getWebTabs().length, 2, "second openWebSessionLog adds a second tab");
+assert.equal(getActiveWebTabId(), "sess-2", "second open activates new tab");
+
+// Close the active tab — focus falls back to previous
+closeWebSessionLog("sess-2");
+assert.equal(getWebTabs().length, 1, "closeWebSessionLog removes the tab");
+assert.equal(getActiveWebTabId(), "sess-1", "close of active tab focuses previous tab");
+
+// Close all tabs — active id becomes null
+closeWebSessionLog("sess-1");
+assert.equal(getWebTabs().length, 0, "closeWebSessionLog removes last tab");
+assert.equal(getActiveWebTabId(), null, "no active tab when all closed");
+
+// Idempotent close — must not throw
+closeWebSessionLog("sess-nonexistent");
+assert.equal(getWebTabs().length, 0, "closeWebSessionLog is idempotent for unknown session");
+
+// ── 8. Draggable sidebar resize handle present + localStorage seed (issue #53) ─
+// The web AppShell reads localStorage("sidebar-width") on first render; since we
+// seeded "420" above the bundle import, the sidebar inline width must reflect it.
+const resizeHandleEl = document.querySelector(".sidebar-resize-handle");
+assert.ok(resizeHandleEl, "sidebar-resize-handle present in web shell (issue #53)");
+assert.equal(
+  resizeHandleEl.getAttribute("role"),
+  "separator",
+  "resize handle has role=separator (issue #53: accessibility)",
+);
+assert.equal(
+  resizeHandleEl.getAttribute("aria-label"),
+  "Resize sidebar",
+  "resize handle has aria-label (issue #53: accessibility)",
+);
+// jsdom does no layout, but the inline style reflects state: seeded 420 → "420px"
+const sidebarElForResize = document.querySelector(".sidebar");
+assert.equal(
+  sidebarElForResize.style.width,
+  "420px",
+  "sidebar inline width reflects localStorage seed of 420 (issue #53: persistence)",
+);
+
+console.log("WEB-TARGET PASS — Vite bundle serves from dist-ui/ (same ui core, tree shipped, same-origin /ws + /profiles seams, CSS unscoped, sidebar width fixed, tab contract verified, resize handle + persistence verified)");
 // React's scheduler keeps the event loop alive; the assertions are done.
 process.exit(0);

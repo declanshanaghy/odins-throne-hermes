@@ -410,7 +410,7 @@ body {
   --pip-running: #6fb7d8;
   --pip-failed: #e07a3f;
   --pip-pending: #d9c27a;
-  --glabel-bg: rgba(5, 7, 10, 0.88);
+  --glabel-bg: rgba(5, 7, 10, 0.97);
   --glabel-border: rgba(176, 196, 201, 0.14);
   --glabel-frost: #d9e6ea;
 }
@@ -659,7 +659,7 @@ body {
   gap: 8px;
   align-items: center;
   width: 212px;
-  background: linear-gradient(180deg, rgba(226, 240, 244, 0.09), rgba(10, 16, 20, 0.88));
+  background: linear-gradient(180deg, rgba(29, 36, 40, 0.97), rgba(10, 16, 20, 0.98));
   border: 1px solid rgba(214, 236, 240, 0.26);
   border-radius: 10px;
   padding: 6px 8px;
@@ -1076,6 +1076,68 @@ body {
   flex: 1; height: 100%;
   display: flex; flex-direction: column;
   background: var(--void); min-width: 0;
+}
+
+/* ── Web session tab panel (seam 6, web flavor) ──
+ * Mirrors the desktop plugin's workspace-tab UX in-page:
+ * a horizontal tab strip above the active tab's log terminal. */
+.session-tab-panel {
+  display: flex; flex-direction: column;
+  min-height: 0;
+}
+.session-tab-bar {
+  display: flex; flex-direction: row; align-items: stretch;
+  flex-shrink: 0; overflow-x: auto; overflow-y: hidden;
+  background: var(--forge);
+  border-bottom: 1px solid var(--rune-border);
+  scrollbar-width: none;
+}
+.session-tab-bar::-webkit-scrollbar { display: none; }
+/* Each tab is a flex row: label button + close button */
+.session-tab {
+  display: flex; flex-direction: row; align-items: stretch;
+  flex-shrink: 0;
+  border-right: 1px solid var(--rune-border);
+  background: var(--forge);
+  transition: background 0.15s;
+}
+.session-tab:hover { background: var(--chain); }
+.session-tab--active {
+  background: var(--void);
+  border-bottom: 2px solid var(--gold);
+}
+.session-tab--active:hover { background: var(--void); }
+.session-tab-label {
+  padding: 0.4rem 0.75rem 0.4rem 0.75rem;
+  background: transparent; border: none; cursor: pointer;
+  font-family: 'JetBrains Mono', monospace; font-size: 0.7rem;
+  color: var(--text-rune); white-space: nowrap;
+  max-width: 220px;
+  text-align: left;
+  transition: color 0.15s;
+}
+.session-tab-label:focus-visible {
+  outline: 2px solid var(--gold); outline-offset: -2px;
+}
+.session-tab--active .session-tab-label { color: var(--gold); font-weight: 600; }
+.session-tab:hover .session-tab-label { color: var(--text-saga); }
+.session-tab-title {
+  display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.session-tab-close {
+  display: flex; align-items: center; justify-content: center;
+  width: 1.5rem; padding: 0;
+  background: transparent; border: none; cursor: pointer;
+  color: var(--text-void); font-size: 1rem; line-height: 1;
+  flex-shrink: 0;
+  transition: color 0.15s;
+}
+.session-tab-close:hover { color: var(--error-strong); }
+.session-tab-close:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
+.session-tab-content {
+  flex: 1; min-height: 0;
+  display: flex; flex-direction: column;
+  position: relative;
 }
 .content-header {
   padding: 0.6rem 1rem;

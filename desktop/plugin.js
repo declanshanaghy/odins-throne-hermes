@@ -420,7 +420,7 @@ var styles_default = `.odins-throne-root .odins-throne-root {
   --pip-running: #6fb7d8;
   --pip-failed: #e07a3f;
   --pip-pending: #d9c27a;
-  --glabel-bg: rgba(5, 7, 10, 0.88);
+  --glabel-bg: rgba(5, 7, 10, 0.97);
   --glabel-border: rgba(176, 196, 201, 0.14);
   --glabel-frost: #d9e6ea;
 }
@@ -669,7 +669,7 @@ var styles_default = `.odins-throne-root .odins-throne-root {
   gap: 8px;
   align-items: center;
   width: 212px;
-  background: linear-gradient(180deg, rgba(226, 240, 244, 0.09), rgba(10, 16, 20, 0.88));
+  background: linear-gradient(180deg, rgba(29, 36, 40, 0.97), rgba(10, 16, 20, 0.98));
   border: 1px solid rgba(214, 236, 240, 0.26);
   border-radius: 10px;
   padding: 6px 8px;
@@ -1086,6 +1086,68 @@ var styles_default = `.odins-throne-root .odins-throne-root {
   flex: 1; height: 100%;
   display: flex; flex-direction: column;
   background: var(--void); min-width: 0;
+}
+
+/* \u2500\u2500 Web session tab panel (seam 6, web flavor) \u2500\u2500
+ * Mirrors the desktop plugin's workspace-tab UX in-page:
+ * a horizontal tab strip above the active tab's log terminal. */
+.odins-throne-root .session-tab-panel {
+  display: flex; flex-direction: column;
+  min-height: 0;
+}
+.odins-throne-root .session-tab-bar {
+  display: flex; flex-direction: row; align-items: stretch;
+  flex-shrink: 0; overflow-x: auto; overflow-y: hidden;
+  background: var(--forge);
+  border-bottom: 1px solid var(--rune-border);
+  scrollbar-width: none;
+}
+.odins-throne-root .session-tab-bar::-webkit-scrollbar { display: none; }
+/* Each tab is a flex row: label button + close button */
+.odins-throne-root .session-tab {
+  display: flex; flex-direction: row; align-items: stretch;
+  flex-shrink: 0;
+  border-right: 1px solid var(--rune-border);
+  background: var(--forge);
+  transition: background 0.15s;
+}
+.odins-throne-root .session-tab:hover { background: var(--chain); }
+.odins-throne-root .session-tab--active {
+  background: var(--void);
+  border-bottom: 2px solid var(--gold);
+}
+.odins-throne-root .session-tab--active:hover { background: var(--void); }
+.odins-throne-root .session-tab-label {
+  padding: 0.4rem 0.75rem 0.4rem 0.75rem;
+  background: transparent; border: none; cursor: pointer;
+  font-family: 'JetBrains Mono', monospace; font-size: 0.7rem;
+  color: var(--text-rune); white-space: nowrap;
+  max-width: 220px;
+  text-align: left;
+  transition: color 0.15s;
+}
+.odins-throne-root .session-tab-label:focus-visible {
+  outline: 2px solid var(--gold); outline-offset: -2px;
+}
+.odins-throne-root .session-tab--active .session-tab-label { color: var(--gold); font-weight: 600; }
+.odins-throne-root .session-tab:hover .session-tab-label { color: var(--text-saga); }
+.odins-throne-root .session-tab-title {
+  display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.odins-throne-root .session-tab-close {
+  display: flex; align-items: center; justify-content: center;
+  width: 1.5rem; padding: 0;
+  background: transparent; border: none; cursor: pointer;
+  color: var(--text-void); font-size: 1rem; line-height: 1;
+  flex-shrink: 0;
+  transition: color 0.15s;
+}
+.odins-throne-root .session-tab-close:hover { color: var(--error-strong); }
+.odins-throne-root .session-tab-close:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
+.odins-throne-root .session-tab-content {
+  flex: 1; min-height: 0;
+  display: flex; flex-direction: column;
+  position: relative;
 }
 .odins-throne-root .content-header {
   padding: 0.6rem 1rem;
@@ -9019,7 +9081,7 @@ function getDisplayMode(width) {
   if (width <= 400) return "normal";
   return "extended";
 }
-function Sidebar({ jobs, activeSessionId, quote, wsState, onAvatarClick, onOdinClick, onTogglePinSession, pinnedSessionIds, onCancelJob, terminatingSessionIds, namespace, namespaces, onNamespaceChange, namespaceSummaries, onSelectTask }) {
+function Sidebar({ jobs, activeSessionId, quote, wsState, onAvatarClick, onOdinClick, onTogglePinSession, pinnedSessionIds, onCancelJob, terminatingSessionIds, namespace, namespaces, onNamespaceChange, namespaceSummaries, onSelectTask, sizingMode = "host-pane", externalWidth, onResizeMouseDown, onResizeDoubleClick }) {
   const { theme, setTheme: setTheme2 } = useTheme();
   const [width, setWidth] = useState12(DEFAULT_WIDTH);
   const navRef = useRef8(null);
@@ -9037,63 +9099,77 @@ function Sidebar({ jobs, activeSessionId, quote, wsState, onAvatarClick, onOdinC
   }, []);
   const displayMode = getDisplayMode(width);
   const isCompact = displayMode === "compact";
-  return /* @__PURE__ */ jsx16(
+  return /* @__PURE__ */ jsxs11(
     "nav",
     {
       ref: navRef,
       className: "sidebar",
       "aria-label": "Agent sessions",
-      style: { width: "100%", height: "100%" },
-      children: /* @__PURE__ */ jsxs11("div", { className: "sidebar-header", children: [
-        /* @__PURE__ */ jsxs11("div", { className: "brand", children: [
-          /* @__PURE__ */ jsx16(
-            "button",
-            {
-              className: "odin-avatar-btn",
-              onClick: onOdinClick,
-              "aria-label": "View Odin profile",
-              title: "View Odin profile",
-              children: /* @__PURE__ */ jsx16(
-                "img",
-                {
-                  src: avatarUrl("odin", theme === "light" ? "light" : "dark") ?? "",
-                  alt: "Odin"
-                }
-              )
-            }
-          ),
-          !isCompact && /* @__PURE__ */ jsx16("h1", { children: "Hlidskjalf" }),
-          !isCompact && /* @__PURE__ */ jsxs11("div", { className: "count", "aria-live": "polite", children: [
-            jobs.length,
-            " session",
-            jobs.length !== 1 ? "s" : ""
+      style: { width: sizingMode === "fixed" ? externalWidth ?? DEFAULT_WIDTH : "100%", height: "100%" },
+      children: [
+        /* @__PURE__ */ jsxs11("div", { className: "sidebar-header", children: [
+          /* @__PURE__ */ jsxs11("div", { className: "brand", children: [
+            /* @__PURE__ */ jsx16(
+              "button",
+              {
+                className: "odin-avatar-btn",
+                onClick: onOdinClick,
+                "aria-label": "View Odin profile",
+                title: "View Odin profile",
+                children: /* @__PURE__ */ jsx16(
+                  "img",
+                  {
+                    src: avatarUrl("odin", theme === "light" ? "light" : "dark") ?? "",
+                    alt: "Odin"
+                  }
+                )
+              }
+            ),
+            !isCompact && /* @__PURE__ */ jsx16("h1", { children: "Hlidskjalf" }),
+            !isCompact && /* @__PURE__ */ jsxs11("div", { className: "count", "aria-live": "polite", children: [
+              jobs.length,
+              " session",
+              jobs.length !== 1 ? "s" : ""
+            ] }),
+            /* @__PURE__ */ jsx16(ThemeSwitcher, { theme, setTheme: setTheme2 }),
+            /* @__PURE__ */ jsx16("span", { className: "brand-wss-badge", children: /* @__PURE__ */ jsx16(StatusBadge, { state: wsState }) })
           ] }),
-          /* @__PURE__ */ jsx16(ThemeSwitcher, { theme, setTheme: setTheme2 }),
-          /* @__PURE__ */ jsx16("span", { className: "brand-wss-badge", children: /* @__PURE__ */ jsx16(StatusBadge, { state: wsState }) })
+          !isCompact && /* @__PURE__ */ jsxs11("div", { className: "quote", role: "note", children: [
+            "\u201C",
+            quote,
+            "\u201D"
+          ] }),
+          /* @__PURE__ */ jsx16(
+            NamespaceTree,
+            {
+              namespace,
+              namespaces,
+              summaries: namespaceSummaries,
+              onNamespaceChange,
+              onSelectTask,
+              activeSessionId,
+              displayMode,
+              onAvatarClick,
+              onTogglePinSession,
+              pinnedSessionIds,
+              onCancelJob,
+              terminatingSessionIds
+            }
+          )
         ] }),
-        !isCompact && /* @__PURE__ */ jsxs11("div", { className: "quote", role: "note", children: [
-          "\u201C",
-          quote,
-          "\u201D"
-        ] }),
-        /* @__PURE__ */ jsx16(
-          NamespaceTree,
+        sizingMode === "fixed" && /* @__PURE__ */ jsx16(
+          "div",
           {
-            namespace,
-            namespaces,
-            summaries: namespaceSummaries,
-            onNamespaceChange,
-            onSelectTask,
-            activeSessionId,
-            displayMode,
-            onAvatarClick,
-            onTogglePinSession,
-            pinnedSessionIds,
-            onCancelJob,
-            terminatingSessionIds
+            className: "sidebar-resize-handle",
+            onMouseDown: onResizeMouseDown,
+            onDoubleClick: onResizeDoubleClick,
+            role: "separator",
+            "aria-orientation": "vertical",
+            "aria-label": "Resize sidebar",
+            title: "Drag to resize \xB7 Double-click to reset"
           }
         )
-      ] })
+      ]
     }
   );
 }

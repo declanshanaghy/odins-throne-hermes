@@ -7,8 +7,13 @@
 //   3. REST: same-origin /api/* — plain fetch, the cookie session carries auth.
 //   4. Assets: same-origin /profiles/*.png URLs.
 //   5. Shell: the full-page AppShell (see AppShell.tsx).
+//   6. Session log: in-page tab panel (SessionTabPanel.tsx).
 
 import type { PlatformAdapter } from "../../ui/platform";
+import {
+  openWebSessionLog,
+  closeWebSessionLog,
+} from "../../ui/components/SessionTabPanel";
 
 // Portrait file stems — agent keys map onto the /profiles/ file names
 // ("firemandecko" → "fireman-decko", the rest are identity).
@@ -46,21 +51,19 @@ export const webPlatform: PlatformAdapter = {
     return stem ? `/profiles/${stem}-${variant}.png` : undefined;
   },
 
-  // The full-page shell shows the sidebar and the log terminal at once —
-  // nothing to bring forward.
+  // The full-page shell shows both surfaces at once — nothing to bring forward.
   focusLogView() {
     /* intentionally blank */
   },
 
-  // Seam 6: the web shell has one log terminal — it follows the store's
-  // activeSessionId, which the App bridge already set before calling here.
-  openSessionLog(_sessionId, _target) {
-    /* intentionally blank */
+  // Seam 6: open (or focus) an in-page session tab in the web hall's right panel.
+  // A repeat call for the same sessionId focuses the existing tab — never duplicates.
+  openSessionLog(sessionId, target) {
+    openWebSessionLog(sessionId, target.namespace, target.job);
   },
 
-  // Seam 7: no per-session views to close — the single terminal just loses
-  // its job from the list refresh.
-  closeSessionLog(_sessionId) {
-    /* intentionally blank */
+  // Seam 7: close the session's in-page tab (triggered on confirmed Ragnarök cancel).
+  closeSessionLog(sessionId) {
+    closeWebSessionLog(sessionId);
   },
 };
