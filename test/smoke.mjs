@@ -1049,5 +1049,63 @@ for (const s of ["rapid-a", "rapid-b", "rapid-c"]) {
   }
 }
 
-console.log("SMOKE PASS — pane + page render, namespace lantern tree (lanterns seated on the painting, vine-strand job cards hung from the open lantern: running → failed → pending → succeeded order, status sigils hammer/dice/raven/ring, panel-body click opens session tab (issue:43 — no open/focus button duplicate), icon-only pin · cancel actions with tooltips, terminating tremble, scroller + canvas beneath the rooted painting, old flat list gone), CSS scoped, theme plugin-local, overlays wired, per-session workspace tabs (issue:6: open per click, focus dedupe, cancel + strip-close teardown, cross-world capture), SPA entry Cache-Control: no-store + hashed /assets immutable (issue:55 — no stale cached bundle after a deploy)");
+// ── issue #59: compact view option — chip rail struck, dense lantern tree ───
+// The initials-chip rail is gone; compact is the DENSER lantern tree.
+// A compact-toggle button always lives in the brand cluster.
+// Sabotage-check: re-introducing chip rail OR meta row in compact mode → test fails.
+{
+  // Chip rail is struck — the chip button must never appear anywhere
+  assert.equal(document.querySelector(".ns-tree__chip"), null,
+    "issue #59: initials chip rail is struck — .ns-tree__chip not in DOM");
+
+  const compactToggle = document.querySelector(".compact-toggle-btn");
+  assert.ok(compactToggle, "issue #59: compact toggle button present in brand cluster");
+  assert.equal(compactToggle.getAttribute("aria-pressed"), "false",
+    "issue #59: compact toggle starts in standard mode (aria-pressed=false)");
+
+  // Enter compact mode
+  compactToggle.click();
+  await flush();
+
+  assert.equal(compactToggle.getAttribute("aria-pressed"), "true",
+    "issue #59: compact toggle enters compact mode on click");
+
+  // The lantern tree stays in compact mode — no chip rail swap
+  assert.ok(document.querySelector('.ns-tree[aria-label="Namespace tree"]'),
+    "issue #59: lantern tree stays in compact mode — no chip rail swap");
+  assert.equal(document.querySelector(".ns-tree__chip"), null,
+    "issue #59: chip rail never appears even in compact mode");
+
+  // Compact cards are ONE line — no meta row (.jcard__row2), no action clasps (.jcard__acts)
+  const compactCards = document.querySelectorAll(".jcard--compact");
+  assert.ok(compactCards.length > 0, "issue #59: compact vine cards get .jcard--compact class");
+  for (const card of compactCards) {
+    assert.equal(card.querySelector(".jcard__row2"), null,
+      "issue #59: compact card has no meta row (ONE-line card — title + dot only)");
+    assert.equal(card.querySelector(".jcard__acts"), null,
+      "issue #59: compact card has no action clasps (📌 ✕ struck in compact)");
+  }
+
+  // localStorage persists the choice
+  assert.equal(globalThis.localStorage.getItem("hlidskjalf:display-mode"), "compact",
+    "issue #59: compact mode choice persisted to localStorage");
+
+  // Exit compact mode — resume width-appropriate mode
+  compactToggle.click();
+  await flush();
+
+  assert.equal(compactToggle.getAttribute("aria-pressed"), "false",
+    "issue #59: compact toggle exits compact mode on second click");
+  assert.equal(globalThis.localStorage.getItem("hlidskjalf:display-mode"), "auto",
+    "issue #59: auto mode written to localStorage on exit");
+
+  // Standard cards still have meta row and acts after toggle exits compact
+  const standardCards = document.querySelectorAll(".jcard:not(.jcard--compact)");
+  assert.ok(standardCards.length > 0, "issue #59: standard cards render after toggle exits compact");
+  const firstStandard = standardCards[0];
+  assert.ok(firstStandard.querySelector(".jcard__row2"),
+    "issue #59: standard card has meta row after exiting compact");
+}
+
+console.log("SMOKE PASS — pane + page render, namespace lantern tree (lanterns seated on the painting, vine-strand job cards hung from the open lantern: running → failed → pending → succeeded order, status sigils hammer/dice/raven/ring, panel-body click opens session tab (issue:43 — no open/focus button duplicate), icon-only pin · cancel actions with tooltips, terminating tremble, scroller + canvas beneath the rooted painting, old flat list gone), CSS scoped, theme plugin-local, overlays wired, per-session workspace tabs (issue:6: open per click, focus dedupe, cancel + strip-close teardown, cross-world capture), SPA entry Cache-Control: no-store + hashed /assets immutable (issue:55 — no stale cached bundle after a deploy), compact view option (issue:59 — chip rail struck, dense lantern tree, one-line cards, localStorage persist, toggle enters/exits compact at any pane width)");
 process.exit(0);
