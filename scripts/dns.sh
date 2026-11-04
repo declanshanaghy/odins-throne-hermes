@@ -11,11 +11,15 @@
 #
 # SAFETY — setHosts is a full zone replace-all:
 #   namecheap.domains.dns.setHosts sends the COMPLETE host list. Any record
-#   omitted from the call is permanently deleted. This script guards against
-#   silent-empty-merge: if the zone XML contains <Host> elements but the
-#   parser yields an empty list, it aborts (exit 1) and prints the raw XML
-#   instead of calling setHosts with a one-record list that would nuke
-#   every other record. See 2026-11-03 incident in knowledge/subsystems/
+#   omitted from the call is permanently deleted. Two guards prevent zone nukes:
+#   1. Raw-count guard: if zone XML contains <host> elements but the parser
+#      yields nothing (XML shape drift while elements are present), abort.
+#   2. Unconditional zero-carry guard: if the parsed carried-forward list is
+#      empty for ANY reason — API glitch, truly wiped zone view, or parse
+#      failure when raw element count is also 0 — setHosts is NEVER called,
+#      independent of raw_host_count. This is the guard that would have
+#      prevented the 2026-11-04 incident (raw count was 0 due to casing).
+#   Both guards print the raw XML and exit 1. See knowledge/subsystems/
 #   deployment-gke.md.
 #
 # Environment:
@@ -46,6 +50,7 @@ API_USER="${NAMECHEAP_API_USER:-}"
 API_KEY="${NAMECHEAP_API_KEY:-}"
 CLIENT_IP="${NAMECHEAP_CLIENT_IP:-}"
 API_BASE="https://api.namecheap.com/xml.response"
+ZONE_XML_FILE=""
 
 log() { printf '[dns.sh] %s\n' "$*"; }
 die() { local code="$1"; shift; printf '[dns.sh] ERROR: %s\n' "$*" >&2; exit "$code"; }
@@ -82,6 +87,7 @@ while [ $# -gt 0 ]; do
     --domain) [ "${2:-}" ] || die 1 "--domain requires sld.tld"; DOMAIN_SLD="${2%%.*}"; DOMAIN_TLD="${2##*.}"; shift 2 ;;
     --host) [ "${2:-}" ] || die 1 "--host requires a value"; HOST_NAME="$2"; shift 2 ;;
     --parse-hosts-xml) [ "${2:-}" ] || die 1 "--parse-hosts-xml requires a file path"; PARSE_HOSTS_XML_FILE="$2"; shift 2 ;;
+    --zone-xml-file) [ "${2:-}" ] || die 1 "--zone-xml-file requires a file path"; ZONE_XML_FILE="$2"; shift 2 ;;
     -h|--help) sed -n '2,29p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) die 1 "unknown argument: $1 (see --help)" ;;
   esac
@@ -111,17 +117,19 @@ current_a_records() {
     | tr '\n' ' ' | sed 's/ $//'
 }
 
-a_now="$(current_a_records)"
-if [ -n "$a_now" ]; then
-  log "current DNS   : ${a_now}"
-  case " ${a_now} " in
-    *" ${TARGET_IP} "*)
-      log "record exists with correct value (${FQDN} -> ${TARGET_IP}) — nothing to do"
-      exit 0
-      ;;
-  esac
-else
-  log "current DNS   : no A record for ${FQDN} (NXDOMAIN — clean insert)"
+if [ -z "$ZONE_XML_FILE" ]; then
+  a_now="$(current_a_records)"
+  if [ -n "$a_now" ]; then
+    log "current DNS   : ${a_now}"
+    case " ${a_now} " in
+      *" ${TARGET_IP} "*)
+        log "record exists with correct value (${FQDN} -> ${TARGET_IP}) — nothing to do"
+        exit 0
+        ;;
+    esac
+  else
+    log "current DNS   : no A record for ${FQDN} (NXDOMAIN — clean insert)"
+  fi
 fi
 
 # ---- Namecheap API helpers -------------------------------------------------
@@ -163,7 +171,11 @@ nc_get_hosts() {
 
 # ---- Decide the action from the authoritative Namecheap zone ----------------
 have_creds=1
-if [ -z "$API_USER" ] || [ -z "$API_KEY" ]; then
+if [ -n "$ZONE_XML_FILE" ]; then
+  [ -f "$ZONE_XML_FILE" ] || die 1 "--zone-xml-file: file not found: $ZONE_XML_FILE"
+  zone_xml="$(cat "$ZONE_XML_FILE")"
+  action="CREATE A ${FQDN} -> ${TARGET_IP}"
+elif [ -z "$API_USER" ] || [ -z "$API_KEY" ]; then
   have_creds=0
   log "Namecheap creds: MISSING — cannot query the zone (repo secret NAMECHEAP_API_USER is pending)"
   action="create/verify A ${FQDN} -> ${TARGET_IP} (zone state unknown)"
@@ -213,6 +225,14 @@ if [ "$action" != "none" ]; then
   raw_host_count="$(printf '%s' "$zone_xml" | grep -ci '<host ' || true)"
   if [ "${raw_host_count:-0}" -gt 0 ] && [ -z "$hosts_list" ]; then
     die 1 "hard-abort: zone XML contains ${raw_host_count} <host> element(s) but the parser yielded an empty list — aborting before setHosts to prevent zone nuke. Raw XML follows:
+${zone_xml}"
+  fi
+
+  # Unconditional zero-carry guard: if hosts_list is empty regardless of why
+  # (API glitch, truly wiped zone, or shape drift when raw count is also 0),
+  # setHosts is NEVER called — a one-record call would nuke the entire zone.
+  if [ -z "$hosts_list" ]; then
+    die 1 "zero carried-forward records — refusing setHosts to prevent zone nuke; raw getHosts XML follows:
 ${zone_xml}"
   fi
 

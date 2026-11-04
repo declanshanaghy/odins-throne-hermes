@@ -136,6 +136,7 @@ assert.ok(legacyOdin, "legacy XML: odins-throne record present");
 assert.equal(legacyOdin.address, "136.81.14.206", "legacy XML: odins-throne address");
 
 // ── Empty zone: no host elements → empty output (no abort, no error) ─────────
+// (parse-only mode; the write-path guard is exercised separately below)
 {
   const dir = mkdtempSync(join(tmpdir(), "dns-parser-test-"));
   const file = join(dir, "empty.xml");
@@ -144,5 +145,44 @@ assert.equal(legacyOdin.address, "136.81.14.206", "legacy XML: odins-throne addr
   assert.equal(out.trim(), "", "empty zone XML produces empty parse output (no error)");
 }
 
-console.log("DNS PARSER PASS — live XML (13 records, all types), legacy XML (3 records, RecordType= form), empty zone");
+// ── Zero-carry write-path guard: getHosts returns valid XML with NO <host>
+//    children → unconditional abort, exit 1, setHosts never invoked ──────────
+// Uses --zone-xml-file to inject zone XML into the write path without making
+// real API calls (same fixture/harness pattern as --parse-hosts-xml above).
+{
+  const ZERO_HOST_XML = `\
+<?xml version="1.0" encoding="utf-8"?>
+<ApiResponse Status="OK" xmlns="http://api.namecheap.com/xml.response">
+  <CommandResponse Type="namecheap.domains.dns.getHosts">
+    <DomainDNSGetHostsResult Domain="shanaghy.com" EmailType="NONE" IsUsingOurDNS="true">
+    </DomainDNSGetHostsResult>
+  </CommandResponse>
+</ApiResponse>`;
+
+  const dir = mkdtempSync(join(tmpdir(), "dns-parser-test-"));
+  const file = join(dir, "zero-hosts.xml");
+  writeFileSync(file, ZERO_HOST_XML, "utf8");
+
+  let threw = false;
+  try {
+    execSync(`bash ${dnsScript} --ip 1.2.3.4 --zone-xml-file ${file}`, {
+      encoding: "utf8",
+      stdio: ["pipe", "pipe", "pipe"],
+    });
+  } catch (err) {
+    threw = true;
+    assert.equal(err.status, 1, `zero-host XML: exit code must be 1, got ${err.status}`);
+    assert.ok(
+      err.stderr.includes("zero carried-forward records"),
+      `zero-host XML: stderr must contain abort message; got: ${err.stderr}`
+    );
+    assert.ok(
+      !err.stderr.includes("setHosts OK") && !err.stdout.includes("setHosts OK"),
+      "zero-host XML: setHosts must never be invoked"
+    );
+  }
+  assert.ok(threw, "zero-host XML: script must abort with non-zero exit when zone has no host records");
+}
+
+console.log("DNS PARSER PASS — live XML (13 records, all types), legacy XML (3 records, RecordType= form), empty zone (parse), zero-host write-path abort");
 process.exit(0);
