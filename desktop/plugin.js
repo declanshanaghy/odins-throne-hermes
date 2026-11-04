@@ -368,17 +368,14 @@ var styles_default = `.odins-throne-root .odins-throne-root {
 @media (prefers-reduced-motion: reduce) {
   .odins-throne-root .compact-toggle-btn { transition: none; }
 }
-/* \u2500\u2500 Namespace lantern tree (issues #11, #12 + #39, garden pattern) \u2500\u2500\u2500 */
-/* Each namespace is seated on one of the backdrop's PAINTED lanterns at its
- * runtime-assigned seat (lib/treeSeats.ts): no UI disc over the painting \u2014
- * a transparent hit area holds the curated shanaghy.com icon (inline glyph
- * fallback offline via TreeIcon), the active world's painted lantern
- * brightens with a screen-blended glow, a row of small task icons beneath
- * counts the world's tasks (lib/taskPips.ts), and a hover label carries the
- * world name + full summary line. Strict accordion: one world's VINE is
- * open at a time \u2014 its job cards hang along a curved strand that extends
- * from the lantern (issue #12), scrolling beneath the rooted painting. The
- * tree IS the panel body (the old flat job list is gone). */
+/* ── Namespace lantern tree (issues #11, #12, #39, #59, #69, garden pattern) ─── */
+/* v3.9 (issue #69): each namespace is a visible dark-slate STONE overlaying
+ * its painted leaf-lantern, carrying the world's curated icon. The active
+ * (selected) world's stone opens (teal ring, translucent center, z7); every
+ * other stone fades into the background (ghost-transparent, no rim, opacity .5,
+ * z4). The whole scene — backdrop + stones + vine + cards — scrolls TOGETHER in
+ * one canvas (the task list is always attached to its stone). All summaries
+ * preload at boot. Max 11 active namespaces (one per painted lantern). */
 .odins-throne-root .ns-tree {
   margin-top: 0.5rem;
   font-family: 'JetBrains Mono', monospace;
@@ -395,14 +392,12 @@ var styles_default = `.odins-throne-root .odins-throne-root {
   padding: 0;
 }
 
-/* \u2500\u2500 the painted scene \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+/* ── the painted scene ───────────────────────────────── */
 .odins-throne-root .ns-tree--lanterns {
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
   padding-bottom: 0.5rem;
-  /* the scene fills the panel: the painting + lanterns stay rooted while
-   * the vine strand scrolls WITHIN (issue #12) */
   min-height: 0;
   flex: 1;
 }
@@ -410,48 +405,49 @@ var styles_default = `.odins-throne-root .odins-throne-root {
   position: relative;
   width: 100%;
   flex: 1 1 auto;
-  min-height: 280px; /* the painting stays in view; the strand scrolls inside */
-  aspect-ratio: 896 / 1200; /* TREE_SCENE \u2014 the painting's composed ratio */
+  min-height: 280px;
   border-radius: 6px;
   border: 1px solid var(--rune-border);
   overflow: hidden;
-  background-image: var(--tree-backdrop);
-  background-size: cover;
-  background-position: top center;
   flex-shrink: 0;
 }
+.odins-throne-root .ns-tree__backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 0;
+  object-fit: cover;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(180deg, #000 90%, transparent 100%);
+          mask-image: linear-gradient(180deg, #000 90%, transparent 100%);
+}
+.odins-throne-root .ns-tree--compact .ns-tree__backdrop { object-fit: fill; }
 .odins-throne-root .ns-tree__roots {
   list-style: none;
   margin: 0;
   padding: 0;
   position: absolute;
-  inset: 0;
-  z-index: 6; /* rooted above the scrolling vine (issue #12) */
-  pointer-events: none; /* lanterns opt back in */
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 2;
+  pointer-events: none;
 }
-/* every namespace is a top-level root node \u2014 no rail above them; in the
- * scene each item pins to its seat (compact rows stay ordinary list items) */
 .odins-throne-root .ns-tree__scene .ns-tree__item {
   position: absolute;
   transform: translate(-50%, -50%);
   pointer-events: none;
 }
 
-/* \u2500\u2500 the lantern \u2014 a namespace seated on a painted lantern \u2500\u2500 */
-/* No glass disc, ring, or stem: the painting's own lantern carries the
- * display. The button is a transparent hit area centred on the painted
- * lantern; the world's icon seats in it. Night-garden palette, scoped to the
- * tree (the painting is dark in both themes): moon glow by default, teal
- * when selected, ember when the world holds a failed job, moss when
- * all-clear \u2014 tinting the icon's halo, and (active only) the screen-blended
- * light that brightens the painted lantern itself. */
+/* ── the stone — a namespace seated on a painted lantern (v3.9) ── */
 .odins-throne-root .ns-tree--lanterns {
   --lg-moon: rgba(176, 196, 201, 0.30);
   --lg-teal: rgba(21, 184, 166, 0.55);
   --lg-ember: rgba(224, 122, 63, 0.42);
   --lg-moss: rgba(121, 179, 86, 0.36);
   --lg: var(--lg-moon);
-  --lantern-light: rgba(255, 226, 168, 0.62); /* the painted flame, lit */
+  --lantern-light: rgba(255, 226, 168, 0.62);
   --pip-succeeded: #79b356;
   --pip-running: #6fb7d8;
   --pip-failed: #e07a3f;
@@ -466,17 +462,17 @@ var styles_default = `.odins-throne-root .odins-throne-root {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 52px;
+  height: 52px;
   padding: 0;
-  border: 0;
+  border: 1px solid rgba(176, 196, 201, 0.22);
   border-radius: 50%;
-  background: transparent;
+  background: radial-gradient(circle at 38% 30%, rgba(58, 74, 80, 0.92), rgba(15, 21, 26, 0.96) 58%, rgba(7, 11, 14, 0.99) 82%);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.08), 0 0 12px var(--lg);
   cursor: pointer;
-  transition: scale 0.2s;
+  z-index: 6;
+  transition: scale 0.2s, box-shadow 0.2s, border-color 0.2s, background 0.2s, opacity 0.2s;
 }
-/* the painted lantern's light \u2014 invisible until hovered/selected; a
- * screen blend only BRIGHTENS the painting beneath (never covers it) */
 .odins-throne-root .ns-tree__lantern::before {
   content: "";
   position: absolute;
@@ -494,20 +490,38 @@ var styles_default = `.odins-throne-root .odins-throne-root {
   outline-offset: 2px;
 }
 .odins-throne-root .ns-tree__lantern:focus-visible::before { opacity: 0.55; }
-/* selected \u2014 the painted lantern lights up teal-warm, its icon brightens */
-.odins-throne-root .ns-tree__lantern--active { --lg: var(--lg-teal); }
+.odins-throne-root .ns-tree__lantern--active {
+  z-index: 7;
+  --lg: var(--lg-teal);
+  border-color: var(--teal-asgard);
+  background: radial-gradient(circle at 38% 30%, rgba(70, 92, 98, 0.55), rgba(15, 21, 26, 0.8) 58%, rgba(7, 11, 14, 0.95) 82%);
+}
 .odins-throne-root .ns-tree__lantern--active::before,
 .odins-throne-root .ns-tree__lantern--active:hover::before { opacity: 1; }
-/* glow tints \u2014 ember for a failed job in the world, moss when all-clear
- * (the selected world keeps its teal light) */
+.odins-throne-root .ns-tree__lantern--inactive {
+  z-index: 4;
+  border-color: transparent;
+  background: radial-gradient(circle at 38% 30%, rgba(10, 16, 20, 0.14), rgba(7, 11, 14, 0.34) 72%);
+  box-shadow: none;
+  scale: 0.85;
+  opacity: 0.5;
+}
+.odins-throne-root .ns-tree__lantern--inactive:hover {
+  opacity: 0.9;
+  scale: 0.95;
+  border-color: rgba(176, 196, 201, 0.2);
+  background: radial-gradient(circle at 38% 30%, rgba(58, 74, 80, 0.5), rgba(15, 21, 26, 0.8) 72%);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.5), 0 0 12px var(--lg);
+}
+.odins-throne-root .ns-tree__lantern--inactive:hover::before { opacity: 0.25; }
+.odins-throne-root .ns-tree__lantern--inactive::before { opacity: 0; }
+.odins-throne-root .ns-tree__lantern--inactive.ns-tree__lantern--dim { opacity: 0.22; }
 .odins-throne-root .ns-tree__lantern--failed:not(.ns-tree__lantern--active) { --lg: var(--lg-ember); }
 .odins-throne-root .ns-tree__lantern--ok:not(.ns-tree__lantern--active)     { --lg: var(--lg-moss); }
-/* the curated icon, seated in the painted lantern: a dark outline + tinted
- * halo keep it legible on the painting without any disc behind it */
 .odins-throne-root .ns-tree__icon--lantern {
-  position: relative; /* above the ::before light */
-  width: 20px;
-  height: 20px;
+  position: relative;
+  width: 30px;
+  height: 30px;
   border-radius: 0;
   opacity: 0.85;
   filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.95)) drop-shadow(0 0 4px var(--lg));
@@ -520,7 +534,15 @@ var styles_default = `.odins-throne-root .odins-throne-root {
   scale: 1.15;
   filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.95)) drop-shadow(0 0 7px var(--lg-teal));
 }
-/* summary unavailable \u2014 the dimmed seat */
+.odins-throne-root .ns-tree__lantern--inactive .ns-tree__icon--lantern {
+  opacity: 0.5;
+  scale: 0.9;
+  filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.95)) saturate(0.3) brightness(0.65);
+}
+.odins-throne-root .ns-tree__lantern--inactive:hover .ns-tree__icon--lantern {
+  opacity: 0.9;
+  filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.95));
+}
 .odins-throne-root .ns-tree__lantern--dim .ns-tree__icon--lantern {
   opacity: 0.5;
   filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.95)) saturate(0.5);
@@ -529,20 +551,19 @@ var styles_default = `.odins-throne-root .odins-throne-root {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 1rem;
+  font-size: 1.4rem;
   line-height: 1;
 }
-/* Extended sidebar seats bigger icons. */
 .odins-throne-root .ns-tree--extended .ns-tree__lantern {
-  width: 38px;
-  height: 38px;
+  width: 60px;
+  height: 60px;
 }
 .odins-throne-root .ns-tree--extended .ns-tree__icon--lantern {
-  width: 24px;
-  height: 24px;
+  width: 36px;
+  height: 36px;
 }
 .odins-throne-root .ns-tree--extended .ns-tree__icon--lantern.ns-tree__icon--fallback {
-  font-size: 1.2rem;
+  font-size: 1.6rem;
 }
 @media (prefers-reduced-motion: reduce) {
   .odins-throne-root .ns-tree__lantern,
@@ -848,9 +869,9 @@ var styles_default = `.odins-throne-root .odins-throne-root {
 .odins-throne-root .ns-tree--lanterns.ns-tree--compact .ns-tree__icon--lantern { width: 24px; height: 24px; }
 .odins-throne-root .ns-tree--lanterns.ns-tree--compact .ns-tree__icon--lantern.ns-tree__icon--fallback { font-size: 1rem; }
 /* compact counts: orbs stay, number labels are standard-only (ns-tree--extended) */
-.odins-throne-root .ns-tree--lanterns.ns-tree--compact .ns-tree__counts { top: calc(50% + 24px); }
+.odins-throne-root .ns-tree--lanterns.ns-tree--compact .ns-tree__counts { top: calc(50% + 22px); }
 /* compact piprow sits tighter under the smaller lantern */
-.odins-throne-root .ns-tree--lanterns.ns-tree--compact .piprow { top: calc(50% + 36px); }
+.odins-throne-root .ns-tree--lanterns.ns-tree--compact .piprow { top: calc(50% + 32px); }
 /* compact jcards: 142px wide, 3px 7px padding, title 9.5px */
 .odins-throne-root .jcard--compact { width: 142px !important; padding: 3px 7px !important; }
 
@@ -901,18 +922,20 @@ var styles_default = `.odins-throne-root .odins-throne-root {
 /* \u2500\u2500 status-counts row (issue #54): orbs beneath a COLLAPSED lantern \u2500\u2500 */
 /* Centered under the lantern; hidden when world is expanded (counts + strip
  * both disappear \u2014 their icons live at the vine anchors instead). */
+.odins-throne-root .ns-tree__lantern--inactive ~ .ns-tree__counts { opacity: 0.55; }
+.odins-throne-root .ns-tree__lantern--inactive ~ .piprow { opacity: 0.6; }
 .odins-throne-root .ns-tree__counts {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  top: calc(50% + 20px);
+  top: calc(50% + 28px);
   z-index: 6;
   display: flex;
   gap: 4px;
   align-items: center;
   pointer-events: none;
 }
-.odins-throne-root .ns-tree--extended .ns-tree__counts { top: calc(50% + 24px); }
+.odins-throne-root .ns-tree--extended .ns-tree__counts { top: calc(50% + 32px); }
 .odins-throne-root .ns-tree__counts__orb {
   width: 11px;
   height: 11px;
@@ -952,7 +975,7 @@ var styles_default = `.odins-throne-root .odins-throne-root {
   gap: 2px;
   top: calc(50% + 36px);
 }
-.odins-throne-root .ns-tree--extended .piprow { top: calc(50% + 41px); }
+.odins-throne-root .ns-tree--extended .piprow { top: calc(50% + 44px); }
 .odins-throne-root .pip-slot {
   width: 9px;
   height: 9px;

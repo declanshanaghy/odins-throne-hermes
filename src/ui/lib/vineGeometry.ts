@@ -1,22 +1,15 @@
-// Vine-strand geometry for the tree display's job cards (issue #12, garden
-// pattern wave 2, epic #7).
+// Vine-strand geometry for the tree display's job cards — v3.9 (issue #69).
 //
-// The open world's branch is a CURVED VINE that extends from its lantern's
-// seat: a cubic-bezier strand leaning off the lantern (dir ±1 from
-// lib/treeSeats.ts) and cascading mostly DOWNWARD, with the world's job
-// cards hung along it — evenly spaced, never overlapping, in the approved
-// hang order (running → failed → pending → succeeded, via useJobs.sortJobs).
+// The open world's branch is a TWO-SEGMENT CURVED VINE that extends from its
+// lantern's seat: the first bezier curls out to a fixed BRANCH RAIL at 44% of
+// the scene width, the second descends the rail so cards stack downward through
+// the right half, never crowding the painted tree. Cards hang along the second
+// segment; the whole scene (painting + stones + vine) scrolls together.
 //
-// The geometry is copied from the approved interactive prototype on the
-// design-tree-display branch (design/tree-display/tree-display-prototype.html,
-// `vineFor`): the arc LENGTH grows with the job count (one pitch per extra
-// card) so the vine extends as work grows, cards sample the curve at evenly
-// spread t values, and every card is clamped inside the scene box. All
-// constants live HERE, never in JSX (same rule as treeSeats.ts).
+// The geometry is from the approved prototype (design/tree-display/
+// tree-display-prototype.html, v3.9, commit 99abad7). All constants live here.
 //
-// Pure functions only — no DOM, no React — so test/vine.mjs can lock the
-// "never overlapping at any job count" and "extends with the job count"
-// contracts by construction.
+// Pure functions only — no DOM, no React.
 
 import type { LanternSeat } from "./treeSeats";
 
@@ -45,21 +38,18 @@ export const VINE = {
   pitchNormal: 56,
   /** px between card centers — compact (dense) mode. */
   pitchCompact: 34,
-  /** Horizontal lean of the control points off the lantern (× dir, px). */
-  leanC1: 16,
-  leanC2: 30,
-  /** Horizontal offset of the vine's tip (× dir, px). */
-  tipLean: 34,
-  /** Vertical arc when a lone card hangs (px). */
-  singleArc: 54,
-  /** Arc base: arc = base + (count - 1) * pitch — the vine extends per card. */
+  /** Branch rail x as a fraction of scene width (44%). */
+  railFrac: 0.44,
+  /** px below the lantern where the first bezier reaches the rail. */
+  railJoinDrop: 36,
+  /** Vertical arc (second bezier) base: arc = base + (count - 1) * pitch. */
   arcBase: 40,
-  /** First card samples the curve slightly below the lantern. */
-  tStart: 0.07,
-  /** Cards sample tStart .. tStart + tSpan. */
-  tSpan: 0.92,
-  /** A lone card hangs at this t. */
-  singleT: 0.55,
+  /** Vertical arc for a lone card. */
+  singleArc: 54,
+  /** t-start for card sampling on the second bezier segment. */
+  tStart: 0.05,
+  /** t-span for card sampling: cards are spread from tStart to tStart + tSpan. */
+  tSpan: 0.93,
   /** Card width — extended. */
   cardWidthExtended: 212,
   /** Card width — normal. */
@@ -75,12 +65,12 @@ export const VINE = {
   /** Canvas room below the vine's tip so the last card never clips. */
   bottomPadding: 90,
   /**
-   * Guaranteed minimum px between consecutive card centers on the curve —
-   * larger than a card's height in normal/extended mode, so cards never overlap.
+   * Guaranteed minimum px between consecutive card centers — larger than a
+   * card's height in normal/extended mode, so cards never overlap.
    */
-  minCenterSpacing: 40,
-  /** Minimum px between card centers in compact mode (compact cards are ~24px tall). */
-  minCenterSpacingCompact: 24,
+  minCenterSpacing: 24,
+  /** Minimum px between card centers in compact mode. */
+  minCenterSpacingCompact: 14,
 } as const;
 
 /** The pitch (px between card centers) for a display mode. */
@@ -95,7 +85,7 @@ export function vineCardWidth(mode: VineMode): number {
   return mode === "normal" ? VINE.cardWidthNormal : VINE.cardWidthExtended;
 }
 
-/** Cubic bezier point at parameter t (0..1) — the prototype's `bez4`. */
+/** Cubic bezier point at parameter t (0..1). */
 function bez4(t: number, P0: Pt, C1: Pt, C2: Pt, P3: Pt): Pt {
   const u = 1 - t;
   return {
@@ -106,9 +96,9 @@ function bez4(t: number, P0: Pt, C1: Pt, C2: Pt, P3: Pt): Pt {
 
 /** A vine-strand's shape plus the anchors its cards hang from. */
 export interface VineGeometry {
-  /** SVG path `d`: from the lantern's seat, cascading down. */
+  /** SVG path `d`: two cubic beziers — lantern → rail join → descend. */
   d: string;
-  /** Card anchor points on the curve, one per job, in hang order. */
+  /** Card anchor points on the second bezier, one per job, in hang order. */
   points: Pt[];
   /** Which way the strand leans (the seat's dir). */
   dir: 1 | -1;
@@ -117,16 +107,14 @@ export interface VineGeometry {
 }
 
 /**
- * The vine for one open world: a gentle cascade off the lantern's seat —
- * `vineFor(w, n)` from the prototype. The seat arrives in percent-of-scene;
- * the scene's measured pixel box converts it to the canvas space the SVG
- * path and the absolutely-positioned cards share.
+ * The vine for one open world — `vineFor(w, n)` from the prototype (v3.9).
  *
- * Cards sample the curve at EVEN VERTICAL intervals (equal y steps along
- * the strand, not equal t): the prototype's t-uniform sampling scrunches
- * near the lantern where the curve runs shallow, dipping under a card's
- * height at high job counts — equal-y spacing keeps every pair of card
- * centers a full even pitch apart, so cards NEVER overlap at any count.
+ * The seat arrives in scene % (PAINTING % already projected by projectSeat()
+ * before this call). The scene's measured pixel box converts it to canvas px.
+ *
+ * Two cubic bezier segments:
+ *   1. Lantern (L) → rail join (J) at 44% sceneW.
+ *   2. Rail join (J) → tip (P3) descending the rail; cards hang along this.
  */
 export function vineFor(
   seat: LanternSeat,
@@ -136,42 +124,36 @@ export function vineFor(
   mode: VineMode,
 ): VineGeometry {
   const L: Pt = { x: (seat.x / 100) * sceneW, y: (seat.y / 100) * sceneH };
-  const dir = seat.dir; // which way the cards hang
+  const dir = seat.dir;
   const pitch = vinePitch(mode);
-  // the vine extends with the job count — one pitch per extra card
   const arc = count <= 1 ? VINE.singleArc : VINE.arcBase + (count - 1) * pitch;
-  // a gentle cascade: slight lean off the lantern, mostly downward
-  const C1: Pt = { x: L.x + dir * VINE.leanC1, y: L.y + arc * 0.22 };
-  const C2: Pt = { x: L.x + dir * VINE.leanC2, y: L.y + arc * 0.55 };
-  const P3: Pt = { x: L.x + dir * VINE.tipLean, y: L.y + arc };
+  const railX = sceneW * VINE.railFrac;
+
+  // First bezier: lantern → rail join
+  const J: Pt = { x: railX, y: L.y + VINE.railJoinDrop };
+  const C1: Pt = { x: railX, y: L.y + 14 };
+  // d string: M L.x,L.y C C1.x,C1.y railX,(J.y-16) J.x,J.y
+  const seg1 = `M${L.x.toFixed(1)},${L.y.toFixed(1)} C${C1.x.toFixed(1)},${C1.y.toFixed(1)} ${railX.toFixed(1)},${(J.y - 16).toFixed(1)} ${J.x.toFixed(1)},${J.y.toFixed(1)}`;
+
+  // Second bezier: rail join → descend (cards hang here)
+  const D1: Pt = { x: railX, y: J.y + arc * 0.34 };
+  const D2: Pt = { x: railX + 10 * dir, y: J.y + arc * 0.68 };
+  const P3: Pt = { x: railX + 6 * dir, y: J.y + arc };
+  const seg2 = ` C${D1.x.toFixed(1)},${D1.y.toFixed(1)} ${D2.x.toFixed(1)},${D2.y.toFixed(1)} ${P3.x.toFixed(1)},${P3.y.toFixed(1)}`;
+
   const n = Math.max(count, 0);
-  const yOf = (t: number): number => bez4(t, L, C1, C2, P3).y;
   const points: Pt[] = [];
   if (n === 1) {
-    points.push(bez4(VINE.singleT, L, C1, C2, P3));
+    points.push(bez4(0.5, J, D1, D2, P3));
   } else if (n > 1) {
-    // even vertical spread: card i centers at yStart + span * i/(n-1)
-    const yStart = yOf(VINE.tStart);
-    const yEnd = yOf(VINE.tStart + VINE.tSpan);
     for (let i = 0; i < n; i++) {
-      const target = yStart + ((yEnd - yStart) * i) / (n - 1);
-      // invert the monotonic cascade by bisection on [tStart, tEnd]
-      let lo: number = VINE.tStart;
-      let hi: number = VINE.tStart + VINE.tSpan;
-      for (let step = 0; step < 24; step++) {
-        const mid = (lo + hi) / 2;
-        if (yOf(mid) < target) lo = mid;
-        else hi = mid;
-      }
-      points.push(bez4((lo + hi) / 2, L, C1, C2, P3));
+      const t = VINE.tStart + VINE.tSpan * (i / (n - 1));
+      points.push(bez4(t, J, D1, D2, P3));
     }
   }
+
   return {
-    d:
-      `M${L.x.toFixed(1)},${L.y.toFixed(1)} ` +
-      `C${C1.x.toFixed(1)},${C1.y.toFixed(1)} ` +
-      `${C2.x.toFixed(1)},${C2.y.toFixed(1)} ` +
-      `${P3.x.toFixed(1)},${P3.y.toFixed(1)}`,
+    d: seg1 + seg2,
     points,
     dir,
     bottom: P3.y,
@@ -208,8 +190,7 @@ export function vineCardBox(
 
 /**
  * The scrollable canvas's height: the scene's own height until the vine
- * outgrows it, then the vine's tip plus breathing room — this is what makes
- * the scene SCROLL when the strand extends past the panel (issue #12).
+ * outgrows it, then the vine's tip plus breathing room.
  */
 export function vineCanvasHeight(vine: VineGeometry, sceneH: number): number {
   return Math.max(sceneH, vine.bottom + VINE.bottomPadding);
