@@ -6,31 +6,36 @@ issue #10 — this directory + `src/ui/lib/treeSeats.ts`.
 
 ## Files
 
-- `tree-backdrop.jpg` — the moonlit tree-of-life painting (mossy trunk,
-  boughs, hanging leaf lanterns), 896x1200 (~3:4 portrait). Extracted
-  byte-identical from the approved interactive prototype
-  (`design/tree-display/tree-display-prototype.html` on the
-  `design-tree-display` branch — the approved contract; the prototype embeds
-  this exact JPEG as a data URL).
+- `tree-backdrop.jpg` — the tall moonlit tree-of-life painting (tree in the
+  left third, leaf lanterns climbing the full height), 896x1200 (~3:4
+  portrait). Extracted byte-identical from the v3.9 approved prototype
+  (`design/tree-display/tree-backdrop-tall.jpg` on the `design-tree-display`
+  branch — commit 99abad7). This is the **tall vertical composition** (see
+  below).
 - `README.md` — this regeneration guide.
 
 ## How the assets are wired
 
-- The painting is imported in `src/ui/components/NamespaceTree.tsx` and
-  exposed to CSS as the `--tree-backdrop` custom property on the tree root
-  (esbuild inlines it as a data URL, same as the `src/assets/` portraits).
+- The painting is imported in `src/ui/components/NamespaceTree.tsx` as a
+  `<img>` element inside the scrolling canvas — `object-fit: cover` in
+  standard mode (center crop) and `object-fit: fill` in compact mode.
+  Its height is pinned to the scene's rendered height by JS so it stays
+  rooted while the canvas (vine + cards) can grow below.
 - Lantern seats live in `src/ui/lib/treeSeats.ts` as TYPED data:
-  `SEAT_POOL` (the painted lantern spots, percent-of-scene, copied verbatim
+  `SEAT_POOL` (the 11 painted lantern spots in PAINTING %, copied verbatim
   from the prototype's `SEAT_POOL`) and `CURATED_SEATS` (namespace id →
-  painted seat index, the prototype's `CURATED_SEATS`). Seats are ASSIGNED at
-  runtime by `assignSeats(nsIds)` over whatever the backend API returns:
-  curated claims first, deterministic djb2-hash claims for unknown worlds,
-  and a documented terrace stack below the boughs when a list outgrows the
-  painted pool. `namespaceSeat(nsId)` is the single-id convenience.
+  painted seat index). Seats are ASSIGNED at runtime by `assignSeats(nsIds)`
+  over whatever the backend API returns: curated claims first, deterministic
+  djb2-hash claims for unknown worlds, share-last-seat guard when the tree
+  is full (11 worlds max). `namespaceSeat(nsId)` is the single-id
+  convenience.
+- `projectSeat(p, mode, sceneW, sceneH)` maps painting % → scene %: compact
+  returns painting % unchanged (fill = 1:1); standard uses cover-center
+  projection so stones sit on the painted lanterns at any panel width.
 - The consumer attaches each namespace's seat to its tree node as
   `data-seat-x` / `data-seat-y` / `data-seat-dir` attributes — no layout
   constants scattered in JSX. The lantern overlay (issue #11) pins each
-  namespace's lantern to the painting with these seats.
+  namespace's stone to the painting with these projected seats.
 
 ## Regenerating the backdrop
 
@@ -48,31 +53,29 @@ work. Ship at 896x1200, JPEG ~q85.
 
 Two compositions stand:
 
-- **Wide (the current shipped `tree-backdrop.jpg`)** — boughs across the top
+- **Wide (previous `tree-backdrop.jpg`, archived)** — boughs across the top
   third, lanterns spread wide:
   a moonlit tree of life at night, moss-covered trunk, spreading boughs
   with leaf-shaped lanterns hanging, deep blue-greens, painterly, portrait
   3:4, no text. Keep boughs in the upper third so lantern seats stay valid.
 
-- **Tall vertical (the v3.7 prototype contract on `design-tree-display` —
-  tree in the left third, lanterns climbing the full height, cool palette)**
-  — a moonlit tree of life at night, moss-covered trunk, deep blue-greens,
+- **Tall vertical (current shipped `tree-backdrop.jpg` — v3.9 contract)** —
+  a moonlit tree of life at night, moss-covered trunk, deep blue-greens,
   painterly, portrait 3:4, no text. Cool moonlit palette: deep teal and
   indigo night sky, lanterns glowing pale cool white-blue like moonlight,
   subtle atmospheric depth, soft edges, no bold swirls, no warm orange
   light. One tall narrow tree standing in the left third of the frame,
-  roots near the bottom edge, crown near the top edge. Ten pale glowing
-  leaf-shaped lanterns hang from its boughs, ALL within the left 40 percent
+  roots near the bottom edge, crown near the top edge. Eleven pale glowing
+  leaf-shaped lanterns hang from its boughs, ALL within the left 50 percent
   of the frame's width, spread across the full height from near the roots
   up to just below the crown. The middle and right of the frame are open
-  starry night sky with a small moon. Keep every lantern in the left third
+  starry night sky with a small moon. Keep every lantern in the left half
   so lantern seats stay valid.
 
-After a repaint, re-map seats as below. Note for the v3.7 contract: the
-prototype stores `SEAT_POOL` in PAINTING percentages and projects them per
-display mode (`projectSeat()` — cover-center crop in standard, `fill` in
-compact), so the interactive lanterns sit on the painted leaf-lanterns at
-any panel width; the port should carry that projection over.
+After a repaint, re-map seats as below. The shipped `SEAT_POOL` is in
+PAINTING percentages; `projectSeat()` maps them to scene % per display
+mode (cover-center crop in standard, `fill` in compact), so the stones sit
+on the painted leaf-lanterns at any panel width.
 
 ## Re-mapping seats after a repaint
 
