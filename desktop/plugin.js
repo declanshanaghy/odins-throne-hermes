@@ -9144,7 +9144,7 @@ function NamespaceTree({
                     children: "fetching the world's work\u2026"
                   }
                 ),
-                openWorld && openSeat && summaryLoaded && !summaryFailed && openTasks.length === 0 && /* @__PURE__ */ jsx15("div", { className: "ns-tree__note", style: notePos(openSeat, -90), children: "no tasks in this world" }),
+                openWorld && openSeat && summaryLoaded && !summaryFailed && openTasks.length === 0 && /* @__PURE__ */ jsx15("div", { className: "ns-tree__note", style: notePos(openSeat, -90), children: "No tasks in this realm" }),
                 openWorld && openSeat && summaryFailed && /* @__PURE__ */ jsx15("div", { className: "ns-tree__note ns-tree__note--err", style: notePos(openSeat, -90), children: "summary unavailable" }),
                 vine && openTasks.map((job, i) => {
                   const isTaskActive = job.sessionId === activeSessionId;
