@@ -82,8 +82,12 @@ on the painted leaf-lanterns at any panel width.
 Seats are percent-of-scene, so they survive any rendered size — but a NEW
 painting moves the boughs. After any repaint:
 
-1. Open the new painting and note each lantern's position as a percentage of
-   the image box (x from left edge, y from top edge, plus hang direction).
+1. Run `python3 scripts/detect-lanterns.py` from the repo root — it
+   flood-fills the bright teal blobs and prints each lantern's position as
+   a percentage of the image box (x from left edge, y from top edge; the
+   blob centroid IS the bright spot). It exits 1 unless exactly eleven
+   lanterns are found. Never hand-vision the mapping — the v3.9 pool was
+   hand-visioned and had drifted a full stone-diameter by v3.9.2.
 2. Update `SEAT_POOL` (and `CURATED_SEATS` for curated bridges) in
    `src/ui/lib/treeSeats.ts`.
 3. `test/tree-seats.mjs` locks the mapping to the prototype's values — update

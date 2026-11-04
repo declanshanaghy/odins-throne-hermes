@@ -8491,25 +8491,25 @@ var TREE_SCENE = {
 var SEAT_POOL = [
   { x: 40, y: 73 },
   { x: 16, y: 69 },
-  { x: 39, y: 67 },
+  { x: 46, y: 68 },
   { x: 10, y: 64 },
   { x: 30, y: 55 },
-  { x: 37, y: 49 },
-  { x: 11, y: 49 },
+  { x: 37, y: 50 },
+  { x: 11, y: 50 },
   { x: 18, y: 40 },
-  { x: 22, y: 35 },
-  { x: 15, y: 28 },
+  { x: 23, y: 30 },
+  { x: 40, y: 37 },
   { x: 47, y: 33 }
 ];
 var CURATED_SEATS = {
   "fenrir-agents": 9,
-  // 15,28
+  // 40,37
   "odins-throne-hermes-agents": 8,
-  // 22,35
+  // 23,30
   "shanaghy-com-agents": 7,
   // 18,40
   "say-so-agents": 6,
-  // 11,49
+  // 11,50
   "re-goatmower-agents": 4
   // 30,55
 };

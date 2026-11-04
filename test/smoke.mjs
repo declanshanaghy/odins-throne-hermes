@@ -240,16 +240,16 @@ assert.ok(
 );
 assert.ok(document.querySelector(".ns-tree__scene"), "the painted scene mounts as the tree's stage");
 const fenrirRoot = document.querySelector('.ns-tree__item[data-namespace="fenrir-agents"]');
-// fenrir-agents is curated onto SEAT_POOL[9] = {15,28} (v3.9 tall painting).
-assert.equal(fenrirRoot.getAttribute("data-seat-x"), "15", "fenrir lantern seat x matches the prototype mapping (SEAT_POOL[9])");
-assert.equal(fenrirRoot.getAttribute("data-seat-y"), "28", "fenrir lantern seat y matches the prototype mapping (SEAT_POOL[9])");
+// fenrir-agents is curated onto SEAT_POOL[9] = {40,37} (v3.9.2 bright-spot re-map).
+assert.equal(fenrirRoot.getAttribute("data-seat-x"), "40", "fenrir lantern seat x matches the prototype mapping (SEAT_POOL[9])");
+assert.equal(fenrirRoot.getAttribute("data-seat-y"), "37", "fenrir lantern seat y matches the prototype mapping (SEAT_POOL[9])");
 assert.equal(fenrirRoot.getAttribute("data-seat-dir"), "1", "fenrir vine hangs rightward (dir 1)");
-assert.equal(fenrirRoot.style.left, "15%", "fenrir lantern is pinned to its seat coordinate");
-assert.equal(fenrirRoot.style.top, "28%", "fenrir lantern is pinned to its seat coordinate");
+assert.equal(fenrirRoot.style.left, "40%", "fenrir lantern is pinned to its seat coordinate");
+assert.equal(fenrirRoot.style.top, "37%", "fenrir lantern is pinned to its seat coordinate");
 const saysoRoot = document.querySelector('.ns-tree__item[data-namespace="say-so-agents"]');
-// say-so-agents is curated onto SEAT_POOL[6] = {11,49}.
+// say-so-agents is curated onto SEAT_POOL[6] = {11,50} (v3.9.2).
 assert.equal(saysoRoot.getAttribute("data-seat-x"), "11", "say-so lantern seat x matches the prototype mapping (SEAT_POOL[6])");
-assert.equal(saysoRoot.getAttribute("data-seat-y"), "49", "say-so lantern seat y matches the prototype mapping (SEAT_POOL[6])");
+assert.equal(saysoRoot.getAttribute("data-seat-y"), "50", "say-so lantern seat y matches the prototype mapping (SEAT_POOL[6])");
 for (const item of document.querySelectorAll(".ns-tree__item[data-namespace]")) {
   const x = Number(item.getAttribute("data-seat-x"));
   const y = Number(item.getAttribute("data-seat-y"));

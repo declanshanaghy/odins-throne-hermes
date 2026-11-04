@@ -1,7 +1,7 @@
 // Lantern seat data for the painted tree scene — v3.9 (issue #69).
 //
 // The contract is the prototype: design/tree-display/tree-display-prototype.html
-// on the design-tree-display branch (v3.9, commit 99abad7). The painting is
+// on the design-tree-display branch (v3.9.2, commit 83c1a16). The painting is
 // 896x1200 (tall portrait, tree in the left third, eleven painted leaf-lanterns
 // climbing the full height). Seats are stored in PAINTING percentages; projectSeat()
 // maps them into scene % per display mode (cover-center in standard, fill in
@@ -47,13 +47,15 @@ export interface PaintedSeat {
 
 /**
  * The eleven painted lantern seats — VERBATIM from the prototype's SEAT_POOL
- * (commit 99abad7, v3.9). Stored in PAINTING %; use projectSeat() to convert
+ * (commit 83c1a16, v3.9.2 — bright-spot centroids detected by
+ * scripts/detect-lanterns.py; the hand-visioned v3.9 pool had drifted).
+ * Stored in PAINTING %; use projectSeat() to convert
  * to scene % before positioning. Max 11 active namespaces (one per lantern).
  */
 export const SEAT_POOL: readonly PaintedSeat[] = [
-  { x: 40, y: 73 }, { x: 16, y: 69 }, { x: 39, y: 67 }, { x: 10, y: 64 },
-  { x: 30, y: 55 }, { x: 37, y: 49 }, { x: 11, y: 49 }, { x: 18, y: 40 },
-  { x: 22, y: 35 }, { x: 15, y: 28 }, { x: 47, y: 33 },
+  { x: 40, y: 73 }, { x: 16, y: 69 }, { x: 46, y: 68 }, { x: 10, y: 64 },
+  { x: 30, y: 55 }, { x: 37, y: 50 }, { x: 11, y: 50 }, { x: 18, y: 40 },
+  { x: 23, y: 30 }, { x: 40, y: 37 }, { x: 47, y: 33 },
 ];
 
 /**
@@ -63,10 +65,10 @@ export const SEAT_POOL: readonly PaintedSeat[] = [
  * index — can never steal a curated world's painted lantern.
  */
 export const CURATED_SEATS: Record<string, number> = {
-  "fenrir-agents": 9,               // 15,28
-  "odins-throne-hermes-agents": 8,  // 22,35
+  "fenrir-agents": 9,               // 40,37
+  "odins-throne-hermes-agents": 8,  // 23,30
   "shanaghy-com-agents": 7,         // 18,40
-  "say-so-agents": 6,               // 11,49
+  "say-so-agents": 6,               // 11,50
   "re-goatmower-agents": 4,         // 30,55
 };
 
