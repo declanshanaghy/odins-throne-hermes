@@ -11,11 +11,15 @@
 #
 # SAFETY — setHosts is a full zone replace-all:
 #   namecheap.domains.dns.setHosts sends the COMPLETE host list. Any record
-#   omitted from the call is permanently deleted. This script guards against
-#   silent-empty-merge: if the zone XML contains <Host> elements but the
-#   parser yields an empty list, it aborts (exit 1) and prints the raw XML
-#   instead of calling setHosts with a one-record list that would nuke
-#   every other record. See 2026-11-03 incident in knowledge/subsystems/
+#   omitted from the call is permanently deleted. Two guards prevent zone nukes:
+#   1. Raw-count guard: if zone XML contains <host> elements but the parser
+#      yields nothing (XML shape drift while elements are present), abort.
+#   2. Unconditional zero-carry guard: if the parsed carried-forward list is
+#      empty for ANY reason — API glitch, truly wiped zone view, or parse
+#      failure when raw element count is also 0 — setHosts is NEVER called,
+#      independent of raw_host_count. This is the guard that would have
+#      prevented the 2026-11-04 incident (raw count was 0 due to casing).
+#   Both guards print the raw XML and exit 1. See knowledge/subsystems/
 #   deployment-gke.md.
 #
 # Environment:
@@ -46,9 +50,35 @@ API_USER="${NAMECHEAP_API_USER:-}"
 API_KEY="${NAMECHEAP_API_KEY:-}"
 CLIENT_IP="${NAMECHEAP_CLIENT_IP:-}"
 API_BASE="https://api.namecheap.com/xml.response"
+ZONE_XML_FILE=""
 
 log() { printf '[dns.sh] %s\n' "$*"; }
 die() { local code="$1"; shift; printf '[dns.sh] ERROR: %s\n' "$*" >&2; exit "$code"; }
+
+# parse_hosts_xml <xml-string>
+# Parses a Namecheap getHosts XML response; prints "name|type|address|ttl" per
+# record on stdout.  Handles both the live API shape:
+#   <host Name=... Type=... Address=... TTL=.../>
+# and the legacy shape:
+#   <Host Name=... RecordType=... Address=... TTL=.../>
+# Element casing and RecordType vs Type differences are both normalised.
+parse_hosts_xml() {
+  local xml="$1"
+  printf '%s' "$xml" \
+    | sed 's/</\n</g' \
+    | (grep -i '^<host ' || true) \
+    | sed 's/^<[Hh][Oo][Ss][Tt] //' \
+    | sed 's/ *\/>$//' \
+    | tr ' ' '\n' \
+    | awk -F'"' '
+        /^Name=/              { name=$2 }
+        /^RecordType=|^Type=/ { type=$2 }
+        /^Address=/           { addr=$2 }
+        /^TTL=/               { ttl=$2; if (name != "") print name "|" type "|" addr "|" (ttl == "" ? "1800" : ttl) }
+      '
+}
+
+PARSE_HOSTS_XML_FILE=""
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -56,10 +86,21 @@ while [ $# -gt 0 ]; do
     --dry-run) DRY_RUN=1; shift ;;
     --domain) [ "${2:-}" ] || die 1 "--domain requires sld.tld"; DOMAIN_SLD="${2%%.*}"; DOMAIN_TLD="${2##*.}"; shift 2 ;;
     --host) [ "${2:-}" ] || die 1 "--host requires a value"; HOST_NAME="$2"; shift 2 ;;
+    --parse-hosts-xml) [ "${2:-}" ] || die 1 "--parse-hosts-xml requires a file path"; PARSE_HOSTS_XML_FILE="$2"; shift 2 ;;
+    --zone-xml-file) [ "${2:-}" ] || die 1 "--zone-xml-file requires a file path"; ZONE_XML_FILE="$2"; shift 2 ;;
     -h|--help) sed -n '2,29p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) die 1 "unknown argument: $1 (see --help)" ;;
   esac
 done
+
+# Parse-only mode: read zone XML from a file, print parsed records, exit.
+# Used by test/dns-parser.mjs to exercise the parser against fixture XML without
+# making any API calls or requiring Namecheap credentials.
+if [ -n "$PARSE_HOSTS_XML_FILE" ]; then
+  [ -f "$PARSE_HOSTS_XML_FILE" ] || die 1 "--parse-hosts-xml: file not found: $PARSE_HOSTS_XML_FILE"
+  parse_hosts_xml "$(cat "$PARSE_HOSTS_XML_FILE")"
+  exit 0
+fi
 
 command -v curl >/dev/null 2>&1 || die 1 "curl is required but not installed"
 
@@ -76,17 +117,19 @@ current_a_records() {
     | tr '\n' ' ' | sed 's/ $//'
 }
 
-a_now="$(current_a_records)"
-if [ -n "$a_now" ]; then
-  log "current DNS   : ${a_now}"
-  case " ${a_now} " in
-    *" ${TARGET_IP} "*)
-      log "record exists with correct value (${FQDN} -> ${TARGET_IP}) — nothing to do"
-      exit 0
-      ;;
-  esac
-else
-  log "current DNS   : no A record for ${FQDN} (NXDOMAIN — clean insert)"
+if [ -z "$ZONE_XML_FILE" ]; then
+  a_now="$(current_a_records)"
+  if [ -n "$a_now" ]; then
+    log "current DNS   : ${a_now}"
+    case " ${a_now} " in
+      *" ${TARGET_IP} "*)
+        log "record exists with correct value (${FQDN} -> ${TARGET_IP}) — nothing to do"
+        exit 0
+        ;;
+    esac
+  else
+    log "current DNS   : no A record for ${FQDN} (NXDOMAIN — clean insert)"
+  fi
 fi
 
 # ---- Namecheap API helpers -------------------------------------------------
@@ -128,19 +171,21 @@ nc_get_hosts() {
 
 # ---- Decide the action from the authoritative Namecheap zone ----------------
 have_creds=1
-if [ -z "$API_USER" ] || [ -z "$API_KEY" ]; then
+if [ -n "$ZONE_XML_FILE" ]; then
+  [ -f "$ZONE_XML_FILE" ] || die 1 "--zone-xml-file: file not found: $ZONE_XML_FILE"
+  zone_xml="$(cat "$ZONE_XML_FILE")"
+  action="CREATE A ${FQDN} -> ${TARGET_IP}"
+elif [ -z "$API_USER" ] || [ -z "$API_KEY" ]; then
   have_creds=0
   log "Namecheap creds: MISSING — cannot query the zone (repo secret NAMECHEAP_API_USER is pending)"
   action="create/verify A ${FQDN} -> ${TARGET_IP} (zone state unknown)"
   zone_xml=""
 else
   zone_xml="$(nc_get_hosts)"
-  # One <Host .../> element per zone record; find ours.
-  existing_addr="$(printf '%s' "$zone_xml" \
-    | sed 's/</\n</g' \
-    | grep -i "^<Host .*Name=\"${HOST_NAME}\"" \
-    | grep -i 'RecordType="A"' \
-    | sed -n 's/.*Address="\([0-9.]*\)".*/\1/p' | head -1 || true)"
+  # One <host .../> element per zone record; find ours.
+  # parse_hosts_xml normalises both XML shapes (live: <host Type=>, legacy: <Host RecordType=>).
+  existing_addr="$(parse_hosts_xml "$zone_xml" \
+    | awk -F'|' -v name="$HOST_NAME" '$1==name && $2=="A"{print $3; exit}' || true)"
   if [ "$existing_addr" = "$TARGET_IP" ]; then
     log "record exists with correct value in the Namecheap zone (awaiting propagation)"
     action="none (awaiting DNS propagation)"
@@ -170,25 +215,24 @@ fi
 # from getHosts, inserting/updating only our record, and send everything back.
 if [ "$action" != "none" ]; then
   # Flat list: name|type|address|ttl per existing zone record.
-  hosts_list="$(printf '%s' "$zone_xml" \
-    | sed 's/</\n</g' \
-    | grep '^<Host ' \
-    | sed -e 's/^<Host //' -e 's/ *\/>$//' \
-    | tr ' ' '\n' \
-    | awk -F'"' '
-        /^Name=/       {name=$2}
-        /^RecordType=/{type=$2}
-        /^Address=/   {addr=$2}
-        /^TTL=/       {ttl=$2; print name "|" type "|" addr "|" (ttl==""?"1800":ttl)}
-      ' || true)"
+  # parse_hosts_xml handles both XML shapes (live: <host Type=>, legacy: <Host RecordType=>).
+  hosts_list="$(parse_hosts_xml "$zone_xml" || true)"
 
-  # Silent-empty-merge guard: setHosts replaces the entire zone, so an empty
-  # parsed list would nuke every record not explicitly in the call. If the raw
-  # XML has <Host> elements but the parser yielded nothing, abort immediately
-  # and print the raw XML so the caller can diagnose the parse failure.
-  raw_host_count="$(printf '%s' "$zone_xml" | grep -c '<Host ' || true)"
+  # Hard-abort guard: setHosts replaces the entire zone. If the raw XML contains
+  # <host> elements (case-insensitive — covers both shapes) but the parser yielded
+  # nothing, something is wrong; abort before setHosts to prevent a zone nuke.
+  # Using -ci makes the raw count correct regardless of element casing.
+  raw_host_count="$(printf '%s' "$zone_xml" | grep -ci '<host ' || true)"
   if [ "${raw_host_count:-0}" -gt 0 ] && [ -z "$hosts_list" ]; then
-    die 1 "empty-merge guard triggered: zone XML contains ${raw_host_count} <Host> element(s) but the parser yielded an empty list — aborting before setHosts to prevent zone nuke. Raw XML follows:
+    die 1 "hard-abort: zone XML contains ${raw_host_count} <host> element(s) but the parser yielded an empty list — aborting before setHosts to prevent zone nuke. Raw XML follows:
+${zone_xml}"
+  fi
+
+  # Unconditional zero-carry guard: if hosts_list is empty regardless of why
+  # (API glitch, truly wiped zone, or shape drift when raw count is also 0),
+  # setHosts is NEVER called — a one-record call would nuke the entire zone.
+  if [ -z "$hosts_list" ]; then
+    die 1 "zero carried-forward records — refusing setHosts to prevent zone nuke; raw getHosts XML follows:
 ${zone_xml}"
   fi
 
