@@ -289,6 +289,11 @@ var styles_default = `.odins-throne-root .odins-throne-root {
   font-family: 'Cinzel Decorative', serif;
   font-size: 1.1rem;
   color: var(--gold);
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .odins-throne-root .sidebar-header .quote {
   font-style: italic; font-size: 0.75rem;
@@ -331,6 +336,37 @@ var styles_default = `.odins-throne-root .odins-throne-root {
 }
 @media (prefers-reduced-motion: reduce) {
   .odins-throne-root .theme-btn { transition: none; }
+}
+/* \u2500\u2500 Compact-view toggle button (issue #59) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+   Icon-only 26px button in the sidebar-header brand cluster,
+   left of the theme toggle. \xAB = standard tree showing (enter compact);
+   \xBB = compact active (exit compact). Opaque background, aria-pressed. */
+.odins-throne-root .compact-toggle-btn {
+  flex: none;
+  width: 26px; height: 26px; padding: 0;
+  border: 1px solid var(--rune-border); border-radius: 7px;
+  background: var(--forge);
+  color: var(--text-rune);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px; line-height: 1;
+  cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+.odins-throne-root .compact-toggle-btn:hover {
+  border-color: var(--teal-asgard);
+  color: var(--teal-asgard);
+}
+.odins-throne-root .compact-toggle-btn[aria-pressed="true"] {
+  border-color: var(--teal-asgard);
+  color: var(--teal-asgard);
+  background: rgba(78, 205, 196, 0.12);
+}
+.odins-throne-root .compact-toggle-btn:focus-visible {
+  outline: 2px solid var(--teal-asgard); outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .odins-throne-root .compact-toggle-btn { transition: none; }
 }
 /* \u2500\u2500 Namespace lantern tree (issues #11, #12 + #39, garden pattern) \u2500\u2500\u2500 */
 /* Each namespace is seated on one of the backdrop's PAINTED lanterns at its
@@ -800,9 +836,23 @@ var styles_default = `.odins-throne-root .odins-throne-root {
 .odins-throne-root .jact:focus-visible { outline: 1.5px solid var(--teal-asgard); outline-offset: 1px; }
 
 /* normal (non-extended) sidebar: tighter cards, same strand */
-.odins-throne-root .ns-tree--lanterns:not(.ns-tree--extended) .jcard { width: 190px; padding: 4px 7px; }
-.odins-throne-root .ns-tree--lanterns:not(.ns-tree--extended) .jcard__title { font-size: 10.5px; }
-.odins-throne-root .ns-tree--lanterns:not(.ns-tree--extended) .jcard__meta { font-size: 8.5px; }
+.odins-throne-root .ns-tree--lanterns:not(.ns-tree--extended):not(.ns-tree--compact) .jcard { width: 190px; padding: 4px 7px; }
+.odins-throne-root .ns-tree--lanterns:not(.ns-tree--extended):not(.ns-tree--compact) .jcard__title { font-size: 10.5px; }
+.odins-throne-root .ns-tree--lanterns:not(.ns-tree--extended):not(.ns-tree--compact) .jcard__meta { font-size: 8.5px; }
+
+/* \u2500\u2500 compact (dense) lantern tree \u2014 issue #59 \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+   The manual compact-toggle mode: same vine + anchors + pips + berries + HUD,
+   but denser metrics. Cards squash to ONE line (compact prop strikes meta row
+   and clasps at the JSX level). Count numbers stay standard-only. */
+.odins-throne-root .ns-tree--lanterns.ns-tree--compact .ns-tree__lantern { width: 40px; height: 40px; }
+.odins-throne-root .ns-tree--lanterns.ns-tree--compact .ns-tree__icon--lantern { width: 24px; height: 24px; }
+.odins-throne-root .ns-tree--lanterns.ns-tree--compact .ns-tree__icon--lantern.ns-tree__icon--fallback { font-size: 1rem; }
+/* compact counts: orbs stay, number labels are standard-only (ns-tree--extended) */
+.odins-throne-root .ns-tree--lanterns.ns-tree--compact .ns-tree__counts { top: calc(50% + 24px); }
+/* compact piprow sits tighter under the smaller lantern */
+.odins-throne-root .ns-tree--lanterns.ns-tree--compact .piprow { top: calc(50% + 36px); }
+/* compact jcards: 142px wide, 3px 7px padding, title 9.5px */
+.odins-throne-root .jcard--compact { width: 142px !important; padding: 3px 7px !important; }
 
 @keyframes vine-pulse   { 50% { transform: scale(1.35); } }
 @keyframes vine-flicker { 50% { opacity: 0.55; } }
@@ -952,70 +1002,8 @@ var styles_default = `.odins-throne-root .odins-throne-root {
 }
 .odins-throne-root .ns-tree__icon--task.ns-tree__icon--fallback { font-size: 0.48rem; }
 
-/* Compact sidebar: collapse to an initials chip + on-demand mini-tree */
-.odins-throne-root .ns-tree--compact {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-top: 0.4rem;
-}
-.odins-throne-root .ns-tree__chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.6rem;
-  color: var(--gold);
-  background: var(--chain);
-  border: 1px solid var(--rune-border);
-  border-radius: 3px;
-  padding: 0.1rem 0.25rem;
-  letter-spacing: 0.04em;
-  cursor: pointer;
-}
-.odins-throne-root .ns-tree__chip:hover, .odins-throne-root .ns-tree__chip:focus { border-color: var(--gold); }
-.odins-throne-root .ns-tree__chip-count {
-  font-size: 0.55rem;
-  color: var(--text-void);
-}
-.odins-throne-root .ns-tree--compact .ns-tree__list {
-  width: 100%;
-  margin-top: 0.3rem;
-  max-height: 30vh;
-  overflow-y: auto;
-}
-.odins-throne-root .ns-tree--compact .ns-tree__item {
-  min-width: 0;
-}
-.odins-throne-root .ns-tree--compact .ns-tree__row {
-  display: flex;
-  flex-direction: row;
-  justify-content: flex-start;
-  align-items: center;
-  gap: 0.25rem;
-  width: 100%;
-  padding: 0.15rem 0.25rem;
-  background: none;
-  border: none;
-  border-radius: 3px;
-  color: var(--text-rune);
-  cursor: pointer;
-  text-align: left;
-  font-size: inherit;
-  font-family: inherit;
-}
-.odins-throne-root .ns-tree--compact .ns-tree__row:hover,
-.odins-throne-root .ns-tree--compact .ns-tree__row:focus {
-  background: var(--chain);
-  color: var(--text-saga);
-}
-.odins-throne-root .ns-tree--compact .ns-tree__item--active .ns-tree__row {
-  color: var(--gold);
-  border-color: var(--gold);
-}
-.odins-throne-root .ns-tree--compact .ns-tree__icon--task { width: 10px; height: 10px; }
-.odins-throne-root .ns-tree__compact-initials { color: var(--gold); letter-spacing: 0.04em; }
-.odins-throne-root .ns-tree__compact-count { color: var(--text-void); font-size: 0.55rem; margin-left: auto; }
+/* .ns-tree--compact is now the dense-lantern-tree class \u2014 no chip rail, no initials list.
+   Compact lantern metrics are in the section above (ns-tree--lanterns.ns-tree--compact). */
 
 .odins-throne-root .card-list { flex: 1; overflow-y: auto; padding: 0.5rem; }
 
@@ -8575,6 +8563,8 @@ var VINE = {
   pitchExtended: 57,
   /** px between card centers — normal sidebar. */
   pitchNormal: 56,
+  /** px between card centers — compact (dense) mode. */
+  pitchCompact: 34,
   /** Horizontal lean of the control points off the lantern (× dir, px). */
   leanC1: 16,
   leanC2: 30,
@@ -8594,6 +8584,8 @@ var VINE = {
   cardWidthExtended: 212,
   /** Card width — normal. */
   cardWidthNormal: 190,
+  /** Card width — compact (dense) mode. */
+  cardWidthCompact: 142,
   /** Card offset past its anchor point (toward the hang side, px). */
   cardOffset: 14,
   /** Px kept clear of the scene's left edge when clamping. */
@@ -8604,14 +8596,18 @@ var VINE = {
   bottomPadding: 90,
   /**
    * Guaranteed minimum px between consecutive card centers on the curve —
-   * larger than a card's height in either mode, so cards never overlap.
+   * larger than a card's height in normal/extended mode, so cards never overlap.
    */
-  minCenterSpacing: 40
+  minCenterSpacing: 40,
+  /** Minimum px between card centers in compact mode (compact cards are ~24px tall). */
+  minCenterSpacingCompact: 24
 };
 function vinePitch(mode) {
+  if (mode === "compact") return VINE.pitchCompact;
   return mode === "normal" ? VINE.pitchNormal : VINE.pitchExtended;
 }
 function vineCardWidth(mode) {
+  if (mode === "compact") return VINE.cardWidthCompact;
   return mode === "normal" ? VINE.cardWidthNormal : VINE.cardWidthExtended;
 }
 function bez4(t, P0, C1, C2, P3) {
@@ -8717,6 +8713,7 @@ function VineCard({
   isActive,
   isPinned: isPinned2,
   isTerminating,
+  compact = false,
   side,
   style,
   ghost = false,
@@ -8730,6 +8727,7 @@ function VineCard({
   const cls = [
     "jcard",
     `jcard--${job.status}`,
+    compact ? "jcard--compact" : "",
     isActive ? "is-active" : "",
     isTerminating ? "jcard--terminating" : "",
     // pop-in plays ON MOUNT only — live WS updates re-render the same
@@ -8766,7 +8764,7 @@ function VineCard({
             /* @__PURE__ */ jsx14("span", { className: "jcard__title", title, children: title }),
             /* @__PURE__ */ jsx14("i", { className: "jcard__dot", "aria-hidden": "true" })
           ] }),
-          /* @__PURE__ */ jsx14("div", { className: "jcard__row2", children: /* @__PURE__ */ jsxs9("span", { className: "jcard__meta", children: [
+          !compact && /* @__PURE__ */ jsx14("div", { className: "jcard__row2", children: /* @__PURE__ */ jsxs9("span", { className: "jcard__meta", children: [
             /* @__PURE__ */ jsx14("b", { children: job.sessionId }),
             " \xB7 Issue #",
             job.issue,
@@ -8775,7 +8773,7 @@ function VineCard({
             isPinned2 ? " \xB7 \u{1F4CC}" : ""
           ] }) })
         ] }),
-        /* @__PURE__ */ jsxs9("span", { className: "jcard__acts", children: [
+        !compact && /* @__PURE__ */ jsxs9("span", { className: "jcard__acts", children: [
           /* @__PURE__ */ jsx14(
             "button",
             {
@@ -8818,9 +8816,6 @@ import { jsx as jsx15, jsxs as jsxs10 } from "react/jsx-runtime";
 function treeBackdropStyle() {
   return { "--tree-backdrop": `url(${JSON.stringify(tree_backdrop_default)})` };
 }
-function initialsOf(label) {
-  return label.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
-}
 function tasksOf(summaryJobs) {
   if (!summaryJobs) return [];
   return summaryJobs.filter((job) => job.status !== "purged").map(parseJob).sort(sortJobs);
@@ -8859,7 +8854,6 @@ function NamespaceTree({
   );
   const [openNs, setOpenNs] = useState11(namespace);
   const [hoveredNs, setHoveredNs] = useState11(null);
-  const [compactOpen, setCompactOpen] = useState11(false);
   const sceneRef = useRef7(null);
   const scrollerRef = useRef7(null);
   const [sceneSize, setSceneSize] = useState11({ w: 0, h: 0 });
@@ -8887,7 +8881,7 @@ function NamespaceTree({
   const openSeat = openWorld ? seats.get(openWorld.id) : void 0;
   const summaryLoaded = openSummary !== void 0;
   const summaryFailed = openSummary?.error != null;
-  const vineMode = displayMode === "normal" ? "normal" : "extended";
+  const vineMode = displayMode === "compact" ? "compact" : displayMode === "normal" ? "normal" : "extended";
   const vine = useMemo2(() => {
     if (!openWorld || !openSeat || summaryFailed) return null;
     return vineFor(openSeat, openTasks.length, sceneSize.w, sceneSize.h, vineMode);
@@ -8927,70 +8921,12 @@ function NamespaceTree({
     }, FALL_MS);
     return () => clearTimeout(t);
   }, [openNs, openTasks, vine, vineMode, sceneSize.w, terminatingSessionIds]);
-  if (isCompact) {
-    const active = namespaces.find((n) => n.id === namespace);
-    const activeSummary = summaries[namespace];
-    return /* @__PURE__ */ jsxs10("div", { className: "ns-tree ns-tree--compact", style: treeBackdropStyle(), children: [
-      /* @__PURE__ */ jsxs10(
-        "button",
-        {
-          type: "button",
-          className: "ns-tree__chip",
-          onClick: () => setCompactOpen((v) => !v),
-          "aria-expanded": compactOpen,
-          "aria-label": active ? `Namespaces: ${active.label}${activeSummary ? ` \u2014 ${summaryLine(activeSummary)}` : ""}` : "Namespaces",
-          title: active ? `${active.label}${activeSummary ? ` \u2014 ${summaryLine(activeSummary)}` : ""}` : namespace,
-          children: [
-            active ? initialsOf(active.label) : "NS",
-            activeSummary ? /* @__PURE__ */ jsx15("span", { className: "ns-tree__chip-count", children: activeSummary.total }) : null
-          ]
-        }
-      ),
-      compactOpen && /* @__PURE__ */ jsx15("ul", { className: "ns-tree__list", role: "tree", "aria-label": "All namespaces", children: namespaces.map((ns) => {
-        const summary = summaries[ns.id];
-        const seat = seats.get(ns.id);
-        return /* @__PURE__ */ jsx15(
-          "li",
-          {
-            role: "treeitem",
-            "aria-selected": ns.id === namespace,
-            "data-namespace": ns.id,
-            "data-seat-x": seat?.x,
-            "data-seat-y": seat?.y,
-            "data-seat-dir": seat?.dir,
-            className: ns.id === namespace ? "ns-tree__item ns-tree__item--active" : "ns-tree__item",
-            children: /* @__PURE__ */ jsxs10(
-              "button",
-              {
-                type: "button",
-                className: "ns-tree__row",
-                title: ns.label,
-                "aria-label": `${ns.label} \u2014 ${labelLineOf(summary)}`,
-                onClick: () => {
-                  onNamespaceChange(ns.id);
-                  setCompactOpen(false);
-                },
-                children: [
-                  /* @__PURE__ */ jsx15(
-                    TreeIcon,
-                    {
-                      src: namespaceIcon(ns.id),
-                      fallback: NAMESPACE_ICON_FALLBACK,
-                      size: "task"
-                    }
-                  ),
-                  /* @__PURE__ */ jsx15("span", { className: "ns-tree__compact-initials", children: initialsOf(ns.label) }),
-                  /* @__PURE__ */ jsx15("span", { className: "ns-tree__compact-count", children: summary?.total ?? "\u2026" })
-                ]
-              }
-            )
-          },
-          ns.id
-        );
-      }) })
-    ] });
-  }
-  const rootClass = displayMode === "extended" ? "ns-tree ns-tree--lanterns ns-tree--extended" : "ns-tree ns-tree--lanterns";
+  const rootClass = [
+    "ns-tree",
+    "ns-tree--lanterns",
+    displayMode === "extended" ? "ns-tree--extended" : "",
+    displayMode === "compact" ? "ns-tree--compact" : ""
+  ].filter(Boolean).join(" ");
   return /* @__PURE__ */ jsx15(
     "div",
     {
@@ -9069,6 +9005,7 @@ function NamespaceTree({
                       isActive: isTaskActive,
                       isPinned: pinnedSessionIds?.has(job.sessionId) ?? false,
                       isTerminating,
+                      compact: isCompact,
                       side: box.side,
                       style: {
                         left: `${box.left}px`,
@@ -9092,6 +9029,7 @@ function NamespaceTree({
                   isActive: false,
                   isPinned: false,
                   isTerminating: true,
+                  compact: isCompact,
                   side: g.side,
                   ghost: true,
                   style: { left: `${g.left}px`, top: `${g.top}px` },
@@ -9230,9 +9168,18 @@ function getDisplayMode(width) {
   if (width <= 400) return "normal";
   return "extended";
 }
+var LS_DISPLAY_MODE_KEY = "hlidskjalf:display-mode";
+function readCompactPref() {
+  try {
+    return localStorage.getItem(LS_DISPLAY_MODE_KEY) === "compact" ? "compact" : "auto";
+  } catch {
+    return "auto";
+  }
+}
 function Sidebar({ jobs, activeSessionId, quote, wsState, onAvatarClick, onOdinClick, onTogglePinSession, pinnedSessionIds, onCancelJob, terminatingSessionIds, namespace, namespaces, onNamespaceChange, namespaceSummaries, onSelectTask, sizingMode = "host-pane", externalWidth, onResizeMouseDown, onResizeDoubleClick }) {
   const { theme, setTheme: setTheme2 } = useTheme();
   const [width, setWidth] = useState12(DEFAULT_WIDTH);
+  const [compactOverride, setCompactOverride] = useState12(() => readCompactPref());
   const navRef = useRef8(null);
   useEffect7(() => {
     const nav = navRef.current;
@@ -9246,8 +9193,17 @@ function Sidebar({ jobs, activeSessionId, quote, wsState, onAvatarClick, onOdinC
     ro.observe(nav);
     return () => ro.disconnect();
   }, []);
-  const displayMode = getDisplayMode(width);
-  const isCompact = displayMode === "compact";
+  const widthMode = getDisplayMode(width);
+  const displayMode = compactOverride === "compact" ? "compact" : widthMode;
+  const isWidthCompact = widthMode === "compact";
+  const toggleCompact = () => {
+    const next = compactOverride === "compact" ? "auto" : "compact";
+    setCompactOverride(next);
+    try {
+      localStorage.setItem(LS_DISPLAY_MODE_KEY, next);
+    } catch {
+    }
+  };
   return /* @__PURE__ */ jsxs11(
     "nav",
     {
@@ -9274,16 +9230,28 @@ function Sidebar({ jobs, activeSessionId, quote, wsState, onAvatarClick, onOdinC
                 )
               }
             ),
-            !isCompact && /* @__PURE__ */ jsx16("h1", { children: "Hlidskjalf" }),
-            !isCompact && /* @__PURE__ */ jsxs11("div", { className: "count", "aria-live": "polite", children: [
+            !isWidthCompact && /* @__PURE__ */ jsx16("h1", { children: "Hlidskjalf" }),
+            !isWidthCompact && /* @__PURE__ */ jsxs11("div", { className: "count", "aria-live": "polite", children: [
               jobs.length,
               " session",
               jobs.length !== 1 ? "s" : ""
             ] }),
+            /* @__PURE__ */ jsx16(
+              "button",
+              {
+                type: "button",
+                className: "compact-toggle-btn",
+                onClick: toggleCompact,
+                "aria-pressed": compactOverride === "compact",
+                title: compactOverride === "compact" ? "standard view \u2014 the full-size tree" : "compact view \u2014 the denser tree",
+                "aria-label": compactOverride === "compact" ? "Switch to standard view" : "Switch to compact view",
+                children: compactOverride === "compact" ? "\xBB" : "\xAB"
+              }
+            ),
             /* @__PURE__ */ jsx16(ThemeSwitcher, { theme, setTheme: setTheme2 }),
             /* @__PURE__ */ jsx16("span", { className: "brand-wss-badge", children: /* @__PURE__ */ jsx16(StatusBadge, { state: wsState }) })
           ] }),
-          !isCompact && /* @__PURE__ */ jsxs11("div", { className: "quote", role: "note", children: [
+          !isWidthCompact && /* @__PURE__ */ jsxs11("div", { className: "quote", role: "note", children: [
             "\u201C",
             quote,
             "\u201D"

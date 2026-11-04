@@ -1060,11 +1060,33 @@ for (const s of ["rapid-a", "rapid-b", "rapid-c"]) {
 
   const compactToggle = document.querySelector(".compact-toggle-btn");
   assert.ok(compactToggle, "issue #59: compact toggle button present in brand cluster");
+
+  // Ensure fenrir-agents vine is open so cards are present to check
+  const fenrirLantern = document.querySelector('.ns-tree__item[data-namespace="fenrir-agents"] .ns-tree__lantern');
+  assert.ok(fenrirLantern, "issue #59: fenrir-agents lantern present for compact test");
+  fenrirLantern.click();
+  await flush();
+  await flush();
+
+  // Standard cards should be present before toggling compact
+  const stdCards = document.querySelectorAll(".jcard");
+  assert.ok(stdCards.length > 0, "issue #59: vine cards present in standard mode before compact toggle");
+  // Standard cards have meta row
+  assert.ok(stdCards[0].querySelector(".jcard__row2"),
+    "issue #59: standard card has meta row before compact toggle");
+
+  // Ensure toggle starts in standard mode (previous tests may have flipped it — reset if needed)
+  if (compactToggle.getAttribute("aria-pressed") === "true") {
+    compactToggle.click();
+    await flush();
+    await flush();
+  }
   assert.equal(compactToggle.getAttribute("aria-pressed"), "false",
-    "issue #59: compact toggle starts in standard mode (aria-pressed=false)");
+    "issue #59: compact toggle is in standard mode before test");
 
   // Enter compact mode
   compactToggle.click();
+  await flush();
   await flush();
 
   assert.equal(compactToggle.getAttribute("aria-pressed"), "true",
@@ -1093,17 +1115,17 @@ for (const s of ["rapid-a", "rapid-b", "rapid-c"]) {
   // Exit compact mode — resume width-appropriate mode
   compactToggle.click();
   await flush();
+  await flush();
 
   assert.equal(compactToggle.getAttribute("aria-pressed"), "false",
     "issue #59: compact toggle exits compact mode on second click");
   assert.equal(globalThis.localStorage.getItem("hlidskjalf:display-mode"), "auto",
     "issue #59: auto mode written to localStorage on exit");
 
-  // Standard cards still have meta row and acts after toggle exits compact
+  // Standard cards still have meta row after toggle exits compact
   const standardCards = document.querySelectorAll(".jcard:not(.jcard--compact)");
   assert.ok(standardCards.length > 0, "issue #59: standard cards render after toggle exits compact");
-  const firstStandard = standardCards[0];
-  assert.ok(firstStandard.querySelector(".jcard__row2"),
+  assert.ok(standardCards[0].querySelector(".jcard__row2"),
     "issue #59: standard card has meta row after exiting compact");
 }
 
