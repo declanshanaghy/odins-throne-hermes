@@ -49,6 +49,15 @@
      accommodates a max of 11 active namespaces. And the whole scene —
      painting, stones, vine, cards — now scrolls TOGETHER in one canvas,
      so the scrolling task list is ALWAYS attached to its lantern.
+     v3.9.1 (2026-11-04): the standard crop is LEFT-ANCHORED, not
+     centered — object-position 0% 50% on the backdrop, fl = 0 in
+     projectSeat. A center crop pushed every seat below painting x ~26%
+     OFF-PANEL in tall narrow scenes (the shipped dock scroller runs
+     ~268px wide): stones invisible and unclickable, including the
+     ACTIVE world's. The tree lives in the painting's left third, so
+     anchoring the crop at the left edge keeps every painted lantern
+     on-canvas at any panel width. Shipped from main (35c2425) with a
+     strict tree-seats on-canvas guard at 268x746 / 432x640 / 500x800.
      v3.9 (2026-11-04, round 4): inactive stones FADE INTO the background —
      ghost-transparent, no rim, dropped in z-order — so the active stone
      alone stands out. Every world's summary PRELOADS at boot (multiple
@@ -167,6 +176,7 @@
     position: absolute; top: 0; left: 0; z-index: 0;
     width: 100%;                    /* height pinned to the scene by JS (v3.8) */
     object-fit: cover;   /* v3.7: the tall painting fills the scene; sides crop */
+    object-position: 0% 50%;  /* v3.9.1: LEFT-anchored crop — matches projectSeat's fl = 0 */
     pointer-events: none;
     -webkit-mask-image: linear-gradient(180deg, #000 90%, transparent 100%);
             mask-image: linear-gradient(180deg, #000 90%, transparent 100%);
@@ -650,7 +660,7 @@
 
 <!-- ═══ prototype furniture ═══ -->
 <div class="deck">
-  <span class="deck__title"><b>ᛟ</b> Odin's Throne — tree display redesign · issue #7 prototype · <b>v3.9</b></span>
+  <span class="deck__title"><b>ᛟ</b> Odin's Throne — tree display redesign · issue #7 prototype · <b>v3.9.1</b></span>
   <span class="deck__note">stones overlay the eleven painted lanterns — one seat per lantern, a max of 11 active namespaces; the active world's stone opens (teal ring) while every other stone fades into the background, z-below the active one · the whole scene scrolls together, the task list always attached to its lantern · vine curls out to the branch rail at 44% · icons pop down to vine anchors · «/» compact toggle — one-line cards, no clasps</span>
   <span class="deck__sep"></span>
   <div class="deck__group">
@@ -1030,7 +1040,9 @@ function orderedJobs(worldId) {
 }
 /* v3.7 — seat projection: SEAT_POOL is in PAINTING %; the interactive
    lanterns must land on the painted leaf-lanterns at any panel width.
-   Standard renders the painting object-fit: cover (center crop); compact
+   Standard renders the painting object-fit: cover, LEFT-anchored
+   (v3.9.1: object-position 0% 50% + fl = 0 — a center crop pushed the
+   low-x seats OFF-PANEL in narrow scenes); compact
    renders object-fit: fill (the painting IS the scene box, so painting %
    pass through unchanged). */
 function projectSeat(p) {
@@ -1038,7 +1050,7 @@ function projectSeat(p) {
   const W = scene.clientWidth, H = scene.clientHeight;
   const k = Math.max(W / 896, H / 1200);
   const dw = 896 * k, dh = 1200 * k;
-  const fl = -(dw - W) / 2, ft = -(dh - H) / 2;
+  const fl = 0, ft = -(dh - H) / 2;   /* v3.9.1: x LEFT-anchored — matches object-position 0% 50% */
   return { x: (p.x / 100 * dw + fl) / W * 100, y: (p.y / 100 * dh + ft) / H * 100 };
 }
 
