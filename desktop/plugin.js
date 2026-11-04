@@ -715,17 +715,6 @@ var styles_default = `.odins-throne-root .odins-throne-root {
 /* keyboard focus rings on the card body \u2014 visible against the painting */
 .odins-throne-root .jcard:focus-visible { outline: 2px solid var(--teal-asgard); outline-offset: 2px; }
 
-.odins-throne-root .jcard__sigil {
-  width: 20px;
-  height: 20px;
-  flex: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6));
-}
-.odins-throne-root .jcard__sigil .ns-tree__icon { width: 20px; height: 20px; }
-.odins-throne-root .jcard__sigil .ns-tree__icon--fallback { font-size: 15px; }
 .odins-throne-root .jcard__main {
   flex: 1;
   min-width: 0;
@@ -777,11 +766,17 @@ var styles_default = `.odins-throne-root .odins-throne-root {
 }
 .odins-throne-root .jcard__meta b { color: #c9d8dd; font-weight: 600; }
 
-/* \u2500\u2500 the on-card actions (prototype .jact) \u2014 no popups anywhere \u2500\u2500 */
+/* \u2500\u2500 card actions: icon-only clasp overlapping the bottom border, flush right \u2500\u2500 */
+/* v3 (issue #54): actions seat at the bottom-right, half above/half below
+ * the border line \u2014 the card body has position:absolute which is a containing
+ * block for these absolutely-positioned children. */
 .odins-throne-root .jcard__acts {
+  position: absolute;
+  right: 7px;
+  bottom: -11px;
+  z-index: 2;
   display: inline-flex;
   gap: 4px;
-  flex: none;
 }
 .odins-throne-root .jact {
   flex: none;
@@ -819,6 +814,120 @@ var styles_default = `.odins-throne-root .odins-throne-root {
   .odins-throne-root .jcard__dot,
   .odins-throne-root .jcard--failed .jcard__dot,
   .odins-throne-root .jcard--terminating { animation: none; }
+}
+
+/* \u2500\u2500 anchor icons (issue #54): seated on the vine at each card's stem tie-on \u2500\u2500 */
+/* Each job's status icon pops down to its vine anchor point when the world
+ * expands. A dark radial "bud seat" halo keeps it legible over the painting
+ * in both themes. aria-hidden \u2014 the card body carries the status in its
+ * aria-label. */
+.odins-throne-root .anchor-ic {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  z-index: 6;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.95)) drop-shadow(0 0 5px var(--anc, rgba(176, 196, 201, 0.55)));
+  pointer-events: none;
+}
+.odins-throne-root .anchor-ic::before {
+  content: "";
+  position: absolute;
+  inset: -5px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(10, 16, 20, 0.94) 34%, rgba(10, 16, 20, 0.5) 62%, transparent 74%);
+}
+.odins-throne-root .anchor-ic .ns-tree__icon { position: relative; width: 16px; height: 16px; }
+.odins-throne-root .anchor-ic .ns-tree__icon--fallback { position: relative; font-size: 12px; line-height: 1; }
+.odins-throne-root .anchor-ic--running    { --anc: rgba(111, 183, 216, 0.85); }
+.odins-throne-root .anchor-ic--succeeded  { --anc: rgba(121, 179, 86, 0.75); }
+.odins-throne-root .anchor-ic--failed     { --anc: rgba(224, 122, 63, 0.95); }
+.odins-throne-root .anchor-ic--pending    { --anc: rgba(217, 194, 122, 0.7); }
+.odins-throne-root .anchor-ic--terminating { --anc: rgba(176, 196, 201, 0.8); animation: vine-tremble 0.5s ease-in-out infinite; }
+.odins-throne-root .anchor-ic.pop-in { animation: vine-sprout 0.4s cubic-bezier(0.2, 1.3, 0.4, 1) backwards; }
+
+/* \u2500\u2500 status-counts row (issue #54): orbs beneath a COLLAPSED lantern \u2500\u2500 */
+/* Centered under the lantern; hidden when world is expanded (counts + strip
+ * both disappear \u2014 their icons live at the vine anchors instead). */
+.odins-throne-root .ns-tree__counts {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  top: calc(50% + 20px);
+  z-index: 6;
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  pointer-events: none;
+}
+.odins-throne-root .ns-tree--extended .ns-tree__counts { top: calc(50% + 24px); }
+.odins-throne-root .ns-tree__counts__orb {
+  width: 11px;
+  height: 11px;
+  border-radius: 50% 50% 50% 4px;
+  display: inline-block;
+  background: currentColor;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.35), 0 0 6px currentColor;
+  rotate: 45deg;
+}
+.odins-throne-root .ns-tree__counts__orb--succeeded { color: #79b356; }
+.odins-throne-root .ns-tree__counts__orb--running   { color: #6fb7d8; }
+.odins-throne-root .ns-tree__counts__orb--failed    { color: #e07a3f; }
+.odins-throne-root .ns-tree__counts__orb--dim { opacity: 0.28; }
+.odins-throne-root .ns-tree__counts__nums {
+  display: none;
+  gap: 5px;
+  font-size: 10.5px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.odins-throne-root .ns-tree--extended .ns-tree__counts__nums { display: flex; }
+.odins-throne-root .ns-tree__counts__nums i {
+  font-style: normal;
+  display: inline-flex;
+  gap: 3px;
+  align-items: center;
+}
+
+/* \u2500\u2500 single-row pip strip (issue #54): progress-bar task icons under COLLAPSED lanterns \u2500\u2500 */
+/* ONE flex-nowrap row growing left\u2192right in hang order (running \u2192 failed \u2192
+ * pending \u2192 succeeded); hidden on expand (icons pop to the vine anchors). */
+.odins-throne-root .piprow {
+  position: absolute;
+  z-index: 6;
+  pointer-events: none;
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 2px;
+  top: calc(50% + 36px);
+}
+.odins-throne-root .ns-tree--extended .piprow { top: calc(50% + 41px); }
+.odins-throne-root .pip-slot {
+  width: 9px;
+  height: 9px;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--pipc, #b0c4c9);
+  filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.95)) drop-shadow(0 0 2px currentColor);
+}
+.odins-throne-root .pip-slot .ns-tree__icon { width: 9px; height: 9px; border-radius: 0; }
+.odins-throne-root .pip-slot .ns-tree__icon--fallback { font-size: 7px; color: currentColor; line-height: 1; }
+.odins-throne-root .pip-slot--running   { --pipc: #6fb7d8; }
+.odins-throne-root .pip-slot--succeeded { --pipc: #79b356; }
+.odins-throne-root .pip-slot--failed    { --pipc: #e07a3f; }
+.odins-throne-root .pip-slot--pending   { --pipc: #d9c27a; }
+.odins-throne-root .piprow__more {
+  font-size: 7.5px;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--glabel-frost, #b0c4c9);
+  text-shadow: 0 0 2px #000, 0 0 2px #000;
+  align-self: center;
+  flex: none;
+  white-space: nowrap;
 }
 
 /* \u2500\u2500 Node icons (shanaghy.com, emoji fallback offline) \u2500\u2500 */
@@ -8429,14 +8538,16 @@ var TASK_PIPS = {
   cap: 8,
   /** Pips per line before the row wraps (two lines at the cap). */
   columns: 4,
-  /** One pip's box, px (matches .ns-tree__icon--pip). */
+  /** One pip's box, px (matches .pip-slot size). */
   sizePx: 9,
-  /** Gap between pips, px (matches .ns-tree__tasks gap). */
+  /** Gap between pips, px. */
   gapPx: 2,
   /** Px kept between the lantern's center line and the row, away from the vine. */
   clearPx: 3,
   /** Px kept clear of the scene's edges when clamping. */
-  edgePx: 3
+  edgePx: 3,
+  /** Approximate width of the "+N" overflow chip in px (including gap). */
+  moreChipPx: 16
 };
 function taskPips(tasks, cap = TASK_PIPS.cap) {
   const count = tasks.length;
@@ -8451,30 +8562,20 @@ function taskPips(tasks, cap = TASK_PIPS.cap) {
     count
   };
 }
-function pipSlots(row) {
-  return row.pips.length + (row.overflow > 0 ? 1 : 0);
+function pipStripWidth(row) {
+  const slots = row.pips.length;
+  if (slots === 0) return 0;
+  const base2 = slots * TASK_PIPS.sizePx + (slots - 1) * TASK_PIPS.gapPx;
+  return base2 + (row.overflow > 0 ? TASK_PIPS.gapPx + TASK_PIPS.moreChipPx : 0);
 }
-function pipRowWidth(columns) {
-  const cols = Math.max(Math.floor(columns), 0);
-  if (cols === 0) return 0;
-  return cols * TASK_PIPS.sizePx + (cols - 1) * TASK_PIPS.gapPx;
-}
-function pipRowLayout(seat, sceneW, slots) {
-  const want = Math.min(Math.max(Math.floor(slots), 1), TASK_PIPS.columns);
-  const awayLeft = (width2) => seat.dir === 1 ? -TASK_PIPS.clearPx - width2 : TASK_PIPS.clearPx;
-  if (!(sceneW > 0)) {
-    const width2 = pipRowWidth(want);
-    return { columns: want, width: width2, left: awayLeft(width2) };
-  }
+function pipStripLeft(seat, sceneW, rowWidth) {
+  if (!(sceneW > 0) || rowWidth <= 0) return 0;
   const seatPx = seat.x / 100 * sceneW;
-  const room = (seat.dir === 1 ? seatPx : sceneW - seatPx) - TASK_PIPS.clearPx - TASK_PIPS.edgePx;
-  const fit = Math.floor((room + TASK_PIPS.gapPx) / (TASK_PIPS.sizePx + TASK_PIPS.gapPx));
-  const columns = Math.max(1, Math.min(want, fit));
-  const width = pipRowWidth(columns);
-  const minLeft = TASK_PIPS.edgePx - seatPx;
-  const maxLeft = sceneW - TASK_PIPS.edgePx - width - seatPx;
-  const left = Math.min(Math.max(awayLeft(width), minLeft), Math.max(maxLeft, minLeft));
-  return { columns, width, left };
+  const rawSceneLeft = seatPx;
+  const minSceneLeft = TASK_PIPS.edgePx;
+  const maxSceneLeft = sceneW - TASK_PIPS.edgePx - rowWidth;
+  const clamped = Math.min(Math.max(rawSceneLeft, minSceneLeft), Math.max(maxSceneLeft, minSceneLeft));
+  return clamped - seatPx;
 }
 
 // src/ui/lib/vineGeometry.ts
@@ -8482,7 +8583,7 @@ var VINE = {
   /** px between card centers — extended sidebar. */
   pitchExtended: 57,
   /** px between card centers — normal sidebar. */
-  pitchNormal: 50,
+  pitchNormal: 56,
   /** Horizontal lean of the control points off the lantern (× dir, px). */
   leanC1: 16,
   leanC2: 30,
@@ -8669,55 +8770,52 @@ function VineCard({
       onClick: ghost ? void 0 : onOpen,
       onKeyDown: openOnKey,
       children: [
-        /* @__PURE__ */ jsx14("span", { className: "jcard__sigil", "aria-hidden": "true", children: /* @__PURE__ */ jsx14(TreeIcon, { src: taskIcon(job.status), fallback: taskIconFallback(job.status), size: "task" }) }),
         /* @__PURE__ */ jsxs10("div", { className: "jcard__main", children: [
           /* @__PURE__ */ jsxs10("div", { className: "jcard__row1", children: [
             /* @__PURE__ */ jsx14("span", { className: "jcard__title", title, children: title }),
             /* @__PURE__ */ jsx14("i", { className: "jcard__dot", "aria-hidden": "true" })
           ] }),
-          /* @__PURE__ */ jsxs10("div", { className: "jcard__row2", children: [
-            /* @__PURE__ */ jsxs10("span", { className: "jcard__meta", children: [
-              /* @__PURE__ */ jsx14("b", { children: job.sessionId }),
-              " \xB7 Issue #",
-              job.issue,
-              " \xB7 ",
-              job.agentName,
-              isPinned2 ? " \xB7 \u{1F4CC}" : ""
-            ] }),
-            /* @__PURE__ */ jsxs10("span", { className: "jcard__acts", children: [
-              /* @__PURE__ */ jsx14(
-                "button",
-                {
-                  type: "button",
-                  className: `jact jact--pin${isPinned2 ? " is-on" : ""}`,
-                  "data-act": "pin",
-                  title: isPinned2 ? "unpin session" : "pin session",
-                  "aria-label": isPinned2 ? `Unpin session ${job.sessionId}` : `Pin session ${job.sessionId}`,
-                  "aria-pressed": isPinned2,
-                  onClick: (e) => {
-                    e.stopPropagation();
-                    onTogglePin();
-                  },
-                  children: "\u{1F4CC}"
-                }
-              ),
-              cancellable && /* @__PURE__ */ jsx14(
-                "button",
-                {
-                  type: "button",
-                  className: "jact jact--cancel",
-                  "data-act": "cancel",
-                  title: "cancel job",
-                  "aria-label": `Cancel job ${job.sessionId}`,
-                  onClick: (e) => {
-                    e.stopPropagation();
-                    onCancel();
-                  },
-                  children: "\u2715"
-                }
-              )
-            ] })
-          ] })
+          /* @__PURE__ */ jsx14("div", { className: "jcard__row2", children: /* @__PURE__ */ jsxs10("span", { className: "jcard__meta", children: [
+            /* @__PURE__ */ jsx14("b", { children: job.sessionId }),
+            " \xB7 Issue #",
+            job.issue,
+            " \xB7 ",
+            job.agentName,
+            isPinned2 ? " \xB7 \u{1F4CC}" : ""
+          ] }) })
+        ] }),
+        /* @__PURE__ */ jsxs10("span", { className: "jcard__acts", children: [
+          /* @__PURE__ */ jsx14(
+            "button",
+            {
+              type: "button",
+              className: `jact jact--pin${isPinned2 ? " is-on" : ""}`,
+              "data-act": "pin",
+              title: isPinned2 ? "unpin session" : "pin session",
+              "aria-label": isPinned2 ? `Unpin session ${job.sessionId}` : `Pin session ${job.sessionId}`,
+              "aria-pressed": isPinned2,
+              onClick: (e) => {
+                e.stopPropagation();
+                onTogglePin();
+              },
+              children: "\u{1F4CC}"
+            }
+          ),
+          cancellable && /* @__PURE__ */ jsx14(
+            "button",
+            {
+              type: "button",
+              className: "jact jact--cancel",
+              "data-act": "cancel",
+              title: "cancel job",
+              "aria-label": `Cancel job ${job.sessionId}`,
+              onClick: (e) => {
+                e.stopPropagation();
+                onCancel();
+              },
+              children: "\u2715"
+            }
+          )
         ] })
       ]
     }
@@ -8950,23 +9048,51 @@ function NamespaceTree({
                 const anchor = vine.points[i];
                 if (!anchor) return null;
                 const box = vineCardBox(anchor, vine.dir, vineCardWidth(vineMode), sceneSize.w);
-                return /* @__PURE__ */ jsx15(
-                  VineCard,
-                  {
-                    job,
-                    isActive: isTaskActive,
-                    isPinned: pinnedSessionIds?.has(job.sessionId) ?? false,
-                    isTerminating: terminatingSessionIds?.has(job.sessionId) ?? false,
-                    side: box.side,
-                    style: { left: `${box.left}px`, top: `${box.top}px` },
-                    onOpen: () => onSelectTask(openWorld.id, job.sessionId, job),
-                    onTogglePin: onTogglePinSession ? () => onTogglePinSession(job.sessionId) : () => {
+                const isTerminating = terminatingSessionIds?.has(job.sessionId) ?? false;
+                const anchorCls = [
+                  "anchor-ic",
+                  `anchor-ic--${isTerminating ? "terminating" : job.status}`,
+                  "pop-in"
+                ].join(" ");
+                return [
+                  /* anchor icon: the status sigil seated ON the vine at this card's
+                     stem tie-on point — decorative (card's aria-label carries status) */
+                  /* @__PURE__ */ jsx15(
+                    "div",
+                    {
+                      className: anchorCls,
+                      style: {
+                        left: `${anchor.x}px`,
+                        top: `${anchor.y}px`,
+                        animationDelay: `${60 + i * 50}ms`
+                      },
+                      "aria-hidden": "true",
+                      children: /* @__PURE__ */ jsx15(TreeIcon, { src: taskIcon(job.status), fallback: taskIconFallback(job.status), size: "task" })
                     },
-                    onCancel: onCancelJob && isCancellable(job.status) ? () => onCancelJob(job.sessionId, job) : () => {
-                    }
-                  },
-                  job.sessionId
-                );
+                    `anc-${job.sessionId}`
+                  ),
+                  /* @__PURE__ */ jsx15(
+                    VineCard,
+                    {
+                      job,
+                      isActive: isTaskActive,
+                      isPinned: pinnedSessionIds?.has(job.sessionId) ?? false,
+                      isTerminating,
+                      side: box.side,
+                      style: {
+                        left: `${box.left}px`,
+                        top: `${box.top}px`,
+                        animationDelay: `${140 + i * 50}ms`
+                      },
+                      onOpen: () => onSelectTask(openWorld.id, job.sessionId, job),
+                      onTogglePin: onTogglePinSession ? () => onTogglePinSession(job.sessionId) : () => {
+                      },
+                      onCancel: onCancelJob && isCancellable(job.status) ? () => onCancelJob(job.sessionId, job) : () => {
+                      }
+                    },
+                    job.sessionId
+                  )
+                ];
               }),
               falling.map((g) => /* @__PURE__ */ jsx15(
                 VineCard,
@@ -9011,8 +9137,9 @@ function NamespaceTree({
             summary?.error ? "ns-tree__glabel--err" : "",
             hoveredNs === ns.id ? "ns-tree__glabel--on" : ""
           ].filter(Boolean).join(" ");
-          const pipRow = summary && !summary.error ? taskPips(isOpen ? openTasks : tasksOf(summary.jobs)) : null;
-          const pipLayout = pipRow ? pipRowLayout(seat, sceneSize.w, pipSlots(pipRow)) : null;
+          const pipRow = !isOpen && summary && !summary.error ? taskPips(tasksOf(summary.jobs)) : null;
+          const stripWidth = pipRow && pipRow.count > 0 ? pipStripWidth(pipRow) : 0;
+          const stripLeft = pipRow && pipRow.count > 0 ? pipStripLeft(seat, sceneSize.w, stripWidth) : 0;
           return /* @__PURE__ */ jsxs11(
             "li",
             {
@@ -9041,27 +9168,49 @@ function NamespaceTree({
                     children: /* @__PURE__ */ jsx15(TreeIcon, { src: namespaceIcon(ns.id), fallback: NAMESPACE_ICON_FALLBACK, size: "lantern" })
                   }
                 ),
-                pipRow && pipLayout && pipRow.count > 0 && /* @__PURE__ */ jsxs11(
+                !isOpen && summary && !summary.error && summary.total > 0 && /* @__PURE__ */ jsxs11("div", { className: "ns-tree__counts", "aria-hidden": "true", children: [
+                  /* @__PURE__ */ jsx15(
+                    "span",
+                    {
+                      className: `ns-tree__counts__orb ns-tree__counts__orb--succeeded${summary.counts.succeeded > 0 ? "" : " ns-tree__counts__orb--dim"}`
+                    }
+                  ),
+                  /* @__PURE__ */ jsx15(
+                    "span",
+                    {
+                      className: `ns-tree__counts__orb ns-tree__counts__orb--running${summary.counts.running > 0 ? "" : " ns-tree__counts__orb--dim"}`
+                    }
+                  ),
+                  /* @__PURE__ */ jsx15(
+                    "span",
+                    {
+                      className: `ns-tree__counts__orb ns-tree__counts__orb--failed${summary.counts.failed > 0 ? "" : " ns-tree__counts__orb--dim"}`
+                    }
+                  ),
+                  /* @__PURE__ */ jsxs11("span", { className: "ns-tree__counts__nums", children: [
+                    summary.counts.succeeded > 0 && /* @__PURE__ */ jsx15("i", { style: { color: "#79b356" }, children: summary.counts.succeeded }),
+                    summary.counts.running > 0 && /* @__PURE__ */ jsx15("i", { style: { color: "#6fb7d8" }, children: summary.counts.running }),
+                    summary.counts.failed > 0 && /* @__PURE__ */ jsx15("i", { style: { color: "#e07a3f" }, children: summary.counts.failed })
+                  ] })
+                ] }),
+                pipRow && pipRow.count > 0 && /* @__PURE__ */ jsxs11(
                   "div",
                   {
-                    className: "ns-tree__tasks",
+                    className: "piprow",
                     "aria-hidden": "true",
                     "data-count": pipRow.count,
-                    style: {
-                      left: `calc(50% + ${pipLayout.left.toFixed(1)}px)`,
-                      "--pip-cols": pipLayout.columns
-                    },
+                    style: { left: `${stripLeft}px` },
                     children: [
                       pipRow.pips.map((pip) => /* @__PURE__ */ jsx15(
                         "span",
                         {
-                          className: `ns-tree__pip ns-tree__pip--${pip.status}`,
+                          className: `pip-slot pip-slot--${pip.status}`,
                           "data-status": pip.status,
                           children: /* @__PURE__ */ jsx15(TreeIcon, { src: taskIcon(pip.status), fallback: taskIconFallback(pip.status), size: "pip" })
                         },
                         pip.sessionId
                       )),
-                      pipRow.overflow > 0 && /* @__PURE__ */ jsxs11("span", { className: "ns-tree__tasks-more", children: [
+                      pipRow.overflow > 0 && /* @__PURE__ */ jsxs11("span", { className: "piprow__more", children: [
                         "+",
                         pipRow.overflow
                       ] })
