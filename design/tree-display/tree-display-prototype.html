@@ -21,6 +21,10 @@
      flush right in the tree panel header (the sidebar-header brand
      cluster, LEFT of the theme toggle, in the shipped plugin) overrides
      the width auto-mode until toggled off. SPEC: COMPACT VIEW block below.
+     v3.4 (Decree 2026-11-03): tree view ONLY — the initials-chip rail is
+     struck. "normal" is re-seated as "compact": a DENSER lantern tree
+     (smaller lanterns, cards, vine pitch) chosen by the «/» header toggle
+     at any pane width. Two options stand: standard + compact.
      Nocturnal garden house palette:
      night #05070a–#0f1419, moss #4a5d23, canopy #0f2e0f, moon #b0c4c9,
      spore gold #ffcc66, teal selection.
@@ -85,7 +89,7 @@
     border-color: var(--teal); color: #d9f4ef;
     background: rgba(21, 184, 166, 0.16);
   }
-  .btn:focus-visible, .lantern:focus-visible, .leaf:focus-visible, .chip-btn:focus-visible, .tab:focus-visible, .headact:focus-visible {
+  .btn:focus-visible, .lantern:focus-visible, .leaf:focus-visible, .tab:focus-visible, .headact:focus-visible {
     outline: 2px solid var(--teal); outline-offset: 2px;
   }
 
@@ -316,12 +320,12 @@
   .jcard__meta b { color: var(--moon); font-weight: 600; }
   .jcard.pop-in { animation: sprout .4s cubic-bezier(.2,1.3,.4,1) backwards; }
   .jcard.fall-out { animation: cardfall .9s ease-in forwards; pointer-events: none; }
-  body[data-mode="normal"] .jcard { width: 188px; padding: 4px 7px; }
-  body[data-mode="normal"] .jcard__title { font-size: 10.5px; }
-  body[data-mode="normal"] .jcard__meta { font-size: 8.5px; }
-  body[data-mode="normal"] .lantern { width: 44px; height: 44px; }
-  body[data-mode="normal"] .lantern__ic { width: 26px; height: 26px; }
-  body[data-mode="normal"] .lantern__ic-fb { font-size: 19px; }
+  body[data-mode="compact"] .jcard { width: 176px; padding: 3px 6px; }
+  body[data-mode="compact"] .jcard__title { font-size: 10px; }
+  body[data-mode="compact"] .jcard__meta { font-size: 8px; }
+  body[data-mode="compact"] .lantern { width: 40px; height: 40px; }
+  body[data-mode="compact"] .lantern__ic { width: 24px; height: 24px; }
+  body[data-mode="compact"] .lantern__ic-fb { font-size: 16px; }
 
   @keyframes pulse     { 50% { transform: scale(1.35); } }
   @keyframes flicker   { 50% { opacity: .55; } }
@@ -342,7 +346,7 @@
     rotate: 45deg;
   }
   .fruit__counts { display: none; gap: 5px; font-size: 10.5px; font-family: var(--mono); }
-  body[data-mode="extended"] .fruit__counts { display: flex; }
+  body[data-mode="standard"] .fruit__counts { display: flex; }
   .fruit__counts i { font-style: normal; display: inline-flex; gap: 3px; align-items: center; }
   .fruit__counts i::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
 
@@ -429,25 +433,27 @@
     .spore, .jcard__dot, .jcard--failed .jcard__dot, .jcard--terminating { animation: none; }
   }
 
-  /* ── compact view — the OPTION (v3.3 SPEC; mirrors Sidebar.tsx) ──────
-     The compact rail is no longer width-only: a manual toggle lets the
-     user CHOOSE compact at any pane width.
-       • placement: panel header, flush right — in the shipped plugin the
-         sidebar-header brand cluster, LEFT of the theme toggle, so the
-         far-right order stays: count · compact · theme · status.
+  /* ── compact view — the OPTION (v3.4 SPEC, Decree 2026-11-03) ─────────
+     Tree view ONLY: the initials-chip rail is struck — compact is a
+     DENSER lantern tree, never a different widget.
+       • placement: the «/» toggle sits flush right in the tree panel
+         header (the sidebar-header brand cluster, LEFT of the theme
+         toggle, in the shipped plugin — far-right order:
+         count · compact · theme · status); it NEVER hides.
        • icon-only, 26px — the tooltip carries the meaning (#43): « while
-         a full tree shows, » while compact; aria-pressed = compact on.
-       • survives compact degradation: title + count hide first (as
-         today); the toggle NEVER hides — it is the way back out.
+         the standard tree shows, » while compact; aria-pressed = on.
+       • two options stand: standard (full tree) + compact (dense tree);
+         the old three-way width ladder collapses behind them.
+       • compact metrics: sidebar 360px, lantern 40px, icon 24px,
+         cards 176px @ 3px 6px padding, title 10px, meta 8px,
+         vine pitch 46px. Berries show; count NUMBERS stay
+         standard-only. The vine, cards, anchors, pips — all render
+         exactly as standard, just denser.
        • semantics: manual compact OVERRIDES the width auto-mode
-         (getDisplayMode: <240 compact, ≤400 normal, else extended) until
-         toggled off — pane resizes never defeat the choice; toggling off
-         resumes the width-appropriate mode.
+         (getDisplayMode) until toggled off — pane resizes never defeat
+         the choice; toggling off resumes the width-appropriate mode.
        • persistence: localStorage "hlidskjalf:display-mode" =
-         "auto" | "compact"; the width-derived mode is never persisted.
-       • rail layout (unchanged): 208px rail, initials chip + total badge,
-         expandable world list (icon · initials · count), row click
-         selects its world. */
+         "auto" | "compact"; the width-derived mode is never persisted. */
   .headact {
     flex: none; margin-left: auto;
     width: 26px; height: 26px; padding: 0;
@@ -462,36 +468,7 @@
     border-color: var(--teal); color: #d9f4ef;
     background: rgba(21, 184, 166, 0.16);
   }
-  /* compact mode — the initials chip */
-  body[data-mode="compact"] .sidebar { width: 208px; }
-  body[data-mode="compact"] .scene,
-  body[data-mode="compact"] .hud { display: none; }
-  body[data-mode="compact"] .sidebar__head .sub { display: none; }
-  .compact-body { display: none; padding: 12px; }
-  body[data-mode="compact"] .compact-body { display: block; }
-  .chip-btn {
-    width: 46px; height: 46px; border-radius: 50%;
-    background: radial-gradient(circle at 35% 30%, #1d2a30, #0c1216);
-    border: 1px solid var(--panel-bd); color: var(--moon);
-    font-size: 15px; font-weight: 600; letter-spacing: 1px;
-    position: relative;
-  }
-  .chip-btn em {
-    position: absolute; top: -4px; right: -4px; font-style: normal; font-size: 10px;
-    background: var(--teal); color: #04211d; border-radius: 9px; padding: 1px 5px;
-    font-family: var(--mono);
-  }
-  .compact-list { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
-  .compact-row {
-    display: flex; align-items: center; gap: 8px;
-    background: var(--night-2); border: 1px solid var(--panel-bd); border-radius: 8px;
-    padding: 6px 9px; width: 100%; color: var(--moon); font-size: 12.5px;
-    text-align: left; transition: border-color .15s;
-  }
-  .compact-row:hover { border-color: var(--teal); }
-  .compact-row.is-active { border-color: var(--teal); background: rgba(21,184,166,0.12); }
-  .compact-row .cnt { margin-left: auto; font-family: var(--mono); font-size: 11px; color: var(--moon-dim); }
-  .compact-row .ic { font-size: 16px; }
+  body[data-mode="compact"] .sidebar { width: 360px; }
 
   /* ══ log hall — tabbed session viewer ══ */
   .logviewer {
@@ -595,17 +572,16 @@
   .swatch { display: inline-block; width: 9px; height: 9px; border-radius: 50% 50% 50% 2px; rotate: 45deg; margin-right: 6px; }
 </style>
 </head>
-<body data-mode="extended">
+<body data-mode="standard">
 
 <!-- ═══ prototype furniture ═══ -->
 <div class="deck">
-  <span class="deck__title"><b>ᛟ</b> Odin's Throne — tree display redesign · issue #7 prototype · <b>v3.3</b></span>
-  <span class="deck__note">icons pop down to each job's vine anchor (out of the card) · single-row progress-bar pips under the status counts, hidden while expanded · icon-only actions clasp the card's bottom border, flush right · «/» compact toggle in the tree header (manual override of the width mode)</span>
+  <span class="deck__title"><b>ᛟ</b> Odin's Throne — tree display redesign · issue #7 prototype · <b>v3.4</b></span>
+  <span class="deck__note">icons pop down to each job's vine anchor (out of the card) · single-row progress-bar pips under the status counts, hidden while expanded · icon-only actions clasp the card's bottom border, flush right · «/» compact toggle in the tree header — compact = the DENSER tree (tree view only; the chip rail is struck)</span>
   <span class="deck__sep"></span>
   <div class="deck__group">
     <span class="deck__lbl">mode</span>
-    <button class="btn" data-mode-btn="extended" aria-pressed="true">extended</button>
-    <button class="btn" data-mode-btn="normal">normal</button>
+    <button class="btn" data-mode-btn="standard" aria-pressed="true">standard</button>
     <button class="btn" data-mode-btn="compact">compact</button>
   </div>
   <span class="deck__sep"></span>
@@ -633,7 +609,7 @@
       <span class="rune">ᛉ</span>
       <span class="name">the world-tree</span>
       <span class="sub">worlds read live from the backend API — one vine open at a time</span>
-      <button class="headact" id="compactToggle" aria-pressed="false" title="compact view — collapse the tree to world chips">«</button>
+      <button class="headact" id="compactToggle" aria-pressed="false" title="compact view — the denser tree">«</button>
     </div>
 
     <div class="scene" id="scene">
@@ -646,11 +622,6 @@
       </div>
       <div class="scene__inner" id="overlay"></div>
       <div class="mapdbg" id="mapdbg" hidden></div>
-    </div>
-
-    <div class="compact-body" id="compactBody">
-      <button class="chip-btn" id="chipBtn" aria-expanded="false">FL<em id="chipCount">12</em></button>
-      <div class="compact-list" id="compactList" hidden></div>
     </div>
 
     <div class="hud" id="hud"></div>
@@ -700,7 +671,7 @@
       <li><span class="k">pin / cancel</span> act right on the card — no popups anywhere</li>
       <li><span class="k">long vine</span> many jobs? the vine extends and the panel scrolls</li>
       <li><span class="k">cancel</span> the card falls from the vine, its tab closes</li>
-      <li><span class="k">compact toggle</span> the « button in the tree header — compact at ANY pane width; click again to resume the width-appropriate mode</li>
+      <li><span class="k">compact toggle</span> the « button in the tree header — the DENSER lantern tree at ANY pane width; click again for the standard tree</li>
     </ul>
   </div>
 </div>
@@ -884,7 +855,7 @@ function buildWorlds(namespaces) {
 
 /* ═══ state ═══ */
 let state = {
-  mode: "extended",
+  mode: "standard",
   worlds: [],          // built from the backend API — never hardcoded
   summariesLoaded: new Set(),
   expanded: new Set(),
@@ -940,7 +911,7 @@ function bez4(t, P0, C1, C2, P3) {
 function vineFor(w, n) {
   const L = px(w.lantern);
   const dir = w.dir || 1;                       // which way the cards hang
-  const pitch = state.mode === "normal" ? 50 : 57;    // px between card centers
+  const pitch = state.mode === "compact" ? 46 : 57;   // px between card centers (compact = denser)
   const arc = n <= 1 ? 54 : 40 + (n - 1) * pitch;    // the vine extends with the job count
   /* a gentle cascade: slight lean off the lantern, mostly downward */
   const C1 = { x: L.x + dir * 16, y: L.y + arc * 0.22 };
@@ -972,7 +943,7 @@ function renderScene() {
 
   for (const w of state.worlds) {
     const isActive = w.id === state.selectedWorld;
-    const isExpanded = state.expanded.has(w.id) && mode !== "compact";
+    const isExpanded = state.expanded.has(w.id);   // v3.4: compact shows the dense tree — expand works in every mode
     const isUnavail = state.unavailable.has(w.id);
     const isLoaded = state.summariesLoaded.has(w.id);
     const s = statsOf(w.id);
@@ -1001,7 +972,7 @@ function renderScene() {
        An expanded world hides its ENTIRE indicator cluster — counts AND
        pip strip — because its jobs themselves hang on the vine; the open
        lantern shows nothing but its icon (and glow). */
-    if (!isExpanded && mode !== "compact") {
+    if (!isExpanded) {
       const fruit = document.createElement("div");
       fruit.className = "fruit";
       fruit.style.left = w.lantern.x + "%"; fruit.style.top = (w.lantern.y + 4) + "%";
@@ -1038,7 +1009,7 @@ function renderScene() {
          • clamped to the scene edges — never clips
          • hidden entirely while the world is EXPANDED (its icons pop down
            to the vine anchors instead), reappearing on collapse */
-    if (!isExpanded && mode !== "compact" && isLoaded && !isUnavail) {
+    if (!isExpanded && isLoaded && !isUnavail) {
       const pjs = orderedJobs(w.id);
       if (pjs.length) {
         const shown = pjs.slice(0, 8);
@@ -1103,7 +1074,7 @@ function renderScene() {
         path.style.transition = "stroke-dashoffset .7s ease-out";
         setTimeout(() => { path.style.strokeDashoffset = 0; }, 50);
       }
-      const cw = (state.mode === "normal" ? 190 : 212);
+      const cw = (state.mode === "compact" ? 178 : 212);
       js.forEach((job, i) => {
         const pos = vine.pts[i];
         const cancellable = job.status === "running" || job.status === "pending";
@@ -1165,7 +1136,6 @@ function renderScene() {
   if (canvasH) canvas.style.height = Math.max(scene.clientHeight, canvasH) + "px";
 
   renderHud();
-  renderCompact();
 }
 
 function showLabel(id, on) {
@@ -1185,25 +1155,9 @@ function renderHud() {
     `<span style="margin-left:auto">${state.live ? "ws feed live · spores drift" : "ws feed paused"}</span>`;
 }
 
-/* ═══ compact mode ═══ */
-function renderCompact() {
-  const chip = $("#chipBtn"), list = $("#compactList");
-  const active = state.worlds.find(w => w.id === state.selectedWorld) ?? state.worlds[0];
-  if (!active) return;
-  const s = statsOf(active.id);
-  chip.childNodes[0].nodeValue = initialsOf(active.label);
-  $("#chipCount").textContent = s.total;
-  list.innerHTML = "";
-  for (const w of state.worlds) {
-    const ws = statsOf(w.id);
-    const row = document.createElement("button");
-    row.className = "compact-row" + (w.id === state.selectedWorld ? " is-active" : "");
-    row.innerHTML = `<span class="ic">${w.glyph}</span><span>${initialsOf(w.label)}</span><span class="cnt">${ws.total}</span>`;
-    row.addEventListener("click", () => selectWorld(w.id));
-    list.appendChild(row);
-  }
-}
-function initialsOf(label) { return label.split(" ").map(x => x[0]).join("").slice(0, 2).toUpperCase(); }
+/* v3.4 (Decree 2026-11-03): the compact chip rail is struck — tree view
+   only. renderCompact() and the initials chip are gone; compact renders
+   the same lantern tree, denser, straight from renderScene(). */
 
 /* ═══ selection — one world's vine open at a time; click toggles ═══ */
 function selectWorld(id) {
@@ -1355,24 +1309,25 @@ document.querySelectorAll("[data-mode-btn]").forEach(btn => {
   btn.addEventListener("click", () => setMode(btn.dataset.modeBtn));
 });
 
-/* ═══ v3.3 — the compact view OPTION: manual toggle in the tree header ═══
-   SPEC (mirrors the COMPACT VIEW CSS block): placement flush right in the
-   panel header (the sidebar-header brand cluster, LEFT of the theme
+/* ═══ v3.4 — the compact view OPTION: manual toggle in the tree header ═══
+   SPEC (mirrors the COMPACT VIEW CSS block): tree view ONLY — compact is
+   the DENSER lantern tree, never a chip rail. Placement flush right in
+   the panel header (the sidebar-header brand cluster, LEFT of the theme
    toggle, in the shipped plugin — far-right order: count · compact ·
    theme · status); icon-only, the tooltip carries the meaning (#43) —
-   « while a full tree shows, » while compact; aria-pressed = compact on.
+   « while the standard tree shows, » while compact; aria-pressed = on.
    Semantics: manual compact OVERRIDES the width auto-mode until toggled
    off; toggling off resumes the width-appropriate mode (getDisplayMode).
    The choice persists (localStorage "hlidskjalf:display-mode"). */
 const compactBtn = $("#compactToggle");
-let compactLast = "extended";      // the width-appropriate mode to resume
+let compactLast = "standard";      // the width-appropriate mode to resume
 function syncCompactToggle() {
   const on = state.mode === "compact";
   compactBtn.textContent = on ? "»" : "«";
   compactBtn.setAttribute("aria-pressed", String(on));
   compactBtn.title = on
-    ? "expand the tree — resume the width-appropriate mode"
-    : "compact view — collapse the tree to world chips";
+    ? "standard view — the full-size tree"
+    : "compact view — the denser tree";
 }
 function setMode(m) {
   if (m !== "compact") compactLast = m;
@@ -1387,12 +1342,6 @@ compactBtn.addEventListener("click", () => {
   setMode(state.mode === "compact" ? compactLast : "compact");
 });
 syncCompactToggle();
-$("#chipBtn").addEventListener("click", () => {
-  const list = $("#compactList");
-  const open = list.hidden;
-  list.hidden = !open;
-  $("#chipBtn").setAttribute("aria-expanded", String(open));
-});
 
 $("#btn-fail").addEventListener("click", () => {
   const candidates = state.worlds.flatMap(w => (state.jobs[w.id] ?? []).map(j => ({ w: w.id, j }))).filter(x => x.j.status === "running");
