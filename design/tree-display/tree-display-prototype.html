@@ -17,6 +17,10 @@
      v3.2: the task-icon strip is ONE row growing left→right (hang order)
      like a progress bar beneath the status counts — and expanding hides
      the ENTIRE indicator cluster (strip + counts) under the open lantern.
+     v3.3: the compact view becomes an OPTION — a manual «/» toggle seated
+     flush right in the tree panel header (the sidebar-header brand
+     cluster, LEFT of the theme toggle, in the shipped plugin) overrides
+     the width auto-mode until toggled off. SPEC: COMPACT VIEW block below.
      Nocturnal garden house palette:
      night #05070a–#0f1419, moss #4a5d23, canopy #0f2e0f, moon #b0c4c9,
      spore gold #ffcc66, teal selection.
@@ -81,7 +85,7 @@
     border-color: var(--teal); color: #d9f4ef;
     background: rgba(21, 184, 166, 0.16);
   }
-  .btn:focus-visible, .lantern:focus-visible, .leaf:focus-visible, .chip-btn:focus-visible, .tab:focus-visible {
+  .btn:focus-visible, .lantern:focus-visible, .leaf:focus-visible, .chip-btn:focus-visible, .tab:focus-visible, .headact:focus-visible {
     outline: 2px solid var(--teal); outline-offset: 2px;
   }
 
@@ -111,7 +115,8 @@
   }
   .sidebar__head .rune { color: var(--spore); font-size: 15px; }
   .sidebar__head .name { font-size: 13.5px; letter-spacing: 0.4px; }
-  .sidebar__head .sub { font-size: 11px; color: var(--moon-dim); margin-left: auto; font-style: italic; }
+  .sidebar__head .sub { font-size: 11px; color: var(--moon-dim); font-style: italic;
+    flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
   .scene {
     position: relative;
@@ -424,6 +429,39 @@
     .spore, .jcard__dot, .jcard--failed .jcard__dot, .jcard--terminating { animation: none; }
   }
 
+  /* ── compact view — the OPTION (v3.3 SPEC; mirrors Sidebar.tsx) ──────
+     The compact rail is no longer width-only: a manual toggle lets the
+     user CHOOSE compact at any pane width.
+       • placement: panel header, flush right — in the shipped plugin the
+         sidebar-header brand cluster, LEFT of the theme toggle, so the
+         far-right order stays: count · compact · theme · status.
+       • icon-only, 26px — the tooltip carries the meaning (#43): « while
+         a full tree shows, » while compact; aria-pressed = compact on.
+       • survives compact degradation: title + count hide first (as
+         today); the toggle NEVER hides — it is the way back out.
+       • semantics: manual compact OVERRIDES the width auto-mode
+         (getDisplayMode: <240 compact, ≤400 normal, else extended) until
+         toggled off — pane resizes never defeat the choice; toggling off
+         resumes the width-appropriate mode.
+       • persistence: localStorage "hlidskjalf:display-mode" =
+         "auto" | "compact"; the width-derived mode is never persisted.
+       • rail layout (unchanged): 208px rail, initials chip + total badge,
+         expandable world list (icon · initials · count), row click
+         selects its world. */
+  .headact {
+    flex: none; margin-left: auto;
+    width: 26px; height: 26px; padding: 0;
+    border: 1px solid var(--panel-bd); border-radius: 7px;
+    background: var(--night-2); color: var(--moon-dim);
+    font-size: 13px; line-height: 1;
+    display: inline-flex; align-items: center; justify-content: center;
+    transition: border-color .15s, color .15s, background .15s;
+  }
+  .headact:hover { border-color: var(--teal); color: #d9f4ef; }
+  .headact[aria-pressed="true"] {
+    border-color: var(--teal); color: #d9f4ef;
+    background: rgba(21, 184, 166, 0.16);
+  }
   /* compact mode — the initials chip */
   body[data-mode="compact"] .sidebar { width: 208px; }
   body[data-mode="compact"] .scene,
@@ -561,8 +599,8 @@
 
 <!-- ═══ prototype furniture ═══ -->
 <div class="deck">
-  <span class="deck__title"><b>ᛟ</b> Odin's Throne — tree display redesign · issue #7 prototype · <b>v3</b></span>
-  <span class="deck__note">icons pop down to each job's vine anchor (out of the card) · single-row progress-bar pips under the status counts, hidden while expanded · icon-only actions clasp the card's bottom border, flush right</span>
+  <span class="deck__title"><b>ᛟ</b> Odin's Throne — tree display redesign · issue #7 prototype · <b>v3.3</b></span>
+  <span class="deck__note">icons pop down to each job's vine anchor (out of the card) · single-row progress-bar pips under the status counts, hidden while expanded · icon-only actions clasp the card's bottom border, flush right · «/» compact toggle in the tree header (manual override of the width mode)</span>
   <span class="deck__sep"></span>
   <div class="deck__group">
     <span class="deck__lbl">mode</span>
@@ -595,6 +633,7 @@
       <span class="rune">ᛉ</span>
       <span class="name">the world-tree</span>
       <span class="sub">worlds read live from the backend API — one vine open at a time</span>
+      <button class="headact" id="compactToggle" aria-pressed="false" title="compact view — collapse the tree to world chips">«</button>
     </div>
 
     <div class="scene" id="scene">
@@ -661,6 +700,7 @@
       <li><span class="k">pin / cancel</span> act right on the card — no popups anywhere</li>
       <li><span class="k">long vine</span> many jobs? the vine extends and the panel scrolls</li>
       <li><span class="k">cancel</span> the card falls from the vine, its tab closes</li>
+      <li><span class="k">compact toggle</span> the « button in the tree header — compact at ANY pane width; click again to resume the width-appropriate mode</li>
     </ul>
   </div>
 </div>
@@ -1312,13 +1352,41 @@ function cancelJob(worldId, jobId) {
 
 /* ═══ controls ═══ */
 document.querySelectorAll("[data-mode-btn]").forEach(btn => {
-  btn.addEventListener("click", () => {
-    document.querySelectorAll("[data-mode-btn]").forEach(b => b.setAttribute("aria-pressed", String(b === btn)));
-    state.mode = btn.dataset.modeBtn;
-    document.body.dataset.mode = state.mode;
-    renderScene();
-  });
+  btn.addEventListener("click", () => setMode(btn.dataset.modeBtn));
 });
+
+/* ═══ v3.3 — the compact view OPTION: manual toggle in the tree header ═══
+   SPEC (mirrors the COMPACT VIEW CSS block): placement flush right in the
+   panel header (the sidebar-header brand cluster, LEFT of the theme
+   toggle, in the shipped plugin — far-right order: count · compact ·
+   theme · status); icon-only, the tooltip carries the meaning (#43) —
+   « while a full tree shows, » while compact; aria-pressed = compact on.
+   Semantics: manual compact OVERRIDES the width auto-mode until toggled
+   off; toggling off resumes the width-appropriate mode (getDisplayMode).
+   The choice persists (localStorage "hlidskjalf:display-mode"). */
+const compactBtn = $("#compactToggle");
+let compactLast = "extended";      // the width-appropriate mode to resume
+function syncCompactToggle() {
+  const on = state.mode === "compact";
+  compactBtn.textContent = on ? "»" : "«";
+  compactBtn.setAttribute("aria-pressed", String(on));
+  compactBtn.title = on
+    ? "expand the tree — resume the width-appropriate mode"
+    : "compact view — collapse the tree to world chips";
+}
+function setMode(m) {
+  if (m !== "compact") compactLast = m;
+  state.mode = m;
+  document.body.dataset.mode = m;
+  document.querySelectorAll("[data-mode-btn]").forEach(b =>
+    b.setAttribute("aria-pressed", String(b.dataset.modeBtn === m)));
+  syncCompactToggle();
+  renderScene();
+}
+compactBtn.addEventListener("click", () => {
+  setMode(state.mode === "compact" ? compactLast : "compact");
+});
+syncCompactToggle();
 $("#chipBtn").addEventListener("click", () => {
   const list = $("#compactList");
   const open = list.hidden;
