@@ -49,6 +49,11 @@
      accommodates a max of 11 active namespaces. And the whole scene —
      painting, stones, vine, cards — now scrolls TOGETHER in one canvas,
      so the scrolling task list is ALWAYS attached to its lantern.
+     v3.9 (2026-11-04, round 4): inactive stones FADE INTO the background —
+     ghost-transparent, no rim, dropped in z-order — so the active stone
+     alone stands out. Every world's summary PRELOADS at boot (multiple
+     namespaces visibly carry tasks), and the two quiet worlds get seed
+     work so all seven stones read alive.
      Nocturnal garden house palette:
      night #05070a–#0f1419, moss #4a5d23, canopy #0f2e0f, moon #b0c4c9,
      spore gold #ffcc66, teal selection.
@@ -244,7 +249,7 @@
     pointer-events: none;
   }
   .lantern:hover::before, .lantern:focus-visible::before { opacity: .55; }
-  .lantern.is-active { --lg: rgba(21, 184, 166, 0.55); border-color: var(--teal);
+  .lantern.is-active { z-index: 7; --lg: rgba(21, 184, 166, 0.55); border-color: var(--teal);
     background:
       radial-gradient(circle at 38% 30%, rgba(70, 92, 98, 0.55), rgba(15, 21, 26, 0.8) 58%, rgba(7, 11, 14, 0.95) 82%); }
   .lantern.is-active::before, .lantern.is-active:hover::before { opacity: 1; }
@@ -268,15 +273,29 @@
     filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.95)) drop-shadow(0 0 7px rgba(21, 184, 166, 0.55));
   }
   .lantern.is-dim .lantern__ic { opacity: .5; filter: drop-shadow(0 0 1px rgba(0,0,0,.95)) saturate(.5); }
-  /* v3.8 — dimming: only the ACTIVE world's stone opens fully; every other
-     stone dims so the open world reads at a glance */
-  .lantern.is-inactive .lantern__ic { opacity: .42; scale: .92;
-    filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.95)) saturate(.35) brightness(.75); }
-  .lantern.is-inactive:hover .lantern__ic { opacity: .8; }
-  .lantern.is-inactive { border-color: rgba(176, 196, 201, 0.12); }
+  /* v3.9 — inactive stones FADE INTO THE BACKGROUND: nearly transparent,
+     ghost icon, no rim, no shadow — the painted lantern shows through and
+     the stone reads as part of the painting. They also drop in z-order so
+     the active stone (and any work passing by) paints above them; the
+     active stone alone stands out. */
+  .lantern.is-inactive {
+    z-index: 4;
+    border-color: transparent;
+    background: radial-gradient(circle at 38% 30%, rgba(10, 16, 20, 0.14), rgba(7, 11, 14, 0.34) 72%);
+    box-shadow: none;
+    scale: .85;
+    opacity: .5;
+  }
+  .lantern.is-inactive .lantern__ic { opacity: .5; scale: .9;
+    filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.95)) saturate(.3) brightness(.65); }
+  .lantern.is-inactive:hover { opacity: .9; scale: .95; border-color: rgba(176, 196, 201, 0.2);
+    background: radial-gradient(circle at 38% 30%, rgba(58, 74, 80, 0.5), rgba(15, 21, 26, 0.8) 72%);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.5), 0 0 12px var(--lg); }
+  .lantern.is-inactive:hover .lantern__ic { opacity: .9;
+    filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.95)); }
   .lantern.is-inactive::before { opacity: 0; }
-  .lantern.is-inactive:hover::before { opacity: .3; }
-  .lantern.is-inactive.is-dim .lantern__ic { opacity: .2; }
+  .lantern.is-inactive:hover::before { opacity: .25; }
+  .lantern.is-inactive.is-dim { opacity: .22; }
 
   /* job cards — full info on the vine, no popup needed */
   .jcard {
@@ -631,8 +650,8 @@
 
 <!-- ═══ prototype furniture ═══ -->
 <div class="deck">
-  <span class="deck__title"><b>ᛟ</b> Odin's Throne — tree display redesign · issue #7 prototype · <b>v3.8</b></span>
-  <span class="deck__note">stones overlay the eleven painted lanterns — one seat per lantern, a max of 11 active namespaces; the active world's stone opens (teal ring) while every other stone dims · the whole scene scrolls together, the task list always attached to its lantern · vine curls out to the branch rail at 44% · icons pop down to vine anchors · «/» compact toggle — one-line cards, no clasps</span>
+  <span class="deck__title"><b>ᛟ</b> Odin's Throne — tree display redesign · issue #7 prototype · <b>v3.9</b></span>
+  <span class="deck__note">stones overlay the eleven painted lanterns — one seat per lantern, a max of 11 active namespaces; the active world's stone opens (teal ring) while every other stone fades into the background, z-below the active one · the whole scene scrolls together, the task list always attached to its lantern · vine curls out to the branch rail at 44% · icons pop down to vine anchors · «/» compact toggle — one-line cards, no clasps</span>
   <span class="deck__sep"></span>
   <div class="deck__group">
     <span class="deck__lbl">mode</span>
@@ -698,7 +717,7 @@
     <ul>
       <li><span class="k">world list</span> read live from the backend service API (/api/namespaces) — never hardcoded; lantern seats assigned by curated id, djb2-hashed for unknown worlds</li>
       <li><span class="k">trunk</span> the painted moonlit tree of life — tall and narrow in the panel's left half, regenerated with /imagen (prompt committed in src/ui/assets/README.md)</li>
-      <li><span class="k">stone</span> one namespace (a world) — a stone overlaying a painted leaf-lantern, carrying its icon; the active world's stone opens (teal ring), all others dim · eleven lanterns — a max of 11 active namespaces</li>
+      <li><span class="k">stone</span> one namespace (a world) — a stone overlaying a painted leaf-lantern, carrying its icon; the active world's stone opens (teal ring), all others fade into the background (ghost icons over the painting) · eleven lanterns — a max of 11 active namespaces</li>
       <li><span class="k">berries</span> status counts — succeeded · running · failed; hidden on the open world (its work is on the vine)</li>
       <li><span class="k">vine</span> one world open at a time — its vine curls out to the branch rail at 44% and the job cards descend it as work grows; painting, stones and vine scroll as one, the list never detaching from its lantern</li>
       <li><span class="k">task pips</span> ONE row under a collapsed lantern's status counts, growing left→right in hang order (running → failed → pending → succeeded) like a progress bar, +N past 8 — expanding hides the whole cluster, the icons popping down to the vine anchors</li>
@@ -820,8 +839,15 @@ const SEED_JOBS = {
     mkJob("t1", "f-ok-1",   "Truth · the salmon swims the rapids",    "heimdall","succeeded",6),
     mkJob("t2", "f-run-1",  "Truth · diving for the ninth hazel nut", "loki",  "running",   1),
   ],
-  "re-goatmower-agents": [],
-  "odins-throne-plugin": [],
+  "re-goatmower-agents": [
+    mkJob("r1", "m-run-1",  "Mow · the west field calls",             "decko", "running",   2),
+    mkJob("r2", "m-ok-1",   "Mow · sharpening the scythe stones",      "freya", "succeeded", 6),
+    mkJob("r3", "m-pend-1", "Mow · oiling the reel",                  "luna",  "pending",   0),
+  ],
+  "odins-throne-plugin": [
+    mkJob("p1", "p-run-1",  "Plugin · the ravens roost",              "odin",  "running",   1),
+    mkJob("p2", "p-ok-1",   "Plugin · hlidskjalf's quiet hinge",      "heimdall", "succeeded", 6),
+  ],
 };
 
 /* ═══ the backend service API ═══
@@ -1590,6 +1616,17 @@ function boot() {
         if (js && js.length && !state.activeTab) openJob(first, js[0].id);
       }, 1500);
     }
+    /* v3.9 — every world's work arrives at once: all summaries preload so
+       multiple namespaces visibly carry tasks up the whole tree */
+    state.worlds.forEach(w => {
+      if (!state.summariesLoaded.has(w.id)) {
+        apiFetchSummaries(w.id).then(js => {
+          state.jobs[w.id] = js.map(j => ({ ...j }));
+          state.summariesLoaded.add(w.id);
+          renderScene();
+        });
+      }
+    });
   });
 }
 boot();
