@@ -167,10 +167,9 @@ export function NamespaceTree({
   // Project the open world's seat for vine geometry (scene % from painting %)
   const openSeat = useMemo(() => {
     if (!openPaintSeat || sceneSize.w === 0 || sceneSize.h === 0) return openPaintSeat;
-    const mode = isCompact ? "compact" : "standard";
-    const p = projectSeat(openPaintSeat, mode, sceneSize.w, sceneSize.h);
+    const p = projectSeat(openPaintSeat, sceneSize.w, sceneSize.h);
     return { x: p.x, y: p.y, dir: openPaintSeat.dir };
-  }, [openPaintSeat, isCompact, sceneSize.w, sceneSize.h]);
+  }, [openPaintSeat, sceneSize.w, sceneSize.h]);
   const summaryLoaded = openSummary !== undefined;
   const summaryFailed = openSummary?.error != null;
 
@@ -270,8 +269,7 @@ export function NamespaceTree({
                 const isOpen = openNs === ns.id;
                 const paintSeat = seats.get(ns.id)!;
                 // Project painting % → scene % for positioning
-                const mode = isCompact ? "compact" : "standard";
-                const projected = projectSeat(paintSeat, mode, sceneSize.w, sceneSize.h);
+                const projected = projectSeat(paintSeat, sceneSize.w, sceneSize.h);
                 const line = labelLineOf(summary);
                 const failed = summary?.counts.failed ?? 0;
                 const total = summary?.total ?? 0;

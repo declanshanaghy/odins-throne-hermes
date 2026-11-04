@@ -4,8 +4,8 @@
 // on the design-tree-display branch (v3.9.2, commit 83c1a16). The painting is
 // 896x1200 (tall portrait, tree in the left third, eleven painted leaf-lanterns
 // climbing the full height). Seats are stored in PAINTING percentages; projectSeat()
-// maps them into scene % per display mode (cover-center in standard, fill in
-// compact) so the stones sit on the painted lanterns at any panel width.
+// maps them into scene % (cover-center, left-anchored) so the stones sit on the
+// painted lanterns at any panel width, in both standard and compact display modes.
 //
 // Seat assignment: curated namespace ids claim painted lanterns first (never
 // stealable); unknown worlds take a deterministic djb2-hashed seat from the
@@ -127,35 +127,29 @@ export function assignSeats(nsIds: readonly string[]): Map<string, LanternSeat> 
 }
 
 /**
- * Map a painted seat (PAINTING %) to scene % for the given display mode and
- * measured scene box. Called per-lantern at render time (the scene size changes
- * on resize, so this runs inside the React layout effect loop).
+ * Map a painted seat (PAINTING %) to scene % for the measured scene box.
+ * Called per-lantern at render time (the scene size changes on resize, so this
+ * runs inside the React layout effect loop). Identical in standard and compact
+ * display modes — compact affects the vine card list only, not the tree.
  *
- *   compact — painting object-fit: fill (the painting IS the scene box),
- *             so painting % map 1:1 to scene %.
- *   standard — painting object-fit: cover, LEFT-anchored (CSS
- *              object-position: 0% 50%): scale factor k = max(W/896,
- *              H/1200); the painting may overhang on one axis; painting x
- *              maps from the scene's LEFT edge (fl = 0), y passes through
- *              (the painting height dominates when H-limited).
+ * Painting object-fit: cover, LEFT-anchored (CSS object-position: 0% 50%):
+ * scale factor k = max(W/896, H/1200); painting x maps from the scene's LEFT
+ * edge (fl = 0), y passes through (painting height dominates when H-limited).
  *
- *              Left-anchor is load-bearing: cover-CENTER put every pool
- *              seat below painting x ~26% at negative scene x in tall
- *              narrow scenes (the ~268px shipped dock scroller) — stones
- *              off-pane, invisible + unclickable, including the ACTIVE
- *              world (v3.9 regression). The tree occupies the painting's
- *              left third, so the left-anchored crop keeps every lantern
- *              on-canvas at any panel width.
+ * Left-anchor is load-bearing: cover-CENTER put every pool seat below painting
+ * x ~26% at negative scene x in tall narrow scenes (the ~268px shipped dock
+ * scroller) — stones off-pane, invisible + unclickable, including the ACTIVE
+ * world (v3.9 regression). The tree occupies the painting's left third, so the
+ * left-anchored crop keeps every lantern on-canvas at any panel width.
  *
  * Returns painting % unchanged when sceneW/H are not yet measured (0).
  */
 export function projectSeat(
   p: PaintedSeat,
-  mode: "standard" | "compact",
   sceneW: number,
   sceneH: number,
 ): { x: number; y: number } {
-  if (mode === "compact" || sceneW <= 0 || sceneH <= 0) {
+  if (sceneW <= 0 || sceneH <= 0) {
     return { x: p.x, y: p.y };
   }
   const k = Math.max(sceneW / 896, sceneH / 1200);

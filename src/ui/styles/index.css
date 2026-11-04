@@ -418,7 +418,6 @@ body {
   -webkit-mask-image: linear-gradient(180deg, #000 90%, transparent 100%);
           mask-image: linear-gradient(180deg, #000 90%, transparent 100%);
 }
-.ns-tree--compact .ns-tree__backdrop { object-fit: fill; }
 /* roots overlay: stones + pip strips + labels — lives INSIDE the scrolling
  * canvas (height pinned to scene by JS) so the painting and stones scroll
  * together with the vine; the task list never detaches from its stone */
@@ -877,15 +876,9 @@ body {
 
 /* ── compact (dense) lantern tree — issue #59 ──────────────────────────────
    The manual compact-toggle mode: same vine + anchors + pips + berries + HUD,
-   but denser metrics. Cards squash to ONE line (compact prop strikes meta row
-   and clasps at the JSX level). Count numbers stay standard-only. */
-.ns-tree--lanterns.ns-tree--compact .ns-tree__lantern { width: 40px; height: 40px; }
-.ns-tree--lanterns.ns-tree--compact .ns-tree__icon--lantern { width: 24px; height: 24px; }
-.ns-tree--lanterns.ns-tree--compact .ns-tree__icon--lantern.ns-tree__icon--fallback { font-size: 1rem; }
-/* compact counts: orbs stay, number labels are standard-only (ns-tree--extended) */
-.ns-tree--lanterns.ns-tree--compact .ns-tree__counts { top: calc(50% + 22px); }
-/* compact piprow sits tighter under the smaller lantern */
-.ns-tree--lanterns.ns-tree--compact .piprow { top: calc(50% + 32px); }
+   same painted tree (backdrop, seat positions, lantern sizes all unchanged).
+   Only the vine card list densifies. Cards squash to ONE line (compact prop
+   strikes meta row and clasps at the JSX level). */
 /* compact jcards: 142px wide, 3px 7px padding, title 9.5px */
 .jcard--compact { width: 142px !important; padding: 3px 7px !important; }
 
