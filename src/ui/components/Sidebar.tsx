@@ -21,6 +21,16 @@ function getDisplayMode(width: number): DisplayMode {
   return "extended";
 }
 
+const LS_DISPLAY_MODE_KEY = "hlidskjalf:display-mode";
+
+function readCompactPref(): "auto" | "compact" {
+  try {
+    return localStorage.getItem(LS_DISPLAY_MODE_KEY) === "compact" ? "compact" : "auto";
+  } catch {
+    return "auto";
+  }
+}
+
 interface Props {
   jobs: DisplayJob[];
   activeSessionId: string | null;
@@ -60,6 +70,7 @@ interface Props {
 export function Sidebar({ jobs, activeSessionId, quote, wsState, onAvatarClick, onOdinClick, onTogglePinSession, pinnedSessionIds, onCancelJob, terminatingSessionIds, namespace, namespaces, onNamespaceChange, namespaceSummaries, onSelectTask, sizingMode = "host-pane", externalWidth, onResizeMouseDown, onResizeDoubleClick }: Props) {
   const { theme, setTheme } = useTheme();
   const [width, setWidth] = useState<number>(DEFAULT_WIDTH);
+  const [compactOverride, setCompactOverride] = useState<"auto" | "compact">(() => readCompactPref());
   const navRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
@@ -75,8 +86,18 @@ export function Sidebar({ jobs, activeSessionId, quote, wsState, onAvatarClick, 
     return () => ro.disconnect();
   }, []);
 
-  const displayMode = getDisplayMode(width);
-  const isCompact = displayMode === "compact";
+  const widthMode = getDisplayMode(width);
+  // Manual compact overrides the width-derived mode until toggled off.
+  // Pane resizes never defeat the choice; only the toggle exits compact.
+  const displayMode: DisplayMode = compactOverride === "compact" ? "compact" : widthMode;
+  // h1/count/quote hide only when the pane is physically narrow (not on manual compact).
+  const isWidthCompact = widthMode === "compact";
+
+  const toggleCompact = () => {
+    const next: "auto" | "compact" = compactOverride === "compact" ? "auto" : "compact";
+    setCompactOverride(next);
+    try { localStorage.setItem(LS_DISPLAY_MODE_KEY, next); } catch { /* storage unavailable */ }
+  };
 
   return (
     <nav
@@ -87,9 +108,9 @@ export function Sidebar({ jobs, activeSessionId, quote, wsState, onAvatarClick, 
     >
       <div className="sidebar-header">
         {/* Header row: brand on the left; right-aligned cluster in order
-         * count → theme toggle → status badge (status stays far right).
-         * Compact degradation (<240px): the title and session count hide
-         * first — the toggle and status badge stay (small, functional). */}
+         * count → compact-toggle → theme toggle → status badge (far right).
+         * Width-compact degradation (<240px): the title and session count hide
+         * first — the compact toggle and status badge always stay visible. */}
         <div className="brand">
           <button
             className="odin-avatar-btn"
@@ -102,18 +123,28 @@ export function Sidebar({ jobs, activeSessionId, quote, wsState, onAvatarClick, 
               alt="Odin"
             />
           </button>
-          {!isCompact && <h1>Hlidskjalf</h1>}
-          {!isCompact && (
+          {!isWidthCompact && <h1>Hlidskjalf</h1>}
+          {!isWidthCompact && (
             <div className="count" aria-live="polite">
               {jobs.length} session{jobs.length !== 1 ? "s" : ""}
             </div>
           )}
+          <button
+            type="button"
+            className="compact-toggle-btn"
+            onClick={toggleCompact}
+            aria-pressed={compactOverride === "compact"}
+            title={compactOverride === "compact" ? "standard view — the full-size tree" : "compact view — the denser tree"}
+            aria-label={compactOverride === "compact" ? "Switch to standard view" : "Switch to compact view"}
+          >
+            {compactOverride === "compact" ? "»" : "«"}
+          </button>
           <ThemeSwitcher theme={theme} setTheme={setTheme} />
           <span className="brand-wss-badge">
             <StatusBadge state={wsState} />
           </span>
         </div>
-        {!isCompact && (
+        {!isWidthCompact && (
           <div className="quote" role="note">
             &ldquo;{quote}&rdquo;
           </div>

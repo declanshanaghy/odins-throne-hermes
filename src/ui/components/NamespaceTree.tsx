@@ -39,8 +39,8 @@
 // closed with the pod.
 //
 // Display modes mirror the sidebar: extended seats bigger icons + roomier
-// pips + wider card pitch, normal shrinks them, compact collapses the
-// scene to an initials chip that opens a minimal icon + initials list.
+// pips + wider card pitch, normal shrinks them, compact renders the same
+// lantern tree with dense one-line cards (vine pitch 34px, 142px cards).
 
 import { useEffect, useMemo, useRef, useState, useLayoutEffect } from "react";
 import type { CSSProperties } from "react";
@@ -94,16 +94,6 @@ interface Props {
   pinnedSessionIds?: Set<string>;
   onCancelJob?: (sessionId: string, job: DisplayJob) => void;
   terminatingSessionIds?: Set<string>;
-}
-
-/** Two-letter initials for compact mode ("Fenrir Ledger Agents" → "FA"). */
-function initialsOf(label: string): string {
-  return label
-    .split(" ")
-    .map((w) => w[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
 }
 
 /**
@@ -172,8 +162,6 @@ export function NamespaceTree({
   const [openNs, setOpenNs] = useState<string | null>(namespace);
   // Hover/focus reveals the garden label (name + full summary line).
   const [hoveredNs, setHoveredNs] = useState<string | null>(null);
-  // In compact mode the scene hides behind the initials chip.
-  const [compactOpen, setCompactOpen] = useState(false);
 
   // ── scene measurement: the vine geometry needs the painted box in px ──
   const sceneRef = useRef<HTMLDivElement | null>(null);
@@ -216,7 +204,8 @@ export function NamespaceTree({
   const summaryFailed = openSummary?.error != null;
 
   // ── the vine: geometry from the open lantern's seat, in scene px ──
-  const vineMode: VineMode = displayMode === "normal" ? "normal" : "extended";
+  // compact renders the dense tree with 34px pitch; normal and extended differ in roomy vs tight.
+  const vineMode: VineMode = displayMode === "compact" ? "compact" : displayMode === "normal" ? "normal" : "extended";
   const vine = useMemo(() => {
     if (!openWorld || !openSeat || summaryFailed) return null;
     return vineFor(openSeat, openTasks.length, sceneSize.w, sceneSize.h, vineMode);
@@ -269,77 +258,12 @@ export function NamespaceTree({
     return () => clearTimeout(t);
   }, [openNs, openTasks, vine, vineMode, sceneSize.w, terminatingSessionIds]);
 
-  if (isCompact) {
-    const active = namespaces.find((n) => n.id === namespace);
-    const activeSummary = summaries[namespace];
-    return (
-      <div className="ns-tree ns-tree--compact" style={treeBackdropStyle()}>
-        <button
-          type="button"
-          className="ns-tree__chip"
-          onClick={() => setCompactOpen((v) => !v)}
-          aria-expanded={compactOpen}
-          aria-label={
-            active
-              ? `Namespaces: ${active.label}${activeSummary ? ` — ${summaryLine(activeSummary)}` : ""}`
-              : "Namespaces"
-          }
-          title={
-            active
-              ? `${active.label}${activeSummary ? ` — ${summaryLine(activeSummary)}` : ""}`
-              : namespace
-          }
-        >
-          {active ? initialsOf(active.label) : "NS"}
-          {activeSummary ? <span className="ns-tree__chip-count">{activeSummary.total}</span> : null}
-        </button>
-        {compactOpen && (
-          <ul className="ns-tree__list" role="tree" aria-label="All namespaces">
-            {namespaces.map((ns) => {
-              const summary = summaries[ns.id];
-              const seat = seats.get(ns.id);
-              return (
-                <li
-                  key={ns.id}
-                  role="treeitem"
-                  aria-selected={ns.id === namespace}
-                  data-namespace={ns.id}
-                  data-seat-x={seat?.x}
-                  data-seat-y={seat?.y}
-                  data-seat-dir={seat?.dir}
-                  className={ns.id === namespace ? "ns-tree__item ns-tree__item--active" : "ns-tree__item"}
-                >
-                  <button
-                    type="button"
-                    className="ns-tree__row"
-                    title={ns.label}
-                    aria-label={`${ns.label} — ${labelLineOf(summary)}`}
-                    onClick={() => {
-                      onNamespaceChange(ns.id);
-                      setCompactOpen(false);
-                    }}
-                  >
-                    <TreeIcon
-                      src={namespaceIcon(ns.id)}
-                      fallback={NAMESPACE_ICON_FALLBACK}
-                      size="task"
-                    />
-                    <span className="ns-tree__compact-initials">{initialsOf(ns.label)}</span>
-                    <span className="ns-tree__compact-count">{summary?.total ?? "…"}</span>
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </div>
-    );
-  }
-
-  const rootClass =
-    displayMode === "extended"
-      ? "ns-tree ns-tree--lanterns ns-tree--extended"
-      : "ns-tree ns-tree--lanterns";
+  const rootClass = [
+    "ns-tree",
+    "ns-tree--lanterns",
+    displayMode === "extended" ? "ns-tree--extended" : "",
+    displayMode === "compact" ? "ns-tree--compact" : "",
+  ].filter(Boolean).join(" ");
 
   return (
     <div
@@ -427,6 +351,7 @@ export function NamespaceTree({
                     isActive={isTaskActive}
                     isPinned={pinnedSessionIds?.has(job.sessionId) ?? false}
                     isTerminating={isTerminating}
+                    compact={isCompact}
                     side={box.side}
                     style={{
                       left: `${box.left}px`,
@@ -453,6 +378,7 @@ export function NamespaceTree({
                 isActive={false}
                 isPinned={false}
                 isTerminating
+                compact={isCompact}
                 side={g.side}
                 ghost
                 style={{ left: `${g.left}px`, top: `${g.top}px` }}

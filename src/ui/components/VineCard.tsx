@@ -38,6 +38,8 @@ interface Props {
   isPinned: boolean;
   /** Terminating (cancel confirmed) — the tremble plays until the purge. */
   isTerminating: boolean;
+  /** Compact (dense) mode: squash to ONE line (title + dot only); no meta row, no clasps. */
+  compact?: boolean;
   /** Which side of the vine anchor the card hangs from (stem direction). */
   side: "right" | "left";
   /** Absolute position on the canvas — computed by the tree's geometry. */
@@ -66,6 +68,7 @@ export function VineCard({
   isActive,
   isPinned,
   isTerminating,
+  compact = false,
   side,
   style,
   ghost = false,
@@ -79,6 +82,7 @@ export function VineCard({
   const cls = [
     "jcard",
     `jcard--${job.status}`,
+    compact ? "jcard--compact" : "",
     isActive ? "is-active" : "",
     isTerminating ? "jcard--terminating" : "",
     // pop-in plays ON MOUNT only — live WS updates re-render the same
@@ -123,49 +127,54 @@ export function VineCard({
           </span>
           <i className="jcard__dot" aria-hidden="true" />
         </div>
-        <div className="jcard__row2">
-          <span className="jcard__meta">
-            <b>{job.sessionId}</b>
-            {" · Issue #"}
-            {job.issue}
-            {" · "}
-            {job.agentName}
-            {isPinned ? " · 📌" : ""}
-          </span>
-        </div>
+        {/* compact squashes to ONE line — no meta row, no clasps; full context rides title + aria-label */}
+        {!compact && (
+          <div className="jcard__row2">
+            <span className="jcard__meta">
+              <b>{job.sessionId}</b>
+              {" · Issue #"}
+              {job.issue}
+              {" · "}
+              {job.agentName}
+              {isPinned ? " · 📌" : ""}
+            </span>
+          </div>
+        )}
       </div>
-      {/* clasp: icon-only actions overlapping the bottom border, flush right */}
-      <span className="jcard__acts">
-        <button
-          type="button"
-          className={`jact jact--pin${isPinned ? " is-on" : ""}`}
-          data-act="pin"
-          title={isPinned ? "unpin session" : "pin session"}
-          aria-label={isPinned ? `Unpin session ${job.sessionId}` : `Pin session ${job.sessionId}`}
-          aria-pressed={isPinned}
-          onClick={(e) => {
-            e.stopPropagation();
-            onTogglePin();
-          }}
-        >
-          📌
-        </button>
-        {cancellable && (
+      {/* clasp: icon-only actions overlapping the bottom border, flush right — struck in compact */}
+      {!compact && (
+        <span className="jcard__acts">
           <button
             type="button"
-            className="jact jact--cancel"
-            data-act="cancel"
-            title="cancel job"
-            aria-label={`Cancel job ${job.sessionId}`}
+            className={`jact jact--pin${isPinned ? " is-on" : ""}`}
+            data-act="pin"
+            title={isPinned ? "unpin session" : "pin session"}
+            aria-label={isPinned ? `Unpin session ${job.sessionId}` : `Pin session ${job.sessionId}`}
+            aria-pressed={isPinned}
             onClick={(e) => {
               e.stopPropagation();
-              onCancel();
+              onTogglePin();
             }}
           >
-            ✕
+            📌
           </button>
-        )}
-      </span>
+          {cancellable && (
+            <button
+              type="button"
+              className="jact jact--cancel"
+              data-act="cancel"
+              title="cancel job"
+              aria-label={`Cancel job ${job.sessionId}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                onCancel();
+              }}
+            >
+              ✕
+            </button>
+          )}
+        </span>
+      )}
     </div>
   );
 }
