@@ -63,6 +63,16 @@
      alone stands out. Every world's summary PRELOADS at boot (multiple
      namespaces visibly carry tasks), and the two quiet worlds get seed
      work so all seven stones read alive.
+     v3.9.2 (2026-11-04, round 5): every seat is re-mapped onto its
+     lantern's BRIGHT SPOT — decree: "ensure all namespace locations are
+     overlapping a lantern, look for the bright spots to align with". The
+     v3.9 pool was hand-visioned and had drifted: seat 8 (Odins Throne
+     Hermes Agents) hung ~one stone-diameter BELOW its painted lantern —
+     Declan clocked it live on the hall — and seats 2 & 9 pointed at bare
+     bough with no lantern at all. Detected instead with
+     scripts/detect-lanterns.py (bright-teal blob centroids on the
+     896x1200 backdrop), pool index order KEPT so the curated claims stay
+     valid: 2 -> 46,68 · 5 -> 37,50 · 6 -> 11,50 · 8 -> 23,30 · 9 -> 40,37.
      Nocturnal garden house palette:
      night #05070a–#0f1419, moss #4a5d23, canopy #0f2e0f, moon #b0c4c9,
      spore gold #ffcc66, teal selection.
@@ -660,7 +670,7 @@
 
 <!-- ═══ prototype furniture ═══ -->
 <div class="deck">
-  <span class="deck__title"><b>ᛟ</b> Odin's Throne — tree display redesign · issue #7 prototype · <b>v3.9.1</b></span>
+  <span class="deck__title"><b>ᛟ</b> Odin's Throne — tree display redesign · issue #7 prototype · <b>v3.9.2</b></span>
   <span class="deck__note">stones overlay the eleven painted lanterns — one seat per lantern, a max of 11 active namespaces; the active world's stone opens (teal ring) while every other stone fades into the background, z-below the active one · the whole scene scrolls together, the task list always attached to its lantern · vine curls out to the branch rail at 44% · icons pop down to vine anchors · «/» compact toggle — one-line cards, no clasps</span>
   <span class="deck__sep"></span>
   <div class="deck__group">
@@ -893,9 +903,9 @@ function apiFetchSummaries(nsId) {
    compact) so the stones overlay the painted lanterns at ANY panel width.
    Curated seats claim first; deterministic hash for the rest. */
 const SEAT_POOL = [
-  { x: 40, y: 73 }, { x: 16, y: 69 }, { x: 39, y: 67 }, { x: 10, y: 64 },
-  { x: 30, y: 55 }, { x: 37, y: 49 }, { x: 11, y: 49 }, { x: 18, y: 40 },
-  { x: 22, y: 35 }, { x: 15, y: 28 }, { x: 47, y: 33 },
+  { x: 40, y: 73 }, { x: 16, y: 69 }, { x: 46, y: 68 }, { x: 10, y: 64 },
+  { x: 30, y: 55 }, { x: 37, y: 50 }, { x: 11, y: 50 }, { x: 18, y: 40 },
+  { x: 23, y: 30 }, { x: 40, y: 37 }, { x: 47, y: 33 },
 ];
 const CURATED_SEATS = {
   "fenrir-agents": 9,
