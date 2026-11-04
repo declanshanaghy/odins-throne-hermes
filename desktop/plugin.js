@@ -294,19 +294,18 @@ var styles_default = `.odins-throne-root .odins-throne-root {
   font-style: italic; font-size: 0.75rem;
   color: var(--text-rune); opacity: 0.8; line-height: 1.4;
 }
-.odins-throne-root .count-row {
-  display: flex; align-items: center; justify-content: space-between;
-  margin-top: 0.5rem;
-}
+/* Session count sits in the brand header row (issue #47): margin-left:auto
+ * pushes the right-aligned cluster (count \u2192 theme toggle \u2192 status badge);
+ * the badge keeps its own auto so the cluster still right-aligns in
+ * compact mode, where the count is the first thing to hide. */
 .odins-throne-root .sidebar-header .count {
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.7rem; color: var(--text-void);
+  margin-left: auto;
+  white-space: nowrap; flex-shrink: 0;
 }
 
-/* \u2500\u2500 Theme switcher \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
-.odins-throne-root .theme-switcher {
-  display: flex; gap: 0.2rem;
-}
+/* \u2500\u2500 Theme toggle (single button, issue #47) \u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
 .odins-throne-root .theme-btn {
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.75rem;
@@ -7925,35 +7924,27 @@ import { useMemo as useMemo4, useState as useState18, useSyncExternalStore as us
 import { useState as useState12, useRef as useRef8, useEffect as useEffect7 } from "react";
 
 // src/ui/components/ThemeSwitcher.tsx
-import { jsx as jsx11, jsxs as jsxs8 } from "react/jsx-runtime";
+import { jsx as jsx11 } from "react/jsx-runtime";
 function ThemeSwitcher({ theme, setTheme: setTheme2 }) {
-  return /* @__PURE__ */ jsxs8("div", { role: "group", "aria-label": "Choose theme", className: "theme-switcher", children: [
-    /* @__PURE__ */ jsx11(
-      "button",
-      {
-        className: "theme-btn",
-        "aria-pressed": theme === "light",
-        "aria-label": "Light theme",
-        onClick: () => setTheme2("light"),
-        children: "\u2600"
-      }
-    ),
-    /* @__PURE__ */ jsx11(
-      "button",
-      {
-        className: "theme-btn",
-        "aria-pressed": theme === "dark",
-        "aria-label": "Dark theme",
-        onClick: () => setTheme2("dark"),
-        children: "\u263D"
-      }
-    )
-  ] });
+  const next = theme === "light" ? "dark" : "light";
+  const label = `Switch to ${next} theme`;
+  return /* @__PURE__ */ jsx11(
+    "button",
+    {
+      type: "button",
+      className: "theme-btn",
+      "aria-pressed": theme === "dark",
+      "aria-label": label,
+      title: label,
+      onClick: () => setTheme2(next),
+      children: next === "light" ? "\u2600" : "\u263D"
+    }
+  );
 }
 
 // src/ui/components/StatusBadge.tsx
 import { useCallback as useCallback5, useEffect as useEffect4, useId, useRef as useRef5, useState as useState7 } from "react";
-import { jsx as jsx12, jsxs as jsxs9 } from "react/jsx-runtime";
+import { jsx as jsx12, jsxs as jsxs8 } from "react/jsx-runtime";
 var STATE_COLORS = {
   open: "#22c55e",
   connecting: "#eab308",
@@ -7976,7 +7967,7 @@ function roleForState(state) {
   return state === "closed" || state === "error" ? "alert" : "status";
 }
 function WssIcon({ color }) {
-  return /* @__PURE__ */ jsxs9(
+  return /* @__PURE__ */ jsxs8(
     "svg",
     {
       width: "16",
@@ -8108,7 +8099,7 @@ function StatusBadge({ state }) {
   }, [clearTimers]);
   const role = roleForState(state);
   const ariaLive = role === "alert" ? "assertive" : "polite";
-  return /* @__PURE__ */ jsxs9("span", { className: "wss-tooltip-wrapper", children: [
+  return /* @__PURE__ */ jsxs8("span", { className: "wss-tooltip-wrapper", children: [
     /* @__PURE__ */ jsx12(
       "span",
       {
@@ -8717,7 +8708,7 @@ function TreeIcon({ src, fallback, size = "ns" }) {
 }
 
 // src/ui/components/VineCard.tsx
-import { jsx as jsx14, jsxs as jsxs10 } from "react/jsx-runtime";
+import { jsx as jsx14, jsxs as jsxs9 } from "react/jsx-runtime";
 function isCancellable(status) {
   return status === "running" || status === "pending";
 }
@@ -8754,7 +8745,7 @@ function VineCard({
       onOpen();
     }
   };
-  return /* @__PURE__ */ jsxs10(
+  return /* @__PURE__ */ jsxs9(
     "div",
     {
       className: cls,
@@ -8770,12 +8761,12 @@ function VineCard({
       onClick: ghost ? void 0 : onOpen,
       onKeyDown: openOnKey,
       children: [
-        /* @__PURE__ */ jsxs10("div", { className: "jcard__main", children: [
-          /* @__PURE__ */ jsxs10("div", { className: "jcard__row1", children: [
+        /* @__PURE__ */ jsxs9("div", { className: "jcard__main", children: [
+          /* @__PURE__ */ jsxs9("div", { className: "jcard__row1", children: [
             /* @__PURE__ */ jsx14("span", { className: "jcard__title", title, children: title }),
             /* @__PURE__ */ jsx14("i", { className: "jcard__dot", "aria-hidden": "true" })
           ] }),
-          /* @__PURE__ */ jsx14("div", { className: "jcard__row2", children: /* @__PURE__ */ jsxs10("span", { className: "jcard__meta", children: [
+          /* @__PURE__ */ jsx14("div", { className: "jcard__row2", children: /* @__PURE__ */ jsxs9("span", { className: "jcard__meta", children: [
             /* @__PURE__ */ jsx14("b", { children: job.sessionId }),
             " \xB7 Issue #",
             job.issue,
@@ -8784,7 +8775,7 @@ function VineCard({
             isPinned2 ? " \xB7 \u{1F4CC}" : ""
           ] }) })
         ] }),
-        /* @__PURE__ */ jsxs10("span", { className: "jcard__acts", children: [
+        /* @__PURE__ */ jsxs9("span", { className: "jcard__acts", children: [
           /* @__PURE__ */ jsx14(
             "button",
             {
@@ -8823,7 +8814,7 @@ function VineCard({
 }
 
 // src/ui/components/NamespaceTree.tsx
-import { jsx as jsx15, jsxs as jsxs11 } from "react/jsx-runtime";
+import { jsx as jsx15, jsxs as jsxs10 } from "react/jsx-runtime";
 function treeBackdropStyle() {
   return { "--tree-backdrop": `url(${JSON.stringify(tree_backdrop_default)})` };
 }
@@ -8939,8 +8930,8 @@ function NamespaceTree({
   if (isCompact) {
     const active = namespaces.find((n) => n.id === namespace);
     const activeSummary = summaries[namespace];
-    return /* @__PURE__ */ jsxs11("div", { className: "ns-tree ns-tree--compact", style: treeBackdropStyle(), children: [
-      /* @__PURE__ */ jsxs11(
+    return /* @__PURE__ */ jsxs10("div", { className: "ns-tree ns-tree--compact", style: treeBackdropStyle(), children: [
+      /* @__PURE__ */ jsxs10(
         "button",
         {
           type: "button",
@@ -8968,7 +8959,7 @@ function NamespaceTree({
             "data-seat-y": seat?.y,
             "data-seat-dir": seat?.dir,
             className: ns.id === namespace ? "ns-tree__item ns-tree__item--active" : "ns-tree__item",
-            children: /* @__PURE__ */ jsxs11(
+            children: /* @__PURE__ */ jsxs10(
               "button",
               {
                 type: "button",
@@ -9007,7 +8998,7 @@ function NamespaceTree({
       role: "tree",
       "aria-label": "Namespace tree",
       style: treeBackdropStyle(),
-      children: /* @__PURE__ */ jsxs11("div", { className: "ns-tree__scene", ref: sceneRef, children: [
+      children: /* @__PURE__ */ jsxs10("div", { className: "ns-tree__scene", ref: sceneRef, children: [
         /* @__PURE__ */ jsx15(
           "div",
           {
@@ -9015,7 +9006,7 @@ function NamespaceTree({
             ref: scrollerRef,
             role: openWorld ? "group" : void 0,
             "aria-label": openWorld ? `${openWorld.label} tasks` : void 0,
-            children: /* @__PURE__ */ jsxs11("div", { className: "ns-tree__canvas", style: { height: `${canvasHeight}px` }, children: [
+            children: /* @__PURE__ */ jsxs10("div", { className: "ns-tree__canvas", style: { height: `${canvasHeight}px` }, children: [
               vine && /* @__PURE__ */ jsx15(
                 "svg",
                 {
@@ -9140,7 +9131,7 @@ function NamespaceTree({
           const pipRow = !isOpen && summary && !summary.error ? taskPips(tasksOf(summary.jobs)) : null;
           const stripWidth = pipRow && pipRow.count > 0 ? pipStripWidth(pipRow) : 0;
           const stripLeft = pipRow && pipRow.count > 0 ? pipStripLeft(seat, sceneSize.w, stripWidth) : 0;
-          return /* @__PURE__ */ jsxs11(
+          return /* @__PURE__ */ jsxs10(
             "li",
             {
               "data-namespace": ns.id,
@@ -9168,7 +9159,7 @@ function NamespaceTree({
                     children: /* @__PURE__ */ jsx15(TreeIcon, { src: namespaceIcon(ns.id), fallback: NAMESPACE_ICON_FALLBACK, size: "lantern" })
                   }
                 ),
-                !isOpen && summary && !summary.error && summary.total > 0 && /* @__PURE__ */ jsxs11("div", { className: "ns-tree__counts", "aria-hidden": "true", children: [
+                !isOpen && summary && !summary.error && summary.total > 0 && /* @__PURE__ */ jsxs10("div", { className: "ns-tree__counts", "aria-hidden": "true", children: [
                   /* @__PURE__ */ jsx15(
                     "span",
                     {
@@ -9187,13 +9178,13 @@ function NamespaceTree({
                       className: `ns-tree__counts__orb ns-tree__counts__orb--failed${summary.counts.failed > 0 ? "" : " ns-tree__counts__orb--dim"}`
                     }
                   ),
-                  /* @__PURE__ */ jsxs11("span", { className: "ns-tree__counts__nums", children: [
+                  /* @__PURE__ */ jsxs10("span", { className: "ns-tree__counts__nums", children: [
                     summary.counts.succeeded > 0 && /* @__PURE__ */ jsx15("i", { style: { color: "#79b356" }, children: summary.counts.succeeded }),
                     summary.counts.running > 0 && /* @__PURE__ */ jsx15("i", { style: { color: "#6fb7d8" }, children: summary.counts.running }),
                     summary.counts.failed > 0 && /* @__PURE__ */ jsx15("i", { style: { color: "#e07a3f" }, children: summary.counts.failed })
                   ] })
                 ] }),
-                pipRow && pipRow.count > 0 && /* @__PURE__ */ jsxs11(
+                pipRow && pipRow.count > 0 && /* @__PURE__ */ jsxs10(
                   "div",
                   {
                     className: "piprow",
@@ -9210,14 +9201,14 @@ function NamespaceTree({
                         },
                         pip.sessionId
                       )),
-                      pipRow.overflow > 0 && /* @__PURE__ */ jsxs11("span", { className: "piprow__more", children: [
+                      pipRow.overflow > 0 && /* @__PURE__ */ jsxs10("span", { className: "piprow__more", children: [
                         "+",
                         pipRow.overflow
                       ] })
                     ]
                   }
                 ),
-                /* @__PURE__ */ jsxs11("div", { className: glabelClass, "aria-hidden": "true", children: [
+                /* @__PURE__ */ jsxs10("div", { className: glabelClass, "aria-hidden": "true", children: [
                   /* @__PURE__ */ jsx15("b", { className: "ns-tree__glabel-name", children: ns.label }),
                   /* @__PURE__ */ jsx15("span", { className: "ns-tree__glabel-line", children: line })
                 ] })
@@ -9232,7 +9223,7 @@ function NamespaceTree({
 }
 
 // src/ui/components/Sidebar.tsx
-import { Fragment as Fragment4, jsx as jsx16, jsxs as jsxs12 } from "react/jsx-runtime";
+import { jsx as jsx16, jsxs as jsxs11 } from "react/jsx-runtime";
 var DEFAULT_WIDTH = 300;
 function getDisplayMode(width) {
   if (width < 240) return "compact";
@@ -9257,7 +9248,7 @@ function Sidebar({ jobs, activeSessionId, quote, wsState, onAvatarClick, onOdinC
   }, []);
   const displayMode = getDisplayMode(width);
   const isCompact = displayMode === "compact";
-  return /* @__PURE__ */ jsxs12(
+  return /* @__PURE__ */ jsxs11(
     "nav",
     {
       ref: navRef,
@@ -9265,8 +9256,8 @@ function Sidebar({ jobs, activeSessionId, quote, wsState, onAvatarClick, onOdinC
       "aria-label": "Agent sessions",
       style: { width: sizingMode === "fixed" ? externalWidth ?? DEFAULT_WIDTH : "100%", height: "100%" },
       children: [
-        /* @__PURE__ */ jsxs12("div", { className: "sidebar-header", children: [
-          /* @__PURE__ */ jsxs12("div", { className: "brand", children: [
+        /* @__PURE__ */ jsxs11("div", { className: "sidebar-header", children: [
+          /* @__PURE__ */ jsxs11("div", { className: "brand", children: [
             /* @__PURE__ */ jsx16(
               "button",
               {
@@ -9284,22 +9275,18 @@ function Sidebar({ jobs, activeSessionId, quote, wsState, onAvatarClick, onOdinC
               }
             ),
             !isCompact && /* @__PURE__ */ jsx16("h1", { children: "Hlidskjalf" }),
-            !isCompact && /* @__PURE__ */ jsx16("span", { className: "brand-wss-badge", children: /* @__PURE__ */ jsx16(StatusBadge, { state: wsState }) })
-          ] }),
-          !isCompact && /* @__PURE__ */ jsxs12(Fragment4, { children: [
-            /* @__PURE__ */ jsxs12("div", { className: "quote", role: "note", children: [
-              "\u201C",
-              quote,
-              "\u201D"
+            !isCompact && /* @__PURE__ */ jsxs11("div", { className: "count", "aria-live": "polite", children: [
+              jobs.length,
+              " session",
+              jobs.length !== 1 ? "s" : ""
             ] }),
-            /* @__PURE__ */ jsxs12("div", { className: "count-row", children: [
-              /* @__PURE__ */ jsxs12("div", { className: "count", "aria-live": "polite", children: [
-                jobs.length,
-                " session",
-                jobs.length !== 1 ? "s" : ""
-              ] }),
-              /* @__PURE__ */ jsx16(ThemeSwitcher, { theme, setTheme: setTheme2 })
-            ] })
+            /* @__PURE__ */ jsx16(ThemeSwitcher, { theme, setTheme: setTheme2 }),
+            /* @__PURE__ */ jsx16("span", { className: "brand-wss-badge", children: /* @__PURE__ */ jsx16(StatusBadge, { state: wsState }) })
+          ] }),
+          !isCompact && /* @__PURE__ */ jsxs11("div", { className: "quote", role: "note", children: [
+            "\u201C",
+            quote,
+            "\u201D"
           ] }),
           /* @__PURE__ */ jsx16(
             NamespaceTree,
@@ -9338,7 +9325,7 @@ function Sidebar({ jobs, activeSessionId, quote, wsState, onAvatarClick, onOdinC
 
 // src/ui/components/AgentProfileModal.tsx
 import { useEffect as useEffect8, useRef as useRef9 } from "react";
-import { jsx as jsx17, jsxs as jsxs13 } from "react/jsx-runtime";
+import { jsx as jsx17, jsxs as jsxs12 } from "react/jsx-runtime";
 var ELDER_FUTHARK = "\u16A0 \u16A2 \u16A6 \u16A8 \u16B1 \u16B2 \u16B7 \u16B9 \u16BA \u16BE \u16C1 \u16C3 \u16C7 \u16C8 \u16C9 \u16CA \u16CF \u16D2 \u16D6 \u16D7 \u16DA \u16DC \u16DE \u16DF";
 function AgentProfileModal({ agentKey, theme, onClose }) {
   const closeButtonRef = useRef9(null);
@@ -9383,7 +9370,7 @@ function AgentProfileModal({ agentKey, theme, onClose }) {
       ref: backdropRef,
       onClick: handleBackdropClick,
       "aria-label": "Agent profile backdrop",
-      children: /* @__PURE__ */ jsxs13(
+      children: /* @__PURE__ */ jsxs12(
         "div",
         {
           className: "apm-shell",
@@ -9403,7 +9390,7 @@ function AgentProfileModal({ agentKey, theme, onClose }) {
                 children: "\u2715"
               }
             ),
-            /* @__PURE__ */ jsxs13("div", { className: "apm-body", children: [
+            /* @__PURE__ */ jsxs12("div", { className: "apm-body", children: [
               /* @__PURE__ */ jsx17("div", { className: "apm-rune-band", "aria-hidden": "true", children: ELDER_FUTHARK }),
               /* @__PURE__ */ jsx17("div", { className: "apm-portrait-zone", children: portrait ? /* @__PURE__ */ jsx17(
                 "img",
@@ -9413,7 +9400,7 @@ function AgentProfileModal({ agentKey, theme, onClose }) {
                   alt: name
                 }
               ) : /* @__PURE__ */ jsx17("div", { className: "apm-portrait apm-portrait-placeholder", "aria-label": name, children: name.charAt(0) }) }),
-              /* @__PURE__ */ jsxs13("div", { className: "apm-identity", children: [
+              /* @__PURE__ */ jsxs12("div", { className: "apm-identity", children: [
                 /* @__PURE__ */ jsx17(
                   "div",
                   {
@@ -9433,7 +9420,7 @@ function AgentProfileModal({ agentKey, theme, onClose }) {
                   }
                 )
               ] }),
-              quote && /* @__PURE__ */ jsx17("div", { className: "apm-quote", children: /* @__PURE__ */ jsxs13("p", { children: [
+              quote && /* @__PURE__ */ jsx17("div", { className: "apm-quote", children: /* @__PURE__ */ jsxs12("p", { children: [
                 "\u201C",
                 quote,
                 "\u201D"
@@ -9450,7 +9437,7 @@ function AgentProfileModal({ agentKey, theme, onClose }) {
 
 // src/ui/components/RagnarokDialog.tsx
 import { useEffect as useEffect9, useRef as useRef10, useState as useState13 } from "react";
-import { jsx as jsx18, jsxs as jsxs14 } from "react/jsx-runtime";
+import { jsx as jsx18, jsxs as jsxs13 } from "react/jsx-runtime";
 function RagnarokDialog({ sessionId, jobTitle, onConfirm, onCancel }) {
   const [isLoading, setIsLoading] = useState13(false);
   const [error, setError] = useState13(null);
@@ -9487,26 +9474,26 @@ function RagnarokDialog({ sessionId, jobTitle, onConfirm, onCancel }) {
       onClick: (e) => {
         if (e.target === e.currentTarget && !isLoading) onCancel();
       },
-      children: /* @__PURE__ */ jsxs14("div", { className: "rdk-shell", children: [
+      children: /* @__PURE__ */ jsxs13("div", { className: "rdk-shell", children: [
         /* @__PURE__ */ jsx18("div", { className: "rdk-rune-band", "aria-hidden": "true", children: "\u16B1\u16A8\u16B7\u16BE\u16A8\u16B1\u16DF\u16B2 \u16CA\u16A2\u16D7\u16D7\u16A2\u16BE\u16CA \u16C1\u16CA \u16BE\u16C1\u16B7\u16BA" }),
-        /* @__PURE__ */ jsxs14("div", { className: "rdk-header", children: [
+        /* @__PURE__ */ jsxs13("div", { className: "rdk-header", children: [
           /* @__PURE__ */ jsx18("span", { className: "rdk-sword-icon", "aria-hidden": "true", children: "\u2694\uFE0F" }),
           /* @__PURE__ */ jsx18("h2", { id: "rdk-title", className: "rdk-title", children: "Invoke Ragnar\xF6k?" })
         ] }),
-        /* @__PURE__ */ jsxs14("div", { className: "rdk-body", id: "rdk-body", children: [
+        /* @__PURE__ */ jsxs13("div", { className: "rdk-body", id: "rdk-body", children: [
           /* @__PURE__ */ jsx18("p", { className: "rdk-body-text", children: "You are about to sever this thread from the Nornir's loom. This agent's saga will end \u2014 no Valhalla awaits a cancelled job. This cannot be undone." }),
-          /* @__PURE__ */ jsxs14("div", { className: "rdk-job-label", "aria-label": "Job to be cancelled", children: [
+          /* @__PURE__ */ jsxs13("div", { className: "rdk-job-label", "aria-label": "Job to be cancelled", children: [
             /* @__PURE__ */ jsx18("span", { className: "rdk-job-label-icon", "aria-hidden": "true", children: "\u263D" }),
             /* @__PURE__ */ jsx18("span", { className: "rdk-job-label-text", children: jobTitle })
           ] }),
           /* @__PURE__ */ jsx18("div", { className: "rdk-session-id", "aria-label": "Session ID", children: sessionId })
         ] }),
-        error && /* @__PURE__ */ jsxs14("div", { className: "rdk-error", role: "alert", children: [
+        error && /* @__PURE__ */ jsxs13("div", { className: "rdk-error", role: "alert", children: [
           /* @__PURE__ */ jsx18("span", { "aria-hidden": "true", children: "\u2715" }),
           " ",
           error
         ] }),
-        /* @__PURE__ */ jsxs14("div", { className: "rdk-actions", children: [
+        /* @__PURE__ */ jsxs13("div", { className: "rdk-actions", children: [
           /* @__PURE__ */ jsx18(
             "button",
             {
@@ -9526,7 +9513,7 @@ function RagnarokDialog({ sessionId, jobTitle, onConfirm, onCancel }) {
               onClick: handleConfirm,
               disabled: isLoading,
               "aria-label": "Unleash Ragnar\xF6k \u2014 permanently cancel this job",
-              children: isLoading ? /* @__PURE__ */ jsxs14("span", { className: "rdk-loading-text", children: [
+              children: isLoading ? /* @__PURE__ */ jsxs13("span", { className: "rdk-loading-text", children: [
                 /* @__PURE__ */ jsx18("span", { className: "rdk-spinner", "aria-hidden": "true" }),
                 "Severing the thread\u2026"
               ] }) : "Unleash Ragnar\xF6k"
@@ -9541,7 +9528,7 @@ function RagnarokDialog({ sessionId, jobTitle, onConfirm, onCancel }) {
 
 // src/ui/components/Toast.tsx
 import { useEffect as useEffect10, useState as useState14 } from "react";
-import { jsx as jsx19, jsxs as jsxs15 } from "react/jsx-runtime";
+import { jsx as jsx19, jsxs as jsxs14 } from "react/jsx-runtime";
 function Toast({ message, onDismiss, duration = 4e3 }) {
   const [exiting, setExiting] = useState14(false);
   useEffect10(() => {
@@ -9552,7 +9539,7 @@ function Toast({ message, onDismiss, duration = 4e3 }) {
       clearTimeout(dismissTimer);
     };
   }, [duration, onDismiss]);
-  return /* @__PURE__ */ jsxs15(
+  return /* @__PURE__ */ jsxs14(
     "div",
     {
       className: `toast${exiting ? " toast--exit" : ""}`,
@@ -9580,10 +9567,10 @@ function Toast({ message, onDismiss, duration = 4e3 }) {
 }
 
 // src/ui/components/ErrorBanner.tsx
-import { jsxs as jsxs16 } from "react/jsx-runtime";
+import { jsxs as jsxs15 } from "react/jsx-runtime";
 function ErrorBanner({ message }) {
   if (!message) return null;
-  return /* @__PURE__ */ jsxs16("div", { className: `error-banner visible`, role: "alert", "aria-live": "assertive", children: [
+  return /* @__PURE__ */ jsxs15("div", { className: `error-banner visible`, role: "alert", "aria-live": "assertive", children: [
     "\u26A0",
     " ",
     message
@@ -9591,11 +9578,11 @@ function ErrorBanner({ message }) {
 }
 
 // src/ui/components/Overlays.tsx
-import { Fragment as Fragment5, jsx as jsx20, jsxs as jsxs17 } from "react/jsx-runtime";
+import { Fragment as Fragment4, jsx as jsx20, jsxs as jsxs16 } from "react/jsx-runtime";
 function ThroneOverlays() {
   const snap = useThrone();
   if (!snap) return null;
-  return /* @__PURE__ */ jsxs17(Fragment5, { children: [
+  return /* @__PURE__ */ jsxs16(Fragment4, { children: [
     /* @__PURE__ */ jsx20(ErrorBanner, { message: snap.wsError }),
     snap.storageWarning && /* @__PURE__ */ jsx20(ErrorBanner, { message: snap.storageWarning }),
     snap.profileAgent && /* @__PURE__ */ jsx20(
@@ -9864,7 +9851,7 @@ function openThroneTab(sessionId) {
 // src/targets/plugin/settings.tsx
 import { useState as useState17, useSyncExternalStore as useSyncExternalStore3 } from "react";
 import { host as host3 } from "@hermes/plugin-sdk";
-import { jsx as jsx21, jsxs as jsxs18 } from "react/jsx-runtime";
+import { jsx as jsx21, jsxs as jsxs17 } from "react/jsx-runtime";
 var open = false;
 var listeners3 = /* @__PURE__ */ new Set();
 var settingsUi = {
@@ -9927,17 +9914,17 @@ function ThroneSettings() {
       onClick: (e) => {
         if (e.target === e.currentTarget) settingsUi.close();
       },
-      children: /* @__PURE__ */ jsxs18("div", { className: "throne-settings", style: { maxWidth: 440 }, children: [
+      children: /* @__PURE__ */ jsxs17("div", { className: "throne-settings", style: { maxWidth: 440 }, children: [
         /* @__PURE__ */ jsx21("h2", { children: "Bind the Bifr\xF6st" }),
-        /* @__PURE__ */ jsxs18("p", { className: "throne-settings-hint", children: [
+        /* @__PURE__ */ jsxs17("p", { className: "throne-settings-hint", children: [
           /* @__PURE__ */ jsx21("strong", { children: "Google OAuth is the only way in" }),
           " \u2014 the same login the web version uses, completed in your browser via a one-time pairing code. No session, no data. The only setting is the upstream URL, overridden for a local dev monitor (which runs without oauth2-proxy)."
         ] }),
-        /* @__PURE__ */ jsxs18("p", { className: "throne-settings-hint", children: [
+        /* @__PURE__ */ jsxs17("p", { className: "throne-settings-hint", children: [
           "Session: ",
           /* @__PURE__ */ jsx21("strong", { children: paired ? "paired \u2713" : "not paired" })
         ] }),
-        /* @__PURE__ */ jsxs18("label", { children: [
+        /* @__PURE__ */ jsxs17("label", { children: [
           "Upstream URL",
           /* @__PURE__ */ jsx21(
             "input",
@@ -9949,7 +9936,7 @@ function ThroneSettings() {
             }
           )
         ] }),
-        /* @__PURE__ */ jsxs18("div", { className: "throne-settings-row", children: [
+        /* @__PURE__ */ jsxs17("div", { className: "throne-settings-row", children: [
           /* @__PURE__ */ jsx21("button", { className: "throne-settings-btn", onClick: () => settingsUi.close(), children: "Cancel" }),
           /* @__PURE__ */ jsx21(
             "button",
@@ -9967,7 +9954,7 @@ function ThroneSettings() {
 }
 
 // src/targets/plugin/pane.tsx
-import { Fragment as Fragment6, jsx as jsx22, jsxs as jsxs19 } from "react/jsx-runtime";
+import { Fragment as Fragment5, jsx as jsx22, jsxs as jsxs18 } from "react/jsx-runtime";
 function SidebarConnected() {
   const snap = useThrone();
   return /* @__PURE__ */ jsx22(
@@ -10012,10 +9999,10 @@ function PairingCard() {
     if (!result.ok) setError(result.error ?? "Pairing failed");
     setBusy(false);
   }
-  return /* @__PURE__ */ jsxs19("div", { className: "throne-connect-card", children: [
+  return /* @__PURE__ */ jsxs18("div", { className: "throne-connect-card", children: [
     /* @__PURE__ */ jsx22("p", { children: "The Throne is sealed \u2014 sign in with Google to open the Bifr\xF6st (the same login the web version uses)." }),
     /* @__PURE__ */ jsx22("button", { className: "throne-settings-btn primary", onClick: () => void openBrowser(), children: "Sign in with Google" }),
-    opened && /* @__PURE__ */ jsxs19(Fragment6, { children: [
+    opened && /* @__PURE__ */ jsxs18(Fragment5, { children: [
       /* @__PURE__ */ jsx22("p", { children: "The pairing page is open in your browser \u2014 click the key to copy it, then paste it here:" }),
       /* @__PURE__ */ jsx22(
         "input",
@@ -10065,7 +10052,7 @@ function ThronePane() {
   useSyncExternalStore4(subscribeSession, sessionSnapshot, sessionSnapshot);
   const { theme } = useTheme();
   const bridge = useMemo4(() => /* @__PURE__ */ jsx22(App, {}), []);
-  return /* @__PURE__ */ jsxs19(
+  return /* @__PURE__ */ jsxs18(
     "div",
     {
       className: "odins-throne-root",

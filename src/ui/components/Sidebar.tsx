@@ -86,6 +86,10 @@ export function Sidebar({ jobs, activeSessionId, quote, wsState, onAvatarClick, 
       style={{ width: sizingMode === "fixed" ? (externalWidth ?? DEFAULT_WIDTH) : "100%", height: "100%" }}
     >
       <div className="sidebar-header">
+        {/* Header row: brand on the left; right-aligned cluster in order
+         * count → theme toggle → status badge (status stays far right).
+         * Compact degradation (<240px): the title and session count hide
+         * first — the toggle and status badge stay (small, functional). */}
         <div className="brand">
           <button
             className="odin-avatar-btn"
@@ -100,23 +104,19 @@ export function Sidebar({ jobs, activeSessionId, quote, wsState, onAvatarClick, 
           </button>
           {!isCompact && <h1>Hlidskjalf</h1>}
           {!isCompact && (
-            <span className="brand-wss-badge">
-              <StatusBadge state={wsState} />
-            </span>
+            <div className="count" aria-live="polite">
+              {jobs.length} session{jobs.length !== 1 ? "s" : ""}
+            </div>
           )}
+          <ThemeSwitcher theme={theme} setTheme={setTheme} />
+          <span className="brand-wss-badge">
+            <StatusBadge state={wsState} />
+          </span>
         </div>
         {!isCompact && (
-          <>
-            <div className="quote" role="note">
-              &ldquo;{quote}&rdquo;
-            </div>
-            <div className="count-row">
-              <div className="count" aria-live="polite">
-                {jobs.length} session{jobs.length !== 1 ? "s" : ""}
-              </div>
-              <ThemeSwitcher theme={theme} setTheme={setTheme} />
-            </div>
-          </>
+          <div className="quote" role="note">
+            &ldquo;{quote}&rdquo;
+          </div>
         )}
         <NamespaceTree
           namespace={namespace}
