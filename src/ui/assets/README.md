@@ -17,10 +17,10 @@ issue #10 — this directory + `src/ui/lib/treeSeats.ts`.
 ## How the assets are wired
 
 - The painting is imported in `src/ui/components/NamespaceTree.tsx` as a
-  `<img>` element inside the scrolling canvas — `object-fit: cover` in
-  standard mode (center crop) and `object-fit: fill` in compact mode.
-  Its height is pinned to the scene's rendered height by JS so it stays
-  rooted while the canvas (vine + cards) can grow below.
+  `<img>` element inside the scrolling canvas — `object-fit: cover`,
+  left-anchored (`object-position: 0% 50%`), in both standard and compact
+  modes. Its height is pinned to the scene's rendered height by JS so it
+  stays rooted while the canvas (vine + cards) can grow below.
 - Lantern seats live in `src/ui/lib/treeSeats.ts` as TYPED data:
   `SEAT_POOL` (the 11 painted lantern spots in PAINTING %, copied verbatim
   from the prototype's `SEAT_POOL`) and `CURATED_SEATS` (namespace id →
@@ -29,9 +29,10 @@ issue #10 — this directory + `src/ui/lib/treeSeats.ts`.
   djb2-hash claims for unknown worlds, share-last-seat guard when the tree
   is full (11 worlds max). `namespaceSeat(nsId)` is the single-id
   convenience.
-- `projectSeat(p, mode, sceneW, sceneH)` maps painting % → scene %: compact
-  returns painting % unchanged (fill = 1:1); standard uses cover-center
-  projection so stones sit on the painted lanterns at any panel width.
+- `projectSeat(p, sceneW, sceneH)` maps painting % → scene % using
+  cover-center, left-anchored projection so stones sit on the painted lanterns
+  at any panel width. The projection is identical in standard and compact modes
+  — compact affects the vine card list only, not the painted tree.
 - The consumer attaches each namespace's seat to its tree node as
   `data-seat-x` / `data-seat-y` / `data-seat-dir` attributes — no layout
   constants scattered in JSX. The lantern overlay (issue #11) pins each
@@ -73,9 +74,9 @@ Two compositions stand:
   so lantern seats stay valid.
 
 After a repaint, re-map seats as below. The shipped `SEAT_POOL` is in
-PAINTING percentages; `projectSeat()` maps them to scene % per display
-mode (cover-center crop in standard, `fill` in compact), so the stones sit
-on the painted leaf-lanterns at any panel width.
+PAINTING percentages; `projectSeat()` maps them to scene % (cover-center
+crop, left-anchored) so the stones sit on the painted leaf-lanterns at any
+panel width, in both standard and compact modes.
 
 ## Re-mapping seats after a repaint
 
