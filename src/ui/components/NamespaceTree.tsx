@@ -415,7 +415,7 @@ export function NamespaceTree({
             )}
             {openWorld && openSeat && summaryLoaded && !summaryFailed && openTasks.length === 0 && (
               <div className="ns-tree__note" style={notePos(openSeat, -90)}>
-                no tasks in this world
+                No tasks in this realm
               </div>
             )}
             {openWorld && openSeat && summaryFailed && (
