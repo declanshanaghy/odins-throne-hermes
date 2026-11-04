@@ -186,28 +186,55 @@ assert.deepEqual(assignSeats(fullList), fullSeats, "overflow seating is determin
   assert.equal(result.x, 30, "unmeasured scene: x passes through unchanged");
   assert.equal(result.y, 55, "unmeasured scene: y passes through unchanged");
 }
-// Standard: cover-center projection
+// Standard: left-anchored (object-position: 0% 50%) cover projection
 {
   const W = 432, H = 1200; // H-limited: k = max(432/896, 1200/1200) = 1.0
-  // dw = 896*1 = 896, fl = -(896-432)/2 = -232
-  // For x=40: (40/100*896 + (-232)) / 432 * 100 = (358.4-232)/432*100 = 126.4/432*100 = 29.26
+  // dw = 896*1 = 896, fl = 0 (LEFT anchor — matches CSS object-position 0% 50%)
+  // For x=40: (40/100*896 + 0) / 432 * 100 = 358.4/432*100 = 82.96
   const p = { x: 40, y: 73 };
   const result = projectSeat(p, "standard", W, H);
   const k = Math.max(W / 896, H / 1200); // = 1.0
   const dw = 896 * k;
-  const fl = -(dw - W) / 2;
+  const fl = 0;
   const expectedX = (p.x / 100 * dw + fl) / W * 100;
   assert.ok(Math.abs(result.x - expectedX) < 0.01, `standard projection x correct (expected ~${expectedX.toFixed(2)}, got ${result.x.toFixed(2)})`);
   assert.equal(result.y, 73, "standard projection y passes through unchanged");
 }
-// Standard at typical sidebar size: stones stay in scene
+// Standard at REAL scene sizes: every painted seat stays ON-CANVAS.
+// v3.9 regression guard: cover-CENTER anchoring pushed every pool seat
+// below painting x ~26% to NEGATIVE scene x in tall narrow scenes (the
+// ~268px shipped dock scroller) — stones off-pane, invisible + unclickable,
+// including the ACTIVE world. Left-anchoring keeps them all in range.
 {
-  const W = 432, H = 640;
-  for (const p of SEAT_POOL) {
-    const result = projectSeat(p, "standard", W, H);
-    assert.ok(result.x >= -5 && result.x <= 105, `projected x in scene range for seat (${p.x},${p.y}): ${result.x.toFixed(2)}`);
-    assert.ok(result.y >= 0 && result.y <= 100, `projected y in scene range for seat (${p.x},${p.y}): ${result.y.toFixed(2)}`);
+  const cases = [
+    [268, 746], // shipped dock scroller (300px pane) — the v3.9 bug scene
+    [432, 640], // design reference sidebar (TREE_SCENE.sidebarWidthPx)
+    [500, 800], // web hall sidebar
+  ];
+  for (const [W, H] of cases) {
+    for (const p of SEAT_POOL) {
+      const r = projectSeat(p, "standard", W, H);
+      assert.ok(
+        r.x >= 0 && r.x <= 100,
+        `seat (${p.x},${p.y}) on-canvas at ${W}x${H}: scene x ${r.x.toFixed(2)}`,
+      );
+      assert.ok(
+        r.y >= 0 && r.y <= 100,
+        `seat (${p.x},${p.y}) scene y in range at ${W}x${H}: ${r.y.toFixed(2)}`,
+      );
+    }
   }
+}
+// …and the CSS crop matches the math: the standard backdrop rule is LEFT-anchored
+{
+  const css = readFileSync(new URL("../src/ui/styles/index.css", import.meta.url), "utf8");
+  const m = css.match(/\.ns-tree__backdrop\s*\{[^}]*\}/);
+  assert.ok(m, "standard .ns-tree__backdrop rule exists in CSS source");
+  assert.ok(m[0].includes("object-fit: cover"), "standard backdrop is object-fit cover");
+  assert.ok(
+    m[0].includes("object-position: 0% 50%"),
+    "standard backdrop is LEFT-anchored (object-position: 0% 50%) — matches projectSeat's fl = 0",
+  );
 }
 
 // ── single-id convenience ────────────────────────────────────────────────────

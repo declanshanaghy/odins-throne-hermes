@@ -225,27 +225,31 @@ assert.ok(!paneHtml.includes("All namespaces"), "no wrapper root — namespaces 
 assert.equal(document.querySelectorAll(".ns-tree__item[data-namespace]").length, 6, "all six API namespaces are top-level root nodes");
 assert.ok(document.querySelector('.ns-tree__item[data-namespace="fenrir-agents"]'), "fenrir-agents root node present");
 
-// ── tree scene assets (issues #10 + #11) ─────────────────────────────────────
-// The painted backdrop lands as --tree-backdrop on the tree root; each
-// namespace lantern is seated on the painting (percent-of-scene, typed data
-// from src/ui/lib/treeSeats.ts — matching the prototype's SEAT_POOL mapping).
-const treeRootEl = document.querySelector('.ns-tree[aria-label="Namespace tree"]');
-const treeStyle = treeRootEl.getAttribute("style") ?? "";
-assert.ok(treeStyle.includes("--tree-backdrop"), "tree root exposes the --tree-backdrop custom property");
+// ── tree scene assets (issues #10, #11, #69) ────────────────────────────────
+// v3.9: the painting ships as a real <img class="ns-tree__backdrop"> INSIDE
+// the scrolling canvas (inlined JPEG src) so the painting, stones, vine and
+// cards all scroll together. Each namespace lantern is seated on the
+// painting (painting-% seat from src/ui/lib/treeSeats.ts — verbatim from the
+// prototype's SEAT_POOL mapping; the unmeasured jsdom scene passes painting
+// % straight through to scene %).
+const backdropImg = document.querySelector(".ns-tree__backdrop");
+assert.ok(backdropImg, "the painted scene mounts as a real <img> backdrop (v3.9)");
 assert.ok(
-  treeStyle.includes("data:image/jpeg;base64,"),
-  "the painted backdrop (inlined JPEG) is the --tree-backdrop value",
+  (backdropImg.getAttribute("src") ?? "").startsWith("data:image/jpeg;base64,"),
+  "the painted backdrop (inlined JPEG) is the <img> src, not a CSS custom property",
 );
 assert.ok(document.querySelector(".ns-tree__scene"), "the painted scene mounts as the tree's stage");
 const fenrirRoot = document.querySelector('.ns-tree__item[data-namespace="fenrir-agents"]');
-assert.equal(fenrirRoot.getAttribute("data-seat-x"), "17", "fenrir lantern seat x matches the prototype mapping");
-assert.equal(fenrirRoot.getAttribute("data-seat-y"), "28", "fenrir lantern seat y matches the prototype mapping");
+// fenrir-agents is curated onto SEAT_POOL[9] = {15,28} (v3.9 tall painting).
+assert.equal(fenrirRoot.getAttribute("data-seat-x"), "15", "fenrir lantern seat x matches the prototype mapping (SEAT_POOL[9])");
+assert.equal(fenrirRoot.getAttribute("data-seat-y"), "28", "fenrir lantern seat y matches the prototype mapping (SEAT_POOL[9])");
 assert.equal(fenrirRoot.getAttribute("data-seat-dir"), "1", "fenrir vine hangs rightward (dir 1)");
-assert.equal(fenrirRoot.style.left, "17%", "fenrir lantern is pinned to its seat coordinate");
+assert.equal(fenrirRoot.style.left, "15%", "fenrir lantern is pinned to its seat coordinate");
 assert.equal(fenrirRoot.style.top, "28%", "fenrir lantern is pinned to its seat coordinate");
 const saysoRoot = document.querySelector('.ns-tree__item[data-namespace="say-so-agents"]');
-assert.equal(saysoRoot.getAttribute("data-seat-x"), "59", "say-so lantern seat x matches the prototype mapping");
-assert.equal(saysoRoot.getAttribute("data-seat-y"), "19", "say-so lantern seat y matches the prototype mapping");
+// say-so-agents is curated onto SEAT_POOL[6] = {11,49}.
+assert.equal(saysoRoot.getAttribute("data-seat-x"), "11", "say-so lantern seat x matches the prototype mapping (SEAT_POOL[6])");
+assert.equal(saysoRoot.getAttribute("data-seat-y"), "49", "say-so lantern seat y matches the prototype mapping (SEAT_POOL[6])");
 for (const item of document.querySelectorAll(".ns-tree__item[data-namespace]")) {
   const x = Number(item.getAttribute("data-seat-x"));
   const y = Number(item.getAttribute("data-seat-y"));

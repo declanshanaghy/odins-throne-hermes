@@ -401,8 +401,11 @@ body {
   overflow: hidden;
   flex-shrink: 0;
 }
-/* backdrop img: pinned to scene height by JS; standard = cover-center crop,
- * compact = fill (painting IS the scene box, painting % map 1:1 to scene %) */
+/* backdrop img: pinned to scene height by JS; standard = cover crop
+ * LEFT-anchored (object-position 0% 50%, matching projectSeat's fl=0 — the
+ * tree lives in the painting's left third, so every SEAT_POOL lantern stays
+ * on-canvas at any panel width); compact = fill (painting IS the scene box,
+ * painting % map 1:1 to scene %) */
 .ns-tree__backdrop {
   position: absolute;
   top: 0;
@@ -410,6 +413,7 @@ body {
   width: 100%;
   z-index: 0;
   object-fit: cover;
+  object-position: 0% 50%;
   pointer-events: none;
   -webkit-mask-image: linear-gradient(180deg, #000 90%, transparent 100%);
           mask-image: linear-gradient(180deg, #000 90%, transparent 100%);
