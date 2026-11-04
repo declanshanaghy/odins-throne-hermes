@@ -428,7 +428,6 @@ var styles_default = `.odins-throne-root .odins-throne-root {
   -webkit-mask-image: linear-gradient(180deg, #000 90%, transparent 100%);
           mask-image: linear-gradient(180deg, #000 90%, transparent 100%);
 }
-.odins-throne-root .ns-tree--compact .ns-tree__backdrop { object-fit: fill; }
 /* roots overlay: stones + pip strips + labels \u2014 lives INSIDE the scrolling
  * canvas (height pinned to scene by JS) so the painting and stones scroll
  * together with the vine; the task list never detaches from its stone */
@@ -887,15 +886,9 @@ var styles_default = `.odins-throne-root .odins-throne-root {
 
 /* \u2500\u2500 compact (dense) lantern tree \u2014 issue #59 \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
    The manual compact-toggle mode: same vine + anchors + pips + berries + HUD,
-   but denser metrics. Cards squash to ONE line (compact prop strikes meta row
-   and clasps at the JSX level). Count numbers stay standard-only. */
-.odins-throne-root .ns-tree--lanterns.ns-tree--compact .ns-tree__lantern { width: 40px; height: 40px; }
-.odins-throne-root .ns-tree--lanterns.ns-tree--compact .ns-tree__icon--lantern { width: 24px; height: 24px; }
-.odins-throne-root .ns-tree--lanterns.ns-tree--compact .ns-tree__icon--lantern.ns-tree__icon--fallback { font-size: 1rem; }
-/* compact counts: orbs stay, number labels are standard-only (ns-tree--extended) */
-.odins-throne-root .ns-tree--lanterns.ns-tree--compact .ns-tree__counts { top: calc(50% + 22px); }
-/* compact piprow sits tighter under the smaller lantern */
-.odins-throne-root .ns-tree--lanterns.ns-tree--compact .piprow { top: calc(50% + 32px); }
+   same painted tree (backdrop, seat positions, lantern sizes all unchanged).
+   Only the vine card list densifies. Cards squash to ONE line (compact prop
+   strikes meta row and clasps at the JSX level). */
 /* compact jcards: 142px wide, 3px 7px padding, title 9.5px */
 .odins-throne-root .jcard--compact { width: 142px !important; padding: 3px 7px !important; }
 
@@ -8544,8 +8537,8 @@ function assignSeats(nsIds) {
   }
   return seats;
 }
-function projectSeat(p, mode, sceneW, sceneH) {
-  if (mode === "compact" || sceneW <= 0 || sceneH <= 0) {
+function projectSeat(p, sceneW, sceneH) {
+  if (sceneW <= 0 || sceneH <= 0) {
     return { x: p.x, y: p.y };
   }
   const k = Math.max(sceneW / 896, sceneH / 1200);
@@ -8914,10 +8907,9 @@ function NamespaceTree({
   const openPaintSeat = openWorld ? seats.get(openWorld.id) : void 0;
   const openSeat = useMemo2(() => {
     if (!openPaintSeat || sceneSize.w === 0 || sceneSize.h === 0) return openPaintSeat;
-    const mode = isCompact ? "compact" : "standard";
-    const p = projectSeat(openPaintSeat, mode, sceneSize.w, sceneSize.h);
+    const p = projectSeat(openPaintSeat, sceneSize.w, sceneSize.h);
     return { x: p.x, y: p.y, dir: openPaintSeat.dir };
-  }, [openPaintSeat, isCompact, sceneSize.w, sceneSize.h]);
+  }, [openPaintSeat, sceneSize.w, sceneSize.h]);
   const summaryLoaded = openSummary !== void 0;
   const summaryFailed = openSummary?.error != null;
   const vineMode = displayMode === "compact" ? "compact" : displayMode === "normal" ? "normal" : "extended";
@@ -9006,8 +8998,7 @@ function NamespaceTree({
                       const isActive = ns.id === namespace;
                       const isOpen = openNs === ns.id;
                       const paintSeat = seats.get(ns.id);
-                      const mode = isCompact ? "compact" : "standard";
-                      const projected = projectSeat(paintSeat, mode, sceneSize.w, sceneSize.h);
+                      const projected = projectSeat(paintSeat, sceneSize.w, sceneSize.h);
                       const line = labelLineOf(summary);
                       const failed = summary?.counts.failed ?? 0;
                       const total = summary?.total ?? 0;
