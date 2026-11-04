@@ -190,7 +190,7 @@ for (const ns of ["mytruthfinder-agents", "brand-new-world", "odins-throne-plugi
 // ── task pips beneath the lantern (issue #39) ───────────────────────────────
 // One small task icon per task, capped at TASK_PIPS.cap slots with a "+N"
 // chip; the row sits on the side away from the vine and narrows to fit.
-const { TASK_PIPS, taskPips, pipSlots, pipRowWidth, pipRowLayout } = await import(
+const { TASK_PIPS, taskPips, pipSlots, pipRowWidth, pipRowLayout, pipStripWidth, pipStripLeft } = await import(
   "../src/ui/lib/taskPips.ts"
 );
 const { vineFor } = await import("../src/ui/lib/vineGeometry.ts");
@@ -278,4 +278,51 @@ assert.ok(
   "painted backdrop is bundled into desktop/plugin.js as an inlined data URL",
 );
 
-console.log("tree-seats: painting + painted seat pool + runtime lantern seating + task pip rows verified (issues #10, #11 + #39)");
+// ── single-row pip strip left anchor (issue #54) ──────────────────────────────
+// The strip is left-anchored at the lantern's left edge, clamped to the scene.
+assert.equal(pipStripLeft({ x: 50, y: 30, dir: 1 }, 0, 0), 0, "unmeasured scene: strip left = 0");
+assert.equal(pipStripLeft({ x: 50, y: 30, dir: 1 }, 432, 0), 0, "zero-width strip: left = 0");
+// Mid-scene seat (x=50%, sceneW=432): seatPx=216, strip starts at 216 from scene edge.
+// 216 is well within scene (< sceneW - edgePx - rowW), so no clamping.
+const midLeft = pipStripLeft({ x: 50, y: 30, dir: 1 }, 432, 50);
+assert.equal(midLeft, 0, "mid-scene seat: strip starts at li's left edge (offset 0)");
+// Near-left seat (x=1%, sceneW=432): seatPx≈4, edgePx=3, strip would start at 4 from scene edge.
+// 4 >= edgePx=3, so no clamping.
+const nearLeft = pipStripLeft({ x: 1, y: 30, dir: 1 }, 432, 20);
+assert.ok(nearLeft >= 0, "near-left seat: strip never clips the left scene edge");
+// Near-right seat with wide strip should clamp to stay in-scene.
+const narrowStrip = 80;
+const nearRightLeft = pipStripLeft({ x: 95, y: 30, dir: -1 }, 432, narrowStrip);
+const seatPx95 = (95 / 100) * 432;
+const stripSceneRight = seatPx95 + nearRightLeft + narrowStrip;
+assert.ok(stripSceneRight <= 432 - TASK_PIPS.edgePx + 0.01, "near-right seat: strip clamped to stay in-scene");
+// Every seat: strip in-scene for all slots
+for (const seat of allSeats) {
+  for (const n of [1, 4, 8]) {
+    const row = taskPips(tasksN(n));
+    const w = pipStripWidth(row);
+    for (const sceneW of [320, 432]) {
+      const left = pipStripLeft(seat, sceneW, w);
+      const sp = (seat.x / 100) * sceneW;
+      const right = sp + left + w;
+      assert.ok(sp + left >= TASK_PIPS.edgePx - 0.01, `strip left in-scene for seat ${seat.x},${seat.y} (${n} pips, sceneW=${sceneW})`);
+      assert.ok(right <= sceneW - TASK_PIPS.edgePx + 0.01, `strip right in-scene for seat ${seat.x},${seat.y} (${n} pips, sceneW=${sceneW})`);
+    }
+  }
+}
+// pipStripWidth: single row width matches prototype formula
+assert.equal(pipStripWidth({ pips: [], overflow: 0, count: 0 }), 0, "empty pip row has zero strip width");
+assert.equal(
+  pipStripWidth({ pips: [{ sessionId: "s0", status: "running" }], overflow: 0, count: 1 }),
+  TASK_PIPS.sizePx,
+  "one pip: width = sizePx",
+);
+assert.equal(
+  pipStripWidth({ pips: [{ sessionId: "s0", status: "running" }, { sessionId: "s1", status: "failed" }], overflow: 0, count: 2 }),
+  2 * TASK_PIPS.sizePx + 1 * TASK_PIPS.gapPx,
+  "two pips: width = 2*sizePx + 1*gapPx",
+);
+const rowWith7Visible = taskPips(tasksN(12)); // 7 visible + "+5" chip
+assert.ok(pipStripWidth(rowWith7Visible) > 7 * TASK_PIPS.sizePx + 6 * TASK_PIPS.gapPx, "overflow row: strip width includes the chip");
+
+console.log("tree-seats: painting + painted seat pool + runtime lantern seating + task pip rows + single-row strip (issues #10, #11, #39, #54) verified");

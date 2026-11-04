@@ -26,10 +26,8 @@
 
 import type { CSSProperties } from "react";
 import type { DisplayJob } from "../lib/types";
-import { taskIcon, taskIconFallback } from "../lib/namespaceIcons";
 import { resolveSessionTitle } from "../lib/resolveSessionTitle";
 import { STATUS_LABELS } from "../lib/constants";
-import { TreeIcon } from "./TreeIcon";
 
 interface Props {
   job: DisplayJob;
@@ -116,9 +114,6 @@ export function VineCard({
       onClick={ghost ? undefined : onOpen}
       onKeyDown={openOnKey}
     >
-      <span className="jcard__sigil" aria-hidden="true">
-        <TreeIcon src={taskIcon(job.status)} fallback={taskIconFallback(job.status)} size="task" />
-      </span>
       <div className="jcard__main">
         <div className="jcard__row1">
           <span className="jcard__title" title={title}>
@@ -135,39 +130,40 @@ export function VineCard({
             {job.agentName}
             {isPinned ? " · 📌" : ""}
           </span>
-          <span className="jcard__acts">
-            <button
-              type="button"
-              className={`jact jact--pin${isPinned ? " is-on" : ""}`}
-              data-act="pin"
-              title={isPinned ? "unpin session" : "pin session"}
-              aria-label={isPinned ? `Unpin session ${job.sessionId}` : `Pin session ${job.sessionId}`}
-              aria-pressed={isPinned}
-              onClick={(e) => {
-                e.stopPropagation();
-                onTogglePin();
-              }}
-            >
-              📌
-            </button>
-            {cancellable && (
-              <button
-                type="button"
-                className="jact jact--cancel"
-                data-act="cancel"
-                title="cancel job"
-                aria-label={`Cancel job ${job.sessionId}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onCancel();
-                }}
-              >
-                ✕
-              </button>
-            )}
-          </span>
         </div>
       </div>
+      {/* clasp: icon-only actions overlapping the bottom border, flush right */}
+      <span className="jcard__acts">
+        <button
+          type="button"
+          className={`jact jact--pin${isPinned ? " is-on" : ""}`}
+          data-act="pin"
+          title={isPinned ? "unpin session" : "pin session"}
+          aria-label={isPinned ? `Unpin session ${job.sessionId}` : `Pin session ${job.sessionId}`}
+          aria-pressed={isPinned}
+          onClick={(e) => {
+            e.stopPropagation();
+            onTogglePin();
+          }}
+        >
+          📌
+        </button>
+        {cancellable && (
+          <button
+            type="button"
+            className="jact jact--cancel"
+            data-act="cancel"
+            title="cancel job"
+            aria-label={`Cancel job ${job.sessionId}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              onCancel();
+            }}
+          >
+            ✕
+          </button>
+        )}
+      </span>
     </div>
   );
 }

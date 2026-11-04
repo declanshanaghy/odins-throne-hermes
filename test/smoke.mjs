@@ -256,38 +256,56 @@ for (const item of document.querySelectorAll(".ns-tree__item[data-namespace]")) 
   // no stats berries — the task count reads as the pip row (issue #39)
   assert.equal(item.querySelector(".ns-tree__fruit, .ns-tree__berry"), null, `namespace ${item.dataset.namespace} carries no berry overlay`);
 }
-// Task pips (issue #39): one small task icon per task beneath the lantern,
-// in hang order (running → failed → pending → succeeded), capped at 8 slots
-// with a "+N" overflow chip — so visible pips + N always equal the count.
-const fenrirPips = fenrirRoot.querySelector(".ns-tree__tasks");
-assert.ok(fenrirPips, "fenrir carries a task-pip row beneath its lantern");
-assert.equal(fenrirPips.getAttribute("aria-hidden"), "true", "pip row is decorative — the lantern label carries the counts");
-assert.equal(fenrirPips.getAttribute("data-count"), "12", "fenrir's pip row stands for its 12 tasks");
-assert.equal(fenrirPips.querySelectorAll(".ns-tree__pip").length, 7, "fenrir shows 7 pips (cap 8, last slot is the overflow chip)");
-assert.equal(fenrirPips.querySelector(".ns-tree__tasks-more")?.textContent, "+5", "fenrir's overflow chip folds the remaining 5 tasks");
-assert.deepEqual(
-  Array.from(fenrirPips.querySelectorAll(".ns-tree__pip")).map((p) => p.dataset.status),
-  ["running", "running", "failed", "pending", "succeeded", "succeeded", "succeeded"],
-  "pips follow the hang order running → failed → pending → succeeded",
-);
-for (const pip of fenrirPips.querySelectorAll(".ns-tree__pip")) {
-  const icon = pip.querySelector(".ns-tree__icon--pip");
-  assert.ok(icon, "each pip seats a pip-sized task icon");
+// Issue #54: open world has NO counts row or pip strip (icons live at vine anchors).
+assert.equal(fenrirRoot.querySelector(".ns-tree__tasks"), null, "open world has no old-style pip grid (issue #54)");
+assert.equal(fenrirRoot.querySelector(".piprow"), null, "open world has no pip strip — icons live at vine anchors");
+assert.equal(fenrirRoot.querySelector(".ns-tree__counts"), null, "open world has no counts row — it is expanded");
+
+// Anchor icons: one per job on the vine canvas, seated at each card's anchor point.
+const fenrirAnchors = document.querySelectorAll('.ns-tree__canvas .anchor-ic');
+assert.equal(fenrirAnchors.length, 12, "one anchor icon per job on the open vine (12 for fenrir)");
+for (const anc of fenrirAnchors) {
+  assert.equal(anc.getAttribute("aria-hidden"), "true", "anchor icon is aria-hidden (card carries the status)");
+  const icon = anc.querySelector(".ns-tree__icon");
+  assert.ok(icon, "anchor icon seats a task icon");
+  assert.ok(
+    (icon.getAttribute("src") ?? "").startsWith("https://www.shanaghy.com/assets/icons/"),
+    `anchor icon is a shanaghy.com status sigil: ${icon.getAttribute("src")}`,
+  );
+}
+
+// Task pips (issues #39, #54): COLLAPSED worlds carry a single-row pip strip
+// (flex-nowrap, left-anchored at the lantern's left edge), capped at 8 + "+N".
+const saysoPips = saysoRoot.querySelector(".piprow");
+assert.ok(saysoPips, "collapsed say-so world carries a single-row pip strip");
+assert.equal(saysoPips.getAttribute("aria-hidden"), "true", "pip strip is decorative — the lantern label carries the counts");
+assert.equal(saysoPips.getAttribute("data-count"), "8", "say-so's pip strip stands for its 8 tasks");
+assert.equal(saysoPips.querySelectorAll(".pip-slot").length, 8, "say-so's 8 tasks show exactly 8 pip slots (at the cap, no chip)");
+assert.equal(saysoPips.querySelector(".piprow__more"), null, "no overflow chip at or under the cap");
+for (const slot of saysoPips.querySelectorAll(".pip-slot")) {
+  const icon = slot.querySelector(".ns-tree__icon--pip");
+  assert.ok(icon, "each pip-slot seats a pip-sized task icon");
   assert.ok(
     (icon.getAttribute("src") ?? "").startsWith("https://www.shanaghy.com/assets/icons/"),
     `pip icon is a shanaghy.com status sigil: ${icon.getAttribute("src")}`,
   );
 }
-const saysoPips = saysoRoot.querySelector(".ns-tree__tasks");
-assert.equal(saysoPips.querySelectorAll(".ns-tree__pip").length, 8, "say-so's 8 tasks show exactly 8 pips (at the cap, no chip)");
-assert.equal(saysoPips.querySelector(".ns-tree__tasks-more"), null, "no overflow chip at or under the cap");
-const goatPips = document.querySelector('.ns-tree__item[data-namespace="re-goatmower-agents"] .ns-tree__tasks');
-assert.equal(goatPips.querySelectorAll(".ns-tree__pip").length, 2, "re-goatmower's 2 tasks show 2 pips");
+const goatPips = document.querySelector('.ns-tree__item[data-namespace="re-goatmower-agents"] .piprow');
+assert.ok(goatPips, "re-goatmower world carries a pip strip");
+assert.equal(goatPips.querySelectorAll(".pip-slot").length, 2, "re-goatmower's 2 tasks show 2 pip slots");
 assert.equal(
-  document.querySelector('.ns-tree__item[data-namespace="shanaghy-com-agents"] .ns-tree__tasks'),
+  document.querySelector('.ns-tree__item[data-namespace="shanaghy-com-agents"] .piprow'),
   null,
-  "an empty world shows no pip row",
+  "an empty world shows no pip strip",
 );
+
+// Status-counts row: collapsed worlds carry orbs beneath their lantern.
+const saysoCountsRow = saysoRoot.querySelector(".ns-tree__counts");
+assert.ok(saysoCountsRow, "collapsed say-so world carries a status-counts row");
+assert.equal(saysoCountsRow.getAttribute("aria-hidden"), "true", "counts row is aria-hidden");
+assert.ok(saysoCountsRow.querySelectorAll(".ns-tree__counts__orb").length >= 1, "counts row has orbs");
+const goatCountsRow = document.querySelector('.ns-tree__item[data-namespace="re-goatmower-agents"] .ns-tree__counts');
+assert.ok(goatCountsRow, "re-goatmower world carries a counts row");
 assert.ok(fenrirRoot.querySelector(".ns-tree__lantern--failed"), "fenrir lantern tints ember (a failed job in the world)");
 assert.ok(saysoRoot.querySelector(".ns-tree__lantern--ok"), "say-so lantern tints moss (all-clear world)");
 
@@ -310,7 +328,8 @@ const brokenRoot = document.querySelector('.ns-tree__item[data-namespace="broken
 assert.ok(brokenRoot, "broken-vista-agents root node present");
 assert.ok(brokenRoot.querySelector(".ns-tree__lantern--dim"), "unavailable summary dims the seat");
 assert.ok(paneHtml.includes("summary unavailable"), "unavailable summary states so in the label");
-assert.equal(brokenRoot.querySelector(".ns-tree__tasks"), null, "an unavailable summary shows no pip row");
+assert.equal(brokenRoot.querySelector(".piprow"), null, "an unavailable summary shows no pip strip");
+assert.equal(brokenRoot.querySelector(".ns-tree__counts"), null, "an unavailable summary shows no counts row");
 
 // Tree semantics: role=tree on the root, treeitem + aria-expanded/selected on
 // the lanterns (the active world starts pre-drilled).
@@ -422,28 +441,33 @@ assert.ok(pinText !== "pin" && pinText !== "unpin", "pin button is icon-only —
 const cancelText = firstCard.querySelector(".jact--cancel").textContent.trim();
 assert.ok(cancelText !== "cancel", "cancel button is icon-only — no text label");
 
-// Status sigils follow the taskIcon contract: hammer/dice/raven/ring.
-const cardByStatus = (status) => [...fenrirCards].find((c) => c.getAttribute("data-status") === status);
+// Status sigils follow the taskIcon contract (issue #54): sigils are on the
+// ANCHOR ICONS on the vine canvas, NOT inside the card's title box.
+const anchorByStatus = (status) =>
+  [...document.querySelectorAll(`.ns-tree__canvas .anchor-ic--${status}`)][0];
 assert.equal(
-  cardByStatus("running").querySelector(".jcard__sigil .ns-tree__icon").getAttribute("src"),
+  anchorByStatus("running")?.querySelector(".ns-tree__icon")?.getAttribute("src"),
   "https://www.shanaghy.com/assets/icons/hammer.png",
-  "running jobs forge with the hammer sigil",
+  "running jobs: anchor icon has the hammer sigil",
 );
 assert.equal(
-  cardByStatus("failed").querySelector(".jcard__sigil .ns-tree__icon").getAttribute("src"),
+  anchorByStatus("failed")?.querySelector(".ns-tree__icon")?.getAttribute("src"),
   "https://www.shanaghy.com/assets/icons/raven.png",
-  "failed jobs fly the raven sigil",
+  "failed jobs: anchor icon has the raven sigil",
 );
 assert.equal(
-  cardByStatus("pending").querySelector(".jcard__sigil .ns-tree__icon").getAttribute("src"),
+  anchorByStatus("pending")?.querySelector(".ns-tree__icon")?.getAttribute("src"),
   "https://www.shanaghy.com/assets/icons/dice.png",
-  "pending jobs wait on the dice sigil",
+  "pending jobs: anchor icon has the dice sigil",
 );
 assert.equal(
-  cardByStatus("succeeded").querySelector(".jcard__sigil .ns-tree__icon").getAttribute("src"),
+  anchorByStatus("succeeded")?.querySelector(".ns-tree__icon")?.getAttribute("src"),
   "https://www.shanaghy.com/assets/icons/ring.png",
-  "succeeded jobs seal with the ring sigil",
+  "succeeded jobs: anchor icon has the ring sigil",
 );
+// Cards carry NO sigil in the title box — text only (issue #54)
+const cardByStatus = (status) => [...fenrirCards].find((c) => c.getAttribute("data-status") === status);
+assert.equal(cardByStatus("running").querySelector(".jcard__sigil"), null, "no sigil inside running card (icon is at the anchor)");
 assert.ok(
   !cardByStatus("succeeded").querySelector(".jact--cancel"),
   "a succeeded (non-cancellable) card hides its cancel action",
