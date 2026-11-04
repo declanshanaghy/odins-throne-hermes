@@ -702,18 +702,25 @@ assert.ok(
   !document.querySelector('.ns-tree__item[data-namespace="fenrir-agents"] .ns-tree__select img'),
   "failed remote img is unmounted",
 );
-// Task pips share the offline fallback: a failed pip icon swaps in its
-// status glyph (⚒ for running) instead of a broken image.
-const firstPipIcon = document.querySelector(
-  '.ns-tree__item[data-namespace="fenrir-agents"] .ns-tree__pip--running img',
+// Pip slots (collapsed worlds) share the offline fallback: a failed pip icon
+// swaps in its status glyph. Use say-so-agents (collapsed, all-succeeded).
+const firstPipSlotIcon = document.querySelector(
+  '.ns-tree__item[data-namespace="say-so-agents"] .pip-slot--succeeded img',
 );
-firstPipIcon.dispatchEvent(new dom.window.Event("error"));
+assert.ok(firstPipSlotIcon, "say-so pip slot has an img icon");
+firstPipSlotIcon.dispatchEvent(new dom.window.Event("error"));
 await flush();
 const pipFallback = document.querySelector(
-  '.ns-tree__item[data-namespace="fenrir-agents"] .ns-tree__pip--running [data-icon-fallback]',
+  '.ns-tree__item[data-namespace="say-so-agents"] .pip-slot--succeeded [data-icon-fallback]',
 );
-assert.ok(pipFallback, "pip icon onError swaps in an inline fallback glyph");
-assert.equal(pipFallback.textContent, "\u2692", "running pip falls back to the hammer glyph");
+assert.ok(pipFallback, "pip slot icon onError swaps in an inline fallback glyph");
+// Anchor icons (open world) also share the offline fallback.
+const firstAnchorIcon = document.querySelector('.ns-tree__canvas .anchor-ic img');
+assert.ok(firstAnchorIcon, "anchor icon has an img element");
+firstAnchorIcon.dispatchEvent(new dom.window.Event("error"));
+await flush();
+const anchorFallback = document.querySelector('.ns-tree__canvas .anchor-ic [data-icon-fallback]');
+assert.ok(anchorFallback, "anchor icon onError swaps in an inline fallback glyph");
 
 // ── the strict accordion (issue #11) ─────────────────────────────────────────
 // Clicking a lantern SELECTS the world (persisted to the same localStorage key
