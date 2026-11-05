@@ -97,7 +97,6 @@ const LIVE_LIST = [
   "mytruthfinder-agents",
   "shanaghy-com-agents",
   "re-goatmower-agents",
-  "odins-throne-plugin",
 ];
 
 const seats = assignSeats(LIVE_LIST);
@@ -233,7 +232,7 @@ assert.deepEqual(assignSeats(fullList), fullSeats, "overflow seating is determin
 
 // ── single-id convenience ────────────────────────────────────────────────────
 assert.deepEqual(namespaceSeat("fenrir-agents"), { x: 40, y: 37, dir: 1 }, "namespaceSeat singleton → curated lantern");
-for (const ns of ["mytruthfinder-agents", "brand-new-world", "odins-throne-plugin"]) {
+for (const ns of ["mytruthfinder-agents", "brand-new-world", "odins-throne-hermes-agents"]) {
   const a = namespaceSeat(ns);
   assert.deepEqual(a, namespaceSeat(ns), `namespaceSeat is deterministic for "${ns}"`);
   assert.ok(a.x > 0 && a.x <= 100 && a.y > 0 && a.y <= 100, `namespaceSeat in-scene for "${ns}"`);

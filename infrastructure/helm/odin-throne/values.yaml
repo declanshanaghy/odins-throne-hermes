@@ -148,7 +148,6 @@ rbac:
     - mytruthfinder-agents
     - shanaghy-com-agents
     - re-goatmower-agents
-    - odins-throne-plugin
 
 # -- Namespaces ConfigMap --------------------------------------------------
 # Defines which namespaces are available in the UI selector.
@@ -166,8 +165,6 @@ namespaces:
       label: "Shanaghy.com Agents"
     - id: re-goatmower-agents
       label: "Re-Goatmower Agents"
-    - id: odins-throne-plugin
-      label: "Odin's Throne Plugin Agents"
     - id: odins-throne-hermes-agents
       label: "Odins Throne Hermes Agents"
 
