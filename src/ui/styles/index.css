@@ -65,64 +65,102 @@
   --agent-accent-freya:    #a855f7;  /* wisdom-violet       */
 }
 
-/* ── Light Theme override ──────────────────────── */
-/* Derived from globals.css light palette (Lightning Norse / Stone Marble).
- * Applied when <html data-theme="light"> is set by useTheme hook. */
+/* ── Light Theme override — PARCHMENT & MEAD HALL (issue #123) ────────────
+ * The approved light theme: proposal #2's measured AA table
+ * (design/tree-display/light-theme-parchment-proposal.md §2.3), built and
+ * frozen in the tree-display prototype at v3.17 (round 25, commit 1dbbe8a).
+ * Applied when data-theme="light" is set (the web target on <html>, the
+ * plugin on its .odins-throne-root). Values are MEASURED, not invented:
+ * vellum #FBF5E6, iron-gall ink #2B1D12 (never pure black), ember #B4451B,
+ * bronze rules #C3A87A, mead-gold #E8B54A accents. Every interactive surface
+ * is OPAQUE in light (>= 0.96 alpha, no frosted glass); glow lives in
+ * box-shadow only. --mead is never a text colour. */
 [data-theme="light"] {
-  --void:              hsl(38, 40%, 89%);   /* body bg     — aged parchment */
-  --forge:             hsl(42, 30%, 95%);   /* sidebar bg  — fresh vellum */
-  --chain:             hsl(36, 24%, 85%);   /* card hover  — warm muted well */
-  --gold:              #8f6e0e;   /* accent gold — globals.css --primary: 38 80% 28% */
-  --gold-bright:       #d97706;   /* bright gold — globals.css --realm-hati: 38 92% 42% */
-  --text-saga:         hsl(25, 55%, 10%);   /* primary txt — iron-gall ink */
-  --text-rune:         hsl(27, 35%, 28%);   /* sec. text   — warm dark brown (Issue #1874) */
-  --text-void:         hsl(30, 28%, 38%);   /* tertiary    — warm tan-brown (Issue #1874) */
-  --rune-border:       hsl(33, 36%, 48%);   /* borders     — warm brown, visible on parchment (Issue #1874) */
-  --teal-asgard:       #077558;   /* status teal — globals.css --realm-asgard: 163 83% 25% */
-  --mayo-red:          #CF2734;   /* unchanged — readable on white */
-  --mayo-green:        #005a00;   /* darkened for white bg */
+  color-scheme: light;
+
+  /* ── Base surfaces (proposal §2.3) ── */
+  --void:              #EFE3CC;  /* body bg — aged parchment (hue 38°) */
+  --forge:             #F7EEDB;  /* sidebar bg — fresh vellum */
+  --chain:             #E4D5B7;  /* hover / well — solid warm wells */
+  --vellum-raise:      #FBF5E6;  /* cards, panels, modals — lightest surface */
+  --vellum-deep:       #F2E7D0;  /* inset / log surface — recessed parchment */
+  --vellum-edge:       #C3A87A;  /* default border — bronze rule, 3.1:1 */
+  --vellum-edge-soft:  #D7C49B;  /* dividers inside cards */
+  --parchment-vignette: rgba(120, 90, 50, 0.10);
+
+  /* ── Ink ── */
+  --text-saga:         #2B1D12;  /* primary — iron-gall ink, 12.8:1 on --void */
+  --text-rune:         #5A4330;  /* secondary — 7.3:1 */
+  --text-void:         #6B5340;  /* tertiary, meta — 5.6:1 */
+  --text-faint:        #8A7358;  /* non-essential chrome — never load-bearing */
+  --rune-border:       #C3A87A;  /* bronze rule — a rule line, not a hairline */
+
+  /* ── Accents — ember, bronze, mead ── */
+  --gold:              #8A5A0B;  /* rune-gold body ink — 5.4:1 on vellum */
+  --gold-bright:       #AE6F14;  /* mead-hall gold — display + graphic ink */
+  --mead:              #E8B54A;  /* glow / gold leaf — shadow + fill-of-light only, never text */
+  --ember:             #B4451B;  /* forge orange — 5.1:1 on vellum */
+  --ember-deep:        #8C3210;  /* ember text on ember-tinted fills — 6.5:1 */
+  --bronze:            #8B5F32;  /* rules, seal strokes (graphic >= 3:1) */
+  --verdigris:         #0B6B5C;  /* replaces the teal for rings/links — 5.9:1 */
+  --teal-asgard:       #0B6B5C;  /* token alias, no new name in the codebase */
+
+  /* ── Semantic ── */
+  --error-strong:      #A32318;  /* 6.9:1 on vellum */
+  --error-bg:          #F6DCD3;  /* OPAQUE (was rgba(254,226,226,0.60)) */
+  --error-border:      #C2563F;
+  --error-text:        #8E2A18;  /* 6.5:1 on --error-bg */
+  --success-strong:    #2E6B34;  /* 5.9:1 */
+  --error-subtle-bg:   #F7E2D6;  /* opaque ember wash */
+  --error-border-dim:  #D9A38F;
+
+  /* ── Mayo / Kildare (agent output + tool calls) ── */
+  --mayo-red:          #CF2734;
+  --mayo-green:        #2E6B34;
   --mayo-red-dim:      #8b1a22;
   --mayo-green-dim:    #004400;
-  --kildare-blue:      #1E3A8A;   /* unchanged — already dark */
-  --kildare-white:     #1a1a2e;   /* inverted for light bg */
+  --kildare-blue:      #1E3A8A;
+  --kildare-white:     #1a1a2e;
   --kildare-blue-bright: #2563eb;
   --kildare-blue-dim:  #dbeafe;
 
-  /* ── Semantic token overrides for light theme ── */
-  --error-strong:  #dc2626;
-  --error-bg:      rgba(254, 226, 226, 0.60);
-  --error-border:  #fca5a5;
-  --error-text:    #b91c1c;
-  --success-strong: #16a34a;
-  --error-subtle-bg:  rgba(220, 38, 38, 0.08);
-  --error-border-dim: rgba(220, 38, 38, 0.30);
+  /* ── Badges — opaque fills + dark ink, all >= 6.5:1 ── */
+  --bash-badge-bg:     #E4EFDC;
+  --bash-badge-text:   #29522C;
+  --write-badge-bg:    #EDE4F7;
+  --write-badge-text:  #5A3A8C;
+  --read-badge-bg:     #E2E9F4;
+  --read-badge-text:   #2A4A76;
 
-  --bash-badge-bg:    #dcfce7;
-  --bash-badge-text:  #166534;
-  --write-badge-bg:   #f3e8ff;
-  --write-badge-text: #7c3aed;
-  --read-badge-bg:    #e8eef8;
-  --read-badge-text:  #2e4a7a;
-  --mist-tool-bg:     rgba(185, 162, 115, 0.30);
-  --mist-tool-border: rgba(120, 95, 55, 0.25);
-  --mist-tool-hover:  rgba(165, 142, 95, 0.50);
+  /* ── Tool-call surfaces — OPAQUE (was 0.30 alpha) ── */
+  --mist-tool-bg:      #F4EBD7;
+  --mist-tool-border:  #CDB489;
+  --mist-tool-hover:   #EDE0C4;
+  --tool-batch-header-bg:    #EDE2C9;
+  --tool-batch-header-hover: #E3D4B4;
+  --bubble-header-bg:        #EFE5CF;
 
-  --tool-batch-header-bg:    rgba(100, 80, 45, 0.08);
-  --tool-batch-header-hover: rgba(100, 80, 45, 0.16);
-  --bubble-header-bg:        rgba(0, 0, 0, 0.03);
+  /* ── Norse tablet (gold = #8A5A0B = rgb(138,90,11)) ── */
+  --norse-tablet-header-bg:    rgba(138, 90, 11, 0.08);
+  --norse-tablet-header-hover: rgba(138, 90, 11, 0.12);
+  --gold-dim-border:           rgba(138, 90, 11, 0.30);
+  --gold-subtle-bg:            rgba(138, 90, 11, 0.06);
 
-  /* light-mode gold is #8f6e0e = rgb(143,110,14) */
-  --norse-tablet-header-bg:    rgba(143, 110, 14, 0.08);
-  --norse-tablet-header-hover: rgba(143, 110, 14, 0.12);
-  --gold-dim-border:           rgba(143, 110, 14, 0.30);
-  --gold-subtle-bg:            rgba(143, 110, 14, 0.06);
+  /* ── Glow / elevation — glow lives in box-shadow, never in the fill ── */
+  --glow-mead-sm:      0 0 6px rgba(232, 181, 74, 0.45);
+  --glow-mead-md:      0 0 14px rgba(232, 181, 74, 0.55);
+  --glow-ember:        0 0 10px rgba(180, 69, 27, 0.35);
+  --elev-1:            0 1px 2px rgba(90, 67, 48, 0.18);
+  --elev-2:            0 2px 6px rgba(90, 67, 48, 0.22);
+  --elev-3:            0 8px 22px rgba(90, 67, 48, 0.26);
+  --deviated-edge:     inset 0 0 0 3px rgba(255, 255, 255, 0.45);
 
-  /* ── Agent accent overrides for light theme ── */
-  --agent-accent-fireman:  #c44a08;
-  --agent-accent-loki:     #16a34a;
-  --agent-accent-luna:     #64748b;
-  --agent-accent-heimdall: #8f6e0e;
-  --agent-accent-freya:    #7c3aed;
+  /* ── Agent accent overrides ── */
+  --agent-accent-fireman:  #B4451B;
+  --agent-accent-loki:     #2E6B34;
+  --agent-accent-luna:     #6B5340;
+  --agent-accent-heimdall: #8A5A0B;
+  --agent-accent-freya:    #5A3A8C;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -2324,12 +2362,12 @@ body {
   color: inherit;
 }
 [data-theme="light"] .decree-body-block {
-  background: rgba(210, 200, 180, 0.5);
-  color: var(--text-primary);
+  background: #F2E7D0;
+  color: var(--text-saga);
 }
 [data-theme="light"] .decree-body-fence {
-  background: rgba(240, 235, 220, 0.7);
-  color: var(--text-primary);
+  background: #F2E7D0;
+  color: var(--text-saga);
 }
 .decree-body-link {
   color: var(--gold);
@@ -2996,7 +3034,7 @@ body {
   padding: 0.1rem 0.35rem;
   border-radius: 10px;
   background: var(--text-void);
-  color: var(--bg-void);
+  color: var(--void);
   opacity: 0.65;
   letter-spacing: 0.02em;
   flex-shrink: 0;
@@ -3847,7 +3885,12 @@ body {
   padding: 1rem;
 }
 [data-theme="light"] .apm-backdrop {
-  background: rgba(15, 20, 25, 0.55);
+  background: rgba(74, 52, 30, 0.45);
+}
+[data-theme="light"] .apm-shell {
+  background: #FBF5E6;
+  border-color: #C3A87A;
+  box-shadow: var(--elev-3), var(--deviated-edge);
 }
 
 /* Modal shell — narrow portrait tablet, 480px max */
@@ -4106,9 +4149,20 @@ body {
   max-height: calc(100vh - 2rem);
   overflow-y: auto;
 }
+/* Light: the blood-on-vellum seal — red ink on pale vellum, a verdict
+ * stamped in blood, not a void. The flicker reads as a rendering bug on
+ * cream, so light drops it (keeps only the fade). */
+[data-theme="light"] .rdk-backdrop { background: rgba(74, 52, 30, 0.50); }
 [data-theme="light"] .rdk-shell {
-  background: #12060a;
-  border-color: #a00000;
+  background: #FBF5E6;
+  border-color: #A32318;
+  box-shadow: var(--elev-3), 0 0 0 1px #E7C9A8 inset;
+  animation: rdkFadeIn 0.22s ease-out;
+}
+[data-theme="light"] .rdk-rune-band {
+  border-color: #D9A38F;
+  background: #F7E2D6;
+  color: #8C3210;
 }
 
 /* Rune bands */
@@ -4333,10 +4387,13 @@ body {
 .toast--exit {
   animation: toastOut 0.35s ease-in forwards;
 }
+/* Light: a wax-sealed note slipped onto the table — opaque vellum, a gold
+ * left rule, a mead halo. No white cards anywhere in the product. */
 [data-theme="light"] .toast {
-  background: #ffffff;
-  border-color: var(--gold);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15), 0 0 6px rgba(143, 110, 14, 0.15);
+  background: #FBF5E6;
+  border-color: #C3A87A;
+  border-left-color: var(--gold-bright);
+  box-shadow: var(--elev-3), var(--glow-mead-sm);
   color: var(--text-saga);
 }
 .toast-rune {
@@ -4394,3 +4451,222 @@ body {
   text-transform: uppercase;
   pointer-events: none;
 }
+
+/* ═══ v3.17 — PARCHMENT & MEAD HALL light-mode coverage (issue #123) ═══════
+ * The token block at the top re-skins every token-driven surface. The rules
+ * below port the prototype v3.17 (round 25) treatment for the hardcoded dark
+ * literals the tokens cannot reach: the lantern scene, the INVERTED dim
+ * ladder, vine cards, the world-title panel, hover labels, clasps, the log
+ * page. Every interactive surface is OPAQUE vellum (decree: no frosted glass
+ * on anything the user reads or clicks); glow lives in box/drop-shadows only. */
+
+[data-theme="light"] body {
+  background: linear-gradient(180deg, #F4E9D2, #EFE3CC);
+}
+
+/* ── the lantern scene — the fresco sky behind the parchment painting ── */
+[data-theme="light"] .ns-tree__scene {
+  border-color: #C3A87A;
+  background:
+    radial-gradient(36% 30% at 78% 9%, rgba(232, 181, 74, 0.22), transparent 70%),
+    linear-gradient(180deg, #FDF7E9 0%, #F4E7C9 60%, #EDDCB8 100%);
+}
+
+/* ── lantern-tree private vocabulary — the warm light set ── */
+[data-theme="light"] .ns-tree--lanterns {
+  --lg-moon: rgba(160, 140, 100, 0.35);
+  --lg-teal: rgba(11, 107, 92, 0.55);
+  --lg-ember: rgba(180, 69, 27, 0.40);
+  --lg-moss: rgba(126, 143, 87, 0.45);
+  --lg: var(--lg-moon);
+  --lantern-light: rgba(232, 181, 74, 0.55);
+  --pip-succeeded: #2E6B34;
+  --pip-running: #0F6B7A;
+  --pip-failed: #A32318;
+  --pip-pending: #8A5A0B;
+  --glabel-bg: #FBF5E6;
+  --glabel-border: #C3A87A;
+  --glabel-frost: #2B1D12;
+}
+
+/* ── THE LADDER INVERTS (proposal #2's signature move) ──
+ * In light, BRIGHT = lit, WASHED = dim: the dark multiply veils become a
+ * warm vellum wash (#EFE6D2, normal blend) against the parchment painting,
+ * and the glow flips from screen-blend moonlight (#lglowg) to the mead-gold
+ * sun radial (#lglowg-sun). Four-tier semantics + teardrop shapes unchanged;
+ * the lit lantern is the brightest thing on the page. */
+[data-theme="light"] .lseat__veil { fill: #EFE6D2; mix-blend-mode: normal; }
+[data-theme="light"] .lseat__halo { fill: #F5EFDF; mix-blend-mode: normal; }
+[data-theme="light"] .lseat__glow { fill: url(#lglowg-sun); mix-blend-mode: normal; }
+[data-theme="light"] .lseat--off  .lseat__veil { opacity: 0.55; }
+[data-theme="light"] .lseat--off  .lseat__halo { opacity: 0.35; }
+[data-theme="light"] .lseat--off  .lseat__glow { opacity: 0; }
+[data-theme="light"] .lseat--empty .lseat__veil { opacity: 0.40; }
+[data-theme="light"] .lseat--empty .lseat__halo { opacity: 0; }
+[data-theme="light"] .lseat--empty .lseat__glow { opacity: 0; }
+[data-theme="light"] .lseat--empty.is-hover .lseat__veil { opacity: 0.22; }
+[data-theme="light"] .lseat--empty.is-hover .lseat__glow { opacity: 0.28; }
+[data-theme="light"] .lseat--mid  .lseat__veil { opacity: 0.18; }
+[data-theme="light"] .lseat--mid  .lseat__glow { opacity: 0.45; }
+[data-theme="light"] .lseat--mid.is-hover .lseat__veil { opacity: 0.08; }
+[data-theme="light"] .lseat--mid.is-hover .lseat__glow { opacity: 0.72; }
+[data-theme="light"] .lseat--full .lseat__veil { opacity: 0; }
+[data-theme="light"] .lseat--full .lseat__glow { opacity: 1; }
+[data-theme="light"] .lseat--full .lseat__ring {
+  stroke: #0B6B5C;
+  filter: drop-shadow(0 0 5px rgba(232, 181, 74, 0.85));
+}
+
+/* ── world title — OPAQUE vellum, the frost is struck (decree) ── */
+[data-theme="light"] .wtitle {
+  background: #FBF5E6;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: 1px solid #C3A87A;
+  border-left: 3px solid #AE6F14;
+  box-shadow: var(--elev-2);
+}
+[data-theme="light"] .wtitle__name { color: #5A4330; }
+[data-theme="light"] .wtitle.is-live .wtitle__name { color: #AE6F14; }
+[data-theme="light"] .wtitle__name-link::after { color: #AE6F14; }
+[data-theme="light"] .wtitle__name-link:hover { text-decoration-color: #AE6F14; }
+[data-theme="light"] .wtitle__state,
+[data-theme="light"] .wtitle__stats,
+[data-theme="light"] .wtitle__lore { color: #5A4330; }
+[data-theme="light"] .wtitle__lore-link { color: #0B6B5C; border-bottom-color: rgba(11, 107, 92, 0.55); }
+[data-theme="light"] .wtitle__garden {
+  border-color: #CDB489;
+  background:
+    radial-gradient(46% 34% at 74% 8%, rgba(232, 181, 74, 0.28), transparent 70%),
+    radial-gradient(90% 80% at 50% 105%, rgba(126, 143, 87, 0.55), #F2E7D0 78%);
+}
+[data-theme="light"] .wtitle__garden .ground {
+  background: linear-gradient(180deg, #8E9C63, rgba(126, 143, 87, 0.2));
+}
+[data-theme="light"] .wtitle__stone {
+  filter: drop-shadow(0 1px 2px rgba(90, 67, 48, 0.35)) drop-shadow(0 0 7px rgba(232, 181, 74, 0.6));
+}
+[data-theme="light"] .wtitle__kin-pill {
+  color: #5A4330;
+  background: #F4EBD7;
+  border-color: #CDB489;
+}
+[data-theme="light"] .wtitle__kin-pill::before { color: #8B5F32; }
+[data-theme="light"] .wtitle__kin-pill:hover { border-color: #AE6F14; color: #AE6F14; }
+[data-theme="light"] .wtitle__kin-pill:focus-visible { outline-color: #B4451B; }
+
+/* ── vine cards — OPAQUE vellum slabs (the black slab was the dark idiom) ── */
+[data-theme="light"] .jcard {
+  background: #FBF5E6;
+  border: 1px solid #C3A87A;
+  box-shadow: var(--elev-1), 0 0 9px var(--card-glow, transparent);
+}
+[data-theme="light"] .jcard:hover {
+  border-color: #AE6F14;
+  box-shadow: 0 0 0 1.5px rgba(174, 111, 20, 0.35), var(--elev-2);
+}
+[data-theme="light"] .jcard.is-active {
+  border-color: #B4451B;
+  box-shadow: 0 0 0 2.5px rgba(180, 69, 27, 0.30), var(--glow-mead-md), var(--elev-2);
+}
+[data-theme="light"] .jcard.is-dim { opacity: 0.62; }
+[data-theme="light"] .jcard--running   { --card-glow: rgba(15, 107, 122, 0.30); }
+[data-theme="light"] .jcard--succeeded { --card-glow: rgba(46, 107, 52, 0.25); }
+[data-theme="light"] .jcard--failed    { --card-glow: rgba(163, 35, 24, 0.30); border-color: #C2563F; }
+[data-theme="light"] .jcard--pending   { opacity: 0.72; }
+[data-theme="light"] .jcard__title { color: #2B1D12; }
+[data-theme="light"] .jcard__meta { color: #5A4330; }
+[data-theme="light"] .jcard__meta b { color: #8C3210; }
+[data-theme="light"] .jcard__dot { background: rgba(138, 90, 11, 0.35); }
+[data-theme="light"] .jcard--running .jcard__dot   { background: #0F6B7A; }
+[data-theme="light"] .jcard--succeeded .jcard__dot { background: #2E6B34; }
+[data-theme="light"] .jcard--failed .jcard__dot    { background: #A32318; }
+[data-theme="light"] .jcard--pending .jcard__dot    { background: #8A5A0B; }
+[data-theme="light"] .jcard:focus-visible { outline-color: #B4451B; }
+
+/* ── clasps, hover labels, notes, pips, anchor sigils — opaque vellum ── */
+[data-theme="light"] .jact {
+  background: #F2E7D0;
+  border-color: #CDB489;
+  color: #5A4330;
+}
+[data-theme="light"] .jact:hover { border-color: #AE6F14; color: #2B1D12; }
+[data-theme="light"] .jact--pin.is-on { border-color: #AE6F14; color: #8A5A0B; }
+[data-theme="light"] .jact--cancel:hover { border-color: #A32318; color: #A32318; }
+[data-theme="light"] .jact:focus-visible { outline-color: #B4451B; }
+[data-theme="light"] .ns-tree__glabel {
+  background: #FBF5E6;
+  border: 1px solid #C3A87A;
+  border-left: 2px solid #AE6F14;
+  color: #5A4330;
+  box-shadow: var(--elev-2);
+  text-shadow: none;
+}
+[data-theme="light"] .ns-tree__glabel-name { color: #2B1D12; }
+[data-theme="light"] .ns-tree__glabel--err .ns-tree__glabel-line { color: #A32318; }
+[data-theme="light"] .ns-tree__note {
+  background: #FBF5E6;
+  border: 1px dashed #C3A87A;
+  color: #5A4330;
+}
+[data-theme="light"] .ns-tree__note--err { color: #A32318; }
+[data-theme="light"] .ns-tree__vine {
+  stroke: rgba(122, 100, 72, 0.8);
+  filter: drop-shadow(0 0 2px rgba(174, 111, 20, 0.35));
+}
+[data-theme="light"] .ns-tree__vine--bare { stroke: rgba(138, 115, 88, 0.75); }
+[data-theme="light"] .anchor-ic {
+  filter: drop-shadow(0 1px 2px rgba(90, 67, 48, 0.4)) drop-shadow(0 0 5px var(--anc, rgba(232, 181, 74, 0.5)));
+}
+[data-theme="light"] .anchor-ic::before {
+  background: radial-gradient(circle, rgba(242, 231, 208, 0.96) 34%, rgba(242, 231, 208, 0.5) 62%, transparent 74%);
+}
+[data-theme="light"] .anchor-ic--running    { --anc: rgba(15, 107, 122, 0.85); }
+[data-theme="light"] .anchor-ic--succeeded  { --anc: rgba(46, 107, 52, 0.75); }
+[data-theme="light"] .anchor-ic--failed     { --anc: rgba(163, 35, 24, 0.95); }
+[data-theme="light"] .anchor-ic--pending    { --anc: rgba(138, 90, 11, 0.7); }
+[data-theme="light"] .anchor-ic--terminating { --anc: rgba(107, 83, 64, 0.8); }
+[data-theme="light"] .piprow .pip-slot {
+  filter: drop-shadow(0 1px 1px rgba(90, 67, 48, 0.4)) drop-shadow(0 0 2px currentColor);
+}
+[data-theme="light"] .piprow .more { color: #5A4330; text-shadow: none; }
+[data-theme="light"] .ns-tree__scroller { scrollbar-color: #C3A87A transparent; }
+
+/* ── the log hall — recessed parchment, the "page" ── */
+[data-theme="light"] .log-terminal {
+  background: #F2E7D0;
+  box-shadow: inset 0 0 0 1px #D7C49B;
+}
+[data-theme="light"] .log-error-box { border-left: 3px solid #C2563F; }
+[data-theme="light"] .log-warning { color: #8C3210; }
+[data-theme="light"] .autoscroll-fab {
+  background: #FBF5E6;
+  border-color: #C3A87A;
+  color: #8A5A0B;
+  box-shadow: var(--elev-2);
+}
+[data-theme="light"] .autoscroll-fab:hover { background: #F2E7D0; }
+[data-theme="light"] .autoscroll-fab.active { color: #AE6F14; }
+[data-theme="light"] .wss-tooltip {
+  background: #FBF5E6;
+  border-color: #C3A87A;
+  box-shadow: var(--elev-3);
+  color: #2B1D12;
+}
+
+/* ── status badges — opaque tinted seats from the single status map ── */
+[data-theme="light"] .job-status-badge {
+  background: #FBF5E6;
+}
+
+/* ── focus, selection, scrollbars ── */
+[data-theme="light"] :focus-visible { outline-color: #B4451B; }
+[data-theme="light"] ::selection { background: rgba(232, 181, 74, 0.45); }
+[data-theme="light"] * { scrollbar-color: #C3A87A transparent; }
+
+/* ── the soot-scorched page — the error tablet inverts its metaphor ── */
+[data-theme="light"] .norse-error-tablet {
+  background: #F0E4CF;
+}
+[data-theme="light"] .net-rune-border { color: #8B5F32; }
+[data-theme="light"] .net-glyph { color: #B4451B; }

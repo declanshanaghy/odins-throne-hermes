@@ -130,14 +130,18 @@ export const STATUS_COLORS: Record<Job["status"], string> = {
   cached: "#c9920a",   // gold — pinned in Odin's memory
 };
 
-/** Darker variants of STATUS_COLORS for light mode — WCAG AA ≥3:1 on parchment bg */
+/**
+ * Light-mode variants of STATUS_COLORS — proposal #2's measured status
+ * palette (Parchment & Mead Hall §2.3, prototype v3.17 round 25), all >= 3:1
+ * on vellum #FBF5E6; running/failed carry their mead/ember halos in CSS.
+ */
 export const STATUS_COLORS_LIGHT: Record<Job["status"], string> = {
-  running:   "#0e7490",  // dark cyan    — matches --teal-asgard family
-  succeeded: "#16a34a",  // dark green   — same as --success-strong light
-  failed:    "#dc2626",  // dark red     — same as --error-strong light
-  pending:   "#b45309",  // dark amber
-  purged:    "#57534e",  // warm dark gray
-  cached:    "#8f6e0e",  // dark gold    — same as --gold light
+  running:   "#0F6B7A",  // teal-ink   — 5.7:1 on vellum
+  succeeded: "#2E6B34",  // moss-ink   — 5.9:1
+  failed:    "#A32318",  // ember-ink  — 6.9:1
+  pending:   "#8A5A0B",  // mead-ink   — 5.4:1
+  purged:    "#6B5F52",  // slate-bark — 5.7:1
+  cached:    "#8A5A0B",  // gold, ringed — 5.4:1
 };
 
 export const STATUS_LABELS: Record<Job["status"], string> = {
