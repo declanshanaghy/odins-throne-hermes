@@ -75,6 +75,9 @@ flowchart TD
   (Enter/Space toggle by default); card bodies are `tabIndex 0` with
   Enter/Space opening the session's tab (the same path a click takes);
   pin and cancel are native buttons; falling ghosts ignore keys.
+  Pressing `n` (outside any text input) cycles the namespace list to the
+  next world in order, wrapping from last back to first — wired via
+  `useNamespaceCycleKey` in `src/ui/hooks/useNamespaceCycleKey.ts`.
 - **Screen-reader semantics** — `role="tree"` on the tree root,
   `role="treeitem"` + `aria-expanded`/`aria-selected` on lanterns and
   cards, `aria-label` on every lantern, card, and action (pin/unpin,
