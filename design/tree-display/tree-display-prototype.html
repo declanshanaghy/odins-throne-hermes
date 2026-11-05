@@ -73,9 +73,166 @@
      scripts/detect-lanterns.py (bright-teal blob centroids on the
      896x1200 backdrop), pool index order KEPT so the curated claims stay
      valid: 2 -> 46,68 · 5 -> 37,50 · 6 -> 11,50 · 8 -> 23,30 · 9 -> 40,37.
+     v3.10 (2026-11-04, round 6): the lantern is the HOLDER OF THE SPIRIT —
+     decree: "all highlights and dimmers should be oval shaped to match the
+     shape of the lantern (even better use SVG shapes and match them
+     exactly)". Every veil, glow and ring now traces the painted lantern's
+     own silhouette (LANTERN_PATH — a teardrop with neck/cap and drop tip,
+     measured off the backdrop's bright cores: 54x83 core, ~62x111
+     silhouette in painting px, blurred softly at the edge). THREE LIGHT
+     STATES: OFF (no namespace seated — the painted lantern is veiled
+     dark, multiply blend), MID (a namespace is seated with tasks, its
+     list collapsed — intermediately lit), FULL (the clicked world, task
+     list showing — fully lit + teal outline traced around the lantern,
+     brighter than everything). The stone disc is struck entirely (#90
+     parity): the button is a transparent hit target, the icon floats
+     straight on the painting.
+     v3.10.1 (2026-11-04, round 7): OFF must read COMPLETELY off — decree:
+     "there are no lanterns completely off to represent a spot that's not
+     filled by a namespace, ensure there are 2 of them in the preview".
+     The painted HALO glows well past the lantern body, so the core veil
+     alone left an unseated lantern reading "dimmed, not off". OFF seats
+     now carry a SECOND wider lantern-shaped veil (.lseat__halo, 1.7x,
+     blur 7, multiply .88) that swallows the whole glow pool. Pixel-
+     verified: OFF core 4 lum (darker than the night sky), inner ring
+     mean ~8-11; MID/FULL untouched. The boot preview shows FOUR off
+     lanterns (7 worlds, 11 seats) — at least two, per decree.
+     v3.10.3 (2026-11-04, rounds 9+10): SELF-CONTAINED + STATIC ICONS —
+     decree: "the prototype shouldn't load from the live site" and
+     "shanaghy.com should be the source of truth — download a copy and
+     store locally". The icons/ folder beside this file is a downloaded
+     copy of the site's TRANSPARENT set (/assets/icons/overlay/ — the
+     /assets/icons/ profile set is opaque; transparent-for-overlays is
+     the 2026-11-04 decree). The four task icons (hammer/dice/ring/
+     scroll) have no transparent variant on the site yet — cut to
+     transparency locally from the live opaque ones. AND the GENERIC
+     STONE: a namespace we don't recognize (a new service) carries a
+     carved "?" pebble (icons/unknown-stone.png) — never a borrowed
+     entity's face; known-but-uncurated worlds are pinned in
+     NAMESPACE_CURATED so their stones never change.
+     Round 11: the STONE ANSWERS THE LIGHT — transparent icon while a
+     world's task list is hidden, the OPAQUE profile-card stone
+     (icons/opaque/) while its tasks hang open, transparent again on
+     deactivate.
+     v3.10.4 (round 12): THE LIST BEGINS BESIDE ITS LANTERN — decree:
+     "the job list is always on the bottom right corner; ensure it
+     aligns with its lantern for easy UX". vineFor() now joins the
+     branch rail LEVEL WITH the open lantern and hangs the FIRST card
+     just under it (top edge level with the lantern), the rest stacking
+     straight down the rail at fixed pitch — no more 0.34-arc drop that
+     parked every list in the bottom-right. The interaction CONTRACT now
+     also lives in tree-display-prototype-interactions.md (code comments
+     are the minimum; the md is the spec above them — the HTML stays the
+     exact reference for values, the md states the behavior that must
+     hold).
+     v3.10.6 (round 14): THE STEM IS STRUCK — decree: "remove the line
+     attaching the job to its agent's profile image; overlay the profile
+     image slightly on top of the job box". The 12px moss stem
+     (.jcard::before) is gone; the sigil bubble (.anchor-ic) now overlays
+     the CARD's left edge (4px onto the box, z-index 8 above the card),
+     bridging card and vine with no connecting line.
+     v3.10.7 (round 15): THE EMPTY WORLD RESTS — decree: "when a namespace
+     is selected that has no tasks, its selection should be deactivated
+     after 2 seconds for ux clarity". A taskless world holds the FULL
+     state (lit, outlined, opaque stone, bare vine) for exactly 2s, then
+     deactivates itself — lantern back to mid, vine retracted, nothing
+     selected, log hall notes "this world holds no work — its lantern
+     rests". Any new click cancels the pending rest; work arriving inside
+     the window keeps the seat.
+     v3.10.8 (round 16): THE FEED STARTS PAUSED — decree: "ensure live
+     growth is always off when the preview first loads". state.live boots
+     false; the deck button reads "live growth: off" (aria-pressed false);
+     the growth interval is inert; the HUD footer reads "ws feed paused";
+     and the gold spores hold still (their drift animation is gated on
+     body.is-live, painted by the button). One click wakes it all.
+     v3.10.9 (round 17): DEAD SPACE RESTS THE SELECTION — decree:
+     "when the user clicks in dead space the currently active lantern
+     should deactivate". A click anywhere in the tree panel that isn't
+     an interactive element (stone, card, clasp, sigil, cluster, note,
+     button) collapses the open vine on the spot — the same resting
+     state the 2-second rule lands on — and clears any pending rest.
+     v3.11 (round 18): TEXT CLEARS THE SIGIL — decree: "icons are a bit
+     too overlapped on the job list rows, create some padding for the job
+     title and details etc". The overlaid bubble rides 13px onto the
+     card's left edge; card left padding now 20px standard (17px compact)
+     so the title and details start clear of the bubble's rim.
+     v3.11.1 (round 19): THE PLUGIN WORLD IS STRUCK — decree: "? Odin's
+     Throne Plugin Agents shouldn't be in the prototype". The mock
+     backend's namespace list drops odins-throne-plugin (with its seed
+     jobs and curated moon.png stone); six worlds remain, and the freed
+     hashed lantern seat renders OFF at boot.
+     v3.12 (round 20): COMPACT NEVER DISTORTS THE PAINTING — decree:
+     "compact mode should not affect the tree display, it seems to
+     change aspect ratio or something; compact should only change the
+     density of information displayed on the tree and in the title".
+     The object-fit: fill override is STRUCK; projectSeat() and the
+     lantern-shape layer run the SAME cover LEFT-anchored crop in both
+     modes. Compact now changes ONLY density: narrower panel (320px),
+     smaller lanterns (40px) + icons (24px), ONE-line cards (title +
+     dot), vine pitch 34 — the tree itself is pixel-identical geometry.
      Nocturnal garden house palette:
      night #05070a–#0f1419, moss #4a5d23, canopy #0f2e0f, moon #b0c4c9,
      spore gold #ffcc66, teal selection.
+     v3.13 (round 21): THE WORLD TITLE SECTION — decree: "when a
+     namespace is active, show it as the title section [marked in
+     green on the deployed panel]: the namespace name in a big header,
+     then statistics about what's running in the namespace with status
+     icons and the full shebang; known services carry lore and links to
+     related namespaces. If a namespace deactivates, fade the title box
+     out to 50% for friendly UX until the next one replaces it, and it
+     brightens back to 100% to show the new info." The box rides ON the
+     painting's upper sky as a glass panel (rounded, teal-rimmed,
+     z-30 above vine and cards, clicks pass through to the painting —
+     only kin buttons catch them). Its content tracks the LAST seated
+     world (state.titleWorld) so a deactivation never wipes the board:
+     expanded → is-live (opacity 1), anything else → dimmed (opacity .5)
+     with the same name/stats/lore until the next selection repaints it.
+     Stats: tasks on the vine · per-status counts with status-color
+     sigils · agent count · lantern seat N of 11. Unknown worlds get the
+     generic seanchaí line — never a borrowed story; kin links call the
+     same selectWorld a lantern tap fires.
+     v3.13.2 (round 21, restated decree): the box widens to the FULL
+     green outline (~90%) and restructures — "active namespace title at
+     the top, stats underneath (# of jobs in each state), the
+     namespace's icon in full glory mini garden (left 25%) and to the
+     right of that, lore about this site (ring fort, as they're called
+     on shanaghy.com)". The GARDEN BAND: a moss bed in the left quarter
+     holding the world's OPAQUE stone glowing in full glory; the
+     RINGFORT lore rides to its right (every known world's line now
+     names its ringfort); kin pills stay below. Compact shrinks the
+     band in place (26px stone, 3-line clamp) — density only.
+     v3.13.1 — SLIM TO THE CLEAR SKY: the box must ride ABOVE the top
+     lanterns (first seat hangs at scene-y ≈ 26%): tighter metrics
+     (15px name, 2-line lore clamp, label-only kin pills, 10px stats)
+     hold it to ~135px — the deployed proportion (~20% of panel height).
+     v3.14 (round 22): KIN LINKS THE WORLD'S PEOPLE — decree: "the title
+     box links to other namespaces in the plugin. it should link to
+     resources in www.shanaghy.com/profiles or other entities." The kin
+     pills stop seating namespaces (the selectWorld jump is struck); each
+     names an ENTITY of the realm {slug,label,why} and renders a plain
+     <a> opening its live profile page
+     (https://www.shanaghy.com/profiles/<slug>/, target _blank,
+     rel noopener). A kin click leaves the throne's selection
+     untouched; `a` was already exempt from the dead-space rest.
+     v3.15 (2026-11-04, round 23): THE FOUR-TIER DIM LADDER — decree:
+     "find it hard to distinguish between non active, empty and active
+     namespaces — ensure the opacities used are akin to 75% dead, no
+     namespace attached / 50% alive no tasks / 25% alive with tasks,
+     deactivated / 0% activated, alive with tasks and actively
+     displaying job list". The veil opacity IS the decree's dim %, so
+     the ladder runs FOUR states now: OFF (no namespace seated) veil
+     .75 + halo veil .5, as before; EMPTY (seated with ZERO tasks,
+     not selected) veil .50, no glow — split out of mid, NEW; MID
+     (seated WITH tasks, deactivated) veil .25 (was .34) keeping its
+     soft glow — now clearly brighter than empty; FULL (selected,
+     its job list hanging on the vine) veil 0 — fully lit + teal
+     outline. The stones follow the tier: an empty world's icon dims
+     to .65 and desaturates. The boot preview exhibits every rung:
+     re-goatmower-agents seats EMPTY (its round-4 seed work is struck
+     — one quiet world must show the 50% rung; live growth still
+     sprouts on it, climbing the ladder), fenrir boots FULL, the
+     other four MID, five lanterns OFF. The 2s empty-world rest
+     returns the lantern to its EMPTY resting light, no longer mid.
      ───────────────────────────────────────────────────────────── */
   :root {
     --night-0: #05070a;
@@ -170,6 +327,82 @@
   .sidebar__head .sub { font-size: 11px; color: var(--moon-dim); font-style: italic;
     flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
+  /* v3.13 — the WORLD TITLE SECTION: a glass panel pinned on the painting's
+     upper sky (the green-outlined region on the deployed panel). Full opacity
+     while its world is seated; a deactivation fades it to 50% with the SAME
+     content until the next world replaces it. pointer-events none on the pane
+     (clicks pass through to the painting = dead space); only kin links
+     catch (v3.14: each opens its entity's profile page on
+     www.shanaghy.com, target _blank — no namespace jump).
+     v3.13.2 (round 21 restated): the box widens to the FULL green outline
+     (~90% of the panel) and its body restructures to the decree — "active
+     namespace title at the top, stats underneath (# of jobs in each state),
+     the namespace's icon in full glory mini garden (left 25%) and to the
+     right of that, lore about this site (ring fort, as they're called on
+     shanaghy.com)": title row → stats chips → the GARDEN BAND (moss bed with
+     the world's OPAQUE stone standing in full glory, left quarter; ringfort
+     lore to its right) → kin entity links (v3.14). Bottom stays above the topmost lantern. */
+  .wtitle {
+    position: absolute; z-index: 30;
+    left: 5%; top: 2.5%; width: 90%;
+    /* v3.13.1/v3.13.2 — slim: the box must ride ABOVE the top lanterns
+       (seat 8's top edge sits at scene-y ≈ 26%): tightened metrics hold
+       it to ~130px at 640 tall — the bottom clears the topmost stone. */
+    padding: 8px 12px 8px;
+    border: 1px solid var(--panel-bd);
+    border-left: 3px solid var(--teal);
+    border-radius: 12px;
+    background: rgba(6, 10, 14, 0.55);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    opacity: 0.5;
+    transition: opacity 0.6s ease;
+    pointer-events: none;
+  }
+  .wtitle.is-live { opacity: 1; }
+  .wtitle__row { display: flex; align-items: center; gap: 8px; }
+  .wtitle__id { min-width: 0; }
+  .wtitle__name { font-family: var(--serif); font-size: 14px; line-height: 1.15;
+    letter-spacing: 0.4px; color: var(--moon); font-weight: 600;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .wtitle.is-live .wtitle__name { color: var(--teal); }
+  .wtitle__state { display: block; font-size: 9.5px; line-height: 1.2; margin-top: 1px;
+    color: var(--moon-dim); font-style: italic; letter-spacing: 0.3px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .wtitle__stats { display: flex; flex-wrap: wrap; gap: 2px 8px; margin: 5px 0 6px;
+    font-size: 10px; color: var(--moon-dim); }
+  .wtitle__stats .st { display: inline-flex; align-items: center; gap: 4px; }
+  .wtitle__stats .st i { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+  /* v3.13.2 — THE GARDEN BAND: the mini garden holds the world's stone in
+     FULL GLORY (the opaque profile-card icon, glowing on a moss bed) in the
+     band's left 25%; the ringfort lore rides to its right */
+  .wtitle__band { display: flex; gap: 10px; align-items: stretch; }
+  .wtitle__garden {
+    flex: 0 0 25%; min-height: 48px; position: relative;
+    border: 1px solid rgba(138,163,86,.26); border-radius: 8px; overflow: hidden;
+    background:
+      radial-gradient(46% 34% at 74% 8%, rgba(176,196,201,.10), transparent 70%),
+      radial-gradient(90% 80% at 50% 105%, rgba(74,93,35,.45), rgba(10,16,20,.92) 78%);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .wtitle__garden .ground { position: absolute; left: 10%; right: 10%; bottom: 5px; height: 9px;
+    border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+    background: linear-gradient(180deg, rgba(138,163,86,.5), rgba(74,93,35,.1)); filter: blur(.4px); }
+  .wtitle__stone { position: relative; width: 32px; height: 32px; object-fit: contain;
+    filter: drop-shadow(0 0 1px rgba(0,0,0,.95)) drop-shadow(0 0 7px rgba(21,184,166,.55)); }
+  .wtitle__lore { flex: 1; margin: 0; font-size: 10px; line-height: 1.45;
+    color: var(--moon-dim); font-style: italic;
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+    overflow: hidden; }
+  .wtitle__kin { display: flex; flex-wrap: wrap; gap: 4px 5px; margin-top: 5px; }
+  .wtitle__kin a { pointer-events: auto; font: inherit; font-size: 9.5px;
+    color: var(--moon-dim); background: none; border: 1px solid var(--panel-bd);
+    border-radius: 999px; padding: 1px 8px; cursor: pointer; text-decoration: none;
+    max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .wtitle__kin a::before { content: "\21B3 "; color: var(--teal); }
+  .wtitle__kin a:hover { border-color: var(--teal); color: var(--teal); }
+  .wtitle__kin a:focus-visible { outline: 1px solid var(--teal); outline-offset: 1px; }
+
   .scene {
     position: relative;
     flex: 1 1 auto;
@@ -191,7 +424,13 @@
     -webkit-mask-image: linear-gradient(180deg, #000 90%, transparent 100%);
             mask-image: linear-gradient(180deg, #000 90%, transparent 100%);
   }
-  body[data-mode="compact"] .scene__backdrop { object-fit: fill; }  /* painting box == scene box */
+  /* v3.12 (round 20) — COMPACT NEVER DISTORTS THE PAINTING: the fill
+     override is STRUCK. Decree: "compact mode should not affect the tree
+     display, it seems to change aspect ratio or something; compact should
+     only change the density of information displayed on the tree and in
+     the title". Both modes render the painting object-fit: cover,
+     LEFT-anchored — compact's narrower panel simply crops more of the
+     painting's right side, never stretching it. */
   /* static layer: lanterns/fruit/labels stay pinned to the painting */
   .scene__inner {
     position: absolute; top: 0; left: 0; width: 100%; z-index: 2;
@@ -235,87 +474,102 @@
   }
   .vine--bare { stroke: var(--moon-dim); stroke-dasharray: 2 5; opacity: .4; filter: none; }
 
-  /* lanterns — namespace nodes, seated on the PAINTED lanterns. v3: the
-     frosted-glass BUBBLES are struck (as #39 struck them from the shipped
-     tree): a transparent hit area carrying the world's icon, no disc, no
-     stem — the painted lantern itself is the node; the active world's
-     lantern brightens with a screen-blended glow that only adds light. */
+  /* lanterns — namespace nodes, seated on the PAINTED lanterns (v3.10).
+     THE SPIRIT-HOLDER MODEL (#90 parity + decree round 6): the painted
+     lantern itself is the node — the button is a fully transparent hit
+     area carrying the world's icon, NO disc, NO border, NO circle. All
+     light (veil, glow, outline ring) is painted by the .lshapes SVG, each
+     shape tracing the lantern's own teardrop silhouette. */
   .lantern {
     position: absolute; transform: translate(-50%, -50%);
     z-index: 6;
     width: 52px; height: 52px;
-    border: 1px solid rgba(176, 196, 201, 0.22);
-    border-radius: 50%;
-    /* v3.8 — the STONE: a visible seat OVERLAYING its painted lantern —
-       dark slate by default; the active world's stone opens (translucent,
-       teal ring) while every other stone dims */
-    background:
-      radial-gradient(circle at 38% 30%, rgba(58, 74, 80, 0.92), rgba(15, 21, 26, 0.96) 58%, rgba(7, 11, 14, 0.99) 82%);
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.08), 0 0 12px var(--lg);
+    border: none; background: transparent; padding: 0;
     display: flex; align-items: center; justify-content: center;
     font-size: 23px;
     cursor: pointer;
-    --lg: rgba(176, 196, 201, 0.30);       /* moon — an empty world */
-    --lg-light: rgba(255, 226, 168, 0.62); /* the painted flame, lit */
-    transition: scale .2s, box-shadow .2s, border-color .2s, background .2s;
   }
-  /* the painted lantern's light — a screen blend BRIGHTENS the painting
-     beneath (never covers it); invisible until hovered/selected */
-  .lantern::before {
-    content: ""; position: absolute; inset: -12px; border-radius: 50%;
-    background: radial-gradient(circle, var(--lg-light) 0%, var(--lg) 40%, transparent 70%);
-    mix-blend-mode: screen;
-    opacity: 0; transition: opacity .2s;
-    pointer-events: none;
-  }
-  .lantern:hover::before, .lantern:focus-visible::before { opacity: .55; }
-  .lantern.is-active { z-index: 7; --lg: rgba(21, 184, 166, 0.55); border-color: var(--teal);
-    background:
-      radial-gradient(circle at 38% 30%, rgba(70, 92, 98, 0.55), rgba(15, 21, 26, 0.8) 58%, rgba(7, 11, 14, 0.95) 82%); }
-  .lantern.is-active::before, .lantern.is-active:hover::before { opacity: 1; }
-  .lantern--failed:not(.is-active) { --lg: rgba(224, 122, 63, 0.42); }
-  .lantern--ok:not(.is-active)     { --lg: rgba(121, 179, 86, 0.36); }
-  /* the curated icon, seated in the painted lantern: a dark outline +
-     tinted halo keep it legible on the painting without any disc behind it */
+  .lantern.is-full { z-index: 8; }
+  /* the curated icon floats on the painted lantern — the lantern is the
+     holder of the namespace's spirit */
   .lantern__ic {
-    position: relative; /* above the ::before light */
+    position: relative;
     width: 30px; height: 30px;
-    opacity: .85;
-    filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.95)) drop-shadow(0 0 4px var(--lg));
+    opacity: .9;
+    filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.95));
     transition: opacity .2s, scale .2s, filter .2s;
     pointer-events: none;
   }
   .lantern__ic-fb { font-size: 23px; line-height: 1; }
   .lantern:hover .lantern__ic,
   .lantern:focus-visible .lantern__ic { opacity: 1; }
-  .lantern.is-active .lantern__ic {
-    opacity: 1; scale: 1.15;
-    filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.95)) drop-shadow(0 0 7px rgba(21, 184, 166, 0.55));
+  .lantern.is-full .lantern__ic {
+    opacity: 1; scale: 1.18;
+    border-radius: 14%;   /* round 11: the opaque stone tile reads carved, not pasted */
+    filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.95)) drop-shadow(0 0 7px rgba(21, 184, 166, 0.65));
   }
-  .lantern.is-dim .lantern__ic { opacity: .5; filter: drop-shadow(0 0 1px rgba(0,0,0,.95)) saturate(.5); }
-  /* v3.9 — inactive stones FADE INTO THE BACKGROUND: nearly transparent,
-     ghost icon, no rim, no shadow — the painted lantern shows through and
-     the stone reads as part of the painting. They also drop in z-order so
-     the active stone (and any work passing by) paints above them; the
-     active stone alone stands out. */
-  .lantern.is-inactive {
-    z-index: 4;
-    border-color: transparent;
-    background: radial-gradient(circle at 38% 30%, rgba(10, 16, 20, 0.14), rgba(7, 11, 14, 0.34) 72%);
-    box-shadow: none;
-    scale: .85;
-    opacity: .5;
+  .lantern.is-mid .lantern__ic { opacity: .88; }
+  /* v3.15 (round 23): an EMPTY world's stone reads one tier dimmer than a
+     task-bearing one — .65 + desaturated, matching its 50% lantern rung */
+  .lantern.is-empty .lantern__ic { opacity: .65; filter: saturate(.7); }
+  .lantern.is-dim .lantern__ic { opacity: .45; filter: drop-shadow(0 0 1px rgba(0,0,0,.95)) saturate(.5); }
+
+  /* v3.10 — LANTERN-SHAPED LIGHT STATES. One SVG (.lshapes) under the
+     buttons, one <g class="lseat"> per painted lantern seat, each holding
+     three stacked copies of LANTERN_PATH (the traced teardrop):
+       .lseat__veil  dark veil, multiply blend — dims the painted lantern
+       .lseat__glow  cool moonlit light, screen blend — lights it
+       .lseat__ring  the teal outline, drawn only on the FULL state
+     FOUR states — v3.15 (round 23), THE FOUR-TIER DIM LADDER. Decree:
+     "75% dead, no namespace attached / 50% alive no tasks / 25% alive
+     with tasks, deactivated / 0% activated, alive with tasks and
+     actively displaying job list" — the veil opacity IS the decree's
+     dim %, one monotonic ladder (stone follows via .lantern.is-empty):
+       off   — no namespace seated there: veil .75 + halo veil .5
+       empty — namespace seated, ZERO tasks, not selected: veil .50,
+               no glow (v3.15: split out of mid, NEW tier)
+       mid   — namespace seated WITH tasks, list collapsed/deactivated:
+               veil .25 + its soft glow — brighter than empty
+               (hover lifts it toward full)
+       full  — the clicked world, its task list showing: veil 0, fully
+               lit + teal outline traced around the lantern, brighter
+               than everything */
+  .lshapes { position: absolute; left: 0; top: 0; z-index: 5; pointer-events: none; }
+  .lseat__veil, .lseat__glow, .lseat__ring, .lseat__halo { transition: opacity .25s; }
+  .lseat__veil { fill: #04070a; mix-blend-mode: multiply; opacity: .93; }
+  /* the OFF state needs more than the core veil — the painted HALO glows
+     well past the lantern body, so a second wider lantern-shaped veil
+     (heavily blurred, multiply) darkens the whole glow pool. Without it
+     an unseated lantern reads "dimmed", not "off" (decree round 7). */
+  .lseat__halo { fill: #04070a; mix-blend-mode: multiply; opacity: 0; }
+  .lseat__glow { fill: url(#lglowg); mix-blend-mode: screen; opacity: 0; }
+  .lseat__ring { fill: none; stroke: transparent; stroke-width: 2.4; }
+  /* v3.10.2 (decree round 8): OFF was TOO dark — "the dimmed lanterns are
+     too dark, ensure the outline of the lantern remains visible, maybe
+     75%". Veils now sit at 75% strength so the painted silhouette stays
+     legible as a dark unlit lantern, not a void.
+     v3.15 (round 23) — THE FOUR-TIER DIM LADDER: the veil opacity IS the
+     decree's dim %. off .75 (+ halo .5) · empty .50 · mid .25 (+ glow) ·
+     full 0. One monotonic rung per light state so dead / empty-but-seated /
+     task-bearing-but-deactivated / active are never confusable. */
+  .lseat--off  .lseat__veil { opacity: .75; }
+  .lseat--off  .lseat__halo { opacity: .5; }
+  .lseat--off  .lseat__glow { opacity: 0; }
+  .lseat--empty .lseat__veil { opacity: .5; }   /* seated, ZERO tasks — 50% dim */
+  .lseat--empty .lseat__halo { opacity: 0; }     /* alive — its halo glow stays lit */
+  .lseat--empty .lseat__glow { opacity: 0; }
+  .lseat--empty.is-hover .lseat__veil { opacity: .2; }  /* hover lifts, stays below mid */
+  .lseat--empty.is-hover .lseat__glow { opacity: .3; }
+  .lseat--mid  .lseat__veil { opacity: .25; }   /* with tasks, deactivated — 25% dim (was .34) */
+  .lseat--mid  .lseat__glow { opacity: .5; }
+  .lseat--mid.is-hover .lseat__veil { opacity: .12; }
+  .lseat--mid.is-hover .lseat__glow { opacity: .78; }
+  .lseat--full .lseat__veil { opacity: 0; }     /* 0% dim — actively displaying its job list */
+  .lseat--full .lseat__glow { opacity: 1; }
+  .lseat--full .lseat__ring {
+    stroke: var(--teal);
+    filter: drop-shadow(0 0 5px rgba(21, 184, 166, 0.8));
   }
-  .lantern.is-inactive .lantern__ic { opacity: .5; scale: .9;
-    filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.95)) saturate(.3) brightness(.65); }
-  .lantern.is-inactive:hover { opacity: .9; scale: .95; border-color: rgba(176, 196, 201, 0.2);
-    background: radial-gradient(circle at 38% 30%, rgba(58, 74, 80, 0.5), rgba(15, 21, 26, 0.8) 72%);
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.5), 0 0 12px var(--lg); }
-  .lantern.is-inactive:hover .lantern__ic { opacity: .9;
-    filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.95)); }
-  .lantern.is-inactive::before { opacity: 0; }
-  .lantern.is-inactive:hover::before { opacity: .25; }
-  .lantern.is-inactive.is-dim { opacity: .22; }
 
   /* job cards — full info on the vine, no popup needed */
   .jcard {
@@ -325,17 +579,19 @@
     background: linear-gradient(180deg, rgba(29,36,40,0.97), rgba(10,16,20,0.98));
     border: 1px solid rgba(214,236,240,0.26);
     border-radius: 10px;
-    padding: 6px 8px;
+    /* v3.11 (round 18) — PADDING FOR THE OVERLaid SIGIL: the status bubble
+       rides 13px onto the card's left edge (round 14), so the text block
+       now clears it — left padding 8→20px leaves a ~6px gap between the
+       bubble's rim and the title/details instead of colliding. */
+    padding: 6px 8px 6px 20px;
     cursor: pointer;
     box-shadow: 0 4px 10px rgba(0,0,0,0.5), 0 0 9px var(--card-glow, transparent);
     transition: border-color .18s, box-shadow .18s;
   }
-  .jcard::before {  /* stem to the vine */
-    content: ""; position: absolute; top: 50%; width: 12px; height: 1.6px;
-    background: var(--moss-lt); box-shadow: 0 0 3px rgba(138,163,86,0.6);
-  }
-  .jcard[data-side="right"]::before { left: -12px; }
-  .jcard[data-side="left"]::before  { right: -12px; }
+  /* v3.10.6 (round 14) — the STEM IS STRUCK: decree "remove the line
+     attaching the job to its agent's profile image". The card once drew a
+     12px moss stem (::before) to its vine anchor; the sigil bubble now
+     overlays the card's left edge itself, so no connecting line remains. */
   .jcard:hover { border-color: var(--teal);
     box-shadow: 0 0 0 1.5px var(--teal-glow), 0 4px 12px rgba(0,0,0,0.5); }
   .jcard.is-active { border-color: var(--teal);
@@ -346,11 +602,14 @@
   .jcard--failed   { --card-glow: rgba(224,122,63,0.4); border-color: rgba(224,122,63,0.5); }
   .jcard--pending  { opacity: 0.62; }
   .jcard--terminating { animation: tremble .5s ease-in-out infinite; }
-  /* v3 — the status sigil no longer sits inside the card: it pops down to
-     the vine ANCHOR alongside its job (the point where the card's stem
-     ties onto the strand), so the title box carries text only. */
+  /* v3 — the status sigil never sat inside the card: it popped down to the
+     vine ANCHOR alongside its job. v3.10.6 (round 14) — decree: "remove the
+     line attaching the job to its agent's profile image; overlay the
+     profile image slightly on top of the job box" — the stem is STRUCK and
+     the sigil bubble now sits ON the card's left edge (slightly overlapping,
+     z-above the card), bridging card and vine with no connecting line. */
   .anchor-ic {
-    position: absolute; transform: translate(-50%, -50%); z-index: 6;
+    position: absolute; transform: translate(-50%, -50%); z-index: 8;
     width: 18px; height: 18px;
     display: flex; align-items: center; justify-content: center;
     filter: drop-shadow(0 0 1px rgba(0,0,0,.95)) drop-shadow(0 0 5px var(--anc, rgba(176,196,201,.55)));
@@ -411,7 +670,9 @@
   .jcard__meta b { color: var(--moon); font-weight: 600; }
   .jcard.pop-in { animation: sprout .4s cubic-bezier(.2,1.3,.4,1) backwards; }
   .jcard.fall-out { animation: cardfall .9s ease-in forwards; pointer-events: none; }
-  body[data-mode="compact"] .jcard { width: 142px; padding: 3px 7px; }
+  /* v3.11 (round 18): compact clears its overlaid sigil too — 17px left
+     padding (bubble rim at 13px + 4px gap) on the one-line card */
+  body[data-mode="compact"] .jcard { width: 142px; padding: 3px 7px 3px 17px; }
   body[data-mode="compact"] .jcard__title { font-size: 9.5px; }
   body[data-mode="compact"] .jcard__meta { display: none; }
   body[data-mode="compact"] .jcard__acts { display: none; }
@@ -508,13 +769,16 @@
   .hud b { color: var(--moon); font-weight: 600; }
   .hud .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 4px; vertical-align: -1px; }
 
-  /* spores — the garden's drifting lights */
+  /* spores — the garden's drifting lights. v3.10.8 (round 16): the feed
+     starts PAUSED, so spores hold still too — they drift only while the
+     body carries .is-live (the live-growth button paints it). */
   .spores { position: absolute; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; }
   .spore {
     position: absolute; width: 3px; height: 3px; border-radius: 50%;
     background: var(--spore); box-shadow: 0 0 6px 1px rgba(255,204,102,0.8);
-    opacity: 0; animation: drift var(--dur) linear var(--delay) infinite;
+    opacity: 0; animation: none;
   }
+  body.is-live .spore { animation: drift var(--dur) linear var(--delay) infinite; }
   @keyframes drift {
     0%   { transform: translate(0, 105%); opacity: 0; }
     12%  { opacity: .9; }
@@ -536,6 +800,10 @@
          the standard tree shows, » while compact; aria-pressed = on.
        • two options stand: standard (full tree) + compact (dense tree);
          the old three-way width ladder collapses behind them.
+       • v3.12 (round 20): compact changes ONLY the information density
+         (panel width, lantern/icon size, one-line cards, pitch) — NEVER
+         the painting: no fill, no aspect-ratio change; the cover
+         LEFT-anchored crop is shared by both modes.
        • compact metrics: sidebar 320px, lantern 40px, icon 24px,
          vine pitch 34px (rows packed TIGHT). Cards squash to ONE
          line — title 9.5px + status dot ONLY: no session/issue/agent
@@ -563,6 +831,20 @@
     background: rgba(21, 184, 166, 0.16);
   }
   body[data-mode="compact"] .sidebar { width: 320px; }
+  /* v3.13 — compact changes the title box's DENSITY only (round 20 law:
+     never its geometry/the painting's aspect). v3.13.2: the garden band
+     shrinks in place — smaller stone, tighter lore clamp — the box must
+     stay above the top lanterns in the 320px panel too */
+  body[data-mode="compact"] .wtitle { padding: 6px 8px 6px; border-radius: 10px; }
+  body[data-mode="compact"] .wtitle__name { font-size: 12px; }
+  body[data-mode="compact"] .wtitle__state { font-size: 8.5px; }
+  body[data-mode="compact"] .wtitle__stats { gap: 2px 6px; margin: 4px 0 4px; font-size: 9px; }
+  body[data-mode="compact"] .wtitle__stats .st i { width: 5px; height: 5px; }
+  body[data-mode="compact"] .wtitle__garden { min-height: 44px; }
+  body[data-mode="compact"] .wtitle__stone { width: 26px; height: 26px; }
+  body[data-mode="compact"] .wtitle__lore { font-size: 8.5px; line-height: 1.4; -webkit-line-clamp: 3; }
+  body[data-mode="compact"] .wtitle__kin { gap: 3px 4px; margin-top: 4px; }
+  body[data-mode="compact"] .wtitle__kin a { font-size: 8.5px; padding: 1px 6px; }
 
   /* ══ log hall — tabbed session viewer ══ */
   .logviewer {
@@ -670,8 +952,8 @@
 
 <!-- ═══ prototype furniture ═══ -->
 <div class="deck">
-  <span class="deck__title"><b>ᛟ</b> Odin's Throne — tree display redesign · issue #7 prototype · <b>v3.9.2</b></span>
-  <span class="deck__note">stones overlay the eleven painted lanterns — one seat per lantern, a max of 11 active namespaces; the active world's stone opens (teal ring) while every other stone fades into the background, z-below the active one · the whole scene scrolls together, the task list always attached to its lantern · vine curls out to the branch rail at 44% · icons pop down to vine anchors · «/» compact toggle — one-line cards, no clasps</span>
+  <span class="deck__title"><b>ᛟ</b> Odin's Throne — tree display redesign · issue #7 prototype · <b>v3.15</b></span>
+  <span class="deck__note">the lantern is the holder of the spirit — no discs, no circles; every veil, glow and outline traces the painted lantern's own teardrop silhouette (SVG) · four light states — the dim ladder 75/50/25/0 (round 23): OFF (no namespace seated — veiled dark, 75% dim) · EMPTY (namespace seated, no tasks — 50% dim) · MID (namespace with tasks, deactivated — 25% dim + soft glow) · FULL (clicked world, task list showing — 0% dim, fully lit + teal outline, brighter than everything) · hover lifts a seated lantern toward full · the whole scene scrolls together, vine out to the 44% rail · «/» compact toggle</span>
   <span class="deck__sep"></span>
   <div class="deck__group">
     <span class="deck__lbl">mode</span>
@@ -689,7 +971,7 @@
   </div>
   <span class="deck__sep"></span>
   <div class="deck__group">
-    <button class="btn" id="btn-live" aria-pressed="true">live growth: on</button>
+    <button class="btn" id="btn-live" aria-pressed="false">live growth: off</button>
     <button class="btn" id="btn-map" aria-pressed="false">show lantern mapping</button>
     <button class="btn" id="btn-newworld">api: new world</button>
   </div>
@@ -717,6 +999,29 @@
           <div class="mapdbg" id="mapdbg" hidden></div>
         </div>
       </div>
+      <!-- v3.13 — the WORLD TITLE SECTION: the seated world's title and deeds
+           ride at the top of the painting (the green-outlined region on the
+           deployed panel). v3.13.2 (round 21): body per the decree — title on
+           top, per-state stats underneath, then the GARDEN BAND: the world's
+           stone in full glory in a moss-bed mini garden (left 25%) with the
+           ringfort lore to its right, kin entity links below (v3.14:
+           each opens the related entity's profile page on
+           www.shanaghy.com — never another namespace). Deactivation fades it
+           to 50% — never wiped — until the next world replaces it at full. -->
+      <div class="wtitle" id="wtitle" aria-live="polite">
+        <div class="wtitle__row">
+          <div class="wtitle__id">
+            <h2 class="wtitle__name" id="wtName">no world seated</h2>
+            <span class="wtitle__state" id="wtState">the throne rests — click a lantern</span>
+          </div>
+        </div>
+        <div class="wtitle__stats" id="wtStats"></div>
+        <div class="wtitle__band">
+          <div class="wtitle__garden"><span class="ground"></span><img class="wtitle__stone" id="wtStone" src="icons/unknown-stone.png" alt=""></div>
+          <p class="wtitle__lore" id="wtLore"></p>
+        </div>
+        <div class="wtitle__kin" id="wtKin"></div>
+      </div>
     </div>
 
     <div class="hud" id="hud"></div>
@@ -735,9 +1040,10 @@
   <div>
     <h4>what the tree means</h4>
     <ul>
-      <li><span class="k">world list</span> read live from the backend service API (/api/namespaces) — never hardcoded; lantern seats assigned by curated id, djb2-hashed for unknown worlds</li>
+      <li><span class="k">title section</span> the seated world rides at the top of the painting — big name header, stats with status sigils (tasks on the vine, agents, lantern seat), then the garden band: the world's stone in full glory in a moss-bed mini garden (left 25%) with its ringfort lore to the right, kin-links below that open the related entity's profile page on www.shanaghy.com (round 22) · a deactivated world fades the box to 50%, its deeds remain until the next world brightens it back</li>
+      <li><span class="k">world list</span> read live from the backend service API (/api/namespaces) — never hardcoded; lantern seats assigned by curated id, djb2-hashed for the rest · a namespace we don't recognize (a new service) carries the generic <b>?</b> stone — never a borrowed face</li>
       <li><span class="k">trunk</span> the painted moonlit tree of life — tall and narrow in the panel's left half, regenerated with /imagen (prompt committed in src/ui/assets/README.md)</li>
-      <li><span class="k">stone</span> one namespace (a world) — a stone overlaying a painted leaf-lantern, carrying its icon; the active world's stone opens (teal ring), all others fade into the background (ghost icons over the painting) · eleven lanterns — a max of 11 active namespaces</li>
+      <li><span class="k">lantern</span> one namespace (a world) — its icon floats directly on a painted leaf-lantern, no disc around it; the lantern HOLDS the world's spirit · the FOUR-TIER DIM LADDER (veil opacity = the decree's dim %, round 23): <b>off</b> no namespace seated — 75% dim, veiled dark, outline stays legible · <b>empty</b> namespace seated with no tasks — 50% dim, its stone fades to .65 · <b>mid</b> namespace with tasks, deactivated — 25% dim + soft glow · <b>full</b> clicked world, task list showing — 0% dim, fully lit + teal outline traced around the lantern, brighter than everything · hover lifts a seated lantern toward full · eleven lanterns — a max of 11 active namespaces</li>
       <li><span class="k">berries</span> status counts — succeeded · running · failed; hidden on the open world (its work is on the vine)</li>
       <li><span class="k">vine</span> one world open at a time — its vine curls out to the branch rail at 44% and the job cards descend it as work grows; painting, stones and vine scroll as one, the list never detaching from its lantern</li>
       <li><span class="k">task pips</span> ONE row under a collapsed lantern's status counts, growing left→right in hang order (running → failed → pending → succeeded) like a progress bar, +N past 8 — expanding hides the whole cluster, the icons popping down to the vine anchors</li>
@@ -803,8 +1109,16 @@ function mkJob(id, session, title, agent, status, step) {
 }
 
 /* the repo's icon contract (namespaceIcons.ts): shanaghy.com icon library,
-   curated per world, with inline-glyph fallbacks when offline (TreeIcon) */
-const ICON_BASE = "https://www.shanaghy.com/assets/icons/";
+   curated per world, with inline-glyph fallbacks when offline (TreeIcon).
+   v3.10.3 (decree round 9): shanaghy.com is the SOURCE OF TRUTH but the
+   prototype must be SELF-CONTAINED and STATIC — the icons/ folder beside
+   this file is a downloaded copy of the site's TRANSPARENT set
+   (/assets/icons/overlay/*.png — the profile-card set at /assets/icons/
+   is opaque, per decree 2026-11-04: transparent for overlays, opaque for
+   cards). The four task icons (hammer/dice/ring/scroll) have no
+   transparent variant on the site yet — cut to transparency locally from
+   the live opaque ones. Re-download from the site to refresh. */
+const ICON_BASE = "icons/";
 const TASK_ICON = { running: "hammer.png", pending: "dice.png", succeeded: "ring.png", failed: "raven.png" };
 const TASK_ICON_FB = { running: "⚒", pending: "⏳", succeeded: "✔", failed: "✖" };
 function iconImg(src, fb, cls) {
@@ -859,15 +1173,17 @@ const SEED_JOBS = {
     mkJob("t1", "f-ok-1",   "Truth · the salmon swims the rapids",    "heimdall","succeeded",6),
     mkJob("t2", "f-run-1",  "Truth · diving for the ninth hazel nut", "loki",  "running",   1),
   ],
-  "re-goatmower-agents": [
-    mkJob("r1", "m-run-1",  "Mow · the west field calls",             "decko", "running",   2),
-    mkJob("r2", "m-ok-1",   "Mow · sharpening the scythe stones",      "freya", "succeeded", 6),
-    mkJob("r3", "m-pend-1", "Mow · oiling the reel",                  "luna",  "pending",   0),
-  ],
-  "odins-throne-plugin": [
-    mkJob("p1", "p-run-1",  "Plugin · the ravens roost",              "odin",  "running",   1),
-    mkJob("p2", "p-ok-1",   "Plugin · hlidskjalf's quiet hinge",      "heimdall", "succeeded", 6),
-  ],
+  /* v3.15 (round 23): re-goatmower-agents seats EMPTY at boot — its round-4
+     seed work is struck so the boot preview exhibits the 50% empty rung of
+     the four-tier dim ladder next to full (fenrir), mid (the other four)
+     and off (five unseated lanterns). Live growth / the sprout button still
+     seeds it — an empty world that gains work climbs the ladder to
+     mid/full, live. */
+  "re-goatmower-agents": [],
+  /* v3.11.1 (round 19): "Odin's Throne Plugin Agents" (odins-throne-plugin)
+     is STRUCK from the mock backend — decree: "? Odin's Throne Plugin
+     Agents shouldn't be in the prototype". Its seed jobs and namespace
+     entry are gone; its hashed lantern seat goes dark (OFF) at boot. */
 };
 
 /* ═══ the backend service API ═══
@@ -883,7 +1199,6 @@ const SERVICE = {
     { id: "mytruthfinder-agents",     label: "MyTruthFinder Agents" },
     { id: "shanaghy-com-agents",      label: "Shanaghy.com Agents" },
     { id: "re-goatmower-agents",      label: "Re-Goatmower Agents" },
-    { id: "odins-throne-plugin",      label: "Odin's Throne Plugin Agents" },
     { id: "odins-throne-hermes-agents", label: "Odins Throne Hermes Agents" },
   ],
 };
@@ -899,9 +1214,19 @@ function apiFetchSummaries(nsId) {
    (the tall /imagen backdrop is 896x1200): ELEVEN leaf-lanterns hang in the
    tree — one seat per painted lantern, accommodating a MAX of 11 active
    namespaces (the api stops adding worlds past eleven). projectSeat() maps
-   them into scene % per mode (cover-center crop in standard, fill in
-   compact) so the stones overlay the painted lanterns at ANY panel width.
-   Curated seats claim first; deterministic hash for the rest. */
+   them into scene % — the SAME cover LEFT-anchored crop in BOTH modes
+   (v3.12/round 20: no fill, no aspect change between modes) so the
+   stones overlay the painted lanterns at ANY panel width.
+   Curated seats claim first; deterministic hash for the rest.
+   v3.10.5 (round 13) — LANTERN_ANCHOR: the RECORDED EXACT COORDINATES of
+   each lantern's POPUP PIN — the right edge of the bulbous belly where
+   the job list's TOP-LEFT corner seats (decree: "popup with its top left
+   corner pinned to the right edge of its lantern at the bulbous part").
+   Derived: anchor = bright-spot centroid + belly half-width (22*(w/38)
+   path units scaled per-seat by LANTERN_SIZE) + 12px stem gap; y = belly
+   center (centroid + 3px). Painting-px provenance per seat in the
+   comments; stored in PAINTING % so projectSeat() carries them through
+   the cover crop identically to the seats, in both modes. */
 const SEAT_POOL = [
   { x: 40, y: 73 }, { x: 16, y: 69 }, { x: 46, y: 68 }, { x: 10, y: 64 },
   { x: 30, y: 55 }, { x: 37, y: 50 }, { x: 11, y: 50 }, { x: 18, y: 40 },
@@ -914,25 +1239,103 @@ const CURATED_SEATS = {
   "say-so-agents": 6,
   "re-goatmower-agents": 4,
 };
+/* v3.10.5 (round 13) — the RECORDED popup anchors: one per painted lantern,
+   in PAINTING % — the bulb's right edge where each world's job list pins
+   its TOP-LEFT corner. Provenance (painting px, from detect-lanterns.py
+   centroids + per-seat belly width + 12px stem gap, y = centroid + 3):
+     0:(391,883) 1:(179,836) 2:(438,821) 3:(122,777) 4:(298,665)
+     5:(362,598) 6:(133,599) 7:(193,488) 8:(239,363) 9:(390,445) 10:(456,396) */
+const LANTERN_ANCHOR = [
+  { x: 43.7, y: 73.5 }, { x: 20.0, y: 69.7 }, { x: 48.9, y: 68.4 },
+  { x: 13.6, y: 64.7 }, { x: 33.2, y: 55.4 }, { x: 40.4, y: 49.8 },
+  { x: 14.9, y: 49.9 }, { x: 21.5, y: 40.7 }, { x: 26.7, y: 30.2 },
+  { x: 43.5, y: 37.1 }, { x: 50.9, y: 33.0 },
+];
 /* djb2 — verbatim from the repo's namespaceIcons.ts */
 function hashKey(key) {
   let h = 5381;
   for (let i = 0; i < key.length; i++) h = ((h << 5) + h + key.charCodeAt(i)) | 0;
   return Math.abs(h);
 }
-/* namespace icon contract — verbatim from the repo's namespaceIcons.ts */
+/* namespace icon contract — verbatim from the repo's namespaceIcons.ts,
+   plus decree round 10: a namespace we don't recognize (a NEW service)
+   carries the GENERIC STONE — a carved "?" pebble (icons/unknown-stone.png)
+   — never a borrowed entity's face. Known-but-uncurated worlds are pinned
+   so their established stones never change. */
 const NAMESPACE_CURATED = {
   "fenrir-agents": "wolf-coins.png",
   "say-so-agents": "horn.png",
   "mytruthfinder-agents": "fionn-salmon.png",
   "shanaghy-com-agents": "webknot.png",
   "re-goatmower-agents": "mossiah.png",
+  "odins-throne-hermes-agents": "candle.png",
 };
-const ICON_POOL = ["raven.png","scroll.png","horn.png","moon.png","ring.png","hammer.png","cauldron.png","dice.png","octopi.png","wolf-coins.png","fianna-watch.png","fionn-salmon.png","gleipnir.png","moss-quiet.png","mossiah.png","moinin.png","sean-chai.png","hal9005.png","the-daykeeper.png","candle.png","smith-odin.png","forge-logo.png","webknot.png","backup-keeper.png","deco.png","zigbee2mqtt.png","cyclone-vacuum.png","front-doorbell.png"];
-function namespaceIcon(nsId) {
-  const curated = NAMESPACE_CURATED[nsId];
-  if (curated) return ICON_BASE + curated;
-  return ICON_BASE + ICON_POOL[hashKey(nsId) % ICON_POOL.length];
+const UNKNOWN_STONE = "unknown-stone.png";
+/* v3.13 — the TITLE SECTION's lore + kin. The API contract carries only
+   {id, label}; the lore of a KNOWN service rides beside it (the real
+   plugin ships this table with its icon set). An unrecognized world gets
+   the generic seanchaí line — never a borrowed story.
+   v3.14 (round 22) — KIN LINKS THE WORLD'S PEOPLE: decree "the title
+   box links to other namespaces in the plugin; it should link to
+   resources in www.shanaghy.com/profiles or other entities". Kin no
+   longer seats a namespace — each entry names an ENTITY of the realm
+   {slug, label, why} and renders a plain link to its profile page on
+   the live site (target _blank; the throne's selection is untouched). */
+const WORLDS_LORE = {
+  "fenrir-agents": {
+    lore: "the wolf's ledger — a ringfort of account-books, Loki's third cub chained to the enterprise since the beginning. Every coin the band moves passes along Fenrir's chain.",
+    kin: [
+      { slug: "fenrir", label: "Fenrir", why: "the wolf itself" },
+      { slug: "gleipnir", label: "Gleipnir", why: "the chain that binds it" },
+      { slug: "loki", label: "Loki", why: "father of the wolf" },
+    ],
+  },
+  "say-so-agents": {
+    lore: "the speaking ringfort — every say-so and utterance given a room of its own, where the sprites learn to speak before they sing.",
+    kin: [
+      { slug: "na-seanchai", label: "Na Seanchaithe", why: "the tellers it serves" },
+      { slug: "seanchan", label: "Seanchán", why: "the little teller it raised" },
+    ],
+  },
+  "mytruthfinder-agents": {
+    lore: "the salmon-pool ringfort — Fionn's salmon of knowledge, the truth-finder that cooks every catch of the net into a meal worth eating.",
+    kin: [
+      { slug: "fionn", label: "Fionn mac Cumhaill", why: "the truth-finder himself" },
+      { slug: "salmon-of-knowledge", label: "The Salmon of Knowledge", why: "the wisdom it cooks" },
+    ],
+  },
+  "shanaghy-com-agents": {
+    lore: "the seanchaí's ringfort — descended of the fox (Sionnach), the family storytellers; the living garden where every ballad hangs, each session a bed in the hub.",
+    kin: [
+      { slug: "na-seanchai", label: "Na Seanchaithe", why: "the tellers it descends from" },
+      { slug: "foxes-bow", label: "Foxes Bow", why: "the fox lost and found again" },
+    ],
+  },
+  "re-goatmower-agents": {
+    lore: "the west-field ringfort — the Mossiah's mower, the goat that grazes the overgrown again and again. What the goat grazed grows back; the pasture keeps its word.",
+    kin: [
+      { slug: "mossy", label: "Mossy", why: "the Mossiah who sends the goat" },
+      { slug: "mayo", label: "Mayo", why: "the ancestral bog it grazes" },
+    ],
+  },
+  "odins-throne-hermes-agents": {
+    lore: "the throne-hill ringfort — Hlidskjalf, the high seat from which the One-Eye watches all the worlds at once. This hall IS that throne; its agents keep the lanterns lit.",
+    kin: [
+      { slug: "odin", label: "Odin", why: "the All-Father on the seat" },
+      { slug: "heimdall", label: "heimdall", why: "the watchman on the wall" },
+    ],
+  },
+};
+const GENERIC_WORLD_LORE = "an uncharted ringfort — the seanchaí has not yet told its story";
+/* decree round 11: the stone ITSELF answers the light state — TRANSPARENT
+   while the world's task list is hidden (mid), OPAQUE (the profile-card
+   stone) once clicked and its tasks hang on the vine (full), transparent
+   again the moment it is deactivated. Both sets are local copies of the
+   shanaghy.com source of truth: icons/ = the transparent overlay set,
+   icons/opaque/ = the profile-card set. */
+function namespaceIcon(nsId, opaque) {
+  const name = NAMESPACE_CURATED[nsId] ?? UNKNOWN_STONE;
+  return (opaque ? "icons/opaque/" : ICON_BASE) + name;
 }
 /* worlds are BUILT from whatever the API returns — never a hardcoded list.
    Curated seats are claimed first so hashed worlds can never steal them. */
@@ -956,9 +1359,10 @@ function buildWorlds(namespaces) {
     const seat = SEAT_POOL[seatIdx];
     return {
       ...ns,
+      seatIdx,   // v3.10: drives the lantern-shaped light state of its painted seat
       lantern: seat,
       dir: 1,   // v3.6: every vine curls right to the branch rail — the trunk keeps the lanterns
-      glyph: "🌐",
+      glyph: "?",   // v3.10.3: the inline fallback mirrors the generic unknown stone
     };
   });
 }
@@ -970,12 +1374,14 @@ let state = {
   summariesLoaded: new Set(),
   expanded: new Set(),
   selectedWorld: null,
+  titleWorld: null,     // v3.13: the title box's world — survives deactivation (dims, never wiped)
   unavailable: new Set(),
   loading: false,      // summary fetch in flight for the selected world
-  live: true,
+  live: false,     // v3.10.8 (round 16): live growth ALWAYS starts OFF at first load — decree
   jobs: {},           // worldId -> [job] (arrive via the summary API)
   tabs: [],           // [{jobId, worldId}]
   activeTab: null,    // jobId
+  autoRestTimer: null,   // v3.10.7: the 2s empty-world rest (round 15)
   tick: 0,
 };
 
@@ -1008,39 +1414,88 @@ function summaryLine(s) {
 
 /* ═══ geometry — one vine per world: a curved strand that extends from the
    lantern, leaves hung along it in flat, evenly-spaced order. ═══ */
+/* v3.13 — the WORLD TITLE SECTION render. Content tracks the LAST world the
+   throne seated (state.titleWorld) so a deactivated world's name and deeds
+   survive its fade — the box dims to 50% and holds until the next world
+   replaces it, brightening back to full. Active = the one world whose vine
+   hangs open. A memo key skips rebuilds when nothing changed (hover-safe). */
+function renderWorldTitle() {
+  const box = $("#wtitle");
+  const activeId = [...(state.expanded)][0] ?? null;
+  if (activeId) state.titleWorld = activeId;
+  const id = state.titleWorld;
+  const w = id ? state.worlds.find(x => x.id === id) : null;
+  const s = w ? statsOf(id) : null;
+  const jobs = w ? (state.jobs[id] ?? []) : [];
+  const agents = new Set(jobs.map(j => j.agent)).size;
+  const key = [id, !!activeId, s && s.total, s && s.running, s && s.pending,
+                s && s.failed, s && s.succeeded, agents].join("|");
+  if (key === box.dataset.wtKey) { box.classList.toggle("is-live", !!activeId); return; }
+  box.dataset.wtKey = key;
+  box.classList.toggle("is-live", !!activeId);
+  const stone = $("#wtStone"), name = $("#wtName"), stateEl = $("#wtState");
+  const stats = $("#wtStats"), lore = $("#wtLore"), kin = $("#wtKin");
+  if (!w) {   /* nothing ever seated — the resting placeholder */
+    stone.src = namespaceIcon("__unknown__");
+    name.textContent = "no world seated";
+    stateEl.textContent = "the throne rests — click a lantern";
+    stats.innerHTML = ""; lore.textContent = ""; kin.innerHTML = "";
+    return;
+  }
+  stone.src = namespaceIcon(id, true);
+  name.textContent = w.label;
+  stateEl.textContent = activeId === id
+    ? "seated — its vine hangs open"
+    : "resting — its lantern dims, its deeds remain";
+  const st = (k, label) => `<span class="st"><i style="background:${STATUS_COLOR[k]}"></i>${s[k]} ${label}</span>`;
+  const bits = [`<span class="st"><i style="background:var(--moon)"></i>${s.total} on the vine</span>`];
+  if (s.running)   bits.push(st("running", "running"));
+  if (s.pending)   bits.push(st("pending", "pending"));
+  if (s.failed)    bits.push(st("failed", "failed"));
+  if (s.succeeded) bits.push(st("succeeded", "succeeded"));
+  if (agents)      bits.push(`<span class="st"><i style="background:var(--moon-dim)"></i>${agents} agents</span>`);
+  bits.push(`<span class="st"><i style="background:var(--panel-bd)"></i>lantern ${w.seatIdx + 1} of ${SEAT_POOL.length}</span>`);
+  stats.innerHTML = bits.join("");
+  const known = WORLDS_LORE[id] ?? null;
+  lore.textContent = known ? known.lore : GENERIC_WORLD_LORE;
+  /* v3.14 (round 22) — kin pills are plain links to the entity's profile
+     page on the live site; no selectWorld jump, no listener needed
+     (`a` is already exempt from the dead-space rest). */
+  kin.innerHTML = ((known && known.kin) ?? []).map(r =>
+    `<a href="https://www.shanaghy.com/profiles/${r.slug}/" target="_blank" rel="noopener"
+      title="${r.label} — ${r.why}">${r.label}</a>`).join("");
+}
+
 function px(p) { // % → px inside the scene
   const W = scene.clientWidth, H = scene.clientHeight;
   return { x: p.x / 100 * W, y: p.y / 100 * H };
 }
-function bez4(t, P0, C1, C2, P3) {
-  const u = 1 - t;
-  return {
-    x: u*u*u*P0.x + 3*u*u*t*C1.x + 3*u*t*t*C2.x + t*t*t*P3.x,
-    y: u*u*u*P0.y + 3*u*u*t*C1.y + 3*u*t*t*C2.y + t*t*t*P3.y,
-  };
-}
 function vineFor(w, n) {
   const L = px(w.pos || projectSeat(w.lantern));   /* v3.7: the projected seat */
-  const dir = w.dir || 1;
   const pitch = state.mode === "compact" ? 34 : 57;   // px between card centers (compact packs rows tight)
-  const arc = n <= 1 ? 54 : 40 + (n - 1) * pitch;    // the vine extends with the job count
-  /* v3.6 — vertical tree: the vine curls out from the trunk lantern to the
-     BRANCH RAIL (a fixed vertical line at 44% of the scene) and descends
-     it — cards stack downward through the right half, never crowding the
-     lanterns climbing the trunk. */
-  const railX = scene.clientWidth * 0.44;
-  const J  = { x: railX, y: L.y + 36 };                        // the join on the rail
-  const C1 = { x: railX, y: L.y + 14 };
-  const D1 = { x: railX, y: J.y + arc * 0.34 };
-  const D2 = { x: railX + 10 * dir, y: J.y + arc * 0.68 };
-  const P3 = { x: railX + 6 * dir, y: J.y + arc };
-  const d = `M${L.x.toFixed(1)},${L.y.toFixed(1)} C${C1.x.toFixed(1)},${C1.y.toFixed(1)} ${railX.toFixed(1)},${(J.y - 16).toFixed(1)} ${J.x.toFixed(1)},${J.y.toFixed(1)} C${D1.x.toFixed(1)},${D1.y.toFixed(1)} ${D2.x.toFixed(1)},${D2.y.toFixed(1)} ${P3.x.toFixed(1)},${P3.y.toFixed(1)}`;
+  /* v3.10.5 (round 13) — THE LIST PINS TO ITS LANTERN'S BULB: decree
+     "the jobs list pops up with its top left corner pinned to the right
+     edge of its lantern at the bulbous part — record the exact
+     coordinates for each lantern and apply on popup". Each seat's
+     RECORDED anchor (LANTERN_ANCHOR, painting % — provenance beside the
+     table) gives the popup pin; the vine emerges from the lantern, ties
+     onto the pin, and the cards hang straight down from there — the first
+     card's TOP-LEFT corner exactly at the pin. This replaces both the
+     fixed 44% branch rail (v3.6) and the level-with-lantern join (v3.10.4):
+     every list now seats at ITS OWN lantern's right edge, wherever that
+     lantern hangs. The stem clamp in the card placement still guards the
+     scene's right edge for the rightmost seats. */
+  const A = px(projectSeat(LANTERN_ANCHOR[w.seatIdx]));   // the popup pin — bulb right edge
+  const ch = state.mode === "compact" ? 20 : 47;           // card height, MEASURED (standard 47; compact one-line 20)
+  const column = A.x - 14;                                 // the vine descends here; card stems tie on
+  const firstY = A.y + ch / 2;                             // first card CENTER — its TOP sits at the pin
+  const lastY = n > 0 ? firstY + (n - 1) * pitch : A.y + 46;
+  const d = `M${L.x.toFixed(1)},${L.y.toFixed(1)} `
+    + `C${((L.x + A.x) / 2).toFixed(1)},${(L.y - 10).toFixed(1)} ${(column - 4).toFixed(1)},${(A.y - 14).toFixed(1)} ${column.toFixed(1)},${A.y.toFixed(1)} `
+    + `L${column.toFixed(1)},${lastY.toFixed(1)}`;
   const pts = [];
-  for (let i = 0; i < n; i++) {
-    const t = n === 1 ? 0.5 : 0.05 + 0.93 * (i / (n - 1));
-    pts.push(bez4(t, J, D1, D2, P3));
-  }
-  return { d, pts, bottom: P3.y };
+  for (let i = 0; i < n; i++) pts.push({ x: column, y: firstY + i * pitch });
+  return { d, pts, bottom: lastY };
 }
 /* leaf order: live work first, embers next, unhatched, then the quiet green */
 const STATUS_ORDER = { running: 0, terminating: 0, failed: 1, pending: 2, succeeded: 3 };
@@ -1050,13 +1505,14 @@ function orderedJobs(worldId) {
 }
 /* v3.7 — seat projection: SEAT_POOL is in PAINTING %; the interactive
    lanterns must land on the painted leaf-lanterns at any panel width.
-   Standard renders the painting object-fit: cover, LEFT-anchored
+   BOTH modes render the painting object-fit: cover, LEFT-anchored
    (v3.9.1: object-position 0% 50% + fl = 0 — a center crop pushed the
-   low-x seats OFF-PANEL in narrow scenes); compact
-   renders object-fit: fill (the painting IS the scene box, so painting %
-   pass through unchanged). */
+   low-x seats OFF-PANEL in narrow scenes). v3.12 (round 20): compact's
+   fill fast-path is STRUCK — the aspect ratio never changes between
+   modes, so both run the same cover crop (clientWidth is live, so the
+   math already tracks compact's narrower panel); compact changes ONLY
+   the information density, never the painting. */
 function projectSeat(p) {
-  if (state.mode === "compact") return { x: p.x, y: p.y };
   const W = scene.clientWidth, H = scene.clientHeight;
   const k = Math.max(W / 896, H / 1200);
   const dw = 896 * k, dh = 1200 * k;
@@ -1067,6 +1523,7 @@ function projectSeat(p) {
 /* ═══ rendering ═══ */
 function renderScene() {
   const animate = state.animate; state.animate = false;
+  renderWorldTitle();   // v3.13 — the title box brightens/dims with the seat
   overlay.innerHTML = "";                       // stones/fruit/labels/notes rebuild
   shootsSvg.innerHTML = "";                     // the vine redraws
   canvas.querySelectorAll(".jcard, .anchor-ic").forEach(el => el.remove());
@@ -1081,6 +1538,75 @@ function renderScene() {
   const mode = state.mode;
   let canvasH = 0;
 
+  /* v3.10 — the LANTERN-SHAPED LIGHT layer: one SVG under the buttons,
+     one <g class="lseat"> per PAINTED lantern (all eleven — seated or not),
+     each holding three stacked copies of LANTERN_PATH, the teardrop
+     silhouette traced off the backdrop's bright cores (54x83 core,
+     ~62x111 with neck/cap and drop tip, in painting px). The veil
+     (multiply) dims an unseated lantern; the glow (screen) lights a
+     seated one; the ring outlines the FULL state. */
+  const LANTERN_PATH = "M0,-42 C4,-42 6,-40 6,-37 C6,-35 5,-33 4,-31 C11,-28 19,-20 21,-11 "
+    + "C22,-4 22,7 19,18 C16,27 10,35 6,39 C4,41 2,42 0,42 C-2,42 -4,41 -6,39 "
+    + "C-10,35 -16,27 -19,18 C-22,7 -22,-4 -21,-11 C-19,-20 -11,-28 -4,-31 "
+    + "C-5,-33 -6,-35 -6,-37 C-6,-40 -4,-42 0,-42 Z";
+  /* per-seat measured lantern sizes (painting px, bright-core w/h from the
+     repo's scripts/detect-lanterns.py on the CURRENT backdrop, mapped to
+     SEAT_POOL index order) — each veil/glow/ring scales to its own lantern */
+  const LANTERN_SIZE = [
+    { w: 40, h: 79 }, { w: 38, h: 74 }, { w: 32, h: 68 }, { w: 31, h: 66 },
+    { w: 34, h: 68 }, { w: 39, h: 76 }, { w: 35, h: 71 }, { w: 36, h: 71 },
+    { w: 38, h: 71 }, { w: 40, h: 76 }, { w: 34, h: 70 },
+  ];
+  const svgNS = "http://www.w3.org/2000/svg";
+  const lsvg = document.createElementNS(svgNS, "svg");
+  lsvg.setAttribute("class", "lshapes");
+  lsvg.setAttribute("width", scene.clientWidth);
+  lsvg.setAttribute("height", H0);
+  const kStd = Math.max(scene.clientWidth / 896, H0 / 1200);
+  /* v3.12 (round 20): the lantern shapes trace the painting's own pixels —
+     ONE cover projection for both modes (compact's fill branch is struck,
+     same as projectSeat). The tree never changes aspect between modes. */
+  const KS = { x: kStd, y: kStd };
+  let lseats = "";
+  SEAT_POOL.forEach((seat, i) => {
+    const w = state.worlds.find(x => x.seatIdx === i);
+    /* v3.15 (round 23) — THE FOUR-TIER DIM LADDER: the veil opacity is the
+       decree's dim %. off (no namespace seated) 75% · empty (seated, ZERO
+       tasks, not selected) 50% · mid (seated WITH tasks, deactivated) 25%
+       · full (selected + its job list showing) 0%. */
+    const st = !w ? "off"
+      : (state.selectedWorld === w.id && state.expanded.has(w.id)) ? "full"
+      : (statsOf(w.id).total > 0 ? "mid" : "empty");
+    const p = px(projectSeat(seat));
+    /* each seat's shape scales to its OWN measured lantern (base path is a
+       38x73-core teardrop; LANTERN_SIZE carries the per-lantern w/h) */
+    const mx = KS.x * (LANTERN_SIZE[i].w / 38), my = KS.y * (LANTERN_SIZE[i].h / 73);
+    lseats += `<g class="lseat lseat--${st}" data-seat="${i}" `
+      + `transform="translate(${p.x.toFixed(1)},${p.y.toFixed(1)}) scale(${mx.toFixed(4)},${my.toFixed(4)})">`
+      + `<use href="#ldrop" class="lseat__halo" filter="url(#lwide)" transform="scale(1.7)"/>`
+      + `<use href="#ldrop" class="lseat__veil" filter="url(#lsoft)" transform="scale(1.16)"/>`
+      + `<use href="#ldrop" class="lseat__glow" transform="scale(1.22)"/>`
+      + `<use href="#ldrop" class="lseat__ring" transform="scale(1.05)"/>`
+      + `</g>`;
+  });
+  lsvg.innerHTML = `<defs>`
+    + `<path id="ldrop" d="${LANTERN_PATH}"/>`
+    + `<filter id="lsoft" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="4"/></filter>`
+    + `<filter id="lwide" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="7"/></filter>`
+    + `<radialGradient id="lglowg" cx="50%" cy="55%" r="68%">`
+    + `<stop offset="0" stop-color="#eaf9ff" stop-opacity=".95"/>`
+    + `<stop offset=".5" stop-color="#a8dcec" stop-opacity=".5"/>`
+    + `<stop offset="1" stop-color="#a8dcec" stop-opacity="0"/>`
+    + `</radialGradient></defs>` + lseats;
+  overlay.appendChild(lsvg);
+
+  /* v3.10 — hover lifts a MID seat's light toward full (the button's own
+     listeners drive this; unseated lanterns have no button, no hover) */
+  function seatHover(seatIdx, on) {
+    const g = lsvg.querySelector(`.lseat[data-seat="${seatIdx}"]`);
+    if (g) g.classList.toggle("is-hover", on);
+  }
+
   for (const w of state.worlds) {
     const isActive = w.id === state.selectedWorld;
     const isExpanded = state.expanded.has(w.id);   // v3.4: compact shows the dense tree — expand works in every mode
@@ -1088,32 +1614,41 @@ function renderScene() {
     const isLoaded = state.summariesLoaded.has(w.id);
     const s = statsOf(w.id);
     const LP = projectSeat(w.lantern);   /* painting % -> scene % (v3.7) */
+    const isFull = isActive && isExpanded;   /* v3.10: FULL = clicked + the task list showing */
 
-    /* lantern — the namespace node */
+    /* lantern — the namespace node: a transparent hit target; the painted
+       lantern itself is the node (spirit-holder, v3.10) */
     const lantern = document.createElement("button");
+    /* v3.15: four-state light — the stone's own tier follows the ladder
+       (is-empty dims it to .65); off seats have no button at all */
+    const hasWork = statsOf(w.id).total > 0;
     lantern.className = "lantern"
-      + (isActive ? " is-active" : " is-inactive")   /* v3.8: dim every stone but the active world's */
-      + (isUnavail ? " is-dim" : "")
-      + (s.failed > 0 ? " lantern--failed" : (s.total && s.failed === 0 ? " lantern--ok" : ""));
+      + (isFull ? " is-full" : hasWork ? " is-mid" : " is-empty")
+      + (isUnavail ? " is-dim" : "");
     lantern.style.left = LP.x + "%"; lantern.style.top = LP.y + "%";
     lantern.setAttribute("role", "treeitem");
     lantern.setAttribute("aria-expanded", String(isExpanded));
     lantern.setAttribute("aria-selected", String(isActive));
     lantern.setAttribute("aria-label", `${w.label} — ${isUnavail ? "summary unavailable" : summaryLine(s)}`);
     lantern.dataset.world = w.id;
-    lantern.appendChild(iconImg(namespaceIcon(w.id), w.glyph, "lantern__ic"));
+    /* round 11: the stone answers the light — transparent at rest, opaque
+       while this world's task list hangs open on the vine */
+    lantern.appendChild(iconImg(namespaceIcon(w.id, isFull), w.glyph, "lantern__ic"));
     lantern.addEventListener("click", () => selectWorld(w.id));
-    lantern.addEventListener("mouseenter", () => showLabel(w.id, true));
-    lantern.addEventListener("focus", () => showLabel(w.id, true));
-    lantern.addEventListener("mouseleave", () => showLabel(w.id, false));
-    lantern.addEventListener("blur", () => showLabel(w.id, false));
+    lantern.addEventListener("mouseenter", () => { showLabel(w.id, true); seatHover(w.seatIdx, true); });
+    lantern.addEventListener("focus", () => { showLabel(w.id, true); seatHover(w.seatIdx, true); });
+    lantern.addEventListener("mouseleave", () => { showLabel(w.id, false); seatHover(w.seatIdx, false); });
+    lantern.addEventListener("blur", () => { showLabel(w.id, false); seatHover(w.seatIdx, false); });
     overlay.appendChild(lantern);
 
     /* v3.2 — status counts (the berries + numbers): COLLAPSED worlds only.
        An expanded world hides its ENTIRE indicator cluster — counts AND
        pip strip — because its jobs themselves hang on the vine; the open
-       lantern shows nothing but its icon (and glow). */
-    if (!isExpanded) {
+       lantern shows nothing but its icon (and glow).
+       v3.15 (round 23): an EMPTY world (zero tasks) shows no berries
+       either — three dead dots under a quiet lantern read as noise; the
+       bare 50%-dim lantern IS the empty signal. */
+    if (!isExpanded && s.total > 0) {
       const fruit = document.createElement("div");
       fruit.className = "fruit";
       fruit.style.left = LP.x + "%"; fruit.style.top = (LP.y + 4) + "%";
@@ -1241,7 +1776,10 @@ function renderScene() {
            card itself carries the status in its aria-label. */
         const anc = document.createElement("div");
         anc.className = `anchor-ic anchor-ic--${job.status}`;
-        anc.style.left = pos.x + "px"; anc.style.top = pos.y + "px";
+        /* v3.10.6 (round 14): the sigil bubble overlays the CARD's left edge
+           (4px onto the box, z-above it) instead of seating on the vine with
+           a stem — follows the card even when the right-edge clamp shifts it */
+        anc.style.left = (left + 4) + "px"; anc.style.top = pos.y + "px";
         anc.setAttribute("aria-hidden", "true");
         if (animate) { anc.classList.add("pop-in"); anc.style.animationDelay = (60 + i * 50) + "ms"; }
         anc.appendChild(iconImg(ICON_BASE + (TASK_ICON[job.status] || "scroll.png"), TASK_ICON_FB[job.status] || "▪", "anchor-ic__img"));
@@ -1316,7 +1854,41 @@ function renderHud() {
    the same lantern tree, denser, straight from renderScene(). */
 
 /* ═══ selection — one world's vine open at a time; click toggles ═══ */
+
+/* v3.10.7 (round 15) — THE EMPTY WORLD GIVES UP ITS SEAT: decree "when a
+   namespace is selected that has no tasks, its selection should be
+   deactivated after 2 seconds for ux clarity". Arming happens the moment
+   the world is known empty (summary already loaded, or once its fetch
+   lands empty); the FULL state (lit + outlined + opaque stone + bare
+   vine) holds for exactly 2s, then the selection rests on its own —
+   lantern back to its EMPTY resting light (v3.15: a taskless world
+   rests at the 50% rung, not mid), vine retracted, nothing selected.
+   Any new click cancels the pending rest, and work arriving inside
+   the window (a sprouted job) keeps the seat. */
+function armEmptyWorldRest(id) {
+  clearTimeout(state.autoRestTimer);
+  state.autoRestTimer = null;
+  if ((state.jobs[id] ?? []).length > 0) return;   // work present — keep the seat
+  state.autoRestTimer = setTimeout(() => {
+    state.autoRestTimer = null;
+    const stillEmpty = (state.jobs[id] ?? []).length === 0;
+    if (stillEmpty && state.selectedWorld === id && state.expanded.has(id)) {
+      const w = state.worlds.find(x => x.id === id);
+      state.selectedWorld = null;
+      state.expanded = new Set();
+      renderScene();
+      setLogviewerHome({
+        head: w ? w.label : "no tasks",
+        note: "this world holds no work — its lantern rests",
+        status: "quiet",
+      });
+    }
+  }, 2000);
+}
+
 function selectWorld(id) {
+  clearTimeout(state.autoRestTimer);        // any new click cancels a pending rest
+  state.autoRestTimer = null;
   state.selectedWorld = id;
   if (state.expanded.has(id)) {
     state.expanded = new Set();               // collapse — nothing is open
@@ -1334,7 +1906,10 @@ function selectWorld(id) {
         state.summariesLoaded.add(id);
         state.animate = true;
         renderScene();
+        if (state.selectedWorld === id && state.expanded.has(id)) armEmptyWorldRest(id);
       });
+    } else {
+      armEmptyWorldRest(id);   // already loaded — rest now if the world is empty
     }
   }
   const s = statsOf(id);
@@ -1561,6 +2136,7 @@ $("#btn-newworld").addEventListener("click", () => {
 });
 $("#btn-live").addEventListener("click", (e) => {
   state.live = !state.live;
+  document.body.classList.toggle("is-live", state.live);   // spores drift only while live (round 16)
   e.currentTarget.setAttribute("aria-pressed", String(state.live));
   e.currentTarget.textContent = "live growth: " + (state.live ? "on" : "off");
   renderHud();
@@ -1602,6 +2178,31 @@ setInterval(() => {
   if (state.activeTab) renderLog(state.activeTab, true); // live tabs stream
   renderScene();
 }, 2600);
+
+/* ═══ dead space — round 17: a click on nothing rests the selection ═══
+
+   Decree: "when the user clicks in dead space the currently active
+   lantern should deactivate". Dead space = anywhere in the tree panel's
+   scroller that is NOT an interactive element (lantern stone, job card,
+   card clasp, status sigil, cluster, branch note, any button). Clicking
+   there collapses the open vine immediately — same resting state the
+   2-second empty-world rule lands on — and clears any pending rest timer
+   (the selection is already gone; nothing left to fire). */
+$("#scroller").addEventListener("click", (e) => {
+  if (e.target.closest(".lantern, .jcard, .jact, .anchor-ic, .cluster, .branch-note, button, a, [role='button']")) return;
+  if (!state.selectedWorld && state.expanded.size === 0) return;   // nothing to rest
+  clearTimeout(state.autoRestTimer);
+  state.autoRestTimer = null;
+  const w = state.worlds.find(x => x.id === state.selectedWorld);
+  state.selectedWorld = null;
+  state.expanded = new Set();
+  renderScene();
+  setLogviewerHome({
+    head: w ? w.label : "hliðskjálf",
+    note: "the lantern rests — click a world to open its work",
+    status: "quiet",
+  });
+});
 
 /* ═══ spores ═══ */
 (function spores() {
