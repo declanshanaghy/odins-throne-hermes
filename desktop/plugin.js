@@ -2611,6 +2611,41 @@ var styles_default = `.odins-throne-root .odins-throne-root {
   color: var(--text-rune);
   margin: 0.2rem 0;
 }
+.odins-throne-root .decree-card-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.odins-throne-root .decree-card-copy-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.4rem;
+  height: 1.4rem;
+  padding: 0;
+  background: transparent;
+  border: 1px solid var(--rune-border);
+  border-radius: 3px;
+  color: var(--text-void);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+  flex-shrink: 0;
+}
+.odins-throne-root .decree-card-copy-btn:hover { color: var(--gold); border-color: var(--gold); }
+.odins-throne-root .decree-card-copy-btn.copied { color: var(--teal-asgard); border-color: var(--teal-asgard); }
+.odins-throne-root[data-theme="light"] .decree-card-copy-btn { color: var(--text-rune); }
+.odins-throne-root .decree-card-format-badge {
+  font-size: 9px;
+  color: var(--text-void);
+  background: rgba(42, 42, 62, 0.6);
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-family: monospace;
+  letter-spacing: 0.5px;
+}
+.odins-throne-root[data-theme="light"] .decree-card-format-badge { background: rgba(100, 80, 45, 0.12); }
 @media (max-width: 600px) {
   .odins-throne-root .decree-card-avatar { width: 30px; height: 30px; }
   .odins-throne-root .decree-card-verdict-value { font-size: 0.75rem; }
@@ -5107,6 +5142,38 @@ function useTheme() {
 
 // src/ui/components/DecreeBlock.tsx
 import { Fragment as Fragment2, jsx as jsx5, jsxs as jsxs5 } from "react/jsx-runtime";
+function ClipboardIcon() {
+  return /* @__PURE__ */ jsxs5("svg", { width: "12", height: "12", viewBox: "0 0 12 12", fill: "none", "aria-hidden": "true", children: [
+    /* @__PURE__ */ jsx5("rect", { x: "4", y: "1", width: "6", height: "8", rx: "1", stroke: "currentColor", strokeWidth: "1.2", fill: "none" }),
+    /* @__PURE__ */ jsx5("path", { d: "M2 3h2M2 3v7a1 1 0 001 1h5", stroke: "currentColor", strokeWidth: "1.2", strokeLinecap: "round" })
+  ] });
+}
+function CheckIcon() {
+  return /* @__PURE__ */ jsx5("svg", { width: "12", height: "12", viewBox: "0 0 12 12", fill: "none", "aria-hidden": "true", children: /* @__PURE__ */ jsx5("path", { d: "M2 6l3 3 5-5", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" }) });
+}
+function CopyDecreeButton({ text }) {
+  const [copied, setCopied] = useState2(false);
+  async function handleCopy() {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => {
+        setCopied(false);
+      }, 2e3);
+    } catch {
+    }
+  }
+  return /* @__PURE__ */ jsx5(
+    "button",
+    {
+      className: `decree-card-copy-btn${copied ? " copied" : ""}`,
+      onClick: handleCopy,
+      title: copied ? "Copied!" : "Copy decree text",
+      "aria-label": copied ? "Decree text copied" : "Copy decree text",
+      children: copied ? /* @__PURE__ */ jsx5(CheckIcon, {}) : /* @__PURE__ */ jsx5(ClipboardIcon, {})
+    }
+  );
+}
 var DECREE_START_RE = /᛭᛭᛭\s*DECREE COMPLETE\s*᛭᛭᛭/;
 var DECREE_END_RE = /᛭᛭᛭\s*END DECREE\s*᛭᛭᛭/;
 function isDecreeBlock(text) {
@@ -5293,30 +5360,10 @@ function DecreeBlock({ text, agentKey: jobAgentKey, onAvatarClick }) {
         style: {
           borderLeftColor: borderColor,
           borderLeftWidth: "3px",
-          animation: `${glowAnimation}, ${shakeAnimation}`,
-          position: "relative"
+          animation: `${glowAnimation}, ${shakeAnimation}`
         },
         "aria-label": `Decree from ${agentName}: verdict ${decree.verdict}`,
         children: [
-          isFallback && /* @__PURE__ */ jsx5(
-            "div",
-            {
-              style: {
-                position: "absolute",
-                top: "6px",
-                right: "8px",
-                fontSize: "9px",
-                color: "var(--text-void)",
-                background: theme === "light" ? "rgba(100, 80, 45, 0.12)" : "rgba(42,42,62,0.6)",
-                padding: "1px 5px",
-                borderRadius: "3px",
-                fontFamily: "monospace",
-                letterSpacing: "0.5px"
-              },
-              "aria-label": `Decree format: ${decree.format} (fallback parsed)`,
-              children: decree.format
-            }
-          ),
           /* @__PURE__ */ jsxs5("div", { className: "decree-card-header", children: [
             /* @__PURE__ */ jsxs5("div", { className: "decree-card-identity", children: [
               avatar && /* @__PURE__ */ jsx5(
@@ -5368,6 +5415,17 @@ function DecreeBlock({ text, agentKey: jobAgentKey, onAvatarClick }) {
                 "Issue ",
                 decree.issue
               ] })
+            ] }),
+            /* @__PURE__ */ jsxs5("div", { className: "decree-card-actions", children: [
+              /* @__PURE__ */ jsx5(CopyDecreeButton, { text }),
+              isFallback && /* @__PURE__ */ jsx5(
+                "div",
+                {
+                  className: "decree-card-format-badge",
+                  "aria-label": `Decree format: ${decree.format} (fallback parsed)`,
+                  children: decree.format
+                }
+              )
             ] })
           ] }),
           /* @__PURE__ */ jsxs5(
@@ -6876,14 +6934,14 @@ function PinIcon({ filled }) {
     ] })
   ) });
 }
-function ClipboardIcon() {
+function ClipboardIcon2() {
   return /* @__PURE__ */ jsxs7("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "none", "aria-hidden": "true", children: [
     /* @__PURE__ */ jsx7("rect", { x: "4", y: "3", width: "7", height: "9", rx: "1", stroke: "currentColor", strokeWidth: "1.5" }),
     /* @__PURE__ */ jsx7("path", { d: "M4 4H3a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-1", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round" }),
     /* @__PURE__ */ jsx7("path", { d: "M6 3V2h3v1", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" })
   ] });
 }
-function CheckIcon() {
+function CheckIcon2() {
   return /* @__PURE__ */ jsx7("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "none", "aria-hidden": "true", children: /* @__PURE__ */ jsx7("path", { d: "M2 7l4 4 6-6", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" }) });
 }
 function CopySessionIdButton({ sessionId }) {
@@ -6906,7 +6964,7 @@ function CopySessionIdButton({ sessionId }) {
       title: copied ? "Copied!" : "Copy session ID",
       "aria-label": copied ? "Session ID copied" : "Copy session ID",
       children: [
-        copied ? /* @__PURE__ */ jsx7(CheckIcon, {}) : /* @__PURE__ */ jsx7(ClipboardIcon, {}),
+        copied ? /* @__PURE__ */ jsx7(CheckIcon2, {}) : /* @__PURE__ */ jsx7(ClipboardIcon2, {}),
         /* @__PURE__ */ jsx7("span", { children: copied ? "Copied" : "Copy" })
       ]
     }
@@ -9161,6 +9219,20 @@ function TreeIcon({ src, fallback, size = "ns" }) {
   );
 }
 
+// src/ui/lib/formatAge.ts
+function formatAge(startTime, now = Date.now()) {
+  if (startTime == null) return "?";
+  const ms = Math.max(0, now - startTime);
+  const seconds = Math.floor(ms / 1e3);
+  if (seconds < 60) return `${Math.max(1, seconds)}s`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h`;
+  const days = Math.floor(hours / 24);
+  return `${days}d`;
+}
+
 // src/ui/components/VineCard.tsx
 import { jsx as jsx14, jsxs as jsxs9 } from "react/jsx-runtime";
 function isCancellable(status) {
@@ -9228,6 +9300,8 @@ function VineCard({
             job.issue,
             " \xB7 ",
             job.agentName,
+            " \xB7 ",
+            /* @__PURE__ */ jsx14("span", { className: "jcard__age", "aria-label": `age: ${formatAge(job.startTime)}`, children: formatAge(job.startTime) }),
             isPinned2 ? " \xB7 \u{1F4CC}" : ""
           ] }) })
         ] }),
@@ -12246,7 +12320,7 @@ function ThroneOverlays() {
 }
 
 // src/ui/App.tsx
-import { useCallback as useCallback9, useEffect as useEffect13, useMemo as useMemo4, useState as useState16 } from "react";
+import { useCallback as useCallback9, useEffect as useEffect14, useMemo as useMemo4, useState as useState16 } from "react";
 
 // src/ui/hooks/useNamespace.ts
 import { useState as useState15, useCallback as useCallback8, useEffect as useEffect12 } from "react";
@@ -12299,11 +12373,38 @@ function useNamespace() {
   return { namespace, namespaces, setNamespace };
 }
 
+// src/ui/hooks/useNamespaceCycleKey.ts
+import { useEffect as useEffect13 } from "react";
+function isTypingTarget(e) {
+  const t = e.target;
+  if (!t) return false;
+  const tag = t.tagName;
+  if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return true;
+  if (t.isContentEditable) return true;
+  return false;
+}
+function useNamespaceCycleKey(namespaces, namespace, setNamespace) {
+  useEffect13(() => {
+    if (namespaces.length === 0) return;
+    function handleKeyDown(e) {
+      if (e.key !== "n") return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (isTypingTarget(e)) return;
+      const idx = namespaces.findIndex((ns) => ns.id === namespace);
+      const next = namespaces[(idx + 1) % namespaces.length];
+      if (next) setNamespace(next.id);
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [namespaces, namespace, setNamespace]);
+}
+
 // src/ui/App.tsx
 function App() {
   const quote = useMemo4(() => randomQuote(), []);
   const { theme } = useTheme();
   const { namespace, namespaces, setNamespace } = useNamespace();
+  useNamespaceCycleKey(namespaces, namespace, setNamespace);
   const [profileAgent, setProfileAgent] = useState16(null);
   const [cancelTarget, setCancelTarget] = useState16(null);
   const { jobs, handleMessage: handleJobsMessage, refreshCached } = useJobs();
@@ -12312,7 +12413,7 @@ function App() {
     [jobs]
   );
   const namespaceSummaries = useNamespaceSummaries(namespaces, namespace, jobsActivityKey);
-  useEffect13(() => {
+  useEffect14(() => {
     migrateRemoveDuplicateLogs();
     evictExpiredLogs();
   }, []);
@@ -12443,7 +12544,7 @@ function App() {
     dismissToast: () => setToast(null),
     storageWarning
   };
-  useEffect13(() => {
+  useEffect14(() => {
     throneStore.publish(snapshot2);
   });
   return null;

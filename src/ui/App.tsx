@@ -3,6 +3,7 @@ import type { ServerMessage, DisplayJob } from "./lib/types";
 import { randomQuote } from "./lib/constants";
 import { useWebSocket } from "./hooks/useWebSocket";
 import { useNamespace } from "./hooks/useNamespace";
+import { useNamespaceCycleKey } from "./hooks/useNamespaceCycleKey";
 import { useNamespaceSummaries } from "./hooks/useNamespaceSummaries";
 import { useJobs } from "./hooks/useJobs";
 import { useTheme } from "./hooks/useTheme";
@@ -32,6 +33,7 @@ export function App() {
   const quote = useMemo(() => randomQuote(), []);
   const { theme } = useTheme();
   const { namespace, namespaces, setNamespace } = useNamespace();
+  useNamespaceCycleKey(namespaces, namespace, setNamespace);
   const [profileAgent, setProfileAgent] = useState<string | null>(null);
   const [cancelTarget, setCancelTarget] = useState<{ sessionId: string; jobTitle: string } | null>(null);
   const { jobs, handleMessage: handleJobsMessage, refreshCached } = useJobs();

@@ -2,6 +2,48 @@ import React, { useState } from "react";
 import { avatarUrl, AGENT_COLORS, AGENT_NAMES, AGENT_RUNE_NAMES, AGENT_TITLES } from "../lib/constants";
 import { useTheme } from "../hooks/useTheme";
 
+function ClipboardIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+      <rect x="4" y="1" width="6" height="8" rx="1" stroke="currentColor" strokeWidth="1.2" fill="none"/>
+      <path d="M2 3h2M2 3v7a1 1 0 001 1h5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+    </svg>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+      <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+}
+
+function CopyDecreeButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+
+  async function handleCopy() {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => { setCopied(false); }, 2000);
+    } catch {
+      // Clipboard API unavailable — no-op
+    }
+  }
+
+  return (
+    <button
+      className={`decree-card-copy-btn${copied ? " copied" : ""}`}
+      onClick={handleCopy}
+      title={copied ? "Copied!" : "Copy decree text"}
+      aria-label={copied ? "Decree text copied" : "Copy decree text"}
+    >
+      {copied ? <CheckIcon /> : <ClipboardIcon />}
+    </button>
+  );
+}
+
 // ── Decree detection ──────────────────────────────────────────────────────────
 
 const DECREE_START_RE = /᛭᛭᛭\s*DECREE COMPLETE\s*᛭᛭᛭/;
@@ -304,31 +346,9 @@ export function DecreeBlock({ text, agentKey: jobAgentKey, onAvatarClick }: Decr
           borderLeftColor: borderColor,
           borderLeftWidth: "3px",
           animation: `${glowAnimation}, ${shakeAnimation}`,
-          position: "relative",
         } as React.CSSProperties}
         aria-label={`Decree from ${agentName}: verdict ${decree.verdict}`}
       >
-        {/* Format badge for non-canonical decrees */}
-        {isFallback && (
-          <div
-            style={{
-              position: "absolute",
-              top: "6px",
-              right: "8px",
-              fontSize: "9px",
-              color: "var(--text-void)",
-              background: theme === "light" ? "rgba(100, 80, 45, 0.12)" : "rgba(42,42,62,0.6)",
-              padding: "1px 5px",
-              borderRadius: "3px",
-              fontFamily: "monospace",
-              letterSpacing: "0.5px",
-            }}
-            aria-label={`Decree format: ${decree.format} (fallback parsed)`}
-          >
-            {decree.format}
-          </div>
-        )}
-
         {/* ── Header ── */}
         <div className="decree-card-header">
           <div className="decree-card-identity">
@@ -376,6 +396,17 @@ export function DecreeBlock({ text, agentKey: jobAgentKey, onAvatarClick }: Decr
               <span className="decree-card-issue" aria-label={`Issue ${decree.issue}`}>
                 Issue {decree.issue}
               </span>
+            )}
+          </div>
+          <div className="decree-card-actions">
+            <CopyDecreeButton text={text} />
+            {isFallback && (
+              <div
+                className="decree-card-format-badge"
+                aria-label={`Decree format: ${decree.format} (fallback parsed)`}
+              >
+                {decree.format}
+              </div>
             )}
           </div>
         </div>
