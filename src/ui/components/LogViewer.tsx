@@ -89,6 +89,7 @@ import { downloadLogFile } from "../lib/localStorageLogs";
 import { useTheme } from "../hooks/useTheme";
 
 import { resolveSessionTitle } from "../lib/resolveSessionTitle";
+import { Markdown } from "../lib/markdown";
 
 interface SessionHeaderProps {
   job: DisplayJob;
@@ -491,7 +492,11 @@ function LogLine({ entry, agentKey, agentName, isLastAssistantText, autoScroll, 
       return <ToolBatchGroup entry={entry} {...(autoScroll !== undefined ? { autoScroll } : {})} {...(isLatestBatch !== undefined ? { isLatestBatch } : {})} />;
     case "assistant-text":
       if (entry.detail === "thinking") {
-        return <div className="ev-thinking">{entry.text}</div>;
+        return (
+          <div className="ev-thinking">
+            <Markdown text={entry.text ?? ""} />
+          </div>
+        );
       }
       return (
         <AgentBubble
@@ -643,7 +648,9 @@ function AgentBubble({
           {title && <span className="agent-bubble-title">{title}</span>}
         </div>
       </div>
-      <div className="agent-bubble-text">{text}</div>
+      <div className="agent-bubble-text">
+        <Markdown text={text} />
+      </div>
     </div>
   );
 }

@@ -2853,9 +2853,116 @@ var styles_default = `.odins-throne-root .odins-throne-root {
   font-family: 'JetBrains Mono', monospace;
   color: var(--text-saga);
   font-size: 0.75rem; line-height: 1.6;
-  white-space: pre-wrap;
   padding: 0.5rem 0.7rem;
 }
+.odins-throne-root .agent-bubble-text > .agent-md { white-space: normal; }
+
+/* \u2500\u2500 Markdown-in-messages (agent bubbles + thinking) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+/* Handcrafted renderer (lib/markdown.tsx) \u2014 opaque surfaces only,
+ * theme tokens flip with data-theme. */
+.odins-throne-root .agent-md > *:first-child { margin-top: 0; }
+.odins-throne-root .agent-md > *:last-child { margin-bottom: 0; }
+.odins-throne-root .agent-md-p { margin: 0.45rem 0; white-space: pre-wrap; }
+.odins-throne-root .agent-md-heading {
+  font-family: 'Cinzel', serif;
+  color: var(--gold-bright);
+  letter-spacing: 0.02em;
+  margin: 0.7rem 0 0.35rem 0;
+  display: flex; align-items: center; gap: 0.45rem;
+}
+.odins-throne-root .agent-md-heading::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, var(--gold-dim-border), transparent);
+}
+.odins-throne-root .agent-md-h1 { font-size: 0.95rem; font-weight: 700; }
+.odins-throne-root .agent-md-h2 { font-size: 0.85rem; font-weight: 700; }
+.odins-throne-root .agent-md-h3 { font-size: 0.78rem; font-weight: 600; color: var(--text-saga); }
+.odins-throne-root .agent-md-h3::after { background: linear-gradient(90deg, var(--rune-border), transparent); }
+.odins-throne-root .agent-md-pre {
+  background: var(--chain);
+  border: 1px solid var(--rune-border);
+  border-radius: 4px;
+  margin: 0.45rem 0;
+  padding: 0.45rem 0.6rem;
+  overflow-x: auto;
+}
+.odins-throne-root .agent-md-pre code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  color: var(--text-saga);
+  white-space: pre;
+  display: block;
+}
+.odins-throne-root .agent-md-code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  background: var(--read-badge-bg);
+  color: var(--read-badge-text);
+  padding: 0.05rem 0.3rem;
+  border-radius: 3px;
+  border: 1px solid var(--mist-tool-border);
+}
+.odins-throne-root .agent-md-list {
+  margin: 0.45rem 0;
+  padding-left: 1.2rem;
+}
+.odins-throne-root .agent-md-list li { margin: 0.2rem 0; }
+.odins-throne-root .agent-md-list li::marker { color: var(--teal-asgard); }
+.odins-throne-root .agent-md-list--ordered li::marker { color: var(--gold); font-weight: 700; }
+.odins-throne-root .agent-md-list .agent-md-list { margin: 0.2rem 0 0.1rem 0; }
+.odins-throne-root .agent-md-quote {
+  margin: 0.45rem 0;
+  padding: 0.15rem 0 0.15rem 0.6rem;
+  border-left: 2px solid var(--teal-asgard);
+  color: var(--text-rune);
+}
+.odins-throne-root .agent-md-quote .agent-md-p { margin: 0.2rem 0; }
+.odins-throne-root .agent-md-hr {
+  border: none;
+  height: 1px;
+  margin: 0.6rem 0;
+  background: linear-gradient(90deg, transparent, var(--rune-border), transparent);
+}
+.odins-throne-root .agent-md-link {
+  color: var(--teal-asgard);
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 2px;
+}
+.odins-throne-root .agent-md-link:hover { text-decoration-style: solid; }
+.odins-throne-root .agent-md-table-wrap { overflow-x: auto; margin: 0.45rem 0; }
+.odins-throne-root .agent-md-table {
+  border-collapse: collapse;
+  background: var(--chain);
+  border: 1px solid var(--rune-border);
+  border-radius: 4px;
+  overflow: hidden;
+  font-size: 0.7rem;
+  width: 100%;
+}
+.odins-throne-root .agent-md-table th {
+  font-family: 'Cinzel', serif;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--gold-bright);
+  background: var(--tool-batch-header-bg);
+  padding: 0.3rem 0.5rem;
+  border-bottom: 1px solid var(--rune-border);
+}
+.odins-throne-root .agent-md-table td {
+  padding: 0.25rem 0.5rem;
+  border-bottom: 1px solid var(--rune-border);
+  color: var(--text-saga);
+}
+.odins-throne-root .agent-md-table tbody tr:last-child td { border-bottom: none; }
+.odins-throne-root .agent-md-table tbody tr:nth-child(even) td { background: rgba(127, 127, 127, 0.05); }
+.odins-throne-root .ev-thinking .agent-md-p { margin: 0.25rem 0; }
+.odins-throne-root .ev-thinking .agent-md-heading { font-size: 0.72rem; margin: 0.4rem 0 0.2rem 0; }
+.odins-throne-root .ev-thinking .agent-md-pre { margin: 0.25rem 0; }
 
 /* \u2500\u2500 JSONL events \u2014 thinking \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
 .odins-throne-root .ev-thinking {
@@ -6016,8 +6123,316 @@ function resolveSessionTitle(job) {
   return job.branchName ?? job.sessionId;
 }
 
+// src/ui/lib/markdown.tsx
+import React2 from "react";
+import { jsx as jsx7, jsxs as jsxs7 } from "react/jsx-runtime";
+var MARKUP_CHARS = /* @__PURE__ */ new Set(["*", "_", "~", "`", "[", "]", "\\", "|"]);
+var BARE_URL_RE = /^https?:\/\/[^\s<>()]+/;
+var LINK_RE = /^\[([^\]]*)\]\((https?:\/\/[^)\s]+)\)/;
+function findClose(src, from, delim) {
+  for (let j = from; j + delim.length <= src.length; j++) {
+    if (src.startsWith(delim, j)) return j;
+  }
+  return -1;
+}
+function parseInline(src) {
+  const out = [];
+  let buf = "";
+  const flush = () => {
+    if (buf) {
+      out.push({ t: "text", v: buf });
+      buf = "";
+    }
+  };
+  let i = 0;
+  while (i < src.length) {
+    const ch = src[i];
+    if (ch === "\\" && i + 1 < src.length && MARKUP_CHARS.has(src[i + 1])) {
+      buf += src[i + 1];
+      i += 2;
+      continue;
+    }
+    if (ch === "\n") {
+      flush();
+      out.push({ t: "br" });
+      i += 1;
+      continue;
+    }
+    if (ch === "`") {
+      const close = src.indexOf("`", i + 1);
+      if (close > i + 1 && !src.slice(i + 1, close).includes("\n")) {
+        flush();
+        out.push({ t: "code", v: src.slice(i + 1, close) });
+        i = close + 1;
+        continue;
+      }
+    }
+    if (src.startsWith("**", i) || src.startsWith("__", i)) {
+      const delim = src.slice(i, i + 2);
+      const close = findClose(src, i + 2, delim);
+      if (close > i + 2 && !src.slice(i + 2, close).includes("\n")) {
+        flush();
+        out.push({ t: "strong", c: parseInline(src.slice(i + 2, close)) });
+        i = close + 2;
+        continue;
+      }
+    }
+    if (src.startsWith("~~", i)) {
+      const close = findClose(src, i + 2, "~~");
+      if (close > i + 2 && !src.slice(i + 2, close).includes("\n")) {
+        flush();
+        out.push({ t: "del", c: parseInline(src.slice(i + 2, close)) });
+        i = close + 2;
+        continue;
+      }
+    }
+    if ((ch === "*" || ch === "_") && !src.startsWith(ch + ch, i)) {
+      const close = findClose(src, i + 1, ch);
+      const isUnderscoreInternal = ch === "_" && i > 0 && /\w/.test(src[i - 1]);
+      if (close > i + 1 && !src.slice(i + 1, close).includes("\n") && !isUnderscoreInternal) {
+        flush();
+        out.push({ t: "em", c: parseInline(src.slice(i + 1, close)) });
+        i = close + 1;
+        continue;
+      }
+    }
+    if (ch === "[") {
+      const m = LINK_RE.exec(src.slice(i));
+      if (m) {
+        flush();
+        out.push({
+          t: "link",
+          href: m[2],
+          c: parseInline(m[1] ?? "")
+        });
+        i += m[0].length;
+        continue;
+      }
+    }
+    if ((ch === "h" || ch === "H") && (i === 0 || /[\s(<]/.test(src[i - 1]))) {
+      const m = BARE_URL_RE.exec(src.slice(i));
+      if (m) {
+        flush();
+        out.push({ t: "link", href: m[0], c: [{ t: "text", v: m[0] }] });
+        i += m[0].length;
+        continue;
+      }
+    }
+    buf += ch;
+    i += 1;
+  }
+  flush();
+  return out;
+}
+var FENCE_RE = /^\s*(```|~~~)\s*(\S*)\s*$/;
+var HEADING_RE = /^(#{1,6})\s+(.*?)\s*#*\s*$/;
+var HR_RE = /^\s*(?:-{3,}|\*{3,}|_{3,})\s*$/;
+var QUOTE_RE = /^\s*>/;
+var LIST_RE = /^(\s*)([-*+]|\d{1,9}[.)])\s+(.*)$/;
+var TABLE_SEP_RE = /^\s*\|?\s*:?-{1,}:?\s*(?:\|\s*:?-{1,}:?\s*)*\|?\s*$/;
+var INDENT_UNIT = 2;
+function isTableLine(line) {
+  return /^\s*\|.*\|/.test(line) || /^\s*\|/.test(line);
+}
+function splitTableRow(line) {
+  let s = line.trim();
+  if (s.startsWith("|")) s = s.slice(1);
+  if (s.endsWith("|")) s = s.slice(0, -1);
+  return s.split("|").map((c) => c.trim());
+}
+function tableAlign(sepLine) {
+  return splitTableRow(sepLine).map((cell) => {
+    const l = cell.startsWith(":");
+    const r = cell.endsWith(":");
+    if (l && r) return "center";
+    if (r) return "right";
+    return "left";
+  });
+}
+function startsNewBlock(line) {
+  return FENCE_RE.test(line) || HEADING_RE.test(line) || HR_RE.test(line) || QUOTE_RE.test(line) || LIST_RE.test(line) || isTableLine(line);
+}
+function parseBlocks(lines, i, len) {
+  const blocks = [];
+  while (i < len) {
+    const line = lines[i];
+    if (line.trim() === "") {
+      i += 1;
+      continue;
+    }
+    const fence = FENCE_RE.exec(line);
+    if (fence) {
+      const delim = fence[1];
+      const lang = fence[2] ?? "";
+      const body = [];
+      i += 1;
+      while (i < len && !new RegExp(`^\\s*${delim}\\s*$`).test(lines[i])) {
+        body.push(lines[i]);
+        i += 1;
+      }
+      i += 1;
+      blocks.push({ t: "code", lang, v: body.join("\n") });
+      continue;
+    }
+    if (HR_RE.test(line)) {
+      blocks.push({ t: "hr" });
+      i += 1;
+      continue;
+    }
+    const heading = HEADING_RE.exec(line);
+    if (heading) {
+      blocks.push({
+        t: "heading",
+        level: heading[1].length,
+        c: parseInline(heading[2] ?? "")
+      });
+      i += 1;
+      continue;
+    }
+    if (QUOTE_RE.test(line)) {
+      const inner = [];
+      while (i < len && QUOTE_RE.test(lines[i])) {
+        inner.push(lines[i].replace(/^\s*>?\s?/, ""));
+        i += 1;
+      }
+      const [sub] = parseBlocks(inner, 0, inner.length);
+      blocks.push({ t: "quote", blocks: sub });
+      continue;
+    }
+    if (LIST_RE.test(line)) {
+      const [list, next] = parseList(lines, i, len);
+      blocks.push(list);
+      i = next;
+      continue;
+    }
+    if (isTableLine(line) && i + 1 < len && TABLE_SEP_RE.test(lines[i + 1])) {
+      const header = splitTableRow(line).map(parseInline);
+      const align = tableAlign(lines[i + 1]);
+      i += 2;
+      const rows = [];
+      while (i < len && lines[i].trim() !== "" && isTableLine(lines[i])) {
+        rows.push(splitTableRow(lines[i]).map(parseInline));
+        i += 1;
+      }
+      blocks.push({ t: "table", align, header, rows });
+      continue;
+    }
+    const para = [line];
+    i += 1;
+    while (i < len && lines[i].trim() !== "" && !startsNewBlock(lines[i])) {
+      para.push(lines[i]);
+      i += 1;
+    }
+    blocks.push({ t: "paragraph", c: parseInline(para.join("\n")) });
+  }
+  return [blocks, i];
+}
+function parseList(lines, i, len) {
+  const first = LIST_RE.exec(lines[i]);
+  const baseIndent = first[1].length;
+  const ordered = /\d/.test(first[2]);
+  const items = [];
+  let current2 = null;
+  while (i < len) {
+    const line = lines[i];
+    const m = LIST_RE.exec(line);
+    if (m) {
+      const indent = m[1].length;
+      const markerOrdered = /\d/.test(m[2]);
+      if (indent < baseIndent) break;
+      if (indent === baseIndent && markerOrdered !== ordered) break;
+      if (indent >= baseIndent + INDENT_UNIT) {
+        const [nested, next] = parseList(lines, i, len);
+        if (current2) current2.children.push(nested);
+        else items.push({ c: [], children: [nested] });
+        i = next;
+        continue;
+      }
+      current2 = { c: parseInline(m[3] ?? ""), children: [] };
+      items.push(current2);
+      i += 1;
+      continue;
+    }
+    if (line.trim() !== "" && current2 && /^\s{2,}/.test(line) && !startsNewBlock(line)) {
+      current2.c = [...current2.c, ...parseInline("\n" + line.trim())];
+      i += 1;
+      continue;
+    }
+    break;
+  }
+  return [{ t: "list", ordered, items }, i];
+}
+function parseMarkdown(text) {
+  const lines = text.replace(/\r\n?/g, "\n").split("\n");
+  const [blocks] = parseBlocks(lines, 0, lines.length);
+  return blocks;
+}
+function renderInline2(nodes, key) {
+  return nodes.map((n, i) => {
+    const k = `${key}-${i}`;
+    switch (n.t) {
+      case "text":
+        return n.v;
+      case "br":
+        return /* @__PURE__ */ jsx7("br", {}, k);
+      case "code":
+        return /* @__PURE__ */ jsx7("code", { className: "agent-md-code", children: n.v }, k);
+      case "strong":
+        return /* @__PURE__ */ jsx7("strong", { children: renderInline2(n.c, k) }, k);
+      case "em":
+        return /* @__PURE__ */ jsx7("em", { children: renderInline2(n.c, k) }, k);
+      case "del":
+        return /* @__PURE__ */ jsx7("del", { children: renderInline2(n.c, k) }, k);
+      case "link":
+        return /* @__PURE__ */ jsx7("a", { className: "agent-md-link", href: n.href, target: "_blank", rel: "noopener noreferrer", children: renderInline2(n.c, k) }, k);
+      default:
+        return null;
+    }
+  });
+}
+var HEADING_CLASS = {
+  1: "agent-md-h1",
+  2: "agent-md-h2",
+  3: "agent-md-h3",
+  4: "agent-md-h3",
+  5: "agent-md-h3",
+  6: "agent-md-h3"
+};
+function renderBlock(block, key) {
+  switch (block.t) {
+    case "heading":
+      return /* @__PURE__ */ jsx7("div", { className: `agent-md-heading ${HEADING_CLASS[block.level] ?? "agent-md-h3"}`, role: "heading", "aria-level": block.level, children: renderInline2(block.c, String(key)) }, key);
+    case "paragraph":
+      return /* @__PURE__ */ jsx7("p", { className: "agent-md-p", children: renderInline2(block.c, String(key)) }, key);
+    case "code":
+      return /* @__PURE__ */ jsx7("pre", { className: "agent-md-pre", children: /* @__PURE__ */ jsx7("code", { className: block.lang ? `language-${block.lang}` : void 0, children: block.v }) }, key);
+    case "list": {
+      const Tag = block.ordered ? "ol" : "ul";
+      return /* @__PURE__ */ jsx7(Tag, { className: `agent-md-list${block.ordered ? " agent-md-list--ordered" : ""}`, children: block.items.map((item, i) => /* @__PURE__ */ jsxs7("li", { children: [
+        renderInline2(item.c, `${key}-li-${i}`),
+        item.children.map((child, j) => renderBlock(child, `${key}-li-${i}-sub-${j}`))
+      ] }, `${key}-li-${i}`)) }, key);
+    }
+    case "quote":
+      return /* @__PURE__ */ jsx7("blockquote", { className: "agent-md-quote", children: block.blocks.map((b, i) => renderBlock(b, `${key}-q-${i}`)) }, key);
+    case "hr":
+      return /* @__PURE__ */ jsx7("hr", { className: "agent-md-hr" }, key);
+    case "table":
+      return /* @__PURE__ */ jsx7("div", { className: "agent-md-table-wrap", children: /* @__PURE__ */ jsxs7("table", { className: "agent-md-table", children: [
+        /* @__PURE__ */ jsx7("thead", { children: /* @__PURE__ */ jsx7("tr", { children: block.header.map((cell, i) => /* @__PURE__ */ jsx7("th", { style: { textAlign: block.align[i] ?? "left" }, children: renderInline2(cell, `${key}-th-${i}`) }, `${key}-th-${i}`)) }) }),
+        /* @__PURE__ */ jsx7("tbody", { children: block.rows.map((row, r) => /* @__PURE__ */ jsx7("tr", { children: row.map((cell, c) => /* @__PURE__ */ jsx7("td", { style: { textAlign: block.align[c] ?? "left" }, children: renderInline2(cell, `${key}-td-${r}-${c}`) }, `${key}-td-${r}-${c}`)) }, `${key}-tr-${r}`)) })
+      ] }) }, key);
+    default:
+      return null;
+  }
+}
+function Markdown({ text, className = "agent-md" }) {
+  const blocks = React2.useMemo(() => parseMarkdown(text), [text]);
+  return /* @__PURE__ */ jsx7("div", { className, children: blocks.map((b, i) => renderBlock(b, `b-${i}`)) });
+}
+
 // src/ui/components/LogViewer.tsx
-import { Fragment as Fragment3, jsx as jsx7, jsxs as jsxs7 } from "react/jsx-runtime";
+import { Fragment as Fragment3, jsx as jsx8, jsxs as jsxs8 } from "react/jsx-runtime";
 function collapseKey(entry) {
   if (entry.type === "tool-use" && entry.toolName) {
     return `tool-use:${entry.toolName}`;
@@ -6076,14 +6491,14 @@ function SessionHeader({ job, isPinned: isPinned2 = false, onTogglePin, showPin 
   useEffect(() => {
     setConfirmingUnpin(false);
   }, [isPinned2]);
-  return /* @__PURE__ */ jsxs7(
+  return /* @__PURE__ */ jsxs8(
     "div",
     {
       className: "content-header",
       "aria-label": `Active session: ${displayTitle}`,
       children: [
-        /* @__PURE__ */ jsxs7("div", { className: "session-title-block", children: [
-          /* @__PURE__ */ jsx7(
+        /* @__PURE__ */ jsxs8("div", { className: "session-title-block", children: [
+          /* @__PURE__ */ jsx8(
             "span",
             {
               className: "session-title-primary",
@@ -6091,8 +6506,8 @@ function SessionHeader({ job, isPinned: isPinned2 = false, onTogglePin, showPin 
               children: displayTitle
             }
           ),
-          /* @__PURE__ */ jsxs7("div", { className: "session-meta-row", children: [
-            /* @__PURE__ */ jsx7(
+          /* @__PURE__ */ jsxs8("div", { className: "session-meta-row", children: [
+            /* @__PURE__ */ jsx8(
               "span",
               {
                 className: "session-agent-badge",
@@ -6100,11 +6515,11 @@ function SessionHeader({ job, isPinned: isPinned2 = false, onTogglePin, showPin 
                 children: job.agentName
               }
             ),
-            /* @__PURE__ */ jsxs7("span", { className: "session-step-tag", children: [
+            /* @__PURE__ */ jsxs8("span", { className: "session-step-tag", children: [
               "Step ",
               job.step
             ] }),
-            /* @__PURE__ */ jsxs7(
+            /* @__PURE__ */ jsxs8(
               "span",
               {
                 className: "session-id-chip",
@@ -6112,7 +6527,7 @@ function SessionHeader({ job, isPinned: isPinned2 = false, onTogglePin, showPin 
                 role: "text",
                 "aria-label": `Session ID: ${job.sessionId}`,
                 children: [
-                  /* @__PURE__ */ jsx7("span", { className: "session-id-label", children: "Session:" }),
+                  /* @__PURE__ */ jsx8("span", { className: "session-id-label", children: "Session:" }),
                   " ",
                   job.sessionId
                 ]
@@ -6120,8 +6535,8 @@ function SessionHeader({ job, isPinned: isPinned2 = false, onTogglePin, showPin 
             )
           ] })
         ] }),
-        /* @__PURE__ */ jsxs7("span", { className: "header-badges", children: [
-          job.status === "running" && onCancelJob ? /* @__PURE__ */ jsxs7(
+        /* @__PURE__ */ jsxs8("span", { className: "header-badges", children: [
+          job.status === "running" && onCancelJob ? /* @__PURE__ */ jsxs8(
             "button",
             {
               className: `header-action-btn header-action-btn--cancel${job.status === "running" ? " pulse" : ""}`,
@@ -6129,21 +6544,21 @@ function SessionHeader({ job, isPinned: isPinned2 = false, onTogglePin, showPin 
               "aria-label": "Cancel running job",
               onClick: () => onCancelJob(job.sessionId, job),
               children: [
-                /* @__PURE__ */ jsx7(StatusIconSvg, { status: job.status }),
-                /* @__PURE__ */ jsx7("span", { children: "Cancel" })
+                /* @__PURE__ */ jsx8(StatusIconSvg, { status: job.status }),
+                /* @__PURE__ */ jsx8("span", { children: "Cancel" })
               ]
             }
-          ) : /* @__PURE__ */ jsx7(
+          ) : /* @__PURE__ */ jsx8(
             "span",
             {
               className: `job-status-icon-btn${job.status === "running" ? " pulse" : ""}`,
               style: { color: statusColorMap[job.status] },
               title: `Job status: ${STATUS_LABELS[job.status]}`,
               "aria-label": `Job status: ${STATUS_LABELS[job.status]}`,
-              children: /* @__PURE__ */ jsx7(StatusIconSvg, { status: job.status })
+              children: /* @__PURE__ */ jsx8(StatusIconSvg, { status: job.status })
             }
           ),
-          replayedFromCache && /* @__PURE__ */ jsx7(
+          replayedFromCache && /* @__PURE__ */ jsx8(
             "span",
             {
               className: "header-action-btn replayed-cache",
@@ -6152,8 +6567,8 @@ function SessionHeader({ job, isPinned: isPinned2 = false, onTogglePin, showPin 
               children: "\u16D7 Cached"
             }
           ),
-          /* @__PURE__ */ jsx7(CopySessionIdButton, { sessionId: job.sessionId }),
-          showPin && onTogglePin && (confirmingUnpin ? /* @__PURE__ */ jsxs7(
+          /* @__PURE__ */ jsx8(CopySessionIdButton, { sessionId: job.sessionId }),
+          showPin && onTogglePin && (confirmingUnpin ? /* @__PURE__ */ jsxs8(
             "button",
             {
               className: "header-action-btn header-action-btn--confirm",
@@ -6165,11 +6580,11 @@ function SessionHeader({ job, isPinned: isPinned2 = false, onTogglePin, showPin 
               title: "Confirm: remove from Odin\\u2019s memory",
               "aria-label": "Confirm unpin",
               children: [
-                /* @__PURE__ */ jsx7("span", { children: "\u2715" }),
-                /* @__PURE__ */ jsx7("span", { children: "Unpin" })
+                /* @__PURE__ */ jsx8("span", { children: "\u2715" }),
+                /* @__PURE__ */ jsx8("span", { children: "Unpin" })
               ]
             }
-          ) : /* @__PURE__ */ jsxs7(
+          ) : /* @__PURE__ */ jsxs8(
             "button",
             {
               className: `header-action-btn${isPinned2 ? " header-action-btn--pinned" : ""}`,
@@ -6184,12 +6599,12 @@ function SessionHeader({ job, isPinned: isPinned2 = false, onTogglePin, showPin 
               "aria-label": isPinned2 ? "Unpin from Odin\u2019s memory" : "Pin to Odin\u2019s memory",
               "aria-pressed": isPinned2,
               children: [
-                /* @__PURE__ */ jsx7(PinIcon, { filled: isPinned2 }),
-                /* @__PURE__ */ jsx7("span", { children: isPinned2 ? "Pinned" : "Pin" })
+                /* @__PURE__ */ jsx8(PinIcon, { filled: isPinned2 }),
+                /* @__PURE__ */ jsx8("span", { children: isPinned2 ? "Pinned" : "Pin" })
               ]
             }
           )),
-          job.status === "succeeded" && /* @__PURE__ */ jsx7(DownloadSessionButton, { sessionId: job.sessionId })
+          job.status === "succeeded" && /* @__PURE__ */ jsx8(DownloadSessionButton, { sessionId: job.sessionId })
         ] })
       ]
     }
@@ -6263,14 +6678,14 @@ function LogViewer({ entries, activeJob, isFixture, isTtlExpired, isNodeUnreacha
   }, [entries]);
   const displayEntries = useMemo(() => groupConsecutiveEntries(entries), [entries]);
   if (!activeJob) {
-    return /* @__PURE__ */ jsx7("main", { className: "content", "aria-label": "Log viewer", children: /* @__PURE__ */ jsxs7("div", { className: "empty-state", "aria-label": "No session selected", children: [
-      /* @__PURE__ */ jsx7("div", { className: "empty-title", children: "All Nine Worlds await" }),
-      /* @__PURE__ */ jsx7("div", { className: "empty-sub", children: "Select an agent session to stream its logs" })
+    return /* @__PURE__ */ jsx8("main", { className: "content", "aria-label": "Log viewer", children: /* @__PURE__ */ jsxs8("div", { className: "empty-state", "aria-label": "No session selected", children: [
+      /* @__PURE__ */ jsx8("div", { className: "empty-title", children: "All Nine Worlds await" }),
+      /* @__PURE__ */ jsx8("div", { className: "empty-sub", children: "Select an agent session to stream its logs" })
     ] }) });
   }
   if (isTtlExpired && streamError && !replayedFromCache && !isConnecting) {
-    return /* @__PURE__ */ jsxs7("main", { className: "content", "aria-label": "Log viewer", children: [
-      /* @__PURE__ */ jsx7(
+    return /* @__PURE__ */ jsxs8("main", { className: "content", "aria-label": "Log viewer", children: [
+      /* @__PURE__ */ jsx8(
         SessionHeader,
         {
           job: activeJob,
@@ -6279,12 +6694,12 @@ function LogViewer({ entries, activeJob, isFixture, isTtlExpired, isNodeUnreacha
           onCancelJob
         }
       ),
-      /* @__PURE__ */ jsx7(NorseErrorTablet, { sessionId: activeJob.sessionId, message: streamError })
+      /* @__PURE__ */ jsx8(NorseErrorTablet, { sessionId: activeJob.sessionId, message: streamError })
     ] });
   }
   if (isNodeUnreachable && streamError && !replayedFromCache && !isConnecting) {
-    return /* @__PURE__ */ jsxs7("main", { className: "content", "aria-label": "Log viewer", children: [
-      /* @__PURE__ */ jsx7(
+    return /* @__PURE__ */ jsxs8("main", { className: "content", "aria-label": "Log viewer", children: [
+      /* @__PURE__ */ jsx8(
         SessionHeader,
         {
           job: activeJob,
@@ -6294,11 +6709,11 @@ function LogViewer({ entries, activeJob, isFixture, isTtlExpired, isNodeUnreacha
           onCancelJob
         }
       ),
-      /* @__PURE__ */ jsx7(NorseErrorTablet, { sessionId: activeJob.sessionId, message: streamError, variant: "node-unreachable" })
+      /* @__PURE__ */ jsx8(NorseErrorTablet, { sessionId: activeJob.sessionId, message: streamError, variant: "node-unreachable" })
     ] });
   }
-  return /* @__PURE__ */ jsxs7("main", { className: "content", "aria-label": "Log viewer", style: { position: "relative" }, children: [
-    /* @__PURE__ */ jsx7(
+  return /* @__PURE__ */ jsxs8("main", { className: "content", "aria-label": "Log viewer", style: { position: "relative" }, children: [
+    /* @__PURE__ */ jsx8(
       SessionHeader,
       {
         job: activeJob,
@@ -6308,7 +6723,7 @@ function LogViewer({ entries, activeJob, isFixture, isTtlExpired, isNodeUnreacha
         onCancelJob
       }
     ),
-    /* @__PURE__ */ jsxs7(
+    /* @__PURE__ */ jsxs8(
       "div",
       {
         className: "log-terminal",
@@ -6318,24 +6733,24 @@ function LogViewer({ entries, activeJob, isFixture, isTtlExpired, isNodeUnreacha
         "aria-label": "Session logs",
         onScroll: handleScroll,
         children: [
-          isConnecting && entries.length === 0 && /* @__PURE__ */ jsxs7(
+          isConnecting && entries.length === 0 && /* @__PURE__ */ jsxs8(
             "div",
             {
               className: `session-connecting${isPodStarting ? " pod-starting" : ""}`,
               "aria-label": isPodStarting ? "Agent is starting up" : "Connecting to session",
               "aria-live": "polite",
               children: [
-                /* @__PURE__ */ jsx7("span", { className: isPodStarting ? "pod-starting-rune" : "connecting-spinner", "aria-hidden": "true", children: isPodStarting ? "\u16C8" : "" }),
-                /* @__PURE__ */ jsx7("span", { children: isPodStarting ? "\u23F3 Agent is starting up \u2014 logs will appear shortly\u2026" : "Awaiting the Norns\u2026" })
+                /* @__PURE__ */ jsx8("span", { className: isPodStarting ? "pod-starting-rune" : "connecting-spinner", "aria-hidden": "true", children: isPodStarting ? "\u16C8" : "" }),
+                /* @__PURE__ */ jsx8("span", { children: isPodStarting ? "\u23F3 Agent is starting up \u2014 logs will appear shortly\u2026" : "Awaiting the Norns\u2026" })
               ]
             }
           ),
           displayEntries.map((item) => {
             if ("_startup" in item) {
-              return /* @__PURE__ */ jsx7(StartupBlock, { group: item }, item.key);
+              return /* @__PURE__ */ jsx8(StartupBlock, { group: item }, item.key);
             }
             if ("_collapsed" in item) {
-              return /* @__PURE__ */ jsx7(
+              return /* @__PURE__ */ jsx8(
                 LogLine,
                 {
                   entry: item.representative,
@@ -6350,7 +6765,7 @@ function LogViewer({ entries, activeJob, isFixture, isTtlExpired, isNodeUnreacha
                 item.representative.id
               );
             }
-            return /* @__PURE__ */ jsx7(
+            return /* @__PURE__ */ jsx8(
               LogLine,
               {
                 entry: item,
@@ -6367,9 +6782,9 @@ function LogViewer({ entries, activeJob, isFixture, isTtlExpired, isNodeUnreacha
         ]
       }
     ),
-    /* @__PURE__ */ jsxs7("div", { className: "log-controls", children: [
-      isFixture && /* @__PURE__ */ jsxs7("div", { className: "speed-controls", children: [
-        /* @__PURE__ */ jsx7(
+    /* @__PURE__ */ jsxs8("div", { className: "log-controls", children: [
+      isFixture && /* @__PURE__ */ jsxs8("div", { className: "speed-controls", children: [
+        /* @__PURE__ */ jsx8(
           "button",
           {
             className: `speed-btn ${fixturePaused ? "active" : ""}`,
@@ -6382,7 +6797,7 @@ function LogViewer({ entries, activeJob, isFixture, isTtlExpired, isNodeUnreacha
             children: fixturePaused ? "\u25B6" : "\u23F8"
           }
         ),
-        [1, 2, 3, 5].map((s) => /* @__PURE__ */ jsxs7(
+        [1, 2, 3, 5].map((s) => /* @__PURE__ */ jsxs8(
           "button",
           {
             className: `speed-btn ${fixtureSpeed === s && !fixturePaused ? "active" : ""}`,
@@ -6400,7 +6815,7 @@ function LogViewer({ entries, activeJob, isFixture, isTtlExpired, isNodeUnreacha
           s
         ))
       ] }),
-      /* @__PURE__ */ jsx7(
+      /* @__PURE__ */ jsx8(
         "button",
         {
           className: `autoscroll-fab ${autoScroll ? "active" : ""}`,
@@ -6416,9 +6831,9 @@ function LogViewer({ entries, activeJob, isFixture, isTtlExpired, isNodeUnreacha
 function LogLine({ entry, agentKey, agentName, isLastAssistantText, autoScroll, isLatestBatch, onAvatarClick, collapseCount }) {
   switch (entry.type) {
     case "system":
-      return /* @__PURE__ */ jsxs7("div", { className: "ev-system", children: [
-        /* @__PURE__ */ jsx7("span", { className: "ev-label", children: "system" }),
-        collapseCount != null && collapseCount > 1 && /* @__PURE__ */ jsxs7("span", { className: "ev-collapse-count", title: `${collapseCount} consecutive identical entries collapsed`, children: [
+      return /* @__PURE__ */ jsxs8("div", { className: "ev-system", children: [
+        /* @__PURE__ */ jsx8("span", { className: "ev-label", children: "system" }),
+        collapseCount != null && collapseCount > 1 && /* @__PURE__ */ jsxs8("span", { className: "ev-collapse-count", title: `${collapseCount} consecutive identical entries collapsed`, children: [
           "\xD7",
           collapseCount
         ] }),
@@ -6429,12 +6844,12 @@ function LogLine({ entry, agentKey, agentName, isLastAssistantText, autoScroll, 
       return null;
     // legacy, unused
     case "tool-batch":
-      return /* @__PURE__ */ jsx7(ToolBatchGroup, { entry, ...autoScroll !== void 0 ? { autoScroll } : {}, ...isLatestBatch !== void 0 ? { isLatestBatch } : {} });
+      return /* @__PURE__ */ jsx8(ToolBatchGroup, { entry, ...autoScroll !== void 0 ? { autoScroll } : {}, ...isLatestBatch !== void 0 ? { isLatestBatch } : {} });
     case "assistant-text":
       if (entry.detail === "thinking") {
-        return /* @__PURE__ */ jsx7("div", { className: "ev-thinking", children: entry.text });
+        return /* @__PURE__ */ jsx8("div", { className: "ev-thinking", children: /* @__PURE__ */ jsx8(Markdown, { text: entry.text ?? "" }) });
       }
-      return /* @__PURE__ */ jsx7(
+      return /* @__PURE__ */ jsx8(
         AgentBubble,
         {
           text: entry.text ?? "",
@@ -6445,20 +6860,20 @@ function LogLine({ entry, agentKey, agentName, isLastAssistantText, autoScroll, 
         }
       );
     case "tool-use":
-      return /* @__PURE__ */ jsx7(ToolBlock, { entry, ...collapseCount != null && collapseCount > 1 ? { collapseCount } : {} });
+      return /* @__PURE__ */ jsx8(ToolBlock, { entry, ...collapseCount != null && collapseCount > 1 ? { collapseCount } : {} });
     case "entrypoint-group":
-      return /* @__PURE__ */ jsx7(EntrypointGroup, { entry });
+      return /* @__PURE__ */ jsx8(EntrypointGroup, { entry });
     case "entrypoint-header":
-      return /* @__PURE__ */ jsx7("div", { className: "ep-header", children: entry.text });
+      return /* @__PURE__ */ jsx8("div", { className: "ep-header", children: entry.text });
     case "entrypoint-ok":
-      return /* @__PURE__ */ jsxs7("div", { className: "ep-ok", children: [
-        /* @__PURE__ */ jsx7("span", { className: "ep-ok-badge", children: "\u2713" }),
+      return /* @__PURE__ */ jsxs8("div", { className: "ep-ok", children: [
+        /* @__PURE__ */ jsx8("span", { className: "ep-ok-badge", children: "\u2713" }),
         " ",
         entry.text
       ] });
     case "entrypoint-info":
-      return /* @__PURE__ */ jsxs7("div", { className: "ep-info", children: [
-        /* @__PURE__ */ jsxs7("span", { className: "ep-info-key", children: [
+      return /* @__PURE__ */ jsxs8("div", { className: "ep-info", children: [
+        /* @__PURE__ */ jsxs8("span", { className: "ep-info-key", children: [
           entry.detail,
           ":"
         ] }),
@@ -6466,40 +6881,40 @@ function LogLine({ entry, agentKey, agentName, isLastAssistantText, autoScroll, 
         entry.text
       ] });
     case "entrypoint-fatal":
-      return /* @__PURE__ */ jsxs7("div", { className: "ep-fatal", role: "alert", children: [
-        /* @__PURE__ */ jsx7("span", { className: "ep-fatal-badge", children: "\u2717" }),
+      return /* @__PURE__ */ jsxs8("div", { className: "ep-fatal", role: "alert", children: [
+        /* @__PURE__ */ jsx8("span", { className: "ep-fatal-badge", children: "\u2717" }),
         " ",
         entry.text
       ] });
     case "entrypoint-task":
-      return /* @__PURE__ */ jsx7(NorseTablet, { text: entry.text ?? "", ...autoScroll !== void 0 ? { autoScroll } : {} });
+      return /* @__PURE__ */ jsx8(NorseTablet, { text: entry.text ?? "", ...autoScroll !== void 0 ? { autoScroll } : {} });
     case "warning":
-      return /* @__PURE__ */ jsxs7("span", { className: "log-warning", children: [
+      return /* @__PURE__ */ jsxs8("span", { className: "log-warning", children: [
         "\u26A0",
         " ",
         entry.message
       ] });
     case "error":
-      return /* @__PURE__ */ jsxs7("div", { className: "log-error-box", role: "alert", "aria-label": "Log stream error", children: [
-        /* @__PURE__ */ jsx7("span", { className: "log-error-icon", children: "\u26A0" }),
-        /* @__PURE__ */ jsx7("span", { className: "log-error-text", children: entry.message })
+      return /* @__PURE__ */ jsxs8("div", { className: "log-error-box", role: "alert", "aria-label": "Log stream error", children: [
+        /* @__PURE__ */ jsx8("span", { className: "log-error-icon", children: "\u26A0" }),
+        /* @__PURE__ */ jsx8("span", { className: "log-error-text", children: entry.message })
       ] });
     case "stream-end":
-      return /* @__PURE__ */ jsxs7("div", { className: "log-end", children: [
+      return /* @__PURE__ */ jsxs8("div", { className: "log-end", children: [
         "\u2014 stream ",
         entry.reason,
         " \u2014"
       ] });
     case "verdict": {
       const color = entry.verdictResult === "PASS" ? "var(--success-strong)" : "var(--error-strong)";
-      return /* @__PURE__ */ jsxs7("span", { style: { color, fontWeight: "bold" }, children: [
+      return /* @__PURE__ */ jsxs8("span", { style: { color, fontWeight: "bold" }, children: [
         "\u2014 Verdict: ",
         entry.verdictResult,
         " \u2014"
       ] });
     }
     case "raw":
-      return /* @__PURE__ */ jsx7("div", { className: "log-line", style: { color: "var(--text-void)" }, children: entry.text });
+      return /* @__PURE__ */ jsx8("div", { className: "log-line", style: { color: "var(--text-void)" }, children: entry.text });
     default:
       return null;
   }
@@ -6520,7 +6935,7 @@ function AgentBubble({
 }) {
   if (isTemplateBoilerplate(text)) return null;
   if (isDecreeBlock(text)) {
-    return /* @__PURE__ */ jsx7(
+    return /* @__PURE__ */ jsx8(
       DecreeBlock,
       {
         text,
@@ -6531,7 +6946,7 @@ function AgentBubble({
     );
   }
   if (isLastAssistantText && isVerdictMessage(text)) {
-    return /* @__PURE__ */ jsx7(
+    return /* @__PURE__ */ jsx8(
       NorseVerdictInscription,
       {
         text,
@@ -6545,24 +6960,24 @@ function AgentBubble({
   const title = AGENT_TITLES[agentKey ?? ""] ?? "";
   const avatar = avatarUrl(agentKey ?? "", theme === "light" ? "light" : "dark");
   const color = AGENT_COLORS[agentKey ?? ""] ?? "var(--gold)";
-  return /* @__PURE__ */ jsxs7("div", { className: "agent-bubble", style: { "--agent-accent": color, borderLeftColor: color }, children: [
-    /* @__PURE__ */ jsxs7("div", { className: "agent-bubble-header", children: [
-      avatar && /* @__PURE__ */ jsx7(
+  return /* @__PURE__ */ jsxs8("div", { className: "agent-bubble", style: { "--agent-accent": color, borderLeftColor: color }, children: [
+    /* @__PURE__ */ jsxs8("div", { className: "agent-bubble-header", children: [
+      avatar && /* @__PURE__ */ jsx8(
         "button",
         {
           className: "agent-bubble-avatar-btn",
           onClick: () => onAvatarClick?.(agentKey ?? ""),
           "aria-label": `View ${name} profile`,
           title: `View ${name} profile`,
-          children: /* @__PURE__ */ jsx7("img", { className: "agent-bubble-avatar", src: avatar, alt: name, style: { borderColor: color } })
+          children: /* @__PURE__ */ jsx8("img", { className: "agent-bubble-avatar", src: avatar, alt: name, style: { borderColor: color } })
         }
       ),
-      /* @__PURE__ */ jsxs7("div", { className: "agent-bubble-identity", children: [
-        /* @__PURE__ */ jsx7("span", { className: "agent-bubble-name", style: { color }, children: name }),
-        title && /* @__PURE__ */ jsx7("span", { className: "agent-bubble-title", children: title })
+      /* @__PURE__ */ jsxs8("div", { className: "agent-bubble-identity", children: [
+        /* @__PURE__ */ jsx8("span", { className: "agent-bubble-name", style: { color }, children: name }),
+        title && /* @__PURE__ */ jsx8("span", { className: "agent-bubble-title", children: title })
       ] })
     ] }),
-    /* @__PURE__ */ jsx7("div", { className: "agent-bubble-text", children: text })
+    /* @__PURE__ */ jsx8("div", { className: "agent-bubble-text", children: /* @__PURE__ */ jsx8(Markdown, { text }) })
   ] });
 }
 function ToolBatchGroup({ entry, autoScroll, isLatestBatch }) {
@@ -6591,14 +7006,14 @@ function ToolBatchGroup({ entry, autoScroll, isLatestBatch }) {
       setOpen(false);
     }
   }, [autoScroll, isLatestBatch]);
-  return /* @__PURE__ */ jsxs7("div", { className: `ev-tool-batch ${open2 ? "open" : ""}${hasError ? " batch-error" : ""}${entry.complete ? " complete" : ""}`, children: [
-    /* @__PURE__ */ jsxs7("div", { className: "ev-tool-batch-header", onClick: () => setOpen(!open2), children: [
-      /* @__PURE__ */ jsx7("span", { className: "ev-tool-batch-chevron", children: "\u203A" }),
-      /* @__PURE__ */ jsx7("span", { className: "ev-tool-batch-label", children: entry.text }),
-      !entry.complete && /* @__PURE__ */ jsx7("span", { className: "ev-tool-batch-spinner" }),
-      entry.complete && /* @__PURE__ */ jsx7("span", { className: "ev-tool-batch-done", children: "\u2713" })
+  return /* @__PURE__ */ jsxs8("div", { className: `ev-tool-batch ${open2 ? "open" : ""}${hasError ? " batch-error" : ""}${entry.complete ? " complete" : ""}`, children: [
+    /* @__PURE__ */ jsxs8("div", { className: "ev-tool-batch-header", onClick: () => setOpen(!open2), children: [
+      /* @__PURE__ */ jsx8("span", { className: "ev-tool-batch-chevron", children: "\u203A" }),
+      /* @__PURE__ */ jsx8("span", { className: "ev-tool-batch-label", children: entry.text }),
+      !entry.complete && /* @__PURE__ */ jsx8("span", { className: "ev-tool-batch-spinner" }),
+      entry.complete && /* @__PURE__ */ jsx8("span", { className: "ev-tool-batch-done", children: "\u2713" })
     ] }),
-    /* @__PURE__ */ jsx7("div", { className: "ev-tool-batch-body-wrap", children: /* @__PURE__ */ jsx7("div", { className: "ev-tool-batch-body", children: entry.children?.map((child) => /* @__PURE__ */ jsx7(LogLine, { entry: child }, child.id)) }) })
+    /* @__PURE__ */ jsx8("div", { className: "ev-tool-batch-body-wrap", children: /* @__PURE__ */ jsx8("div", { className: "ev-tool-batch-body", children: entry.children?.map((child) => /* @__PURE__ */ jsx8(LogLine, { entry: child }, child.id)) }) })
   ] });
 }
 function parseDecreeSections(text) {
@@ -6658,7 +7073,7 @@ function applyWikiLinksToNodes(nodes) {
       for (const part of parts) {
         if (part === term) {
           next.push(
-            /* @__PURE__ */ jsx7(
+            /* @__PURE__ */ jsx8(
               "a",
               {
                 className: "decree-body-link",
@@ -6686,7 +7101,7 @@ function processInline(text) {
   for (let i = 0; i < btParts.length; i++) {
     const part = btParts[i] ?? "";
     if (i % 2 === 1) {
-      nodes.push(/* @__PURE__ */ jsx7("code", { className: "decree-body-code", children: part }, `bc-${i}`));
+      nodes.push(/* @__PURE__ */ jsx8("code", { className: "decree-body-code", children: part }, `bc-${i}`));
     } else if (part) {
       nodes.push(part);
     }
@@ -6709,9 +7124,9 @@ function DecreeSectionBody({ body }) {
   const flushList = () => {
     if (listBuffer.length === 0) return;
     elements.push(
-      /* @__PURE__ */ jsx7("ul", { children: listBuffer.map((item, i) => {
+      /* @__PURE__ */ jsx8("ul", { children: listBuffer.map((item, i) => {
         const content = item.trimStart().replace(/^[-*]\s+/, "");
-        return /* @__PURE__ */ jsx7("li", { children: processInline(content) }, i);
+        return /* @__PURE__ */ jsx8("li", { children: processInline(content) }, i);
       }) }, `ul-${keyIdx++}`)
     );
     listBuffer.length = 0;
@@ -6719,14 +7134,14 @@ function DecreeSectionBody({ body }) {
   const flushCode = () => {
     if (codeBuffer.length === 0) return;
     elements.push(
-      /* @__PURE__ */ jsx7("code", { className: "decree-body-block", children: codeBuffer.join("\n") }, `blk-${keyIdx++}`)
+      /* @__PURE__ */ jsx8("code", { className: "decree-body-block", children: codeBuffer.join("\n") }, `blk-${keyIdx++}`)
     );
     codeBuffer.length = 0;
   };
   const flushFence = () => {
     if (fenceBuffer.length === 0 && !inFence) return;
     elements.push(
-      /* @__PURE__ */ jsx7("pre", { className: "decree-body-fence", children: /* @__PURE__ */ jsx7("code", { className: fenceLang ? `language-${fenceLang}` : void 0, children: fenceBuffer.join("\n") }) }, `fence-${keyIdx++}`)
+      /* @__PURE__ */ jsx8("pre", { className: "decree-body-fence", children: /* @__PURE__ */ jsx8("code", { className: fenceLang ? `language-${fenceLang}` : void 0, children: fenceBuffer.join("\n") }) }, `fence-${keyIdx++}`)
     );
     fenceBuffer.length = 0;
     inFence = false;
@@ -6761,21 +7176,21 @@ function DecreeSectionBody({ body }) {
       if (!trimmed) continue;
       if (isHeadingLine(line)) {
         const content = trimmed.replace(/^##\s+/, "").replace(/^\*\*/, "").replace(/\*\*$/, "");
-        elements.push(/* @__PURE__ */ jsx7("strong", { children: processInline(content) }, `h-${keyIdx++}`));
+        elements.push(/* @__PURE__ */ jsx8("strong", { children: processInline(content) }, `h-${keyIdx++}`));
       } else {
-        elements.push(/* @__PURE__ */ jsx7("p", { children: processInline(trimmed) }, `p-${keyIdx++}`));
+        elements.push(/* @__PURE__ */ jsx8("p", { children: processInline(trimmed) }, `p-${keyIdx++}`));
       }
     }
   }
   flushCode();
   flushList();
   if (inFence) flushFence();
-  return /* @__PURE__ */ jsx7(Fragment3, { children: elements });
+  return /* @__PURE__ */ jsx8(Fragment3, { children: elements });
 }
 function DecreeSection({ glyph, title, body, defaultOpen, wide }) {
   const [open2, setOpen] = useState3(defaultOpen);
-  return /* @__PURE__ */ jsxs7("div", { className: `decree-section ${open2 ? "open" : ""}${wide ? " decree-wide" : ""}`, children: [
-    /* @__PURE__ */ jsxs7(
+  return /* @__PURE__ */ jsxs8("div", { className: `decree-section ${open2 ? "open" : ""}${wide ? " decree-wide" : ""}`, children: [
+    /* @__PURE__ */ jsxs8(
       "div",
       {
         className: "decree-section-header",
@@ -6790,13 +7205,13 @@ function DecreeSection({ glyph, title, body, defaultOpen, wide }) {
           }
         },
         children: [
-          /* @__PURE__ */ jsx7("span", { className: "decree-section-glyph", "aria-hidden": "true", children: glyph }),
-          /* @__PURE__ */ jsx7("span", { className: "decree-section-title", children: title }),
-          /* @__PURE__ */ jsx7("span", { className: "ep-group-chevron", style: { marginLeft: "auto" }, children: "\u203A" })
+          /* @__PURE__ */ jsx8("span", { className: "decree-section-glyph", "aria-hidden": "true", children: glyph }),
+          /* @__PURE__ */ jsx8("span", { className: "decree-section-title", children: title }),
+          /* @__PURE__ */ jsx8("span", { className: "ep-group-chevron", style: { marginLeft: "auto" }, children: "\u203A" })
         ]
       }
     ),
-    open2 && /* @__PURE__ */ jsx7("div", { className: "decree-section-body", children: /* @__PURE__ */ jsx7(DecreeSectionBody, { body }) })
+    open2 && /* @__PURE__ */ jsx8("div", { className: "decree-section-body", children: /* @__PURE__ */ jsx8(DecreeSectionBody, { body }) })
   ] });
 }
 function NorseTablet({ text, autoScroll }) {
@@ -6821,13 +7236,13 @@ function NorseTablet({ text, autoScroll }) {
     }, 3e3);
     return () => clearTimeout(timer);
   }, [autoScroll, hasBeenCollapsed]);
-  return /* @__PURE__ */ jsxs7(
+  return /* @__PURE__ */ jsxs8(
     "div",
     {
       className: `norse-tablet ${open2 ? "open" : ""}`,
       style: { borderLeft: `3px solid ${agentColor}` },
       children: [
-        /* @__PURE__ */ jsxs7(
+        /* @__PURE__ */ jsxs8(
           "div",
           {
             className: "norse-tablet-header",
@@ -6842,28 +7257,28 @@ function NorseTablet({ text, autoScroll }) {
               }
             },
             children: [
-              /* @__PURE__ */ jsx7("span", { className: "norse-tablet-rune", "aria-hidden": "true", children: firstRune }),
-              /* @__PURE__ */ jsxs7("div", { className: "norse-tablet-title-block", children: [
-                /* @__PURE__ */ jsxs7("div", { className: "norse-tablet-title", children: [
+              /* @__PURE__ */ jsx8("span", { className: "norse-tablet-rune", "aria-hidden": "true", children: firstRune }),
+              /* @__PURE__ */ jsxs8("div", { className: "norse-tablet-title-block", children: [
+                /* @__PURE__ */ jsxs8("div", { className: "norse-tablet-title", children: [
                   "THE ALL-FATHER'S DECREE UNTO ",
                   agentDisplayName.toUpperCase()
                 ] }),
-                /* @__PURE__ */ jsxs7("div", { className: "norse-tablet-subtitle", children: [
+                /* @__PURE__ */ jsxs8("div", { className: "norse-tablet-subtitle", children: [
                   issue ? `Issue #${issue} \xB7 ` : "",
                   agentTitle,
-                  agentRunes && /* @__PURE__ */ jsxs7("span", { className: "norse-tablet-rune-name", "aria-hidden": "true", children: [
+                  agentRunes && /* @__PURE__ */ jsxs8("span", { className: "norse-tablet-rune-name", "aria-hidden": "true", children: [
                     " \\u00B7 ",
                     agentRunes
                   ] })
                 ] })
               ] }),
-              /* @__PURE__ */ jsx7("span", { className: "norse-tablet-rune", "aria-hidden": "true", children: firstRune }),
-              /* @__PURE__ */ jsx7("span", { className: "ep-group-chevron", style: { marginLeft: "auto" }, children: "\u203A" })
+              /* @__PURE__ */ jsx8("span", { className: "norse-tablet-rune", "aria-hidden": "true", children: firstRune }),
+              /* @__PURE__ */ jsx8("span", { className: "ep-group-chevron", style: { marginLeft: "auto" }, children: "\u203A" })
             ]
           }
         ),
-        /* @__PURE__ */ jsx7("div", { className: "norse-tablet-body-wrap", children: /* @__PURE__ */ jsxs7("div", { className: "norse-tablet-body", children: [
-          /* @__PURE__ */ jsx7("div", { className: "decree-grid", children: sections.map((sec, i) => /* @__PURE__ */ jsx7(
+        /* @__PURE__ */ jsx8("div", { className: "norse-tablet-body-wrap", children: /* @__PURE__ */ jsxs8("div", { className: "norse-tablet-body", children: [
+          /* @__PURE__ */ jsx8("div", { className: "decree-grid", children: sections.map((sec, i) => /* @__PURE__ */ jsx8(
             DecreeSection,
             {
               glyph: sec.glyph,
@@ -6874,14 +7289,14 @@ function NorseTablet({ text, autoScroll }) {
             },
             i
           )) }),
-          /* @__PURE__ */ jsxs7("div", { className: "decree-seal", role: "complementary", "aria-label": "Odin's royal seal", children: [
-            /* @__PURE__ */ jsx7("div", { className: "decree-seal-runic-band", "aria-hidden": "true", children: "\u16DF \u16DE \u16C1 \u16BE \xB7 \u16A8 \u16DA \u16DA \u16A0 \u16A8 \u16A6 \u16D6 \u16B1 \xB7 \u16A2 \u16CF \u16B7 \u16A8 \u16B1 \u16DE" }),
-            /* @__PURE__ */ jsx7("div", { className: "decree-seal-medallion", role: "img", "aria-label": "Odin's rune \u2014 Othalan", children: "\u16DF" }),
-            /* @__PURE__ */ jsx7("div", { className: "decree-seal-divider", "aria-hidden": "true", children: "\u2014 \u16A8 \u2014" }),
-            /* @__PURE__ */ jsxs7("div", { className: "decree-seal-command", children: [
+          /* @__PURE__ */ jsxs8("div", { className: "decree-seal", role: "complementary", "aria-label": "Odin's royal seal", children: [
+            /* @__PURE__ */ jsx8("div", { className: "decree-seal-runic-band", "aria-hidden": "true", children: "\u16DF \u16DE \u16C1 \u16BE \xB7 \u16A8 \u16DA \u16DA \u16A0 \u16A8 \u16A6 \u16D6 \u16B1 \xB7 \u16A2 \u16CF \u16B7 \u16A8 \u16B1 \u16DE" }),
+            /* @__PURE__ */ jsx8("div", { className: "decree-seal-medallion", role: "img", "aria-label": "Odin's rune \u2014 Othalan", children: "\u16DF" }),
+            /* @__PURE__ */ jsx8("div", { className: "decree-seal-divider", "aria-hidden": "true", children: "\u2014 \u16A8 \u2014" }),
+            /* @__PURE__ */ jsxs8("div", { className: "decree-seal-command", children: [
               "\u201CBy mine eye that sees all",
               " ",
-              /* @__PURE__ */ jsx7(
+              /* @__PURE__ */ jsx8(
                 "a",
                 {
                   className: "wiki-link decree-body-link",
@@ -6896,7 +7311,7 @@ function NorseTablet({ text, autoScroll }) {
               " ",
               "\u2014 I command thee to this task. Fail not.",
               " ",
-              /* @__PURE__ */ jsx7(
+              /* @__PURE__ */ jsx8(
                 "a",
                 {
                   className: "wiki-link decree-body-link",
@@ -6911,8 +7326,8 @@ function NorseTablet({ text, autoScroll }) {
               " ",
               "hungers.\u201D"
             ] }),
-            /* @__PURE__ */ jsx7("div", { className: "decree-seal-attribution", children: "Odin \xB7 All-Father" }),
-            /* @__PURE__ */ jsx7("div", { className: "decree-seal-title-runes", "aria-hidden": "true", children: "\u16DF\u16DE\u16C1\u16BE \u16A8\u16DA\u16DA\u16A0\u16A8\u16A6\u16D6\u16B1" })
+            /* @__PURE__ */ jsx8("div", { className: "decree-seal-attribution", children: "Odin \xB7 All-Father" }),
+            /* @__PURE__ */ jsx8("div", { className: "decree-seal-title-runes", "aria-hidden": "true", children: "\u16DF\u16DE\u16C1\u16BE \u16A8\u16DA\u16DA\u16A0\u16A8\u16A6\u16D6\u16B1" })
           ] })
         ] }) })
       ]
@@ -6920,29 +7335,29 @@ function NorseTablet({ text, autoScroll }) {
   );
 }
 function PinIcon({ filled }) {
-  return /* @__PURE__ */ jsx7("svg", { width: "16", height: "16", viewBox: "0 0 16 16", fill: "none", "aria-hidden": "true", children: filled ? (
+  return /* @__PURE__ */ jsx8("svg", { width: "16", height: "16", viewBox: "0 0 16 16", fill: "none", "aria-hidden": "true", children: filled ? (
     // Filled tack (pinned state — gold)
-    /* @__PURE__ */ jsxs7(Fragment3, { children: [
-      /* @__PURE__ */ jsx7("path", { d: "M10 2L14 6L10.5 9.5L8.5 14L7 12.5L9 8.5L5.5 5L2 3.5L6.5 1.5L10 2Z", fill: "currentColor" }),
-      /* @__PURE__ */ jsx7("line", { x1: "5", y1: "11", x2: "2", y2: "14", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round" })
+    /* @__PURE__ */ jsxs8(Fragment3, { children: [
+      /* @__PURE__ */ jsx8("path", { d: "M10 2L14 6L10.5 9.5L8.5 14L7 12.5L9 8.5L5.5 5L2 3.5L6.5 1.5L10 2Z", fill: "currentColor" }),
+      /* @__PURE__ */ jsx8("line", { x1: "5", y1: "11", x2: "2", y2: "14", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round" })
     ] })
   ) : (
     // Hollow tack (unpinned state — dim)
-    /* @__PURE__ */ jsxs7(Fragment3, { children: [
-      /* @__PURE__ */ jsx7("path", { d: "M10 2L14 6L10.5 9.5L8.5 14L7 12.5L9 8.5L5.5 5L2 3.5L6.5 1.5L10 2Z", stroke: "currentColor", strokeWidth: "1.5", strokeLinejoin: "round" }),
-      /* @__PURE__ */ jsx7("line", { x1: "5", y1: "11", x2: "2", y2: "14", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round" })
+    /* @__PURE__ */ jsxs8(Fragment3, { children: [
+      /* @__PURE__ */ jsx8("path", { d: "M10 2L14 6L10.5 9.5L8.5 14L7 12.5L9 8.5L5.5 5L2 3.5L6.5 1.5L10 2Z", stroke: "currentColor", strokeWidth: "1.5", strokeLinejoin: "round" }),
+      /* @__PURE__ */ jsx8("line", { x1: "5", y1: "11", x2: "2", y2: "14", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round" })
     ] })
   ) });
 }
 function ClipboardIcon2() {
-  return /* @__PURE__ */ jsxs7("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "none", "aria-hidden": "true", children: [
-    /* @__PURE__ */ jsx7("rect", { x: "4", y: "3", width: "7", height: "9", rx: "1", stroke: "currentColor", strokeWidth: "1.5" }),
-    /* @__PURE__ */ jsx7("path", { d: "M4 4H3a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-1", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round" }),
-    /* @__PURE__ */ jsx7("path", { d: "M6 3V2h3v1", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" })
+  return /* @__PURE__ */ jsxs8("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "none", "aria-hidden": "true", children: [
+    /* @__PURE__ */ jsx8("rect", { x: "4", y: "3", width: "7", height: "9", rx: "1", stroke: "currentColor", strokeWidth: "1.5" }),
+    /* @__PURE__ */ jsx8("path", { d: "M4 4H3a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-1", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round" }),
+    /* @__PURE__ */ jsx8("path", { d: "M6 3V2h3v1", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" })
   ] });
 }
 function CheckIcon2() {
-  return /* @__PURE__ */ jsx7("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "none", "aria-hidden": "true", children: /* @__PURE__ */ jsx7("path", { d: "M2 7l4 4 6-6", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" }) });
+  return /* @__PURE__ */ jsx8("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "none", "aria-hidden": "true", children: /* @__PURE__ */ jsx8("path", { d: "M2 7l4 4 6-6", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" }) });
 }
 function CopySessionIdButton({ sessionId }) {
   const [copied, setCopied] = useState3(false);
@@ -6956,7 +7371,7 @@ function CopySessionIdButton({ sessionId }) {
     } catch {
     }
   }
-  return /* @__PURE__ */ jsxs7(
+  return /* @__PURE__ */ jsxs8(
     "button",
     {
       className: `header-action-btn${copied ? " header-action-btn--copied" : ""}`,
@@ -6964,27 +7379,27 @@ function CopySessionIdButton({ sessionId }) {
       title: copied ? "Copied!" : "Copy session ID",
       "aria-label": copied ? "Session ID copied" : "Copy session ID",
       children: [
-        copied ? /* @__PURE__ */ jsx7(CheckIcon2, {}) : /* @__PURE__ */ jsx7(ClipboardIcon2, {}),
-        /* @__PURE__ */ jsx7("span", { children: copied ? "Copied" : "Copy" })
+        copied ? /* @__PURE__ */ jsx8(CheckIcon2, {}) : /* @__PURE__ */ jsx8(ClipboardIcon2, {}),
+        /* @__PURE__ */ jsx8("span", { children: copied ? "Copied" : "Copy" })
       ]
     }
   );
 }
 function DownloadIcon() {
-  return /* @__PURE__ */ jsxs7("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "none", "aria-hidden": "true", children: [
-    /* @__PURE__ */ jsx7("path", { d: "M7 2v7M4 6l3 3 3-3", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" }),
-    /* @__PURE__ */ jsx7("path", { d: "M2 11h10", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round" })
+  return /* @__PURE__ */ jsxs8("svg", { width: "14", height: "14", viewBox: "0 0 14 14", fill: "none", "aria-hidden": "true", children: [
+    /* @__PURE__ */ jsx8("path", { d: "M7 2v7M4 6l3 3 3-3", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" }),
+    /* @__PURE__ */ jsx8("path", { d: "M2 11h10", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round" })
   ] });
 }
 function DownloadSessionButton({ sessionId }) {
-  return /* @__PURE__ */ jsx7(
+  return /* @__PURE__ */ jsx8(
     "button",
     {
       className: "copy-session-btn",
       onClick: () => void downloadLogFile(sessionId),
       title: "Download session log",
       "aria-label": "Download session log",
-      children: /* @__PURE__ */ jsx7(DownloadIcon, {})
+      children: /* @__PURE__ */ jsx8(DownloadIcon, {})
     }
   );
 }
@@ -6994,32 +7409,32 @@ function StartupBlock({ group }) {
   const sessionEntry = group.metaEntries.find((e) => /^Session:\s*/.test(e.text ?? ""));
   const model = modelEntry?.text?.replace(/^Model:\s*/, "").trim() ?? "";
   const session = sessionEntry?.text?.replace(/^Session:\s*/, "").trim() ?? "";
-  return /* @__PURE__ */ jsxs7("div", { className: `ep-group ${open2 ? "open" : ""}`, children: [
-    /* @__PURE__ */ jsxs7("div", { className: "ep-group-header", onClick: () => setOpen(!open2), role: "button", tabIndex: 0, "aria-expanded": open2, onKeyDown: (e) => {
+  return /* @__PURE__ */ jsxs8("div", { className: `ep-group ${open2 ? "open" : ""}`, children: [
+    /* @__PURE__ */ jsxs8("div", { className: "ep-group-header", onClick: () => setOpen(!open2), role: "button", tabIndex: 0, "aria-expanded": open2, onKeyDown: (e) => {
       if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
         setOpen((o) => !o);
       }
     }, children: [
-      /* @__PURE__ */ jsx7("span", { className: "ep-group-chevron", children: "\u203A" }),
-      /* @__PURE__ */ jsx7("span", { className: "ep-group-title", children: group.headerEntry.text }),
-      /* @__PURE__ */ jsxs7("span", { className: "ep-group-meta", children: [
-        model && /* @__PURE__ */ jsxs7("span", { className: "ep-group-meta-item", children: [
-          /* @__PURE__ */ jsx7("span", { className: "ep-group-meta-key", children: "Model:" }),
+      /* @__PURE__ */ jsx8("span", { className: "ep-group-chevron", children: "\u203A" }),
+      /* @__PURE__ */ jsx8("span", { className: "ep-group-title", children: group.headerEntry.text }),
+      /* @__PURE__ */ jsxs8("span", { className: "ep-group-meta", children: [
+        model && /* @__PURE__ */ jsxs8("span", { className: "ep-group-meta-item", children: [
+          /* @__PURE__ */ jsx8("span", { className: "ep-group-meta-key", children: "Model:" }),
           " ",
           model
         ] }),
-        session && /* @__PURE__ */ jsxs7("span", { className: "ep-group-meta-item", children: [
-          /* @__PURE__ */ jsx7("span", { className: "ep-group-meta-key", children: "Session:" }),
+        session && /* @__PURE__ */ jsxs8("span", { className: "ep-group-meta-item", children: [
+          /* @__PURE__ */ jsx8("span", { className: "ep-group-meta-key", children: "Session:" }),
           " ",
           session
         ] })
       ] })
     ] }),
-    /* @__PURE__ */ jsx7("div", { className: "ep-group-body-wrap", children: /* @__PURE__ */ jsx7("div", { className: "ep-group-body", children: /* @__PURE__ */ jsx7("div", { className: "ep-info-card", children: group.metaEntries.map((e) => {
+    /* @__PURE__ */ jsx8("div", { className: "ep-group-body-wrap", children: /* @__PURE__ */ jsx8("div", { className: "ep-group-body", children: /* @__PURE__ */ jsx8("div", { className: "ep-info-card", children: group.metaEntries.map((e) => {
       const kvMatch = /^([^:]+):\s*(.+)$/.exec(e.text ?? "");
-      return /* @__PURE__ */ jsx7("div", { className: "ep-info", children: kvMatch ? /* @__PURE__ */ jsxs7(Fragment3, { children: [
-        /* @__PURE__ */ jsxs7("span", { className: "ep-info-key", children: [
+      return /* @__PURE__ */ jsx8("div", { className: "ep-info", children: kvMatch ? /* @__PURE__ */ jsxs8(Fragment3, { children: [
+        /* @__PURE__ */ jsxs8("span", { className: "ep-info-key", children: [
           kvMatch[1],
           ":"
         ] }),
@@ -7038,44 +7453,44 @@ function EntrypointGroup({ entry }) {
   const fatalItems = children.filter((c) => c.type === "entrypoint-fatal");
   const noiseItems = children.filter((c) => c.type === "raw" || c.type === "warning");
   const hasFatal = fatalItems.length > 0;
-  return /* @__PURE__ */ jsxs7("div", { className: `ep-group ${open2 ? "open" : ""}${hasFatal ? " ep-group-error" : ""}`, children: [
-    /* @__PURE__ */ jsxs7("div", { className: "ep-group-header", onClick: () => setOpen(!open2), children: [
-      /* @__PURE__ */ jsx7("span", { className: "ep-group-chevron", children: "\u203A" }),
-      /* @__PURE__ */ jsx7("span", { className: "ep-group-title", children: entry.text }),
-      infoItems.length > 0 && /* @__PURE__ */ jsx7("span", { className: "ep-group-meta", children: infoItems.map((i) => /* @__PURE__ */ jsxs7("span", { className: "ep-group-meta-item", children: [
-        /* @__PURE__ */ jsxs7("span", { className: "ep-group-meta-key", children: [
+  return /* @__PURE__ */ jsxs8("div", { className: `ep-group ${open2 ? "open" : ""}${hasFatal ? " ep-group-error" : ""}`, children: [
+    /* @__PURE__ */ jsxs8("div", { className: "ep-group-header", onClick: () => setOpen(!open2), children: [
+      /* @__PURE__ */ jsx8("span", { className: "ep-group-chevron", children: "\u203A" }),
+      /* @__PURE__ */ jsx8("span", { className: "ep-group-title", children: entry.text }),
+      infoItems.length > 0 && /* @__PURE__ */ jsx8("span", { className: "ep-group-meta", children: infoItems.map((i) => /* @__PURE__ */ jsxs8("span", { className: "ep-group-meta-item", children: [
+        /* @__PURE__ */ jsxs8("span", { className: "ep-group-meta-key", children: [
           i.detail,
           ":"
         ] }),
         " ",
         i.text
       ] }, i.id)) }),
-      /* @__PURE__ */ jsx7("span", { className: "ep-group-summary", children: hasFatal ? "\u26A0 setup failed" : `${okItems.length} steps \u2713` })
+      /* @__PURE__ */ jsx8("span", { className: "ep-group-summary", children: hasFatal ? "\u26A0 setup failed" : `${okItems.length} steps \u2713` })
     ] }),
-    /* @__PURE__ */ jsx7("div", { className: "ep-group-body-wrap", children: /* @__PURE__ */ jsxs7("div", { className: "ep-group-body", children: [
-      infoItems.length > 0 && /* @__PURE__ */ jsx7("div", { className: "ep-info-card", children: infoItems.map((i) => /* @__PURE__ */ jsxs7("div", { className: "ep-info", children: [
-        /* @__PURE__ */ jsxs7("span", { className: "ep-info-key", children: [
+    /* @__PURE__ */ jsx8("div", { className: "ep-group-body-wrap", children: /* @__PURE__ */ jsxs8("div", { className: "ep-group-body", children: [
+      infoItems.length > 0 && /* @__PURE__ */ jsx8("div", { className: "ep-info-card", children: infoItems.map((i) => /* @__PURE__ */ jsxs8("div", { className: "ep-info", children: [
+        /* @__PURE__ */ jsxs8("span", { className: "ep-info-key", children: [
           i.detail,
           ":"
         ] }),
         " ",
         i.text
       ] }, i.id)) }),
-      fatalItems.map((c) => /* @__PURE__ */ jsx7(LogLine, { entry: c }, c.id)),
-      okItems.map((c) => /* @__PURE__ */ jsx7(LogLine, { entry: c }, c.id)),
-      noiseItems.length > 0 && /* @__PURE__ */ jsxs7("div", { className: `ep-noise-group ${noiseOpen ? "open" : ""}`, children: [
-        /* @__PURE__ */ jsxs7("div", { className: "ep-noise-header", onClick: (e) => {
+      fatalItems.map((c) => /* @__PURE__ */ jsx8(LogLine, { entry: c }, c.id)),
+      okItems.map((c) => /* @__PURE__ */ jsx8(LogLine, { entry: c }, c.id)),
+      noiseItems.length > 0 && /* @__PURE__ */ jsxs8("div", { className: `ep-noise-group ${noiseOpen ? "open" : ""}`, children: [
+        /* @__PURE__ */ jsxs8("div", { className: "ep-noise-header", onClick: (e) => {
           e.stopPropagation();
           setNoiseOpen((v) => !v);
         }, children: [
-          /* @__PURE__ */ jsx7("span", { className: "ep-group-chevron", children: "\u203A" }),
-          /* @__PURE__ */ jsx7("span", { className: "ep-noise-title", children: "Setup details" }),
-          /* @__PURE__ */ jsxs7("span", { className: "ep-group-summary", children: [
+          /* @__PURE__ */ jsx8("span", { className: "ep-group-chevron", children: "\u203A" }),
+          /* @__PURE__ */ jsx8("span", { className: "ep-noise-title", children: "Setup details" }),
+          /* @__PURE__ */ jsxs8("span", { className: "ep-group-summary", children: [
             noiseItems.length,
             " lines"
           ] })
         ] }),
-        /* @__PURE__ */ jsx7("div", { className: "ep-group-body-wrap", children: /* @__PURE__ */ jsx7("div", { className: "ep-group-body", children: noiseItems.map((c) => /* @__PURE__ */ jsx7(LogLine, { entry: c }, c.id)) }) })
+        /* @__PURE__ */ jsx8("div", { className: "ep-group-body-wrap", children: /* @__PURE__ */ jsx8("div", { className: "ep-group-body", children: noiseItems.map((c) => /* @__PURE__ */ jsx8(LogLine, { entry: c }, c.id)) }) })
       ] })
     ] }) })
   ] });
@@ -7942,7 +8357,7 @@ function useLogStream() {
 }
 
 // src/ui/components/SessionLogViewer.tsx
-import { jsx as jsx8 } from "react/jsx-runtime";
+import { jsx as jsx9 } from "react/jsx-runtime";
 function SessionLogViewer({
   sessionId,
   namespace: tabNamespace,
@@ -8073,7 +8488,7 @@ function SessionLogViewer({
     }
     setIsPinned((prev) => !prev);
   }, [jobs, snap, sessionId, jobSnapshot]);
-  return /* @__PURE__ */ jsx8(
+  return /* @__PURE__ */ jsx9(
     LogViewer,
     {
       entries,
@@ -8097,7 +8512,7 @@ function SessionLogViewer({
 }
 function SessionLogViewerEmpty() {
   const snap = useThrone();
-  return /* @__PURE__ */ jsx8(
+  return /* @__PURE__ */ jsx9(
     LogViewer,
     {
       entries: [],
@@ -8192,7 +8607,7 @@ function useExternalLinkRouter(rootRef) {
 }
 
 // src/targets/plugin/page.tsx
-import { jsx as jsx9 } from "react/jsx-runtime";
+import { jsx as jsx10 } from "react/jsx-runtime";
 function ThronePage({
   sessionId,
   tabNamespace,
@@ -8203,27 +8618,27 @@ function ThronePage({
   const namespace = tabNamespace ?? snap?.namespace ?? "fenrir-agents";
   const rootRef = useRef5(null);
   useExternalLinkRouter(rootRef);
-  return /* @__PURE__ */ jsx9(
+  return /* @__PURE__ */ jsx10(
     "div",
     {
       ref: rootRef,
       className: "odins-throne-root",
       "data-theme": theme === "light" ? "light" : void 0,
       style: { width: "100%", height: "100%" },
-      children: sessionId ? /* @__PURE__ */ jsx9(ErrorBoundary, { children: /* @__PURE__ */ jsx9(
+      children: sessionId ? /* @__PURE__ */ jsx10(ErrorBoundary, { children: /* @__PURE__ */ jsx10(
         SessionLogViewer,
         {
           sessionId,
           namespace,
           jobSnapshot: jobSnapshot ?? null
         }
-      ) }) : /* @__PURE__ */ jsx9(ErrorBoundary, { children: /* @__PURE__ */ jsx9(SessionLogViewerEmpty, {}) })
+      ) }) : /* @__PURE__ */ jsx10(ErrorBoundary, { children: /* @__PURE__ */ jsx10(SessionLogViewerEmpty, {}) })
     }
   );
 }
 
 // src/targets/plugin/sessionTabs.tsx
-import { jsx as jsx10 } from "react/jsx-runtime";
+import { jsx as jsx11 } from "react/jsx-runtime";
 var pluginCtx = null;
 var openTabs = /* @__PURE__ */ new Map();
 var fallbackRoutes = /* @__PURE__ */ new Set();
@@ -8255,7 +8670,7 @@ function openSessionTab(sessionId, opts) {
         onClose: () => {
           openTabs.delete(sessionId);
         },
-        render: () => /* @__PURE__ */ jsx10(ThronePage, { sessionId, tabNamespace: namespace, jobSnapshot: job })
+        render: () => /* @__PURE__ */ jsx11(ThronePage, { sessionId, tabNamespace: namespace, jobSnapshot: job })
       });
       const existing = openTabs.get(sessionId);
       const close = typeof disposer === "function" ? disposer : void 0;
@@ -8277,7 +8692,7 @@ function openSessionTab(sessionId, opts) {
         area: ROUTES_AREA,
         title,
         data: { path: `/odins-throne/${sessionId}` },
-        render: () => /* @__PURE__ */ jsx10(ThronePage, { sessionId, tabNamespace: namespace, jobSnapshot: job })
+        render: () => /* @__PURE__ */ jsx11(ThronePage, { sessionId, tabNamespace: namespace, jobSnapshot: job })
       });
       fallbackRoutes.add(sessionId);
     } catch {
@@ -8396,11 +8811,11 @@ import { useMemo as useMemo5, useRef as useRef12, useState as useState18, useSyn
 import { useState as useState12, useRef as useRef9, useEffect as useEffect8, useMemo as useMemo3 } from "react";
 
 // src/ui/components/ThemeSwitcher.tsx
-import { jsx as jsx11 } from "react/jsx-runtime";
+import { jsx as jsx12 } from "react/jsx-runtime";
 function ThemeSwitcher({ theme, setTheme: setTheme2 }) {
   const next = theme === "light" ? "dark" : "light";
   const label = `Switch to ${next} theme`;
-  return /* @__PURE__ */ jsx11(
+  return /* @__PURE__ */ jsx12(
     "button",
     {
       type: "button",
@@ -8416,7 +8831,7 @@ function ThemeSwitcher({ theme, setTheme: setTheme2 }) {
 
 // src/ui/components/StatusBadge.tsx
 import { useCallback as useCallback5, useEffect as useEffect5, useId, useLayoutEffect, useRef as useRef6, useState as useState7 } from "react";
-import { jsx as jsx12, jsxs as jsxs8 } from "react/jsx-runtime";
+import { jsx as jsx13, jsxs as jsxs9 } from "react/jsx-runtime";
 var VIEWPORT_PAD = 8;
 var BADGE_GAP = 6;
 var POPUP_Z = 2147483e3;
@@ -8442,7 +8857,7 @@ function roleForState(state) {
   return state === "closed" || state === "error" ? "alert" : "status";
 }
 function WssIcon({ color }) {
-  return /* @__PURE__ */ jsxs8(
+  return /* @__PURE__ */ jsxs9(
     "svg",
     {
       width: "16",
@@ -8452,11 +8867,11 @@ function WssIcon({ color }) {
       xmlns: "http://www.w3.org/2000/svg",
       "aria-hidden": "true",
       children: [
-        /* @__PURE__ */ jsx12("rect", { x: "6", y: "8", width: "4", height: "5", rx: "1", fill: color }),
-        /* @__PURE__ */ jsx12("rect", { x: "5", y: "6", width: "1.5", height: "3", rx: "0.5", fill: color }),
-        /* @__PURE__ */ jsx12("rect", { x: "9.5", y: "6", width: "1.5", height: "3", rx: "0.5", fill: color }),
-        /* @__PURE__ */ jsx12("rect", { x: "4.5", y: "3", width: "7", height: "4", rx: "1.5", fill: color }),
-        /* @__PURE__ */ jsx12(
+        /* @__PURE__ */ jsx13("rect", { x: "6", y: "8", width: "4", height: "5", rx: "1", fill: color }),
+        /* @__PURE__ */ jsx13("rect", { x: "5", y: "6", width: "1.5", height: "3", rx: "0.5", fill: color }),
+        /* @__PURE__ */ jsx13("rect", { x: "9.5", y: "6", width: "1.5", height: "3", rx: "0.5", fill: color }),
+        /* @__PURE__ */ jsx13("rect", { x: "4.5", y: "3", width: "7", height: "4", rx: "1.5", fill: color }),
+        /* @__PURE__ */ jsx13(
           "path",
           {
             d: "M2.5 2.5 C2.5 2.5 1 4.5 1 8 C1 11.5 2.5 13.5 2.5 13.5",
@@ -8467,7 +8882,7 @@ function WssIcon({ color }) {
             opacity: "0.5"
           }
         ),
-        /* @__PURE__ */ jsx12(
+        /* @__PURE__ */ jsx13(
           "path",
           {
             d: "M13.5 2.5 C13.5 2.5 15 4.5 15 8 C15 11.5 13.5 13.5 13.5 13.5",
@@ -8645,8 +9060,8 @@ function StatusBadge({ state }) {
   }, [clearTimers]);
   const role = roleForState(state);
   const ariaLive = role === "alert" ? "assertive" : "polite";
-  return /* @__PURE__ */ jsxs8("span", { ref: wrapperRef, className: "wss-tooltip-wrapper", children: [
-    /* @__PURE__ */ jsx12(
+  return /* @__PURE__ */ jsxs9("span", { ref: wrapperRef, className: "wss-tooltip-wrapper", children: [
+    /* @__PURE__ */ jsx13(
       "span",
       {
         ref: badgeRef,
@@ -8662,10 +9077,10 @@ function StatusBadge({ state }) {
         onBlur: handleBlur,
         onKeyDown: handleKeyDown,
         onClick: handleClick,
-        children: /* @__PURE__ */ jsx12(WssIcon, { color })
+        children: /* @__PURE__ */ jsx13(WssIcon, { color })
       }
     ),
-    /* @__PURE__ */ jsx12(
+    /* @__PURE__ */ jsx13(
       "span",
       {
         ref: tooltipRef,
@@ -9185,7 +9600,7 @@ var tree_backdrop_default = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEBLAEsAAD/
 
 // src/ui/components/TreeIcon.tsx
 import { useState as useState10 } from "react";
-import { jsx as jsx13 } from "react/jsx-runtime";
+import { jsx as jsx14 } from "react/jsx-runtime";
 var SIZE_CLASS = {
   ns: "",
   task: "ns-tree__icon--task",
@@ -9196,7 +9611,7 @@ function TreeIcon({ src, fallback, size = "ns" }) {
   const [failed, setFailed] = useState10(false);
   const cls = ["ns-tree__icon", SIZE_CLASS[size]].filter(Boolean).join(" ");
   if (failed) {
-    return /* @__PURE__ */ jsx13(
+    return /* @__PURE__ */ jsx14(
       "span",
       {
         className: [cls, "ns-tree__icon--fallback"].filter(Boolean).join(" "),
@@ -9206,7 +9621,7 @@ function TreeIcon({ src, fallback, size = "ns" }) {
       }
     );
   }
-  return /* @__PURE__ */ jsx13(
+  return /* @__PURE__ */ jsx14(
     "img",
     {
       className: cls,
@@ -9234,7 +9649,7 @@ function formatAge(startTime, now = Date.now()) {
 }
 
 // src/ui/components/VineCard.tsx
-import { jsx as jsx14, jsxs as jsxs9 } from "react/jsx-runtime";
+import { jsx as jsx15, jsxs as jsxs10 } from "react/jsx-runtime";
 function isCancellable(status) {
   return status === "running" || status === "pending";
 }
@@ -9273,7 +9688,7 @@ function VineCard({
       onOpen();
     }
   };
-  return /* @__PURE__ */ jsxs9(
+  return /* @__PURE__ */ jsxs10(
     "div",
     {
       className: cls,
@@ -9289,24 +9704,24 @@ function VineCard({
       onClick: ghost ? void 0 : onOpen,
       onKeyDown: openOnKey,
       children: [
-        /* @__PURE__ */ jsxs9("div", { className: "jcard__main", children: [
-          /* @__PURE__ */ jsxs9("div", { className: "jcard__row1", children: [
-            /* @__PURE__ */ jsx14("span", { className: "jcard__title", title, children: title }),
-            /* @__PURE__ */ jsx14("i", { className: "jcard__dot", "aria-hidden": "true" })
+        /* @__PURE__ */ jsxs10("div", { className: "jcard__main", children: [
+          /* @__PURE__ */ jsxs10("div", { className: "jcard__row1", children: [
+            /* @__PURE__ */ jsx15("span", { className: "jcard__title", title, children: title }),
+            /* @__PURE__ */ jsx15("i", { className: "jcard__dot", "aria-hidden": "true" })
           ] }),
-          !compact && /* @__PURE__ */ jsx14("div", { className: "jcard__row2", children: /* @__PURE__ */ jsxs9("span", { className: "jcard__meta", children: [
-            /* @__PURE__ */ jsx14("b", { children: job.sessionId }),
+          !compact && /* @__PURE__ */ jsx15("div", { className: "jcard__row2", children: /* @__PURE__ */ jsxs10("span", { className: "jcard__meta", children: [
+            /* @__PURE__ */ jsx15("b", { children: job.sessionId }),
             " \xB7 Issue #",
             job.issue,
             " \xB7 ",
             job.agentName,
             " \xB7 ",
-            /* @__PURE__ */ jsx14("span", { className: "jcard__age", "aria-label": `age: ${formatAge(job.startTime)}`, children: formatAge(job.startTime) }),
+            /* @__PURE__ */ jsx15("span", { className: "jcard__age", "aria-label": `age: ${formatAge(job.startTime)}`, children: formatAge(job.startTime) }),
             isPinned2 ? " \xB7 \u{1F4CC}" : ""
           ] }) })
         ] }),
-        !compact && /* @__PURE__ */ jsxs9("span", { className: "jcard__acts", children: [
-          /* @__PURE__ */ jsx14(
+        !compact && /* @__PURE__ */ jsxs10("span", { className: "jcard__acts", children: [
+          /* @__PURE__ */ jsx15(
             "button",
             {
               type: "button",
@@ -9322,7 +9737,7 @@ function VineCard({
               children: "\u{1F4CC}"
             }
           ),
-          cancellable && /* @__PURE__ */ jsx14(
+          cancellable && /* @__PURE__ */ jsx15(
             "button",
             {
               type: "button",
@@ -11123,7 +11538,7 @@ function linkifyLore(text) {
 }
 
 // src/ui/components/WorldTitle.tsx
-import { Fragment as Fragment4, jsx as jsx15, jsxs as jsxs10 } from "react/jsx-runtime";
+import { Fragment as Fragment4, jsx as jsx16, jsxs as jsxs11 } from "react/jsx-runtime";
 var STATUS_COLOR = {
   running: "#6fb7d8",
   succeeded: "#79b356",
@@ -11144,7 +11559,7 @@ function opaqueIconUrl(nsId) {
 function renderLore(text) {
   return linkifyLore(text).map((span, i) => {
     if (span.kind === "link" && span.href !== void 0) {
-      return /* @__PURE__ */ jsx15(
+      return /* @__PURE__ */ jsx16(
         "a",
         {
           href: span.href,
@@ -11186,7 +11601,7 @@ function WorldTitle({
   const base2 = REALM.meta.base;
   const cls = ["wtitle", isLive ? "is-live" : ""].filter(Boolean).join(" ");
   const compactStyle = compact ? { padding: "6px 8px 6px", borderRadius: "10px" } : {};
-  const nameEl = world ? loreEntry?.profile ? /* @__PURE__ */ jsx15(
+  const nameEl = world ? loreEntry?.profile ? /* @__PURE__ */ jsx16(
     "a",
     {
       href: base2 + loreEntry.profile,
@@ -11197,50 +11612,50 @@ function WorldTitle({
       children: world.label
     }
   ) : world.label : "no world seated";
-  return /* @__PURE__ */ jsxs10("div", { className: cls, "aria-live": "polite", style: compactStyle, children: [
-    /* @__PURE__ */ jsx15("div", { className: "wtitle__row", children: /* @__PURE__ */ jsxs10("div", { className: "wtitle__id", children: [
-      /* @__PURE__ */ jsx15("h2", { className: "wtitle__name", style: compact ? { fontSize: "12px" } : void 0, children: nameEl }),
-      /* @__PURE__ */ jsx15("span", { className: "wtitle__state", style: compact ? { fontSize: "8.5px" } : void 0, children: !world ? "the throne rests \u2014 click a lantern" : isLive ? "seated \u2014 its vine hangs open" : "resting \u2014 its lantern dims, its deeds remain" })
+  return /* @__PURE__ */ jsxs11("div", { className: cls, "aria-live": "polite", style: compactStyle, children: [
+    /* @__PURE__ */ jsx16("div", { className: "wtitle__row", children: /* @__PURE__ */ jsxs11("div", { className: "wtitle__id", children: [
+      /* @__PURE__ */ jsx16("h2", { className: "wtitle__name", style: compact ? { fontSize: "12px" } : void 0, children: nameEl }),
+      /* @__PURE__ */ jsx16("span", { className: "wtitle__state", style: compact ? { fontSize: "8.5px" } : void 0, children: !world ? "the throne rests \u2014 click a lantern" : isLive ? "seated \u2014 its vine hangs open" : "resting \u2014 its lantern dims, its deeds remain" })
     ] }) }),
-    world && /* @__PURE__ */ jsxs10(Fragment4, { children: [
-      /* @__PURE__ */ jsxs10(
+    world && /* @__PURE__ */ jsxs11(Fragment4, { children: [
+      /* @__PURE__ */ jsxs11(
         "div",
         {
           className: "wtitle__stats",
           style: compact ? { gap: "2px 6px", margin: "4px 0 4px", fontSize: "9px" } : void 0,
           children: [
-            /* @__PURE__ */ jsxs10("span", { className: "st", children: [
-              /* @__PURE__ */ jsx15("i", { style: { background: "rgba(176,196,201,0.4)" } }),
+            /* @__PURE__ */ jsxs11("span", { className: "st", children: [
+              /* @__PURE__ */ jsx16("i", { style: { background: "rgba(176,196,201,0.4)" } }),
               counts.total,
               " on the vine"
             ] }),
-            counts.running > 0 && /* @__PURE__ */ jsxs10("span", { className: "st", children: [
-              /* @__PURE__ */ jsx15("i", { style: { background: STATUS_COLOR.running } }),
+            counts.running > 0 && /* @__PURE__ */ jsxs11("span", { className: "st", children: [
+              /* @__PURE__ */ jsx16("i", { style: { background: STATUS_COLOR.running } }),
               counts.running,
               " running"
             ] }),
-            counts.pending > 0 && /* @__PURE__ */ jsxs10("span", { className: "st", children: [
-              /* @__PURE__ */ jsx15("i", { style: { background: STATUS_COLOR.pending } }),
+            counts.pending > 0 && /* @__PURE__ */ jsxs11("span", { className: "st", children: [
+              /* @__PURE__ */ jsx16("i", { style: { background: STATUS_COLOR.pending } }),
               counts.pending,
               " pending"
             ] }),
-            counts.failed > 0 && /* @__PURE__ */ jsxs10("span", { className: "st", children: [
-              /* @__PURE__ */ jsx15("i", { style: { background: STATUS_COLOR.failed } }),
+            counts.failed > 0 && /* @__PURE__ */ jsxs11("span", { className: "st", children: [
+              /* @__PURE__ */ jsx16("i", { style: { background: STATUS_COLOR.failed } }),
               counts.failed,
               " failed"
             ] }),
-            counts.succeeded > 0 && /* @__PURE__ */ jsxs10("span", { className: "st", children: [
-              /* @__PURE__ */ jsx15("i", { style: { background: STATUS_COLOR.succeeded } }),
+            counts.succeeded > 0 && /* @__PURE__ */ jsxs11("span", { className: "st", children: [
+              /* @__PURE__ */ jsx16("i", { style: { background: STATUS_COLOR.succeeded } }),
               counts.succeeded,
               " succeeded"
             ] }),
-            agents > 0 && /* @__PURE__ */ jsxs10("span", { className: "st", children: [
-              /* @__PURE__ */ jsx15("i", { style: { background: "rgba(176,196,201,0.25)" } }),
+            agents > 0 && /* @__PURE__ */ jsxs11("span", { className: "st", children: [
+              /* @__PURE__ */ jsx16("i", { style: { background: "rgba(176,196,201,0.25)" } }),
               agents,
               " agents"
             ] }),
-            titleWorldSeatIdx != null && /* @__PURE__ */ jsxs10("span", { className: "st", children: [
-              /* @__PURE__ */ jsx15("i", { style: { background: "rgba(176,196,201,0.14)" } }),
+            titleWorldSeatIdx != null && /* @__PURE__ */ jsxs11("span", { className: "st", children: [
+              /* @__PURE__ */ jsx16("i", { style: { background: "rgba(176,196,201,0.14)" } }),
               "lantern ",
               titleWorldSeatIdx + 1,
               " of ",
@@ -11249,10 +11664,10 @@ function WorldTitle({
           ]
         }
       ),
-      /* @__PURE__ */ jsxs10("div", { className: "wtitle__band", children: [
-        /* @__PURE__ */ jsxs10("div", { className: "wtitle__garden", style: compact ? { minHeight: "44px" } : void 0, children: [
-          /* @__PURE__ */ jsx15("span", { className: "ground", "aria-hidden": "true" }),
-          /* @__PURE__ */ jsx15(
+      /* @__PURE__ */ jsxs11("div", { className: "wtitle__band", children: [
+        /* @__PURE__ */ jsxs11("div", { className: "wtitle__garden", style: compact ? { minHeight: "44px" } : void 0, children: [
+          /* @__PURE__ */ jsx16("span", { className: "ground", "aria-hidden": "true" }),
+          /* @__PURE__ */ jsx16(
             "img",
             {
               className: "wtitle__stone",
@@ -11263,7 +11678,7 @@ function WorldTitle({
             }
           )
         ] }),
-        /* @__PURE__ */ jsx15(
+        /* @__PURE__ */ jsx16(
           "p",
           {
             className: "wtitle__lore",
@@ -11272,7 +11687,7 @@ function WorldTitle({
           }
         )
       ] }),
-      kin.length > 0 && /* @__PURE__ */ jsx15(
+      kin.length > 0 && /* @__PURE__ */ jsx16(
         "div",
         {
           className: "wtitle__kin",
@@ -11280,7 +11695,7 @@ function WorldTitle({
           children: kin.map((k) => {
             const entity = REALM.entities[k.slug];
             if (entity === void 0) return null;
-            return /* @__PURE__ */ jsx15(
+            return /* @__PURE__ */ jsx16(
               "a",
               {
                 href: base2 + entity.path,
@@ -11311,7 +11726,7 @@ function matchesQuery(job, q) {
 }
 
 // src/ui/components/NamespaceTree.tsx
-import { jsx as jsx16, jsxs as jsxs11 } from "react/jsx-runtime";
+import { jsx as jsx17, jsxs as jsxs12 } from "react/jsx-runtime";
 function tasksOf(summaryJobs) {
   if (!summaryJobs) return [];
   return summaryJobs.filter((job) => job.status !== "purged").map(parseJob).sort(sortJobs);
@@ -11490,26 +11905,26 @@ function NamespaceTree({
     return m;
   }, [namespaces, seats]);
   const titleWorldSeat = titleWorldId ? seats.get(titleWorldId) : void 0;
-  return /* @__PURE__ */ jsx16(
+  return /* @__PURE__ */ jsx17(
     "div",
     {
       className: rootClass,
       role: "tree",
       "aria-label": "Namespace tree",
-      children: /* @__PURE__ */ jsx16("div", { className: "ns-tree__scene", ref: sceneRef, onClick: handleSceneClick, children: /* @__PURE__ */ jsx16(
+      children: /* @__PURE__ */ jsx17("div", { className: "ns-tree__scene", ref: sceneRef, onClick: handleSceneClick, children: /* @__PURE__ */ jsx17(
         "div",
         {
           className: "ns-tree__scroller",
           ref: scrollerRef,
           role: openWorld ? "group" : void 0,
           "aria-label": openWorld ? `${openWorld.label} tasks` : void 0,
-          children: /* @__PURE__ */ jsxs11(
+          children: /* @__PURE__ */ jsxs12(
             "div",
             {
               className: "ns-tree__canvas",
               style: { height: effectiveCanvasHeight > 0 ? `${effectiveCanvasHeight}px` : void 0 },
               children: [
-                /* @__PURE__ */ jsx16(
+                /* @__PURE__ */ jsx17(
                   "img",
                   {
                     className: "ns-tree__backdrop",
@@ -11519,7 +11934,7 @@ function NamespaceTree({
                     style: sceneSize.h > 0 ? { height: `${sceneSize.h}px` } : void 0
                   }
                 ),
-                sceneSize.w > 0 && sceneSize.h > 0 && /* @__PURE__ */ jsxs11(
+                sceneSize.w > 0 && sceneSize.h > 0 && /* @__PURE__ */ jsxs12(
                   "svg",
                   {
                     className: "lshapes",
@@ -11527,14 +11942,14 @@ function NamespaceTree({
                     height: sceneSize.h,
                     "aria-hidden": "true",
                     children: [
-                      /* @__PURE__ */ jsxs11("defs", { children: [
-                        /* @__PURE__ */ jsx16("path", { id: "ldrop", d: LANTERN_PATH }),
-                        /* @__PURE__ */ jsx16("filter", { id: "lsoft", x: "-60%", y: "-60%", width: "220%", height: "220%", children: /* @__PURE__ */ jsx16("feGaussianBlur", { stdDeviation: "4" }) }),
-                        /* @__PURE__ */ jsx16("filter", { id: "lwide", x: "-80%", y: "-80%", width: "260%", height: "260%", children: /* @__PURE__ */ jsx16("feGaussianBlur", { stdDeviation: "7" }) }),
-                        /* @__PURE__ */ jsxs11("radialGradient", { id: "lglowg", cx: "50%", cy: "55%", r: "68%", children: [
-                          /* @__PURE__ */ jsx16("stop", { offset: "0", stopColor: "#eaf9ff", stopOpacity: "0.95" }),
-                          /* @__PURE__ */ jsx16("stop", { offset: "0.5", stopColor: "#a8dcec", stopOpacity: "0.5" }),
-                          /* @__PURE__ */ jsx16("stop", { offset: "1", stopColor: "#a8dcec", stopOpacity: "0" })
+                      /* @__PURE__ */ jsxs12("defs", { children: [
+                        /* @__PURE__ */ jsx17("path", { id: "ldrop", d: LANTERN_PATH }),
+                        /* @__PURE__ */ jsx17("filter", { id: "lsoft", x: "-60%", y: "-60%", width: "220%", height: "220%", children: /* @__PURE__ */ jsx17("feGaussianBlur", { stdDeviation: "4" }) }),
+                        /* @__PURE__ */ jsx17("filter", { id: "lwide", x: "-80%", y: "-80%", width: "260%", height: "260%", children: /* @__PURE__ */ jsx17("feGaussianBlur", { stdDeviation: "7" }) }),
+                        /* @__PURE__ */ jsxs12("radialGradient", { id: "lglowg", cx: "50%", cy: "55%", r: "68%", children: [
+                          /* @__PURE__ */ jsx17("stop", { offset: "0", stopColor: "#eaf9ff", stopOpacity: "0.95" }),
+                          /* @__PURE__ */ jsx17("stop", { offset: "0.5", stopColor: "#a8dcec", stopOpacity: "0.5" }),
+                          /* @__PURE__ */ jsx17("stop", { offset: "1", stopColor: "#a8dcec", stopOpacity: "0" })
                         ] })
                       ] }),
                       SEAT_POOL.map((seat, i) => {
@@ -11550,17 +11965,17 @@ function NamespaceTree({
                         const size = LANTERN_SIZE[i];
                         const mx = kStd * (size.w / 38);
                         const my = kStd * (size.h / 73);
-                        return /* @__PURE__ */ jsxs11(
+                        return /* @__PURE__ */ jsxs12(
                           "g",
                           {
                             className: `lseat lseat--${lseatState}${isHovered ? " is-hover" : ""}`,
                             "data-seat": i,
                             transform: `translate(${px.toFixed(1)},${py.toFixed(1)}) scale(${mx.toFixed(4)},${my.toFixed(4)})`,
                             children: [
-                              /* @__PURE__ */ jsx16("use", { href: "#ldrop", className: "lseat__halo", filter: "url(#lwide)", transform: "scale(1.7)" }),
-                              /* @__PURE__ */ jsx16("use", { href: "#ldrop", className: "lseat__veil", filter: "url(#lsoft)", transform: "scale(1.16)" }),
-                              /* @__PURE__ */ jsx16("use", { href: "#ldrop", className: "lseat__glow", transform: "scale(1.22)" }),
-                              /* @__PURE__ */ jsx16("use", { href: "#ldrop", className: "lseat__ring", transform: "scale(1.05)" })
+                              /* @__PURE__ */ jsx17("use", { href: "#ldrop", className: "lseat__halo", filter: "url(#lwide)", transform: "scale(1.7)" }),
+                              /* @__PURE__ */ jsx17("use", { href: "#ldrop", className: "lseat__veil", filter: "url(#lsoft)", transform: "scale(1.16)" }),
+                              /* @__PURE__ */ jsx17("use", { href: "#ldrop", className: "lseat__glow", transform: "scale(1.22)" }),
+                              /* @__PURE__ */ jsx17("use", { href: "#ldrop", className: "lseat__ring", transform: "scale(1.05)" })
                             ]
                           },
                           i
@@ -11569,7 +11984,7 @@ function NamespaceTree({
                     ]
                   }
                 ),
-                /* @__PURE__ */ jsx16(
+                /* @__PURE__ */ jsx17(
                   "ul",
                   {
                     className: "ns-tree__roots",
@@ -11607,7 +12022,7 @@ function NamespaceTree({
                         sceneSize.w,
                         stripWidth
                       ) : 0;
-                      return /* @__PURE__ */ jsxs11(
+                      return /* @__PURE__ */ jsxs12(
                         "li",
                         {
                           "data-namespace": ns.id,
@@ -11617,7 +12032,7 @@ function NamespaceTree({
                           className: isActive ? "ns-tree__item ns-tree__item--active" : "ns-tree__item",
                           style: { left: `${projected.x}%`, top: `${projected.y}%` },
                           children: [
-                            /* @__PURE__ */ jsx16(
+                            /* @__PURE__ */ jsx17(
                               "button",
                               {
                                 type: "button",
@@ -11635,7 +12050,7 @@ function NamespaceTree({
                                 onMouseLeave: () => setHoveredNs((prev) => prev === ns.id ? null : prev),
                                 onFocus: () => setHoveredNs(ns.id),
                                 onBlur: () => setHoveredNs((prev) => prev === ns.id ? null : prev),
-                                children: /* @__PURE__ */ jsx16(
+                                children: /* @__PURE__ */ jsx17(
                                   TreeIcon,
                                   {
                                     src: namespaceIcon(ns.id, isFull),
@@ -11645,32 +12060,32 @@ function NamespaceTree({
                                 )
                               }
                             ),
-                            !isOpen && summary && !summary.error && summary.total > 0 && /* @__PURE__ */ jsxs11("div", { className: "ns-tree__counts", "aria-hidden": "true", children: [
-                              /* @__PURE__ */ jsx16(
+                            !isOpen && summary && !summary.error && summary.total > 0 && /* @__PURE__ */ jsxs12("div", { className: "ns-tree__counts", "aria-hidden": "true", children: [
+                              /* @__PURE__ */ jsx17(
                                 "span",
                                 {
                                   className: `ns-tree__counts__orb ns-tree__counts__orb--succeeded${summary.counts.succeeded > 0 ? "" : " ns-tree__counts__orb--dim"}`
                                 }
                               ),
-                              /* @__PURE__ */ jsx16(
+                              /* @__PURE__ */ jsx17(
                                 "span",
                                 {
                                   className: `ns-tree__counts__orb ns-tree__counts__orb--running${summary.counts.running > 0 ? "" : " ns-tree__counts__orb--dim"}`
                                 }
                               ),
-                              /* @__PURE__ */ jsx16(
+                              /* @__PURE__ */ jsx17(
                                 "span",
                                 {
                                   className: `ns-tree__counts__orb ns-tree__counts__orb--failed${summary.counts.failed > 0 ? "" : " ns-tree__counts__orb--dim"}`
                                 }
                               ),
-                              /* @__PURE__ */ jsxs11("span", { className: "ns-tree__counts__nums", children: [
-                                summary.counts.succeeded > 0 && /* @__PURE__ */ jsx16("i", { style: { color: "#79b356" }, children: summary.counts.succeeded }),
-                                summary.counts.running > 0 && /* @__PURE__ */ jsx16("i", { style: { color: "#6fb7d8" }, children: summary.counts.running }),
-                                summary.counts.failed > 0 && /* @__PURE__ */ jsx16("i", { style: { color: "#e07a3f" }, children: summary.counts.failed })
+                              /* @__PURE__ */ jsxs12("span", { className: "ns-tree__counts__nums", children: [
+                                summary.counts.succeeded > 0 && /* @__PURE__ */ jsx17("i", { style: { color: "#79b356" }, children: summary.counts.succeeded }),
+                                summary.counts.running > 0 && /* @__PURE__ */ jsx17("i", { style: { color: "#6fb7d8" }, children: summary.counts.running }),
+                                summary.counts.failed > 0 && /* @__PURE__ */ jsx17("i", { style: { color: "#e07a3f" }, children: summary.counts.failed })
                               ] })
                             ] }),
-                            pipRow && pipRow.count > 0 && /* @__PURE__ */ jsxs11(
+                            pipRow && pipRow.count > 0 && /* @__PURE__ */ jsxs12(
                               "div",
                               {
                                 className: "piprow",
@@ -11678,25 +12093,25 @@ function NamespaceTree({
                                 "data-count": pipRow.count,
                                 style: { left: `${stripLeft}px` },
                                 children: [
-                                  pipRow.pips.map((pip) => /* @__PURE__ */ jsx16(
+                                  pipRow.pips.map((pip) => /* @__PURE__ */ jsx17(
                                     "span",
                                     {
                                       className: `pip-slot pip-slot--${pip.status}`,
                                       "data-status": pip.status,
-                                      children: /* @__PURE__ */ jsx16(TreeIcon, { src: taskIcon(pip.status), fallback: taskIconFallback(pip.status), size: "pip" })
+                                      children: /* @__PURE__ */ jsx17(TreeIcon, { src: taskIcon(pip.status), fallback: taskIconFallback(pip.status), size: "pip" })
                                     },
                                     pip.sessionId
                                   )),
-                                  pipRow.overflow > 0 && /* @__PURE__ */ jsxs11("span", { className: "piprow__more", children: [
+                                  pipRow.overflow > 0 && /* @__PURE__ */ jsxs12("span", { className: "piprow__more", children: [
                                     "+",
                                     pipRow.overflow
                                   ] })
                                 ]
                               }
                             ),
-                            /* @__PURE__ */ jsxs11("div", { className: glabelClass, "aria-hidden": "true", children: [
-                              /* @__PURE__ */ jsx16("b", { className: "ns-tree__glabel-name", children: ns.label }),
-                              /* @__PURE__ */ jsx16("span", { className: "ns-tree__glabel-line", children: line })
+                            /* @__PURE__ */ jsxs12("div", { className: glabelClass, "aria-hidden": "true", children: [
+                              /* @__PURE__ */ jsx17("b", { className: "ns-tree__glabel-name", children: ns.label }),
+                              /* @__PURE__ */ jsx17("span", { className: "ns-tree__glabel-line", children: line })
                             ] })
                           ]
                         },
@@ -11705,7 +12120,7 @@ function NamespaceTree({
                     })
                   }
                 ),
-                /* @__PURE__ */ jsx16(
+                /* @__PURE__ */ jsx17(
                   WorldTitle,
                   {
                     titleWorldId,
@@ -11716,14 +12131,14 @@ function NamespaceTree({
                     compact: isCompact
                   }
                 ),
-                vine && /* @__PURE__ */ jsx16(
+                vine && /* @__PURE__ */ jsx17(
                   "svg",
                   {
                     className: "ns-tree__shoots",
                     width: Math.max(1, sceneSize.w),
                     height: Math.max(1, effectiveCanvasHeight),
                     "aria-hidden": "true",
-                    children: /* @__PURE__ */ jsx16(
+                    children: /* @__PURE__ */ jsx17(
                       "path",
                       {
                         className: `ns-tree__vine${openTasks.length === 0 ? " ns-tree__vine--bare" : ""}`,
@@ -11732,7 +12147,7 @@ function NamespaceTree({
                     )
                   }
                 ),
-                openWorld && openSeat && !summaryLoaded && /* @__PURE__ */ jsx16(
+                openWorld && openSeat && !summaryLoaded && /* @__PURE__ */ jsx17(
                   "div",
                   {
                     className: "ns-tree__note",
@@ -11741,12 +12156,12 @@ function NamespaceTree({
                     children: "fetching the world's work\u2026"
                   }
                 ),
-                openWorld && openSeat && summaryLoaded && !summaryFailed && openTasks.length === 0 && /* @__PURE__ */ jsx16("div", { className: "ns-tree__note", style: notePos(openSeat, -90), children: "no tasks in this world \u2014 its lantern rests" }),
-                openWorld && openSeat && summaryFailed && /* @__PURE__ */ jsx16("div", { className: "ns-tree__note ns-tree__note--err", style: notePos(openSeat, -90), children: "summary unavailable" }),
-                openWorld && openSeat && summaryLoaded && !summaryFailed && openTasks.length > 0 && filteredTasks.length === 0 && /* @__PURE__ */ jsxs11("div", { className: "ns-tree__note", style: { ...notePos(openSeat, -90), pointerEvents: "auto" }, children: [
+                openWorld && openSeat && summaryLoaded && !summaryFailed && openTasks.length === 0 && /* @__PURE__ */ jsx17("div", { className: "ns-tree__note", style: notePos(openSeat, -90), children: "no tasks in this world \u2014 its lantern rests" }),
+                openWorld && openSeat && summaryFailed && /* @__PURE__ */ jsx17("div", { className: "ns-tree__note ns-tree__note--err", style: notePos(openSeat, -90), children: "summary unavailable" }),
+                openWorld && openSeat && summaryLoaded && !summaryFailed && openTasks.length > 0 && filteredTasks.length === 0 && /* @__PURE__ */ jsxs12("div", { className: "ns-tree__note", style: { ...notePos(openSeat, -90), pointerEvents: "auto" }, children: [
                   "No session matches \u2014",
                   " ",
-                  /* @__PURE__ */ jsx16(
+                  /* @__PURE__ */ jsx17(
                     "button",
                     {
                       type: "button",
@@ -11768,7 +12183,7 @@ function NamespaceTree({
                     "pop-in"
                   ].join(" ");
                   return [
-                    /* @__PURE__ */ jsx16(
+                    /* @__PURE__ */ jsx17(
                       "div",
                       {
                         className: anchorCls,
@@ -11778,11 +12193,11 @@ function NamespaceTree({
                           animationDelay: `${60 + i * 50}ms`
                         },
                         "aria-hidden": "true",
-                        children: /* @__PURE__ */ jsx16(TreeIcon, { src: taskIcon(job.status), fallback: taskIconFallback(job.status), size: "task" })
+                        children: /* @__PURE__ */ jsx17(TreeIcon, { src: taskIcon(job.status), fallback: taskIconFallback(job.status), size: "task" })
                       },
                       `anc-${job.sessionId}`
                     ),
-                    /* @__PURE__ */ jsx16(
+                    /* @__PURE__ */ jsx17(
                       VineCard,
                       {
                         job,
@@ -11806,7 +12221,7 @@ function NamespaceTree({
                     )
                   ];
                 }),
-                falling.map((g) => /* @__PURE__ */ jsx16(
+                falling.map((g) => /* @__PURE__ */ jsx17(
                   VineCard,
                   {
                     job: g.job,
@@ -11836,7 +12251,7 @@ function NamespaceTree({
 }
 
 // src/ui/components/Sidebar.tsx
-import { jsx as jsx17, jsxs as jsxs12 } from "react/jsx-runtime";
+import { jsx as jsx18, jsxs as jsxs13 } from "react/jsx-runtime";
 var _focusFn = null;
 var findSessionUi = {
   register(fn) {
@@ -11911,7 +12326,7 @@ function Sidebar({ jobs, activeSessionId, quote, wsState, onAvatarClick, onOdinC
     } catch {
     }
   };
-  return /* @__PURE__ */ jsxs12(
+  return /* @__PURE__ */ jsxs13(
     "nav",
     {
       ref: navRef,
@@ -11919,16 +12334,16 @@ function Sidebar({ jobs, activeSessionId, quote, wsState, onAvatarClick, onOdinC
       "aria-label": "Agent sessions",
       style: { width: sizingMode === "fixed" ? externalWidth ?? DEFAULT_WIDTH : "100%", height: "100%" },
       children: [
-        /* @__PURE__ */ jsxs12("div", { className: "sidebar-header", children: [
-          /* @__PURE__ */ jsxs12("div", { className: "brand", children: [
-            /* @__PURE__ */ jsx17(
+        /* @__PURE__ */ jsxs13("div", { className: "sidebar-header", children: [
+          /* @__PURE__ */ jsxs13("div", { className: "brand", children: [
+            /* @__PURE__ */ jsx18(
               "button",
               {
                 className: "odin-avatar-btn",
                 onClick: onOdinClick,
                 "aria-label": "View Odin profile",
                 title: "View Odin profile",
-                children: /* @__PURE__ */ jsx17(
+                children: /* @__PURE__ */ jsx18(
                   "img",
                   {
                     src: avatarUrl("odin", theme === "light" ? "light" : "dark") ?? "",
@@ -11937,9 +12352,9 @@ function Sidebar({ jobs, activeSessionId, quote, wsState, onAvatarClick, onOdinC
                 )
               }
             ),
-            !isWidthCompact && /* @__PURE__ */ jsx17("h1", { children: "Hlidskjalf" }),
-            !isWidthCompact && /* @__PURE__ */ jsx17("div", { className: "count", "aria-live": "polite", children: query.trim() ? `${matchingSessions} of ${totalSessions} session${totalSessions !== 1 ? "s" : ""}` : `${jobs.length} session${jobs.length !== 1 ? "s" : ""}` }),
-            /* @__PURE__ */ jsx17(
+            !isWidthCompact && /* @__PURE__ */ jsx18("h1", { children: "Hlidskjalf" }),
+            !isWidthCompact && /* @__PURE__ */ jsx18("div", { className: "count", "aria-live": "polite", children: query.trim() ? `${matchingSessions} of ${totalSessions} session${totalSessions !== 1 ? "s" : ""}` : `${jobs.length} session${jobs.length !== 1 ? "s" : ""}` }),
+            /* @__PURE__ */ jsx18(
               "button",
               {
                 type: "button",
@@ -11951,16 +12366,16 @@ function Sidebar({ jobs, activeSessionId, quote, wsState, onAvatarClick, onOdinC
                 children: compactOverride === "compact" ? "\xBB" : "\xAB"
               }
             ),
-            /* @__PURE__ */ jsx17(ThemeSwitcher, { theme, setTheme: setTheme2 }),
-            /* @__PURE__ */ jsx17("span", { className: "brand-wss-badge", children: /* @__PURE__ */ jsx17(StatusBadge, { state: wsState }) })
+            /* @__PURE__ */ jsx18(ThemeSwitcher, { theme, setTheme: setTheme2 }),
+            /* @__PURE__ */ jsx18("span", { className: "brand-wss-badge", children: /* @__PURE__ */ jsx18(StatusBadge, { state: wsState }) })
           ] }),
-          !isWidthCompact && /* @__PURE__ */ jsxs12("div", { className: "quote", role: "note", children: [
+          !isWidthCompact && /* @__PURE__ */ jsxs13("div", { className: "quote", role: "note", children: [
             "\u201C",
             quote,
             "\u201D"
           ] }),
-          !isWidthCompact && /* @__PURE__ */ jsxs12("div", { className: "sidebar-filter", children: [
-            /* @__PURE__ */ jsx17(
+          !isWidthCompact && /* @__PURE__ */ jsxs13("div", { className: "sidebar-filter", children: [
+            /* @__PURE__ */ jsx18(
               "input",
               {
                 ref: filterInputRef,
@@ -11977,7 +12392,7 @@ function Sidebar({ jobs, activeSessionId, quote, wsState, onAvatarClick, onOdinC
                 spellCheck: false
               }
             ),
-            query && /* @__PURE__ */ jsx17(
+            query && /* @__PURE__ */ jsx18(
               "button",
               {
                 type: "button",
@@ -11992,7 +12407,7 @@ function Sidebar({ jobs, activeSessionId, quote, wsState, onAvatarClick, onOdinC
               }
             )
           ] }),
-          /* @__PURE__ */ jsx17(
+          /* @__PURE__ */ jsx18(
             NamespaceTree,
             {
               namespace,
@@ -12012,7 +12427,7 @@ function Sidebar({ jobs, activeSessionId, quote, wsState, onAvatarClick, onOdinC
             }
           )
         ] }),
-        sizingMode === "fixed" && /* @__PURE__ */ jsx17(
+        sizingMode === "fixed" && /* @__PURE__ */ jsx18(
           "div",
           {
             className: "sidebar-resize-handle",
@@ -12031,7 +12446,7 @@ function Sidebar({ jobs, activeSessionId, quote, wsState, onAvatarClick, onOdinC
 
 // src/ui/components/AgentProfileModal.tsx
 import { useEffect as useEffect9, useRef as useRef10 } from "react";
-import { jsx as jsx18, jsxs as jsxs13 } from "react/jsx-runtime";
+import { jsx as jsx19, jsxs as jsxs14 } from "react/jsx-runtime";
 var ELDER_FUTHARK = "\u16A0 \u16A2 \u16A6 \u16A8 \u16B1 \u16B2 \u16B7 \u16B9 \u16BA \u16BE \u16C1 \u16C3 \u16C7 \u16C8 \u16C9 \u16CA \u16CF \u16D2 \u16D6 \u16D7 \u16DA \u16DC \u16DE \u16DF";
 function AgentProfileModal({ agentKey, theme, onClose }) {
   const closeButtonRef = useRef10(null);
@@ -12069,14 +12484,14 @@ function AgentProfileModal({ agentKey, theme, onClose }) {
       closeButtonRef.current?.focus();
     }
   }
-  return /* @__PURE__ */ jsx18(
+  return /* @__PURE__ */ jsx19(
     "div",
     {
       className: "apm-backdrop",
       ref: backdropRef,
       onClick: handleBackdropClick,
       "aria-label": "Agent profile backdrop",
-      children: /* @__PURE__ */ jsxs13(
+      children: /* @__PURE__ */ jsxs14(
         "div",
         {
           className: "apm-shell",
@@ -12086,7 +12501,7 @@ function AgentProfileModal({ agentKey, theme, onClose }) {
           onKeyDown: handleModalKeyDown,
           style: { "--agent-accent": accent },
           children: [
-            /* @__PURE__ */ jsx18(
+            /* @__PURE__ */ jsx19(
               "button",
               {
                 ref: closeButtonRef,
@@ -12096,18 +12511,18 @@ function AgentProfileModal({ agentKey, theme, onClose }) {
                 children: "\u2715"
               }
             ),
-            /* @__PURE__ */ jsxs13("div", { className: "apm-body", children: [
-              /* @__PURE__ */ jsx18("div", { className: "apm-rune-band", "aria-hidden": "true", children: ELDER_FUTHARK }),
-              /* @__PURE__ */ jsx18("div", { className: "apm-portrait-zone", children: portrait ? /* @__PURE__ */ jsx18(
+            /* @__PURE__ */ jsxs14("div", { className: "apm-body", children: [
+              /* @__PURE__ */ jsx19("div", { className: "apm-rune-band", "aria-hidden": "true", children: ELDER_FUTHARK }),
+              /* @__PURE__ */ jsx19("div", { className: "apm-portrait-zone", children: portrait ? /* @__PURE__ */ jsx19(
                 "img",
                 {
                   className: "apm-portrait",
                   src: portrait,
                   alt: name
                 }
-              ) : /* @__PURE__ */ jsx18("div", { className: "apm-portrait apm-portrait-placeholder", "aria-label": name, children: name.charAt(0) }) }),
-              /* @__PURE__ */ jsxs13("div", { className: "apm-identity", children: [
-                /* @__PURE__ */ jsx18(
+              ) : /* @__PURE__ */ jsx19("div", { className: "apm-portrait apm-portrait-placeholder", "aria-label": name, children: name.charAt(0) }) }),
+              /* @__PURE__ */ jsxs14("div", { className: "apm-identity", children: [
+                /* @__PURE__ */ jsx19(
                   "div",
                   {
                     className: "apm-agent-name",
@@ -12116,8 +12531,8 @@ function AgentProfileModal({ agentKey, theme, onClose }) {
                     children: name
                   }
                 ),
-                /* @__PURE__ */ jsx18("div", { className: "apm-agent-title", children: title }),
-                runes && /* @__PURE__ */ jsx18(
+                /* @__PURE__ */ jsx19("div", { className: "apm-agent-title", children: title }),
+                runes && /* @__PURE__ */ jsx19(
                   "div",
                   {
                     className: "apm-rune-sig",
@@ -12126,13 +12541,13 @@ function AgentProfileModal({ agentKey, theme, onClose }) {
                   }
                 )
               ] }),
-              quote && /* @__PURE__ */ jsx18("div", { className: "apm-quote", children: /* @__PURE__ */ jsxs13("p", { children: [
+              quote && /* @__PURE__ */ jsx19("div", { className: "apm-quote", children: /* @__PURE__ */ jsxs14("p", { children: [
                 "\u201C",
                 quote,
                 "\u201D"
               ] }) }),
-              description && /* @__PURE__ */ jsx18("div", { className: "apm-description", children: /* @__PURE__ */ jsx18("p", { children: description }) }),
-              /* @__PURE__ */ jsx18("div", { className: "apm-rune-band apm-rune-band--bottom", "aria-hidden": "true", children: ELDER_FUTHARK })
+              description && /* @__PURE__ */ jsx19("div", { className: "apm-description", children: /* @__PURE__ */ jsx19("p", { children: description }) }),
+              /* @__PURE__ */ jsx19("div", { className: "apm-rune-band apm-rune-band--bottom", "aria-hidden": "true", children: ELDER_FUTHARK })
             ] })
           ]
         }
@@ -12143,7 +12558,7 @@ function AgentProfileModal({ agentKey, theme, onClose }) {
 
 // src/ui/components/RagnarokDialog.tsx
 import { useEffect as useEffect10, useRef as useRef11, useState as useState13 } from "react";
-import { jsx as jsx19, jsxs as jsxs14 } from "react/jsx-runtime";
+import { jsx as jsx20, jsxs as jsxs15 } from "react/jsx-runtime";
 function RagnarokDialog({ sessionId, jobTitle, onConfirm, onCancel }) {
   const [isLoading, setIsLoading] = useState13(false);
   const [error, setError] = useState13(null);
@@ -12169,7 +12584,7 @@ function RagnarokDialog({ sessionId, jobTitle, onConfirm, onCancel }) {
       setIsLoading(false);
     }
   };
-  return /* @__PURE__ */ jsx19(
+  return /* @__PURE__ */ jsx20(
     "div",
     {
       className: "rdk-backdrop",
@@ -12180,27 +12595,27 @@ function RagnarokDialog({ sessionId, jobTitle, onConfirm, onCancel }) {
       onClick: (e) => {
         if (e.target === e.currentTarget && !isLoading) onCancel();
       },
-      children: /* @__PURE__ */ jsxs14("div", { className: "rdk-shell", children: [
-        /* @__PURE__ */ jsx19("div", { className: "rdk-rune-band", "aria-hidden": "true", children: "\u16B1\u16A8\u16B7\u16BE\u16A8\u16B1\u16DF\u16B2 \u16CA\u16A2\u16D7\u16D7\u16A2\u16BE\u16CA \u16C1\u16CA \u16BE\u16C1\u16B7\u16BA" }),
-        /* @__PURE__ */ jsxs14("div", { className: "rdk-header", children: [
-          /* @__PURE__ */ jsx19("span", { className: "rdk-sword-icon", "aria-hidden": "true", children: "\u2694\uFE0F" }),
-          /* @__PURE__ */ jsx19("h2", { id: "rdk-title", className: "rdk-title", children: "Invoke Ragnar\xF6k?" })
+      children: /* @__PURE__ */ jsxs15("div", { className: "rdk-shell", children: [
+        /* @__PURE__ */ jsx20("div", { className: "rdk-rune-band", "aria-hidden": "true", children: "\u16B1\u16A8\u16B7\u16BE\u16A8\u16B1\u16DF\u16B2 \u16CA\u16A2\u16D7\u16D7\u16A2\u16BE\u16CA \u16C1\u16CA \u16BE\u16C1\u16B7\u16BA" }),
+        /* @__PURE__ */ jsxs15("div", { className: "rdk-header", children: [
+          /* @__PURE__ */ jsx20("span", { className: "rdk-sword-icon", "aria-hidden": "true", children: "\u2694\uFE0F" }),
+          /* @__PURE__ */ jsx20("h2", { id: "rdk-title", className: "rdk-title", children: "Invoke Ragnar\xF6k?" })
         ] }),
-        /* @__PURE__ */ jsxs14("div", { className: "rdk-body", id: "rdk-body", children: [
-          /* @__PURE__ */ jsx19("p", { className: "rdk-body-text", children: "You are about to sever this thread from the Nornir's loom. This agent's saga will end \u2014 no Valhalla awaits a cancelled job. This cannot be undone." }),
-          /* @__PURE__ */ jsxs14("div", { className: "rdk-job-label", "aria-label": "Job to be cancelled", children: [
-            /* @__PURE__ */ jsx19("span", { className: "rdk-job-label-icon", "aria-hidden": "true", children: "\u263D" }),
-            /* @__PURE__ */ jsx19("span", { className: "rdk-job-label-text", children: jobTitle })
+        /* @__PURE__ */ jsxs15("div", { className: "rdk-body", id: "rdk-body", children: [
+          /* @__PURE__ */ jsx20("p", { className: "rdk-body-text", children: "You are about to sever this thread from the Nornir's loom. This agent's saga will end \u2014 no Valhalla awaits a cancelled job. This cannot be undone." }),
+          /* @__PURE__ */ jsxs15("div", { className: "rdk-job-label", "aria-label": "Job to be cancelled", children: [
+            /* @__PURE__ */ jsx20("span", { className: "rdk-job-label-icon", "aria-hidden": "true", children: "\u263D" }),
+            /* @__PURE__ */ jsx20("span", { className: "rdk-job-label-text", children: jobTitle })
           ] }),
-          /* @__PURE__ */ jsx19("div", { className: "rdk-session-id", "aria-label": "Session ID", children: sessionId })
+          /* @__PURE__ */ jsx20("div", { className: "rdk-session-id", "aria-label": "Session ID", children: sessionId })
         ] }),
-        error && /* @__PURE__ */ jsxs14("div", { className: "rdk-error", role: "alert", children: [
-          /* @__PURE__ */ jsx19("span", { "aria-hidden": "true", children: "\u2715" }),
+        error && /* @__PURE__ */ jsxs15("div", { className: "rdk-error", role: "alert", children: [
+          /* @__PURE__ */ jsx20("span", { "aria-hidden": "true", children: "\u2715" }),
           " ",
           error
         ] }),
-        /* @__PURE__ */ jsxs14("div", { className: "rdk-actions", children: [
-          /* @__PURE__ */ jsx19(
+        /* @__PURE__ */ jsxs15("div", { className: "rdk-actions", children: [
+          /* @__PURE__ */ jsx20(
             "button",
             {
               ref: cancelRef,
@@ -12211,7 +12626,7 @@ function RagnarokDialog({ sessionId, jobTitle, onConfirm, onCancel }) {
               children: "Stay the Hand of Fate"
             }
           ),
-          /* @__PURE__ */ jsx19(
+          /* @__PURE__ */ jsx20(
             "button",
             {
               ref: confirmRef,
@@ -12219,14 +12634,14 @@ function RagnarokDialog({ sessionId, jobTitle, onConfirm, onCancel }) {
               onClick: handleConfirm,
               disabled: isLoading,
               "aria-label": "Unleash Ragnar\xF6k \u2014 permanently cancel this job",
-              children: isLoading ? /* @__PURE__ */ jsxs14("span", { className: "rdk-loading-text", children: [
-                /* @__PURE__ */ jsx19("span", { className: "rdk-spinner", "aria-hidden": "true" }),
+              children: isLoading ? /* @__PURE__ */ jsxs15("span", { className: "rdk-loading-text", children: [
+                /* @__PURE__ */ jsx20("span", { className: "rdk-spinner", "aria-hidden": "true" }),
                 "Severing the thread\u2026"
               ] }) : "Unleash Ragnar\xF6k"
             }
           )
         ] }),
-        /* @__PURE__ */ jsx19("div", { className: "rdk-rune-band rdk-rune-band--bottom", "aria-hidden": "true", children: "\u16A0\u16D6\u16BE\u16B1\u16C1\u16B1 \u16B9\u16A8\u16CF\u16B2\u16BA\u16D6\u16CA \u16A6\u16D6 \u16B9\u16DF\u16DA\u16A0 \u16B9\u16A8\u16CF\u16B2\u16BA\u16D6\u16CA" })
+        /* @__PURE__ */ jsx20("div", { className: "rdk-rune-band rdk-rune-band--bottom", "aria-hidden": "true", children: "\u16A0\u16D6\u16BE\u16B1\u16C1\u16B1 \u16B9\u16A8\u16CF\u16B2\u16BA\u16D6\u16CA \u16A6\u16D6 \u16B9\u16DF\u16DA\u16A0 \u16B9\u16A8\u16CF\u16B2\u16BA\u16D6\u16CA" })
       ] })
     }
   );
@@ -12234,7 +12649,7 @@ function RagnarokDialog({ sessionId, jobTitle, onConfirm, onCancel }) {
 
 // src/ui/components/Toast.tsx
 import { useEffect as useEffect11, useState as useState14 } from "react";
-import { jsx as jsx20, jsxs as jsxs15 } from "react/jsx-runtime";
+import { jsx as jsx21, jsxs as jsxs16 } from "react/jsx-runtime";
 function Toast({ message, onDismiss, duration = 4e3 }) {
   const [exiting, setExiting] = useState14(false);
   useEffect11(() => {
@@ -12245,7 +12660,7 @@ function Toast({ message, onDismiss, duration = 4e3 }) {
       clearTimeout(dismissTimer);
     };
   }, [duration, onDismiss]);
-  return /* @__PURE__ */ jsxs15(
+  return /* @__PURE__ */ jsxs16(
     "div",
     {
       className: `toast${exiting ? " toast--exit" : ""}`,
@@ -12253,9 +12668,9 @@ function Toast({ message, onDismiss, duration = 4e3 }) {
       "aria-live": "polite",
       "aria-atomic": "true",
       children: [
-        /* @__PURE__ */ jsx20("span", { className: "toast-rune", "aria-hidden": "true", children: "\u2694\uFE0F" }),
-        /* @__PURE__ */ jsx20("span", { className: "toast-message", children: message }),
-        /* @__PURE__ */ jsx20(
+        /* @__PURE__ */ jsx21("span", { className: "toast-rune", "aria-hidden": "true", children: "\u2694\uFE0F" }),
+        /* @__PURE__ */ jsx21("span", { className: "toast-message", children: message }),
+        /* @__PURE__ */ jsx21(
           "button",
           {
             className: "toast-close",
@@ -12273,10 +12688,10 @@ function Toast({ message, onDismiss, duration = 4e3 }) {
 }
 
 // src/ui/components/ErrorBanner.tsx
-import { jsxs as jsxs16 } from "react/jsx-runtime";
+import { jsxs as jsxs17 } from "react/jsx-runtime";
 function ErrorBanner({ message }) {
   if (!message) return null;
-  return /* @__PURE__ */ jsxs16("div", { className: `error-banner visible`, role: "alert", "aria-live": "assertive", children: [
+  return /* @__PURE__ */ jsxs17("div", { className: `error-banner visible`, role: "alert", "aria-live": "assertive", children: [
     "\u26A0",
     " ",
     message
@@ -12284,14 +12699,14 @@ function ErrorBanner({ message }) {
 }
 
 // src/ui/components/Overlays.tsx
-import { Fragment as Fragment5, jsx as jsx21, jsxs as jsxs17 } from "react/jsx-runtime";
+import { Fragment as Fragment5, jsx as jsx22, jsxs as jsxs18 } from "react/jsx-runtime";
 function ThroneOverlays() {
   const snap = useThrone();
   if (!snap) return null;
-  return /* @__PURE__ */ jsxs17(Fragment5, { children: [
-    /* @__PURE__ */ jsx21(ErrorBanner, { message: snap.wsError }),
-    snap.storageWarning && /* @__PURE__ */ jsx21(ErrorBanner, { message: snap.storageWarning }),
-    snap.profileAgent && /* @__PURE__ */ jsx21(
+  return /* @__PURE__ */ jsxs18(Fragment5, { children: [
+    /* @__PURE__ */ jsx22(ErrorBanner, { message: snap.wsError }),
+    snap.storageWarning && /* @__PURE__ */ jsx22(ErrorBanner, { message: snap.storageWarning }),
+    snap.profileAgent && /* @__PURE__ */ jsx22(
       AgentProfileModal,
       {
         agentKey: snap.profileAgent,
@@ -12299,7 +12714,7 @@ function ThroneOverlays() {
         onClose: () => snap.setProfileAgent(null)
       }
     ),
-    snap.cancelTarget && /* @__PURE__ */ jsx21(
+    snap.cancelTarget && /* @__PURE__ */ jsx22(
       RagnarokDialog,
       {
         sessionId: snap.cancelTarget.sessionId,
@@ -12308,7 +12723,7 @@ function ThroneOverlays() {
         onCancel: () => snap.setCancelTarget(null)
       }
     ),
-    snap.toast && /* @__PURE__ */ jsx21(
+    snap.toast && /* @__PURE__ */ jsx22(
       Toast,
       {
         message: snap.toast.message,
@@ -12553,7 +12968,7 @@ function App() {
 // src/targets/plugin/settings.tsx
 import { useState as useState17, useSyncExternalStore as useSyncExternalStore3 } from "react";
 import { host as host3 } from "@hermes/plugin-sdk";
-import { jsx as jsx22, jsxs as jsxs18 } from "react/jsx-runtime";
+import { jsx as jsx23, jsxs as jsxs19 } from "react/jsx-runtime";
 var open = false;
 var listeners3 = /* @__PURE__ */ new Set();
 var settingsUi = {
@@ -12606,7 +13021,7 @@ function ThroneSettings() {
     settingsUi.close();
     setSaving(false);
   }
-  return /* @__PURE__ */ jsx22(
+  return /* @__PURE__ */ jsx23(
     "div",
     {
       className: "apm-backdrop",
@@ -12616,19 +13031,19 @@ function ThroneSettings() {
       onClick: (e) => {
         if (e.target === e.currentTarget) settingsUi.close();
       },
-      children: /* @__PURE__ */ jsxs18("div", { className: "throne-settings", style: { maxWidth: 440 }, children: [
-        /* @__PURE__ */ jsx22("h2", { children: "Bind the Bifr\xF6st" }),
-        /* @__PURE__ */ jsxs18("p", { className: "throne-settings-hint", children: [
-          /* @__PURE__ */ jsx22("strong", { children: "Google OAuth is the only way in" }),
+      children: /* @__PURE__ */ jsxs19("div", { className: "throne-settings", style: { maxWidth: 440 }, children: [
+        /* @__PURE__ */ jsx23("h2", { children: "Bind the Bifr\xF6st" }),
+        /* @__PURE__ */ jsxs19("p", { className: "throne-settings-hint", children: [
+          /* @__PURE__ */ jsx23("strong", { children: "Google OAuth is the only way in" }),
           " \u2014 the same login the web version uses, completed in your browser via a one-time pairing code. No session, no data. The only setting is the upstream URL, overridden for a local dev monitor (which runs without oauth2-proxy)."
         ] }),
-        /* @__PURE__ */ jsxs18("p", { className: "throne-settings-hint", children: [
+        /* @__PURE__ */ jsxs19("p", { className: "throne-settings-hint", children: [
           "Session: ",
-          /* @__PURE__ */ jsx22("strong", { children: paired ? "paired \u2713" : "not paired" })
+          /* @__PURE__ */ jsx23("strong", { children: paired ? "paired \u2713" : "not paired" })
         ] }),
-        /* @__PURE__ */ jsxs18("label", { children: [
+        /* @__PURE__ */ jsxs19("label", { children: [
           "Upstream URL",
-          /* @__PURE__ */ jsx22(
+          /* @__PURE__ */ jsx23(
             "input",
             {
               style: inputStyle,
@@ -12638,9 +13053,9 @@ function ThroneSettings() {
             }
           )
         ] }),
-        /* @__PURE__ */ jsxs18("div", { className: "throne-settings-row", children: [
-          /* @__PURE__ */ jsx22("button", { className: "throne-settings-btn", onClick: () => settingsUi.close(), children: "Cancel" }),
-          /* @__PURE__ */ jsx22(
+        /* @__PURE__ */ jsxs19("div", { className: "throne-settings-row", children: [
+          /* @__PURE__ */ jsx23("button", { className: "throne-settings-btn", onClick: () => settingsUi.close(), children: "Cancel" }),
+          /* @__PURE__ */ jsx23(
             "button",
             {
               className: "throne-settings-btn primary",
@@ -12656,10 +13071,10 @@ function ThroneSettings() {
 }
 
 // src/targets/plugin/pane.tsx
-import { Fragment as Fragment6, jsx as jsx23, jsxs as jsxs19 } from "react/jsx-runtime";
+import { Fragment as Fragment6, jsx as jsx24, jsxs as jsxs20 } from "react/jsx-runtime";
 function SidebarConnected() {
   const snap = useThrone();
-  return /* @__PURE__ */ jsx23(
+  return /* @__PURE__ */ jsx24(
     Sidebar,
     {
       jobs: snap.jobs,
@@ -12701,12 +13116,12 @@ function PairingCard() {
     if (!result.ok) setError(result.error ?? "Pairing failed");
     setBusy(false);
   }
-  return /* @__PURE__ */ jsxs19("div", { className: "throne-connect-card", children: [
-    /* @__PURE__ */ jsx23("p", { children: "The Throne is sealed \u2014 sign in with Google to open the Bifr\xF6st (the same login the web version uses)." }),
-    /* @__PURE__ */ jsx23("button", { className: "throne-settings-btn primary", onClick: () => void openBrowser(), children: "Sign in with Google" }),
-    opened && /* @__PURE__ */ jsxs19(Fragment6, { children: [
-      /* @__PURE__ */ jsx23("p", { children: "The pairing page is open in your browser \u2014 click the key to copy it, then paste it here:" }),
-      /* @__PURE__ */ jsx23(
+  return /* @__PURE__ */ jsxs20("div", { className: "throne-connect-card", children: [
+    /* @__PURE__ */ jsx24("p", { children: "The Throne is sealed \u2014 sign in with Google to open the Bifr\xF6st (the same login the web version uses)." }),
+    /* @__PURE__ */ jsx24("button", { className: "throne-settings-btn primary", onClick: () => void openBrowser(), children: "Sign in with Google" }),
+    opened && /* @__PURE__ */ jsxs20(Fragment6, { children: [
+      /* @__PURE__ */ jsx24("p", { children: "The pairing page is open in your browser \u2014 click the key to copy it, then paste it here:" }),
+      /* @__PURE__ */ jsx24(
         "input",
         {
           className: "throne-code-input",
@@ -12731,10 +13146,10 @@ function PairingCard() {
           }
         }
       ),
-      /* @__PURE__ */ jsx23("button", { className: "throne-settings-btn", disabled: busy, onClick: () => void pair(), children: busy ? "Binding\u2026" : "Pair" })
+      /* @__PURE__ */ jsx24("button", { className: "throne-settings-btn", disabled: busy, onClick: () => void pair(), children: busy ? "Binding\u2026" : "Pair" })
     ] }),
-    error && /* @__PURE__ */ jsx23("p", { style: { color: "var(--error-text)" }, children: error }),
-    /* @__PURE__ */ jsx23(
+    error && /* @__PURE__ */ jsx24("p", { style: { color: "var(--error-text)" }, children: error }),
+    /* @__PURE__ */ jsx24(
       "button",
       {
         className: "throne-settings-btn",
@@ -12755,8 +13170,8 @@ function ThronePane() {
   const { theme } = useTheme();
   const rootRef = useRef12(null);
   useExternalLinkRouter(rootRef);
-  const bridge = useMemo5(() => /* @__PURE__ */ jsx23(App, {}), []);
-  return /* @__PURE__ */ jsxs19(
+  const bridge = useMemo5(() => /* @__PURE__ */ jsx24(App, {}), []);
+  return /* @__PURE__ */ jsxs20(
     "div",
     {
       ref: rootRef,
@@ -12765,17 +13180,17 @@ function ThronePane() {
       style: { width: "100%", height: "100%", position: "relative", overflow: "hidden" },
       children: [
         bridge,
-        snap ? /* @__PURE__ */ jsx23(ErrorBoundary, { children: /* @__PURE__ */ jsx23(SidebarConnected, {}) }) : /* @__PURE__ */ jsx23("div", { className: "throne-boot", children: "Awakening the Allfather\u2026" }),
-        !isConfigured() && /* @__PURE__ */ jsx23(PairingCard, {}),
-        /* @__PURE__ */ jsx23(ThroneOverlays, {}),
-        settingsOpen && /* @__PURE__ */ jsx23(ThroneSettings, {})
+        snap ? /* @__PURE__ */ jsx24(ErrorBoundary, { children: /* @__PURE__ */ jsx24(SidebarConnected, {}) }) : /* @__PURE__ */ jsx24("div", { className: "throne-boot", children: "Awakening the Allfather\u2026" }),
+        !isConfigured() && /* @__PURE__ */ jsx24(PairingCard, {}),
+        /* @__PURE__ */ jsx24(ThroneOverlays, {}),
+        settingsOpen && /* @__PURE__ */ jsx24(ThroneSettings, {})
       ]
     }
   );
 }
 
 // src/targets/plugin/entry.tsx
-import { jsx as jsx24 } from "react/jsx-runtime";
+import { jsx as jsx25 } from "react/jsx-runtime";
 var FONTS_HREF = "https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Cinzel+Decorative:wght@400;700;900&family=Source+Serif+4:wght@300;400;600&family=JetBrains+Mono:wght@400;500;600&display=swap";
 setPlatform(pluginPlatform);
 var STYLE_ID = "odins-throne-hermes-style";
@@ -12861,13 +13276,13 @@ var entry_default = {
         dock: { pane: "workspace", pos: "right", enforce: true },
         width: "300px"
       },
-      render: () => /* @__PURE__ */ jsx24(ThronePane, {})
+      render: () => /* @__PURE__ */ jsx25(ThronePane, {})
     });
     ctx2.register({
       id: "page",
       area: ROUTES_AREA2,
       data: { path: "/odins-throne" },
-      render: () => /* @__PURE__ */ jsx24(ThronePage, {})
+      render: () => /* @__PURE__ */ jsx25(ThronePage, {})
     });
     ctx2.register({
       id: "nav",
@@ -12913,9 +13328,11 @@ var entry_default = {
 };
 export {
   HermesLogParser,
+  Markdown,
   entry_default as default,
   isDecreeBlock,
   openThroneTab,
   parseDecree,
+  parseMarkdown,
   useLogStream
 };

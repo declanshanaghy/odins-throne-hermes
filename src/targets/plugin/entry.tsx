@@ -198,6 +198,7 @@ export default {
 // Test seams: the smoke/stream tests import these from the built bundle and
 // exercise the log-parsing pipeline directly. Not used by the desktop host.
 export { HermesLogParser } from "../../ui/lib/hermesFormat";
+export { parseMarkdown, Markdown } from "../../ui/lib/markdown";
 export { useLogStream } from "../../ui/hooks/useLogStream";
 export { parseDecree, isDecreeBlock } from "../../ui/components/DecreeBlock";
 // Tab-opening seam — lets smoke.mjs assert the openThroneTab→openWorkspace
