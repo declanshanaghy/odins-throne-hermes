@@ -449,11 +449,12 @@ var styles_default = `.odins-throne-root .odins-throne-root {
   pointer-events: none;
 }
 
-/* \u2500\u2500 the stone \u2014 a namespace seated on a painted lantern (v3.9) \u2500\u2500 */
-/* Each namespace node is a visible dark-slate stone (radial gradient, 1px rim,
- * inner light) overlaying its painted lantern. The active stone opens (teal
- * border + ring shadow, translucent center, z7); inactive stones fade into the
- * background (ghost-transparent, no rim, no shadow, scale .85, z4). */
+/* \u2500\u2500 the lantern \u2014 the painted lantern is the holder of the namespace's spirit (v3.9.3) \u2500\u2500 */
+/* The painted lantern itself holds the namespace's spirit. No disc or stone sits on top \u2014
+ * the namespace icon floats directly on the painting. The active lantern glows via the
+ * ::before screen-blend halo; every inactive lantern is dimmed by a ::after multiply-blend
+ * radial mask so it reads unlit. The button is fully transparent \u2014 no border, no radius,
+ * no background \u2014 it is a hit target only. \`:focus-visible\` keeps a keyboard focus ring. */
 .odins-throne-root .ns-tree--lanterns {
   --lg-moon: rgba(176, 196, 201, 0.30);
   --lg-teal: rgba(21, 184, 166, 0.55);
@@ -478,14 +479,11 @@ var styles_default = `.odins-throne-root .odins-throne-root {
   width: 52px;
   height: 52px;
   padding: 0;
-  border: 1px solid rgba(176, 196, 201, 0.22);
-  border-radius: 50%;
-  /* dark-slate stone with inner radial light */
-  background: radial-gradient(circle at 38% 30%, rgba(58, 74, 80, 0.92), rgba(15, 21, 26, 0.96) 58%, rgba(7, 11, 14, 0.99) 82%);
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.08), 0 0 12px var(--lg);
+  border: none;
+  background: transparent;
   cursor: pointer;
   z-index: 6;
-  transition: scale 0.2s, box-shadow 0.2s, border-color 0.2s, background 0.2s, opacity 0.2s;
+  transition: scale 0.2s;
 }
 /* the painted lantern's screen-blend glow \u2014 invisible until hovered/active */
 .odins-throne-root .ns-tree__lantern::before {
@@ -500,41 +498,45 @@ var styles_default = `.odins-throne-root .odins-throne-root {
   pointer-events: none;
 }
 .odins-throne-root .ns-tree__lantern:hover::before { opacity: 0.55; }
+/* keyboard focus ring \u2014 a11y, not a decorative disc */
 .odins-throne-root .ns-tree__lantern:focus-visible {
   outline: 2px solid var(--teal-asgard);
   outline-offset: 2px;
 }
 .odins-throne-root .ns-tree__lantern:focus-visible::before { opacity: 0.55; }
-/* active stone: teal border + ring shadow, translucent center, z7 */
+/* active lantern: its spirit glows \u2014 teal halo at full opacity, z7 */
 .odins-throne-root .ns-tree__lantern--active {
   z-index: 7;
   --lg: var(--lg-teal);
-  border-color: var(--teal-asgard);
-  background: radial-gradient(circle at 38% 30%, rgba(70, 92, 98, 0.55), rgba(15, 21, 26, 0.8) 58%, rgba(7, 11, 14, 0.95) 82%);
 }
 .odins-throne-root .ns-tree__lantern--active::before,
 .odins-throne-root .ns-tree__lantern--active:hover::before { opacity: 1; }
-/* inactive stone: fades into the painting \u2014 ghost-transparent, no rim, z4 */
+/* inactive lantern: dimmed with a multiply-blend radial mask so it reads unlit */
 .odins-throne-root .ns-tree__lantern--inactive {
   z-index: 4;
-  border-color: transparent;
-  background: radial-gradient(circle at 38% 30%, rgba(10, 16, 20, 0.14), rgba(7, 11, 14, 0.34) 72%);
-  box-shadow: none;
-  scale: 0.85;
-  opacity: 0.5;
 }
-.odins-throne-root .ns-tree__lantern--inactive:hover {
-  opacity: 0.9;
-  scale: 0.95;
-  border-color: rgba(176, 196, 201, 0.2);
-  background: radial-gradient(circle at 38% 30%, rgba(58, 74, 80, 0.5), rgba(15, 21, 26, 0.8) 72%);
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.5), 0 0 12px var(--lg);
+/* dark mask overlaying the inactive painted lantern */
+.odins-throne-root .ns-tree__lantern--inactive::after {
+  content: "";
+  position: absolute;
+  inset: -14px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0, 0, 0, 0.78) 25%, rgba(0, 0, 0, 0.55) 55%, transparent 72%);
+  mix-blend-mode: multiply;
+  pointer-events: none;
+  transition: background 0.2s;
+  z-index: -1;
 }
-.odins-throne-root .ns-tree__lantern--inactive:hover::before { opacity: 0.25; }
+.odins-throne-root .ns-tree__lantern--inactive:hover::after {
+  background: radial-gradient(circle, rgba(0, 0, 0, 0.42) 25%, rgba(0, 0, 0, 0.28) 55%, transparent 72%);
+}
+.odins-throne-root .ns-tree__lantern--inactive:hover::before { opacity: 0.15; }
 .odins-throne-root .ns-tree__lantern--inactive::before { opacity: 0; }
-/* summary unavailable + inactive */
-.odins-throne-root .ns-tree__lantern--inactive.ns-tree__lantern--dim { opacity: 0.22; }
-/* glow tints on the default stone (ember/moss/failed) \u2014 active keeps teal */
+/* summary unavailable + inactive: deepen the mask */
+.odins-throne-root .ns-tree__lantern--inactive.ns-tree__lantern--dim::after {
+  background: radial-gradient(circle, rgba(0, 0, 0, 0.90) 25%, rgba(0, 0, 0, 0.75) 55%, transparent 72%);
+}
+/* glow tints (ember/moss) \u2014 active keeps teal */
 .odins-throne-root .ns-tree__lantern--failed:not(.ns-tree__lantern--active) { --lg: var(--lg-ember); }
 .odins-throne-root .ns-tree__lantern--ok:not(.ns-tree__lantern--active)     { --lg: var(--lg-moss); }
 /* icon inside the stone */
@@ -591,6 +593,7 @@ var styles_default = `.odins-throne-root .odins-throne-root {
 @media (prefers-reduced-motion: reduce) {
   .odins-throne-root .ns-tree__lantern,
   .odins-throne-root .ns-tree__lantern::before,
+  .odins-throne-root .ns-tree__lantern::after,
   .odins-throne-root .ns-tree__icon--lantern { transition: none; }
 }
 

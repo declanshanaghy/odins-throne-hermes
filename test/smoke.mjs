@@ -521,20 +521,26 @@ for (const sel of [".jcard:focus-visible", ".ns-tree__lantern:focus-visible", ".
   assert.ok(css.includes(sel), `keyboard focus ring present in the CSS: ${sel}`);
 }
 
-// Stone skin (issue #69 v3.9): the lantern button is a dark-slate stone disc
-// with a radial gradient and glow — active opens (teal ring, translucent
-// center, z7); inactive fades to ghost (opacity 0.5, z4).
+// Spirit-holder model (issue #90 v3.9.3): the painted lantern holds the namespace's spirit.
+// The button is fully transparent — no disc, no border, no border-radius, no gradient.
+// Active: screen-blend ::before glow at opacity 1. Inactive: ::after multiply-blend mask dims the painting.
 const lanternRule = css.match(/\.ns-tree__lantern\s*\{([^}]*)\}/)?.[1] ?? "";
 assert.ok(lanternRule, "the lantern rule ships in the CSS");
-assert.match(lanternRule, /radial-gradient/, "lantern button has the stone radial gradient");
-assert.match(lanternRule, /border-radius:\s*50%/, "lantern button is a circle (border-radius 50%)");
+assert.match(lanternRule, /background:\s*transparent/, "lantern button is transparent — no disc");
+assert.doesNotMatch(lanternRule, /border-radius:\s*50%/, "lantern button has no disc shape (no border-radius 50%)");
+assert.doesNotMatch(lanternRule, /radial-gradient/, "lantern button base has no stone gradient");
 const activeLanternRule = css.match(/\.ns-tree__lantern--active\s*\{([^}]*)\}/)?.[1] ?? "";
 assert.ok(activeLanternRule, "active lantern rule ships in the CSS");
 assert.match(activeLanternRule, /z-index:\s*7/, "active lantern floats above (z-index 7)");
 const inactiveLanternRule = css.match(/\.ns-tree__lantern--inactive\s*\{([^}]*)\}/)?.[1] ?? "";
 assert.ok(inactiveLanternRule, "inactive lantern rule ships in the CSS");
-assert.match(inactiveLanternRule, /opacity:\s*0\.5/, "inactive stone fades to 0.5 opacity");
-assert.match(inactiveLanternRule, /z-index:\s*4/, "inactive stone recedes to z-index 4");
+assert.doesNotMatch(inactiveLanternRule, /opacity:\s*0\.5/, "inactive lantern has no opacity fade (uses mask instead)");
+assert.match(inactiveLanternRule, /z-index:\s*4/, "inactive lantern recedes to z-index 4");
+// The inactive mask: ::after multiply-blend radial darkens the painted lantern
+const inactiveMaskRule = css.match(/\.ns-tree__lantern--inactive::after\s*\{([^}]*)\}/)?.[1] ?? "";
+assert.ok(inactiveMaskRule, "inactive lantern mask (::after) rule ships in the CSS");
+assert.match(inactiveMaskRule, /mix-blend-mode:\s*multiply/, "inactive mask uses multiply blend to dim the painting");
+assert.match(inactiveMaskRule, /radial-gradient/, "inactive mask uses a radial gradient");
 const lightRule = css.match(/\.ns-tree__lantern::before\s*\{([^}]*)\}/)?.[1] ?? "";
 assert.match(lightRule, /mix-blend-mode:\s*screen/, "the lantern light brightens the painting (screen blend), never covers it");
 assert.match(lightRule, /opacity:\s*0/, "the lantern light is off until hovered/selected");
