@@ -1,6 +1,6 @@
 # Odin's Throne — Tree Display Interaction Spec
 
-**Prototype:** `tree-display-prototype.html` (v3.15) · **This file:** the behavioral contract for the port.
+**Prototype:** `tree-display-prototype.html` (v3.16) · **This file:** the behavioral contract for the port.
 **Division of truth:** the HTML is the *reference implementation* — its code holds the exact values
 (geometry, opacities, sizes, colors) and its inline comments are the *minimum* documentation; THIS md
 sits *above* the code and states the behavior that must hold no matter the implementation. Every
@@ -11,11 +11,18 @@ change to the prototype updates the HTML, its comments, and this file in the sam
 
 ## 1. The scene
 
-- One painted moonlit tree (896×1200 backdrop, inline base64 — never regenerate without re-mapping seats).
-- **Eleven painted leaf-lanterns = eleven seats.** `SEAT_POOL` is in painting %, curated namespaces
-  claim their seats first, the rest seat deterministically (djb2 hash, forward-walk past taken seats).
-  Max 11 active namespaces — past that the tree is full and says so ("the tree is full — eleven
-  lanterns shine"); a 12th world shares the last lantern.
+- ONE painted tree per theme (896×1200 backdrops — never regenerate without re-mapping seats):
+  **dark** = the moonlit tree (inline base64), **light** = the parchment tree (`backdrop-parchment.jpg`,
+  sibling file, prompt beside it). The ☀ header toggle flips `data-theme="light"` on the root and swaps
+  painting + seat pool (v3.16).
+- **Eleven painted leaf-lanterns = eleven seats, per painting.** `SEAT_POOL` (dark) and
+  `SEAT_POOL_LIGHT` (parchment) are each in painting %; seat indices are theme-stable — curated
+  namespaces claim their seats first, the rest seat deterministically (djb2 hash, forward-walk past
+  taken seats). The **light pool was re-calculated from the parchment painting's own amber lantern
+  cores** (pixel detection cross-checked by one Gemini pass — pixels win), with re-measured bulb
+  anchors (`LANTERN_ANCHOR_LIGHT`) and silhouettes (`LANTERN_SIZE_LIGHT`); the SAME `projectSeat()`
+  cover LEFT-anchored crop carries both pools in both modes. Max = the pool's length; past that the
+  tree is full and says so ("the tree is full — N lanterns shine"); one world over shares the last lantern.
 - The whole scene (painting + light shapes + stones + vine + cards) is **one scrolling canvas** — the
   task list never detaches from its lantern while scrolling.
 - Standard mode crops the painting left-anchored (`object-fit: cover`, `object-position 0% 50%`,
@@ -46,6 +53,29 @@ deactivated / active are never confusable:
   **off ≈ 33 lum · empty ≈ 119 · mid ≈ 189 · full ≈ 228** — a clean four-step monotonic hierarchy.
 - An empty world that gains work **climbs the ladder live**: empty → full while selected, resting
   at mid when deactivated. A world whose work drains to zero falls back to empty.
+
+### 2b. The light theme (PARCHMENT & MEAD HALL, v3.16 round 24)
+
+- **Toggle**: the ☀ button in the tree panel header (far-right order: count · compact · theme · status).
+  Flips `data-theme="light"` on the root; in-memory persistence for the session (prototype). The button
+  shows ☀ while dark, ☾ while light; `aria-pressed` = light.
+- **Tokens** come from proposal #2's measured AA table (PROPOSAL.md §2.3): vellum `#FBF5E6`, iron-gall
+  ink `#2B1D12` (never pure black), ember `#B4451B`, bronze rules `#C3A87A`, mead-gold `#E8B54A` accents,
+  display gold `#AE6F14`, verdigris `#0B6B5C` (replaces the teal for rings/links in light), status
+  palette running `#0F6B7A` / succeeded `#2E6B34` / failed `#A32318` / pending `#8A5A0B`. Nothing on
+  screen is white; all interactive surfaces are OPAQUE (title box, cards, hover labels, clasps, notes,
+  chips — solid vellum; the frost is struck); glow lives in box/drop-shadows only.
+- **Ladder inversion (proposal #2's signature move)**: in light, **BRIGHT = lit, WASHED = dim**. The
+  dark multiply veils become a warm vellum wash (`#EFE6D2`, normal blend): off `.55` (+ halo wash `.35`)
+  / empty `.40` / mid `.18` (+ mead glow) / full `0` — the lit lantern is the brightest thing on the
+  page. The glow flips from screen-blend moonlight (`#lglowg`) to the mead-gold sun radial
+  (`#lglowg-sun`); the FULL ring is verdigris with a mead drop-shadow. Teardrop shapes, per-seat
+  silhouettes, and the four-tier semantics are IDENTICAL to dark.
+- **Seats**: flipping the theme swaps the backdrop (dark keeps the embedded base64; light references
+  the sibling `backdrop-parchment.jpg`) and the pool — every world keeps its seat INDEX but re-seats
+  onto the parchment painting's own lanterns (`SEAT_POOL_LIGHT`, painting %, same `projectSeat()`
+  projection — no new math). The tree header sub-line and the tree-full note carry the active pool's
+  count. Berries/anchor sigils/status chips follow the light status palette.
 
 ## 3. Icons
 
@@ -94,15 +124,19 @@ deactivated / active are never confusable:
   glory** (32px, glowing) planted in a **moss-bed mini garden** (the band's **left 25%**, moss ground +
   moonlit sky), with the world's **ringfort lore** to its right (worlds are **ringforts** in the shanaghy.com
   tongue — every known world's lore names its ringfort).
-- **Known services** carry lore (fleet table `WORLDS_LORE`) and **kin links** — pills that open the
-  related **entity's profile page** on `https://www.shanaghy.com/profiles/<slug>/` in a new tab
-  (`target="_blank"`, round 22 — they no longer seat another namespace; the throne's selection is
-  untouched). Unknown worlds get the generic seanchaí ringfort line, never a borrowed story.
+- **Known services** carry lore (the embedded **REALM knowledge db**, round 24) and **kin links** — pills that open the
+  related **entity's profile page** on shanaghy.com in a new tab (`target="_blank"`, round 22 — they no longer seat
+  another namespace; the throne's selection is untouched). The **world NAME** links to the world's **own page** —
+  its stone if one exists (`/sessions/fenrir-ledger/`, `/projects/odins-throne/`, `/projects/re-goatmower/`), else
+  its persona's profile (fionn for MyTruthFinder), else the hub itself (Shanaghy.com) — and **entity mentions inside
+  the lore are linkified** from the db (entity names + aliases, longest first, first hit each). Unknown worlds get
+  the generic seanchaí ringfort line, never a borrowed story, and a plain-text name.
 - **Deactivation** (collapse, dead-space click, empty-world rest) → the box **fades to 50% opacity but is
   never wiped**: it keeps the last seated world's name/stats/lore ("its deeds remain") until the next
   selection repaints it and **brightens it back to 100%** with the new info.
-- The pane itself is `pointer-events: none` — clicks on it **pass through to the painting** (dead-space
-  deselect still fires); only the kin links catch clicks.
+- The pane itself **catches its own clicks** (`pointer-events: auto` + `.wtitle` in the dead-space exempt list,
+  round 24): a click **anywhere in the title area never deactivates the world** — only the links inside act
+  (name → the world's own page, lore mentions + kin pills → entity profiles).
 
 ## 6. Interactions
 
@@ -123,7 +157,7 @@ deactivated / active are never confusable:
 | live growth | running jobs advance steps, may succeed/fail; quiet selected worlds sprout new work; gold spores drift while the feed is live — **the feed always starts PAUSED at first load** (button "live growth: off", HUD "ws feed paused", spores still; one click wakes it — round 16) |
 | the title box (deactivated) | **fades to 50%** over 0.6s, content unchanged ("its deeds remain") — the next selection repaints + brightens it back to 100% |
 | kin link pill | opens the related **entity's profile page** on www.shanaghy.com in a new tab (round 22 — no namespace jump; the throne's selection is untouched) |
-| click in dead space | the active lantern **deactivates immediately** (the title box dims with it) (vine retracted, nothing selected, hall notes "the lantern rests"); anything interactive — stone, card, clasp, sigil, cluster, note, button — is exempt (round 17) |
+| click in dead space | the active lantern **deactivates immediately** (the title box dims with it) (vine retracted, nothing selected, hall notes "the lantern rests"); anything interactive — stone, card, clasp, sigil, cluster, note, button — **and the whole title box** are exempt (rounds 17 + 24: a click in the title area never deactivates) |
 | `prefers-reduced-motion` | all animations off (vine growth, pop-ins, spores, pulses) |
 
 ## 7. Port acceptance (verify, don't trust)
@@ -137,19 +171,27 @@ deactivated / active are never confusable:
       top edge level with the pin's y
 - [ ] Click cycles mid→full→mid and empty→full→(2s rest)→empty, hover lift, focus ring, accordion exclusivity
 - [ ] Selecting a taskless world: FULL for exactly 2s, then selection deactivates itself (back to **empty** — the 50% rung — vine retracted, nothing selected); a click or a sprouted job inside the window cancels the rest
-- [ ] Clicking dead space (scene/painting, not any interactive element) deactivates the active lantern at once; clicking stone/card/clasp/sigil/cluster/note/button never deselects
+- [ ] Clicking dead space (scene/painting **outside the title box**, not any interactive element) deactivates the active lantern at once; clicking stone/card/clasp/sigil/cluster/note/button **or anywhere in the title box** never deselects
 - [ ] Zero external resources when loaded from disk; icons from the local sets
 - [ ] Live growth OFF at first load: button "live growth: off" (aria-pressed false), HUD "ws feed paused", no spore motion, running jobs hold their steps — one click turns it all on
 - [ ] Compact mode: seats still on painted lanterns (same cover projection as standard — painting aspect ratio IDENTICAL between modes), one-line cards, no clasps
 - [ ] Cluster hides on expand, returns on collapse; pip strip single-row, +N past 8
-- [ ] **Title section**: active world → box 100% + teal name + per-state stats sigils + the GARDEN BAND (opaque stone in full glory in the left-25% moss bed, ringfort lore naming the world's ringfort to its right) + kin entity links; deactivate → 50% fade with SAME content; next selection → back to 100% with new info; kin click opens the entity's profile page on www.shanaghy.com in a new tab (selection unchanged); pane clicks pass through (dead-space deselect); unknown world → generic ringfort lore
+- [ ] **Title section**: active world → box 100% + teal name (a **LINK to the world's own page** on shanaghy.com — REALM db `worlds[].profile`) + per-state stats sigils + the GARDEN BAND (opaque stone in full glory in the left-25% moss bed, ringfort lore naming the world's ringfort to its right, **entity mentions linkified**) + kin entity links; deactivate → 50% fade with SAME content; next selection → back to 100% with new info; kin click opens the entity's profile page in a new tab (selection unchanged); **clicks anywhere in the title box NEVER deactivate the world** (round 24); unknown world → generic ringfort lore + plain-text name
 - [ ] A11y: treeitem roles, aria-expanded/selected, focus-visible ring
+- [ ] **Light theme (v3.16)**: ☀ flips `data-theme="light"` + swaps painting and seat pool; every
+      stone still lands on ITS pool's lantern through the same `projectSeat()` (exp == act for all
+      worlds, dark AND light, standard AND compact); light ladder is the inverted wash (off .55 /
+      empty .40 / mid .18 / full 0 + mead glow + verdigris ring — verify via computed styles); every
+      interactive surface opaque (wtitle, jcard, glabel, jact, branch-note); no horizontal overflow
+      beyond the pre-existing hover-glabel class; dark theme + geometry byte-identical to v3.15
+      behavior (regression: same seat projections, clearances, ladder opacities)
 
 ## 8. Port mapping (prototype → shipped plugin)
 
 | prototype | plugin |
 |---|---|
 | SEAT_POOL / CURATED_SEATS / projectSeat | `src/ui/lib/treeSeats.ts` |
+| SEAT_POOL_LIGHT / LANTERN_ANCHOR_LIGHT / LANTERN_SIZE_LIGHT / ☀ theme toggle / `[data-theme="light"]` ladder inversion (off .55 / empty .40 / mid .18 / full 0, mead `#lglowg-sun` glow, verdigris ring) | `treeSeats.ts` (second pool) + `NamespaceTree.tsx` (theme-aware pool/anchor/size) + `index.css` `[data-theme="light"]` blocks (proposal-2 tokens) |
 | LANTERN_PATH / LANTERN_SIZE / lseat states (four-tier ladder: off .75 / empty .50 / mid .25 / full 0 — empty = seated world with zero tasks; stone .65 + no berries) | new light layer in `NamespaceTree.tsx` + `index.css` |
 | NAMESPACE_CURATED / unknown-stone / transparent↔opaque swap | `src/ui/lib/namespaceIcons.ts` + `TreeIcon` |
 | vineFor (rail join at lantern height) | `src/ui/lib/vineGeometry.ts` |
