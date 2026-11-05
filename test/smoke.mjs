@@ -56,6 +56,9 @@ class FakeWebSocket {
 FakeWebSocket.instances = [];
 globalThis.WebSocket = FakeWebSocket;
 dom.window.WebSocket = FakeWebSocket;
+// RAF buffering (issue:106) requires requestAnimationFrame in the global scope.
+// jsdom provides it on dom.window (pretendToBeVisual: true); bridge it to globalThis.
+globalThis.requestAnimationFrame = (cb) => dom.window.requestAnimationFrame(cb);
 
 // Deterministic upstream: the pane's REST calls (namespace list + the
 // per-namespace job summaries that back the namespace tree) hit a stub so no
