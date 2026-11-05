@@ -1,16 +1,19 @@
-// World title section — v3.13.2 (issue #95).
+// World title section — v3.16 (issue #99).
 //
 // A glass panel riding on the painting's upper sky (~90% of scene width, above
-// the topmost lanterns). Shows the last-seated world's name, stats, garden band
-// (opaque stone + ringfort lore), and kin pills. Deactivation fades to 50%;
-// the next selection repaints at full opacity.
+// the topmost lanterns). Shows the last-seated world's name (linked to its
+// shanaghy.com page), stats, garden band, linkified lore, and kin pills
+// (entity profile links — no namespace jump on click). Deactivation fades to
+// 50%; the next selection repaints at full opacity.
 //
-// §5 of the interaction spec / §8 port mapping from the prototype.
+// §5/§6/§7 of the interaction spec / v3.16 port.
 
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import type { NamespaceOption } from "../hooks/useNamespace";
 import type { NamespaceSummaries } from "../hooks/useNamespaceSummaries";
 import { WORLDS_LORE, GENERIC_WORLD_LORE } from "../lib/worldLore";
+import { REALM } from "../lib/realmKnowledge";
+import { linkifyLore } from "../lib/linkifyLore";
 import { ICON_BASE, UNKNOWN_STONE } from "../lib/namespaceIcons";
 import { SEAT_POOL } from "../lib/treeSeats";
 
@@ -30,8 +33,6 @@ interface Props {
   summaries: NamespaceSummaries;
   /** seatIdx of the title world (for "lantern N of 11" label). */
   titleWorldSeatIdx: number | undefined;
-  /** Select a world via a kin pill click — same path as a lantern tap. */
-  onSelectWorld: (nsId: string) => void;
   compact?: boolean;
 }
 
@@ -47,13 +48,33 @@ function opaqueIconUrl(nsId: string): string {
   return ICON_BASE + (CURATED[nsId] ?? UNKNOWN_STONE);
 }
 
+/** Render lore text with entity mentions linked (teal dotted underline; first occurrence only). */
+function renderLore(text: string): ReactNode[] {
+  return linkifyLore(text).map((span, i) => {
+    if (span.kind === "link" && span.href !== undefined) {
+      return (
+        <a
+          key={i}
+          href={span.href}
+          target="_blank"
+          rel="noopener"
+          className="wtitle__lore-link"
+          aria-label={span.ariaLabel}
+        >
+          {span.text}
+        </a>
+      );
+    }
+    return span.text;
+  });
+}
+
 export function WorldTitle({
   titleWorldId,
   activeWorldId,
   namespaces,
   summaries,
   titleWorldSeatIdx,
-  onSelectWorld,
   compact = false,
 }: Props) {
   const isLive = activeWorldId !== null && activeWorldId === titleWorldId;
@@ -73,6 +94,7 @@ export function WorldTitle({
   const loreEntry = titleWorldId ? (WORLDS_LORE[titleWorldId] ?? null) : null;
   const loreText = loreEntry ? loreEntry.lore : GENERIC_WORLD_LORE;
   const kin = loreEntry?.kin ?? [];
+  const base = REALM.meta.base;
 
   const cls = ["wtitle", isLive ? "is-live" : ""].filter(Boolean).join(" ");
 
@@ -80,12 +102,28 @@ export function WorldTitle({
     ? { padding: "6px 8px 6px", borderRadius: "10px" }
     : {};
 
+  const nameEl: ReactNode = world
+    ? loreEntry?.profile
+      ? (
+          <a
+            href={base + loreEntry.profile}
+            target="_blank"
+            rel="noopener"
+            className="wtitle__name-link"
+            title={`${world.label} — its own page on shanaghy.com`}
+          >
+            {world.label}
+          </a>
+        )
+      : world.label
+    : "no world seated";
+
   return (
     <div className={cls} aria-live="polite" style={compactStyle}>
       <div className="wtitle__row">
         <div className="wtitle__id">
           <h2 className="wtitle__name" style={compact ? { fontSize: "12px" } : undefined}>
-            {world ? world.label : "no world seated"}
+            {nameEl}
           </h2>
           <span className="wtitle__state" style={compact ? { fontSize: "8.5px" } : undefined}>
             {!world
@@ -158,7 +196,7 @@ export function WorldTitle({
               className="wtitle__lore"
               style={compact ? { fontSize: "8.5px", lineHeight: "1.4", WebkitLineClamp: 3 } as CSSProperties : undefined}
             >
-              {loreText}
+              {renderLore(loreText)}
             </p>
           </div>
           {kin.length > 0 && (
@@ -167,20 +205,21 @@ export function WorldTitle({
               style={compact ? { gap: "3px 4px", marginTop: "4px" } : undefined}
             >
               {kin.map((k) => {
-                const kinWorld = namespaces.find((ns) => ns.id === k.id);
-                if (!kinWorld) return null;
+                const entity = REALM.entities[k.slug];
+                if (entity === undefined) return null;
                 return (
-                  <button
-                    key={k.id}
-                    type="button"
+                  <a
+                    key={k.slug}
+                    href={base + entity.path}
+                    target="_blank"
+                    rel="noopener"
                     className="wtitle__kin-pill"
-                    title={`${kinWorld.label} — ${k.why}`}
-                    aria-label={`Go to ${kinWorld.label}`}
+                    title={`${entity.name} — ${k.why}`}
+                    aria-label={`${entity.name} — ${k.why}`}
                     style={compact ? { fontSize: "8.5px", padding: "1px 6px" } : undefined}
-                    onClick={() => onSelectWorld(k.id)}
                   >
-                    {kinWorld.label}
-                  </button>
+                    {entity.name}
+                  </a>
                 );
               })}
             </div>
