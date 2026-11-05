@@ -4004,7 +4004,7 @@ import { host as host2 } from "@hermes/plugin-sdk";
 var URL_KEY = "hlidskjalf:upstream-url";
 var SESSION_KEY = "hlidskjalf:session";
 var CLIENT_KEY = "hlidskjalf:client-id";
-var DEFAULT_UPSTREAM_URL = "https://odins-throne.fenrirledger.com";
+var DEFAULT_UPSTREAM_URL = "https://odins-throne.shanaghy.com";
 function base() {
   return getUpstreamUrl().replace(/\/+$/, "");
 }

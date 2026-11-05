@@ -65,13 +65,13 @@ assert.equal(
 );
 assert.equal(
   pluginPlatform.wsUrl("fenrir-agents"),
-  "wss://odins-throne.fenrirledger.com/bot/ws?namespace=fenrir-agents",
+  "wss://odins-throne.shanaghy.com/bot/ws?namespace=fenrir-agents",
   "unpaired plugin dials the bot surface without a token",
 );
 localStorage.setItem("hlidskjalf:session", "sess-token-123");
 assert.equal(
   pluginPlatform.wsUrl("fenrir-agents"),
-  "wss://odins-throne.fenrirledger.com/bot/ws?namespace=fenrir-agents&token=sess-token-123",
+  "wss://odins-throne.shanaghy.com/bot/ws?namespace=fenrir-agents&token=sess-token-123",
   "paired plugin dials the bot surface with ?token=",
 );
 localStorage.removeItem("hlidskjalf:session");
@@ -86,7 +86,7 @@ localStorage.setItem("hlidskjalf:session", "sess-token-123");
 await pluginPlatform.restFetch("/api/namespaces");
 assert.equal(
   fetchCalls[1].url,
-  "https://odins-throne.fenrirledger.com/bot/api/namespaces",
+  "https://odins-throne.shanaghy.com/bot/api/namespaces",
   "plugin maps /api/* onto ${base}/bot/api",
 );
 assert.equal(
@@ -97,7 +97,7 @@ assert.equal(
 await pluginPlatform.restFetch("/health");
 assert.equal(
   fetchCalls[2].url,
-  "https://odins-throne.fenrirledger.com/health",
+  "https://odins-throne.shanaghy.com/health",
   "non-/api paths pass through to the upstream base untouched",
 );
 localStorage.removeItem("hlidskjalf:session");

@@ -32,7 +32,7 @@ dom.window.fetch = globalThis.fetch;
 const SESSION_KEY = "hlidskjalf:session";
 const URL_KEY = "hlidskjalf:upstream-url";
 const CLIENT_KEY = "hlidskjalf:client-id";
-const DEFAULT_BASE = "https://odins-throne.fenrirledger.com";
+const DEFAULT_BASE = "https://odins-throne.shanaghy.com";
 
 // ── the real source, transpiled by the loader ────────────────────────────────
 const upstream = await import("../src/targets/plugin/upstream.ts");
@@ -86,7 +86,7 @@ setUpstreamConfig(DEFAULT_BASE);
 localStorage.setItem(SESSION_KEY, "sess-token-123");
 assert.equal(
   wsUrl("fenrir-agents"),
-  "wss://odins-throne.fenrirledger.com/bot/ws?namespace=fenrir-agents&token=sess-token-123",
+  "wss://odins-throne.shanaghy.com/bot/ws?namespace=fenrir-agents&token=sess-token-123",
   "paired ws dial carries ?token= and upgrades https→wss",
 );
 localStorage.removeItem(SESSION_KEY);

@@ -163,9 +163,11 @@ of the viewport.
 - `/` and all app routes → `403` via oauth2-proxy if not authenticated
 - Behind Google OAuth (oauth2-proxy); authenticated users land at the job tree
 
-The hall is distinct from the old fenrir-ledger dev hall
-(`odins-throne.fenrirledger.com`), which remains running in parallel until
-full parity is confirmed and the exodus epic retires it.
+This is the only hall: the plugin's `DEFAULT_UPSTREAM_URL` points here, and
+the old fenrir-ledger dev hall (`odins-throne.fenrirledger.com`) was retired
+by the exodus epic — its DNS resolves but nothing listens. Panes that still
+carry the old URL as an override show every realm as "summary unavailable";
+re-point them via ⌘K → "Odin's Throne: Configure upstream".
 
 ## Deploy pipeline
 

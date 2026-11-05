@@ -1,5 +1,5 @@
 // Upstream connection to the deployed Odin's Throne monitor
-// (https://odins-throne.fenrirledger.com).
+// (https://odins-throne.shanaghy.com).
 //
 // ONE auth path: the website's Google OAuth, completed in the user's real
 // browser, delivered to the plugin as a short-lived pairing session.
@@ -24,7 +24,7 @@ const URL_KEY = "hlidskjalf:upstream-url";
 const SESSION_KEY = "hlidskjalf:session";
 const CLIENT_KEY = "hlidskjalf:client-id";
 
-export const DEFAULT_UPSTREAM_URL = "https://odins-throne.fenrirledger.com";
+export const DEFAULT_UPSTREAM_URL = "https://odins-throne.shanaghy.com";
 
 function base(): string {
   return getUpstreamUrl().replace(/\/+$/, "");
