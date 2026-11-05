@@ -123,6 +123,11 @@ export function useLogStream() {
   // Tracks how many live log-line messages to skip after a cache replay.
   // Set to N after replaying N cached lines so the re-streamed duplicates are ignored.
   const liveSkipRef = useRef(0);
+  // Buffer incoming log lines and flush via requestAnimationFrame so React 18
+  // auto-batching collapses all resulting setEntries calls into one render per
+  // frame — prevents scroll jumps under heavy output (issue:106).
+  const lineBufferRef = useRef<string[]>([]);
+  const flushScheduledRef = useRef(false);
 
   const setIsConnecting = useCallback((v: boolean) => {
     isConnectingRef.current = v;
@@ -143,6 +148,8 @@ export function useLogStream() {
     setEntries([]);
     counterRef.current.n = 0;
     liveSkipRef.current = 0;
+    lineBufferRef.current = [];
+    flushScheduledRef.current = false;
     taskPromptBuffer.current = [];
     inTaskPrompt.current = false;
     inEntrypoint.current = false;
@@ -474,18 +481,33 @@ export function useLogStream() {
         liveSkipRef.current--;
         return;
       }
-      // First live log-line clears connecting + pod-starting state
+      // First live log-line clears connecting + pod-starting state immediately
+      // (don't buffer these transitions — they affect the spinner display)
       if (isConnectingRef.current) {
         setIsConnecting(false);
       }
       if (isPodStartingRef.current) {
         setIsPodStarting(false);
       }
-      // Persist raw line to localStorage for download / future revisits
+      // Persist raw line to localStorage immediately for download / future revisits
       if (activeSessionIdRef.current) {
         appendLogLine(activeSessionIdRef.current, line);
       }
-      processRawLogLine(line);
+      // Buffer the line and flush via requestAnimationFrame.
+      // React 18 auto-batching collapses all setEntries calls within a single
+      // RAF callback into one render, preventing scroll jumps on heavy output.
+      lineBufferRef.current.push(line);
+      if (!flushScheduledRef.current) {
+        flushScheduledRef.current = true;
+        requestAnimationFrame(() => {
+          flushScheduledRef.current = false;
+          const lines = lineBufferRef.current;
+          lineBufferRef.current = [];
+          for (const line of lines) {
+            processRawLogLine(line);
+          }
+        });
+      }
     } else if (msg.type === "stream-error") {
       liveSkipRef.current = 0; // stop skipping on error
       // If the session has cached data in localStorage, fall back to it immediately

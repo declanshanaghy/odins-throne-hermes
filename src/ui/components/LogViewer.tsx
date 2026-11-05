@@ -233,20 +233,33 @@ export function LogViewer({ entries, activeJob, isFixture, isTtlExpired, isNodeU
   const [fixturePaused, setFixturePaused] = useState(false);
   const [autoScroll, setAutoScroll] = useState(true);
   const programmaticScrollRef = useRef(false);
+  // Ref mirror of autoScroll state — safe to read inside RAF callbacks
+  // without stale closure issues.
+  const autoScrollRef = useRef(true);
+  // Dedup scroll RAF: only one pending at a time so heavy output (many renders
+  // per second) doesn't queue dozens of scroll attempts (issue:106).
+  const scrollScheduledRef = useRef(false);
+
+  useEffect(() => { autoScrollRef.current = autoScroll; }, [autoScroll]);
 
   // Auto-scroll when new entries arrive (if enabled).
   // Depend on entry count + last entry ID, NOT the full array reference.
   // This prevents scroll resets when the array is reconstructed (e.g. entrypoint grouping).
+  // programmaticScrollRef is set INSIDE the RAF callback (not before it) so that
+  // user scrolls that arrive between scheduling and firing are not incorrectly
+  // suppressed as programmatic (issue:106).
   const lastEntryId = entries[entries.length - 1]?.id;
   useEffect(() => {
-    if (autoScroll && termRef.current) {
-      programmaticScrollRef.current = true;
-      requestAnimationFrame(() => {
-        if (termRef.current) {
-          termRef.current.scrollTop = termRef.current.scrollHeight;
-        }
-      });
-    }
+    if (!autoScroll) return;
+    if (scrollScheduledRef.current) return;
+    scrollScheduledRef.current = true;
+    requestAnimationFrame(() => {
+      scrollScheduledRef.current = false;
+      if (autoScrollRef.current && termRef.current) {
+        programmaticScrollRef.current = true;
+        termRef.current.scrollTop = termRef.current.scrollHeight;
+      }
+    });
   }, [entries.length, lastEntryId, autoScroll]);
 
   // Reset auto-scroll when switching sessions
