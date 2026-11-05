@@ -418,15 +418,16 @@ body {
   -webkit-mask-image: linear-gradient(180deg, #000 90%, transparent 100%);
           mask-image: linear-gradient(180deg, #000 90%, transparent 100%);
 }
-/* ── lantern-shaped light states (v3.10, issue #95) ──────────────────────────
+/* ── lantern-shaped light states (v3.15 four-tier dim ladder, issue #97) ──────
  * One SVG (.lshapes) under the lantern buttons, one <g class="lseat"> per
  * SEAT_POOL entry (all 11 — seated or not), each holding three stacked copies
  * of LANTERN_PATH (the teardrop silhouette traced off the backdrop's bright
- * cores). Three states:
+ * cores). FOUR states — the veil opacity IS the decree's dim %:
  *   lseat--off   no namespace: dark veil (multiply) dims the painted glow pool
- *   lseat--mid   namespace seated, list collapsed: soft cool screen-blend glow
+ *   lseat--empty seated, ZERO tasks, not selected: veil .50, stone .65 + desaturated
+ *   lseat--mid   namespace seated with tasks, list collapsed: veil .25 + glow
  *   lseat--full  the clicked world (list showing): fully lit + teal ring
- * is-hover lifts a mid seat's light toward full on hover/focus. */
+ * is-hover lifts a seated lantern toward full (empty hover stays below mid). */
 .lshapes {
   position: absolute;
   left: 0;
@@ -450,8 +451,15 @@ body {
 .lseat--off .lseat__veil { opacity: 0.75; }
 .lseat--off .lseat__halo { opacity: 0.5; }
 .lseat--off .lseat__glow { opacity: 0; }
-/* MID: intermediately lit */
-.lseat--mid .lseat__veil { opacity: 0.34; }
+/* EMPTY: seated with zero tasks — 50% dim, no glow; stone .65 + desaturated */
+.lseat--empty .lseat__veil { opacity: 0.5; }
+.lseat--empty .lseat__halo { opacity: 0; }
+.lseat--empty .lseat__glow { opacity: 0; }
+/* hover lifts EMPTY one rung below mid */
+.lseat--empty.is-hover .lseat__veil { opacity: 0.2; }
+.lseat--empty.is-hover .lseat__glow { opacity: 0.3; }
+/* MID: seated with tasks, deactivated — 25% dim (was .34) + soft glow */
+.lseat--mid .lseat__veil { opacity: 0.25; }
 .lseat--mid .lseat__glow { opacity: 0.5; }
 /* hover lifts MID toward full */
 .lseat--mid.is-hover .lseat__veil { opacity: 0.12; }
@@ -741,6 +749,15 @@ body {
 }
 .ns-tree__lantern--inactive:hover .ns-tree__icon--lantern {
   opacity: 0.9;
+  filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.95));
+}
+/* EMPTY tier stone: dims to .65 + desaturates (overrides --inactive's .5 rule) */
+.ns-tree__lantern.is-empty .ns-tree__icon--lantern {
+  opacity: 0.65;
+  filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.95)) saturate(0.7);
+}
+.ns-tree__lantern.is-empty:hover .ns-tree__icon--lantern {
+  opacity: 0.85;
   filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.95));
 }
 /* summary unavailable — the dimmed seat */
