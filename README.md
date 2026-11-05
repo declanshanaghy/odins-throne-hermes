@@ -119,6 +119,19 @@ stored server-side, so it works across the deployment's multiple pods.
 > (`pnpm dev` in `development/odins-throne`, which run without
 > oauth2-proxy). Server side: `src/handoff.ts` (fenrir-ledger #2377).
 
+### Links open in your real browser (#103)
+
+Every external link in the pane and the session log tabs — the title box's
+world name, lore and kin links, decree PRs, wiki references — opens in
+**your default browser**, never inside the app. The desktop app denies
+`window.open` from plugin surfaces (its `setWindowOpenHandler` blocks
+popups), so a raw anchor click that a browser would handle does nothing
+in-app; the plugin routes those clicks through the SDK's
+`ctx.os.openExternal` instead (`src/targets/plugin/externalLinks.ts`).
+Right-click still offers the app's own anchor menu (open external / copy
+URL). The web hall is untouched — browsers handle `target="_blank"`
+natively.
+
 ## Dev loop (live reload)
 
 ```bash

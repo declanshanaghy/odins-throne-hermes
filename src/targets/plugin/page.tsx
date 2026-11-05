@@ -11,10 +11,12 @@
 // its OWN WebSocket connection and useLogStream instance, so several session
 // tabs can stream independently without replacing each other.
 
+import { useRef } from "react";
 import { ErrorBoundary } from "../../ui/components/ErrorBoundary";
 import { SessionLogViewer, SessionLogViewerEmpty } from "../../ui/components/SessionLogViewer";
 import { useThrone } from "../../ui/store";
 import { useTheme } from "../../ui/hooks/useTheme";
+import { useExternalLinkRouter } from "./externalLinks";
 import type { DisplayJob } from "../../ui/lib/types";
 
 export function ThronePage({
@@ -32,8 +34,13 @@ export function ThronePage({
   const snap = useThrone();
   const { theme } = useTheme();
   const namespace = tabNamespace ?? snap?.namespace ?? "fenrir-agents";
+  // Wiki/session links in the log viewer: the app denies window.open, so
+  // route external link clicks to the real browser (issue #103).
+  const rootRef = useRef<HTMLDivElement>(null);
+  useExternalLinkRouter(rootRef);
   return (
     <div
+      ref={rootRef}
       className="odins-throne-root"
       data-theme={theme === "light" ? "light" : undefined}
       style={{ width: "100%", height: "100%" }}

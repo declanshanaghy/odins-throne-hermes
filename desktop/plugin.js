@@ -4363,6 +4363,9 @@ async function otFetch(path, init) {
 // src/targets/plugin/sessionTabs.tsx
 import { host, ROUTES_AREA } from "@hermes/plugin-sdk";
 
+// src/targets/plugin/page.tsx
+import { useRef as useRef5 } from "react";
+
 // src/ui/components/ErrorBoundary.tsx
 import { Component } from "react";
 import { jsx, jsxs } from "react/jsx-runtime";
@@ -7998,6 +8001,75 @@ function SessionLogViewerEmpty() {
   );
 }
 
+// src/targets/plugin/externalLinks.ts
+import { useEffect as useEffect4 } from "react";
+
+// src/targets/plugin/pluginCtx.ts
+var ctx = null;
+function setCtx(c) {
+  ctx = c;
+}
+async function requestReload() {
+  try {
+    const res = await ctx?.runAction?.("plugins.reload");
+    if (res?.ok) return true;
+  } catch {
+  }
+  return false;
+}
+async function openExternal(url) {
+  try {
+    const ok = await ctx?.os?.openExternal?.(url);
+    return ok !== false && ok !== void 0;
+  } catch {
+    return false;
+  }
+}
+var throneTabOpener = null;
+function setThroneTabOpener(fn) {
+  throneTabOpener = fn;
+}
+function openThroneTab(sessionId) {
+  if (throneTabOpener) {
+    throneTabOpener(sessionId);
+  }
+}
+
+// src/targets/plugin/externalLinks.ts
+var EXTERNAL_HREF = /^https?:/i;
+function route(href) {
+  void openExternal(href).then((ok) => {
+    if (ok) return;
+    try {
+      window.open(href, "_blank", "noopener");
+    } catch {
+    }
+  });
+}
+function useExternalLinkRouter(rootRef) {
+  useEffect4(() => {
+    const root = rootRef.current;
+    if (!root) return;
+    const handler = (event) => {
+      if (event.defaultPrevented) return;
+      if (event.type === "auxclick" && event.button !== 1) return;
+      const target = event.target;
+      const anchor = target?.closest?.("a[href]");
+      if (!anchor) return;
+      const href = anchor.getAttribute("href") ?? "";
+      if (!EXTERNAL_HREF.test(href)) return;
+      event.preventDefault();
+      route(href);
+    };
+    root.addEventListener("click", handler);
+    root.addEventListener("auxclick", handler);
+    return () => {
+      root.removeEventListener("click", handler);
+      root.removeEventListener("auxclick", handler);
+    };
+  }, [rootRef]);
+}
+
 // src/targets/plugin/page.tsx
 import { jsx as jsx9 } from "react/jsx-runtime";
 function ThronePage({
@@ -8008,9 +8080,12 @@ function ThronePage({
   const snap = useThrone();
   const { theme } = useTheme();
   const namespace = tabNamespace ?? snap?.namespace ?? "fenrir-agents";
+  const rootRef = useRef5(null);
+  useExternalLinkRouter(rootRef);
   return /* @__PURE__ */ jsx9(
     "div",
     {
+      ref: rootRef,
       className: "odins-throne-root",
       "data-theme": theme === "light" ? "light" : void 0,
       style: { width: "100%", height: "100%" },
@@ -8194,10 +8269,10 @@ var pluginPlatform = {
 };
 
 // src/targets/plugin/pane.tsx
-import { useMemo as useMemo4, useState as useState18, useSyncExternalStore as useSyncExternalStore4 } from "react";
+import { useMemo as useMemo4, useRef as useRef12, useState as useState18, useSyncExternalStore as useSyncExternalStore4 } from "react";
 
 // src/ui/components/Sidebar.tsx
-import { useState as useState12, useRef as useRef8, useEffect as useEffect7 } from "react";
+import { useState as useState12, useRef as useRef9, useEffect as useEffect8 } from "react";
 
 // src/ui/components/ThemeSwitcher.tsx
 import { jsx as jsx11 } from "react/jsx-runtime";
@@ -8219,7 +8294,7 @@ function ThemeSwitcher({ theme, setTheme: setTheme2 }) {
 }
 
 // src/ui/components/StatusBadge.tsx
-import { useCallback as useCallback5, useEffect as useEffect4, useId, useLayoutEffect, useRef as useRef5, useState as useState7 } from "react";
+import { useCallback as useCallback5, useEffect as useEffect5, useId, useLayoutEffect, useRef as useRef6, useState as useState7 } from "react";
 import { jsx as jsx12, jsxs as jsxs8 } from "react/jsx-runtime";
 var VIEWPORT_PAD = 8;
 var BADGE_GAP = 6;
@@ -8291,10 +8366,10 @@ function StatusBadge({ state }) {
   const tooltipId = useId();
   const [visible, setVisible] = useState7(false);
   const { theme } = useTheme();
-  const badgeRef = useRef5(null);
-  const tooltipRef = useRef5(null);
-  const wrapperRef = useRef5(null);
-  const hostRef = useRef5(null);
+  const badgeRef = useRef6(null);
+  const tooltipRef = useRef6(null);
+  const wrapperRef = useRef6(null);
+  const hostRef = useRef6(null);
   useLayoutEffect(() => {
     const tip = tooltipRef.current;
     const home = wrapperRef.current;
@@ -8351,7 +8426,7 @@ function StatusBadge({ state }) {
   useLayoutEffect(() => {
     place();
   }, [place, visible, state]);
-  useEffect4(() => {
+  useEffect5(() => {
     if (!visible) return;
     const onMove = () => place();
     window.addEventListener("resize", onMove);
@@ -8361,9 +8436,9 @@ function StatusBadge({ state }) {
       window.removeEventListener("scroll", onMove, true);
     };
   }, [visible, place]);
-  const showTimerRef = useRef5(null);
-  const hideTimerRef = useRef5(null);
-  const mobileDismissRef = useRef5(null);
+  const showTimerRef = useRef6(null);
+  const hideTimerRef = useRef6(null);
+  const mobileDismissRef = useRef6(null);
   const clearTimers = useCallback5(() => {
     if (showTimerRef.current !== null) {
       clearTimeout(showTimerRef.current);
@@ -8385,7 +8460,7 @@ function StatusBadge({ state }) {
     clearTimers();
     setVisible(false);
   }, [clearTimers]);
-  useEffect4(() => {
+  useEffect5(() => {
     hide();
   }, [state]);
   const handleMouseEnter = useCallback5(() => {
@@ -8439,7 +8514,7 @@ function StatusBadge({ state }) {
       }, 3e3);
     }
   }, [visible]);
-  useEffect4(() => {
+  useEffect5(() => {
     return () => {
       clearTimers();
       if (mobileDismissRef.current !== null) {
@@ -8483,10 +8558,10 @@ function StatusBadge({ state }) {
 }
 
 // src/ui/components/NamespaceTree.tsx
-import { useEffect as useEffect6, useMemo as useMemo2, useRef as useRef7, useState as useState11, useLayoutEffect as useLayoutEffect2 } from "react";
+import { useEffect as useEffect7, useMemo as useMemo2, useRef as useRef8, useState as useState11, useLayoutEffect as useLayoutEffect2 } from "react";
 
 // src/ui/hooks/useNamespaceSummaries.ts
-import { useCallback as useCallback6, useEffect as useEffect5, useRef as useRef6, useState as useState8 } from "react";
+import { useCallback as useCallback6, useEffect as useEffect6, useRef as useRef7, useState as useState8 } from "react";
 
 // src/ui/lib/restJobs.ts
 function isWireJob(raw) {
@@ -8551,9 +8626,9 @@ function summaryLine(summary) {
 }
 function useNamespaceSummaries(namespaces, activeNamespace, activityKey) {
   const [summaries, setSummaries] = useState8({});
-  const mountedRef = useRef6(true);
-  const inflightRef = useRef6(/* @__PURE__ */ new Set());
-  useEffect5(() => {
+  const mountedRef = useRef7(true);
+  const inflightRef = useRef7(/* @__PURE__ */ new Set());
+  useEffect6(() => {
     mountedRef.current = true;
     return () => {
       mountedRef.current = false;
@@ -8590,13 +8665,13 @@ function useNamespaceSummaries(namespaces, activeNamespace, activityKey) {
   const fetchAll = useCallback6(() => {
     for (const ns of namespaces) void fetchOne(ns.id);
   }, [namespaces, fetchOne]);
-  useEffect5(() => {
+  useEffect6(() => {
     fetchAll();
     const timer = setInterval(fetchAll, REFRESH_MS);
     return () => clearInterval(timer);
   }, [fetchAll]);
-  const firstRunRef = useRef6(true);
-  useEffect5(() => {
+  const firstRunRef = useRef7(true);
+  useEffect6(() => {
     if (firstRunRef.current) {
       firstRunRef.current = false;
       return;
@@ -11128,8 +11203,8 @@ function NamespaceTree({
   const [openNs, setOpenNs] = useState11(namespace);
   const [hoveredNs, setHoveredNs] = useState11(null);
   const [titleWorldId, setTitleWorldId] = useState11(null);
-  const sceneRef = useRef7(null);
-  const scrollerRef = useRef7(null);
+  const sceneRef = useRef8(null);
+  const scrollerRef = useRef8(null);
   const [sceneSize, setSceneSize] = useState11({ w: 0, h: 0 });
   useLayoutEffect2(() => {
     const el = sceneRef.current;
@@ -11140,10 +11215,10 @@ function NamespaceTree({
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
-  useEffect6(() => {
+  useEffect7(() => {
     setOpenNs((prev) => prev && namespaces.some((ns) => ns.id === prev) ? prev : null);
   }, [namespaces]);
-  useEffect6(() => {
+  useEffect7(() => {
     if (openNs) setTitleWorldId(openNs);
   }, [openNs]);
   const selectWorld = (nsId) => {
@@ -11162,7 +11237,7 @@ function NamespaceTree({
   const openSummary = openNs ? summaries[openNs] : void 0;
   const openTasks = useMemo2(() => tasksOf(openSummary?.jobs), [openSummary]);
   const openPaintSeat = openWorld ? seats.get(openWorld.id) : void 0;
-  useEffect6(() => {
+  useEffect7(() => {
     const summaryLoaded2 = openSummary !== void 0;
     const summaryFailed2 = openSummary?.error != null;
     if (openNs && summaryLoaded2 && !summaryFailed2 && openTasks.length === 0) {
@@ -11199,9 +11274,9 @@ function NamespaceTree({
   }, [openWorld, openSeat, openTasks.length, sceneSize.w, sceneSize.h, vineMode, summaryFailed]);
   const canvasHeight = vine ? vineCanvasHeight(vine, sceneSize.h) : 0;
   const [falling, setFalling] = useState11([]);
-  const prevTasksRef = useRef7([]);
-  const prevOpenNsRef = useRef7(openNs);
-  useEffect6(() => {
+  const prevTasksRef = useRef8([]);
+  const prevOpenNsRef = useRef8(openNs);
+  useEffect7(() => {
     const prev = prevTasksRef.current;
     prevTasksRef.current = openTasks;
     const worldChanged = prevOpenNsRef.current !== openNs;
@@ -11599,8 +11674,8 @@ function Sidebar({ jobs, activeSessionId, quote, wsState, onAvatarClick, onOdinC
   const { theme, setTheme: setTheme2 } = useTheme();
   const [width, setWidth] = useState12(DEFAULT_WIDTH);
   const [compactOverride, setCompactOverride] = useState12(() => readCompactPref());
-  const navRef = useRef8(null);
-  useEffect7(() => {
+  const navRef = useRef9(null);
+  useEffect8(() => {
     const nav = navRef.current;
     if (!nav) return;
     const ro = new ResizeObserver((entries) => {
@@ -11711,12 +11786,12 @@ function Sidebar({ jobs, activeSessionId, quote, wsState, onAvatarClick, onOdinC
 }
 
 // src/ui/components/AgentProfileModal.tsx
-import { useEffect as useEffect8, useRef as useRef9 } from "react";
+import { useEffect as useEffect9, useRef as useRef10 } from "react";
 import { jsx as jsx18, jsxs as jsxs13 } from "react/jsx-runtime";
 var ELDER_FUTHARK = "\u16A0 \u16A2 \u16A6 \u16A8 \u16B1 \u16B2 \u16B7 \u16B9 \u16BA \u16BE \u16C1 \u16C3 \u16C7 \u16C8 \u16C9 \u16CA \u16CF \u16D2 \u16D6 \u16D7 \u16DA \u16DC \u16DE \u16DF";
 function AgentProfileModal({ agentKey, theme, onClose }) {
-  const closeButtonRef = useRef9(null);
-  const backdropRef = useRef9(null);
+  const closeButtonRef = useRef10(null);
+  const backdropRef = useRef10(null);
   const name = AGENT_NAMES[agentKey] ?? agentKey;
   const title = AGENT_TITLES[agentKey] ?? "";
   const runes = AGENT_RUNE_NAMES[agentKey] ?? AGENT_RUNE_NAMES._fallback ?? "";
@@ -11725,16 +11800,16 @@ function AgentProfileModal({ agentKey, theme, onClose }) {
   const accent = AGENT_COLORS[agentKey] ?? "var(--gold)";
   const primaryVariant = theme === "light" ? "light" : "dark";
   const portrait = avatarUrl(agentKey, primaryVariant) ?? avatarUrl(agentKey, primaryVariant === "light" ? "dark" : "light");
-  useEffect8(() => {
+  useEffect9(() => {
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = "";
     };
   }, []);
-  useEffect8(() => {
+  useEffect9(() => {
     closeButtonRef.current?.focus();
   }, []);
-  useEffect8(() => {
+  useEffect9(() => {
     const handleKeyDown = (e) => {
       if (e.key === "Escape") onClose();
     };
@@ -11823,17 +11898,17 @@ function AgentProfileModal({ agentKey, theme, onClose }) {
 }
 
 // src/ui/components/RagnarokDialog.tsx
-import { useEffect as useEffect9, useRef as useRef10, useState as useState13 } from "react";
+import { useEffect as useEffect10, useRef as useRef11, useState as useState13 } from "react";
 import { jsx as jsx19, jsxs as jsxs14 } from "react/jsx-runtime";
 function RagnarokDialog({ sessionId, jobTitle, onConfirm, onCancel }) {
   const [isLoading, setIsLoading] = useState13(false);
   const [error, setError] = useState13(null);
-  const confirmRef = useRef10(null);
-  const cancelRef = useRef10(null);
-  useEffect9(() => {
+  const confirmRef = useRef11(null);
+  const cancelRef = useRef11(null);
+  useEffect10(() => {
     cancelRef.current?.focus();
   }, []);
-  useEffect9(() => {
+  useEffect10(() => {
     const onKey = (e) => {
       if (e.key === "Escape" && !isLoading) onCancel();
     };
@@ -11914,11 +11989,11 @@ function RagnarokDialog({ sessionId, jobTitle, onConfirm, onCancel }) {
 }
 
 // src/ui/components/Toast.tsx
-import { useEffect as useEffect10, useState as useState14 } from "react";
+import { useEffect as useEffect11, useState as useState14 } from "react";
 import { jsx as jsx20, jsxs as jsxs15 } from "react/jsx-runtime";
 function Toast({ message, onDismiss, duration = 4e3 }) {
   const [exiting, setExiting] = useState14(false);
-  useEffect10(() => {
+  useEffect11(() => {
     const exitTimer = setTimeout(() => setExiting(true), duration - 400);
     const dismissTimer = setTimeout(onDismiss, duration);
     return () => {
@@ -12001,10 +12076,10 @@ function ThroneOverlays() {
 }
 
 // src/ui/App.tsx
-import { useCallback as useCallback9, useEffect as useEffect12, useMemo as useMemo3, useState as useState16 } from "react";
+import { useCallback as useCallback9, useEffect as useEffect13, useMemo as useMemo3, useState as useState16 } from "react";
 
 // src/ui/hooks/useNamespace.ts
-import { useState as useState15, useCallback as useCallback8, useEffect as useEffect11 } from "react";
+import { useState as useState15, useCallback as useCallback8, useEffect as useEffect12 } from "react";
 var STORAGE_KEY2 = "hlidskjalf:namespace";
 var DEFAULT_NAMESPACE = "fenrir-agents";
 function loadNamespace() {
@@ -12030,7 +12105,7 @@ function useNamespace() {
     { id: "shanaghy-com-agents", label: "Shanaghy.com Agents" },
     { id: "re-goatmower-agents", label: "Re-Goatmower Agents" }
   ]);
-  useEffect11(() => {
+  useEffect12(() => {
     getPlatform().restFetch("/api/namespaces").then((res) => res.json()).then((data) => {
       if (Array.isArray(data.namespaces) && data.namespaces.length > 0) {
         setNamespaces(data.namespaces);
@@ -12067,7 +12142,7 @@ function App() {
     [jobs]
   );
   const namespaceSummaries = useNamespaceSummaries(namespaces, namespace, jobsActivityKey);
-  useEffect12(() => {
+  useEffect13(() => {
     migrateRemoveDuplicateLogs();
     evictExpiredLogs();
   }, []);
@@ -12198,41 +12273,10 @@ function App() {
     dismissToast: () => setToast(null),
     storageWarning
   };
-  useEffect12(() => {
+  useEffect13(() => {
     throneStore.publish(snapshot2);
   });
   return null;
-}
-
-// src/targets/plugin/pluginCtx.ts
-var ctx = null;
-function setCtx(c) {
-  ctx = c;
-}
-async function requestReload() {
-  try {
-    const res = await ctx?.runAction?.("plugins.reload");
-    if (res?.ok) return true;
-  } catch {
-  }
-  return false;
-}
-async function openExternal(url) {
-  try {
-    const ok = await ctx?.os?.openExternal?.(url);
-    return ok !== false && ok !== void 0;
-  } catch {
-    return false;
-  }
-}
-var throneTabOpener = null;
-function setThroneTabOpener(fn) {
-  throneTabOpener = fn;
-}
-function openThroneTab(sessionId) {
-  if (throneTabOpener) {
-    throneTabOpener(sessionId);
-  }
 }
 
 // src/targets/plugin/settings.tsx
@@ -12438,10 +12482,13 @@ function ThronePane() {
   const settingsOpen = useSettingsOpen();
   useSyncExternalStore4(subscribeSession, sessionSnapshot, sessionSnapshot);
   const { theme } = useTheme();
+  const rootRef = useRef12(null);
+  useExternalLinkRouter(rootRef);
   const bridge = useMemo4(() => /* @__PURE__ */ jsx23(App, {}), []);
   return /* @__PURE__ */ jsxs19(
     "div",
     {
+      ref: rootRef,
       className: "odins-throne-root",
       "data-theme": theme === "light" ? "light" : void 0,
       style: { width: "100%", height: "100%", position: "relative", overflow: "hidden" },
