@@ -340,6 +340,41 @@ var styles_default = `.odins-throne-root .odins-throne-root {
   white-space: nowrap; flex-shrink: 0;
 }
 
+/* \u2500\u2500 Session filter input (issue #117) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+   Sits below the quote / brand row, above the namespace tree.
+   Reuses the same monospace tokens as the settings inputs. */
+.odins-throne-root .sidebar-filter {
+  display: flex; align-items: center; gap: 6px;
+  margin-bottom: 0.5rem;
+}
+.odins-throne-root .sidebar-filter__input {
+  flex: 1; min-width: 0;
+  padding: 0.3rem 0.6rem;
+  border-radius: 5px;
+  border: 1px solid var(--rune-border);
+  background: var(--void);
+  color: var(--text-saga);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.odins-throne-root .sidebar-filter__input:focus {
+  border-color: var(--teal-asgard);
+}
+.odins-throne-root .sidebar-filter__input::placeholder {
+  color: var(--text-rune); opacity: 0.6;
+}
+.odins-throne-root .sidebar-filter__clear {
+  flex: none;
+  padding: 0 6px; height: 24px;
+  border: 1px solid var(--rune-border); border-radius: 4px;
+  background: transparent; color: var(--text-rune);
+  font-family: 'JetBrains Mono', monospace; font-size: 0.7rem;
+  cursor: pointer; transition: color 0.15s, border-color 0.15s;
+}
+.odins-throne-root .sidebar-filter__clear:hover { color: var(--text-saga); border-color: var(--text-rune); }
+
 /* \u2500\u2500 Theme toggle (single button, issue #47) \u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
 .odins-throne-root .theme-btn {
   font-family: 'JetBrains Mono', monospace;
@@ -8269,10 +8304,10 @@ var pluginPlatform = {
 };
 
 // src/targets/plugin/pane.tsx
-import { useMemo as useMemo4, useRef as useRef12, useState as useState18, useSyncExternalStore as useSyncExternalStore4 } from "react";
+import { useMemo as useMemo5, useRef as useRef12, useState as useState18, useSyncExternalStore as useSyncExternalStore4 } from "react";
 
 // src/ui/components/Sidebar.tsx
-import { useState as useState12, useRef as useRef9, useEffect as useEffect8 } from "react";
+import { useState as useState12, useRef as useRef9, useEffect as useEffect8, useMemo as useMemo3 } from "react";
 
 // src/ui/components/ThemeSwitcher.tsx
 import { jsx as jsx11 } from "react/jsx-runtime";
@@ -11164,6 +11199,15 @@ function WorldTitle({
   ] });
 }
 
+// src/ui/lib/matchesQuery.ts
+function matchesQuery(job, q) {
+  const trimmed = q.trim();
+  if (!trimmed) return true;
+  const lower = trimmed.toLowerCase();
+  const issueSearch = lower.startsWith("#") ? lower.slice(1) : lower;
+  return job.sessionId.toLowerCase().includes(lower) || job.issue.includes(issueSearch) || (job.issueTitle?.toLowerCase().includes(lower) ?? false) || job.agentName.toLowerCase().includes(lower) || (job.branchName?.toLowerCase().includes(lower) ?? false);
+}
+
 // src/ui/components/NamespaceTree.tsx
 import { jsx as jsx16, jsxs as jsxs11 } from "react/jsx-runtime";
 function tasksOf(summaryJobs) {
@@ -11196,7 +11240,9 @@ function NamespaceTree({
   onTogglePinSession,
   pinnedSessionIds,
   onCancelJob,
-  terminatingSessionIds
+  terminatingSessionIds,
+  query = "",
+  onClearQuery
 }) {
   const isCompact = displayMode === "compact";
   const seats = useMemo2(
@@ -11240,6 +11286,21 @@ function NamespaceTree({
   const openSummary = openNs ? summaries[openNs] : void 0;
   const openTasks = useMemo2(() => tasksOf(openSummary?.jobs), [openSummary]);
   const openPaintSeat = openWorld ? seats.get(openWorld.id) : void 0;
+  const q = query.trim();
+  const filteredTasks = useMemo2(
+    () => q ? openTasks.filter((j) => matchesQuery(j, q)) : openTasks,
+    [openTasks, q]
+  );
+  const nsMatchesQuery = useMemo2(() => {
+    if (!q) return (_nsId) => true;
+    const lower = q.toLowerCase();
+    return (nsId) => {
+      if (nsId.toLowerCase().includes(lower)) return true;
+      const summary = summaries[nsId];
+      if (!summary || summary.error) return false;
+      return tasksOf(summary.jobs).some((j) => matchesQuery(j, q));
+    };
+  }, [q, summaries]);
   useEffect7(() => {
     const summaryLoaded2 = openSummary !== void 0;
     const summaryFailed2 = openSummary?.error != null;
@@ -11273,8 +11334,8 @@ function NamespaceTree({
       x: anchorScene.x / 100 * W,
       y: anchorScene.y / 100 * H
     };
-    return vineFor(lanternPx, anchorPx, openTasks.length, vineMode, W);
-  }, [openWorld, openSeat, openTasks.length, sceneSize.w, sceneSize.h, vineMode, summaryFailed]);
+    return vineFor(lanternPx, anchorPx, filteredTasks.length, vineMode, W);
+  }, [openWorld, openSeat, filteredTasks.length, sceneSize.w, sceneSize.h, vineMode, summaryFailed]);
   const canvasHeight = vine ? vineCanvasHeight(vine, sceneSize.h) : 0;
   const [falling, setFalling] = useState11([]);
   const prevTasksRef = useRef8([]);
@@ -11378,7 +11439,8 @@ function NamespaceTree({
                         const nsId = nsForSeat.get(i);
                         const isFull = nsId != null && openNs === nsId;
                         const hasWork = nsId != null && (summaries[nsId]?.total ?? 0) > 0;
-                        const lseatState = nsId == null ? "off" : isFull ? "full" : hasWork ? "mid" : "empty";
+                        const queryMatch = nsId == null || !q || nsMatchesQuery(nsId);
+                        const lseatState = nsId == null ? "off" : !queryMatch ? "off" : isFull ? "full" : hasWork ? "mid" : "empty";
                         const isHovered = nsId != null && hoveredNs === nsId;
                         const p = projectSeat(seat, sceneSize.w, sceneSize.h);
                         const px = p.x / 100 * sceneSize.w;
@@ -11420,7 +11482,8 @@ function NamespaceTree({
                       const failed = summary?.counts.failed ?? 0;
                       const total = summary?.total ?? 0;
                       const isFull = isActive && isOpen;
-                      const stoneTier = isFull ? "is-full" : total > 0 ? "is-mid" : "is-empty";
+                      const isNsMatch = !q || nsMatchesQuery(ns.id);
+                      const stoneTier = !isNsMatch ? "is-empty" : isFull ? "is-full" : total > 0 ? "is-mid" : "is-empty";
                       const lanternClass = [
                         "ns-tree__select",
                         "ns-tree__lantern",
@@ -11578,7 +11641,20 @@ function NamespaceTree({
                 ),
                 openWorld && openSeat && summaryLoaded && !summaryFailed && openTasks.length === 0 && /* @__PURE__ */ jsx16("div", { className: "ns-tree__note", style: notePos(openSeat, -90), children: "no tasks in this world \u2014 its lantern rests" }),
                 openWorld && openSeat && summaryFailed && /* @__PURE__ */ jsx16("div", { className: "ns-tree__note ns-tree__note--err", style: notePos(openSeat, -90), children: "summary unavailable" }),
-                vine && openTasks.map((job, i) => {
+                openWorld && openSeat && summaryLoaded && !summaryFailed && openTasks.length > 0 && filteredTasks.length === 0 && /* @__PURE__ */ jsxs11("div", { className: "ns-tree__note", style: { ...notePos(openSeat, -90), pointerEvents: "auto" }, children: [
+                  "No session matches \u2014",
+                  " ",
+                  /* @__PURE__ */ jsx16(
+                    "button",
+                    {
+                      type: "button",
+                      onClick: onClearQuery,
+                      style: { background: "none", border: "none", color: "inherit", cursor: "pointer", padding: 0, font: "inherit", textDecoration: "underline" },
+                      children: "clear filter"
+                    }
+                  )
+                ] }),
+                vine && filteredTasks.map((job, i) => {
                   const isTaskActive = job.sessionId === activeSessionId;
                   const anchor = vine.points[i];
                   if (!anchor) return null;
@@ -11659,6 +11735,18 @@ function NamespaceTree({
 
 // src/ui/components/Sidebar.tsx
 import { jsx as jsx17, jsxs as jsxs12 } from "react/jsx-runtime";
+var _focusFn = null;
+var findSessionUi = {
+  register(fn) {
+    _focusFn = fn;
+  },
+  unregister() {
+    _focusFn = null;
+  },
+  focus() {
+    _focusFn?.();
+  }
+};
 var DEFAULT_WIDTH = 300;
 function getDisplayMode(width) {
   if (width < 240) return "compact";
@@ -11677,7 +11765,13 @@ function Sidebar({ jobs, activeSessionId, quote, wsState, onAvatarClick, onOdinC
   const { theme, setTheme: setTheme2 } = useTheme();
   const [width, setWidth] = useState12(DEFAULT_WIDTH);
   const [compactOverride, setCompactOverride] = useState12(() => readCompactPref());
+  const [query, setQuery] = useState12("");
+  const filterInputRef = useRef9(null);
   const navRef = useRef9(null);
+  useEffect8(() => {
+    findSessionUi.register(() => filterInputRef.current?.focus());
+    return () => findSessionUi.unregister();
+  }, []);
   useEffect8(() => {
     const nav = navRef.current;
     if (!nav) return;
@@ -11693,6 +11787,20 @@ function Sidebar({ jobs, activeSessionId, quote, wsState, onAvatarClick, onOdinC
   const widthMode = getDisplayMode(width);
   const displayMode = compactOverride === "compact" ? "compact" : widthMode;
   const isWidthCompact = widthMode === "compact";
+  const { totalSessions, matchingSessions } = useMemo3(() => {
+    const q = query.trim();
+    if (!q) return { totalSessions: jobs.length, matchingSessions: jobs.length };
+    let total = 0;
+    let matching = 0;
+    for (const ns of namespaces) {
+      const summary = namespaceSummaries[ns.id];
+      if (!summary || summary.error) continue;
+      const tasks = summary.jobs.filter((j) => j.status !== "purged").map(parseJob);
+      total += tasks.length;
+      matching += tasks.filter((j) => matchesQuery(j, q)).length;
+    }
+    return { totalSessions: total, matchingSessions: matching };
+  }, [query, namespaces, namespaceSummaries, jobs.length]);
   const toggleCompact = () => {
     const next = compactOverride === "compact" ? "auto" : "compact";
     setCompactOverride(next);
@@ -11728,11 +11836,7 @@ function Sidebar({ jobs, activeSessionId, quote, wsState, onAvatarClick, onOdinC
               }
             ),
             !isWidthCompact && /* @__PURE__ */ jsx17("h1", { children: "Hlidskjalf" }),
-            !isWidthCompact && /* @__PURE__ */ jsxs12("div", { className: "count", "aria-live": "polite", children: [
-              jobs.length,
-              " session",
-              jobs.length !== 1 ? "s" : ""
-            ] }),
+            !isWidthCompact && /* @__PURE__ */ jsx17("div", { className: "count", "aria-live": "polite", children: query.trim() ? `${matchingSessions} of ${totalSessions} session${totalSessions !== 1 ? "s" : ""}` : `${jobs.length} session${jobs.length !== 1 ? "s" : ""}` }),
             /* @__PURE__ */ jsx17(
               "button",
               {
@@ -11753,6 +11857,39 @@ function Sidebar({ jobs, activeSessionId, quote, wsState, onAvatarClick, onOdinC
             quote,
             "\u201D"
           ] }),
+          !isWidthCompact && /* @__PURE__ */ jsxs12("div", { className: "sidebar-filter", children: [
+            /* @__PURE__ */ jsx17(
+              "input",
+              {
+                ref: filterInputRef,
+                className: "sidebar-filter__input",
+                type: "search",
+                placeholder: "filter sessions\u2026",
+                "aria-label": "Filter sessions",
+                value: query,
+                onChange: (e) => setQuery(e.target.value),
+                onKeyDown: (e) => {
+                  if (e.key === "Escape") setQuery("");
+                },
+                autoComplete: "off",
+                spellCheck: false
+              }
+            ),
+            query && /* @__PURE__ */ jsx17(
+              "button",
+              {
+                type: "button",
+                className: "sidebar-filter__clear",
+                "aria-label": "Clear filter",
+                title: "Clear filter",
+                onClick: () => {
+                  setQuery("");
+                  filterInputRef.current?.focus();
+                },
+                children: "\xD7"
+              }
+            )
+          ] }),
           /* @__PURE__ */ jsx17(
             NamespaceTree,
             {
@@ -11767,7 +11904,9 @@ function Sidebar({ jobs, activeSessionId, quote, wsState, onAvatarClick, onOdinC
               onTogglePinSession,
               pinnedSessionIds,
               onCancelJob,
-              terminatingSessionIds
+              terminatingSessionIds,
+              query,
+              onClearQuery: () => setQuery("")
             }
           )
         ] }),
@@ -12079,7 +12218,7 @@ function ThroneOverlays() {
 }
 
 // src/ui/App.tsx
-import { useCallback as useCallback9, useEffect as useEffect13, useMemo as useMemo3, useState as useState16 } from "react";
+import { useCallback as useCallback9, useEffect as useEffect13, useMemo as useMemo4, useState as useState16 } from "react";
 
 // src/ui/hooks/useNamespace.ts
 import { useState as useState15, useCallback as useCallback8, useEffect as useEffect12 } from "react";
@@ -12134,13 +12273,13 @@ function useNamespace() {
 
 // src/ui/App.tsx
 function App() {
-  const quote = useMemo3(() => randomQuote(), []);
+  const quote = useMemo4(() => randomQuote(), []);
   const { theme } = useTheme();
   const { namespace, namespaces, setNamespace } = useNamespace();
   const [profileAgent, setProfileAgent] = useState16(null);
   const [cancelTarget, setCancelTarget] = useState16(null);
   const { jobs, handleMessage: handleJobsMessage, refreshCached } = useJobs();
-  const jobsActivityKey = useMemo3(
+  const jobsActivityKey = useMemo4(
     () => jobs.map((j) => `${j.sessionId}:${j.status}`).join("|"),
     [jobs]
   );
@@ -12183,7 +12322,7 @@ function App() {
     },
     [namespace, jobs, setNamespace]
   );
-  const pinnedSessionIds = useMemo3(
+  const pinnedSessionIds = useMemo4(
     () => new Set(jobs.filter((j) => isPinned(j.sessionId)).map((j) => j.sessionId)),
     [jobs]
   );
@@ -12487,7 +12626,7 @@ function ThronePane() {
   const { theme } = useTheme();
   const rootRef = useRef12(null);
   useExternalLinkRouter(rootRef);
-  const bridge = useMemo4(() => /* @__PURE__ */ jsx23(App, {}), []);
+  const bridge = useMemo5(() => /* @__PURE__ */ jsx23(App, {}), []);
   return /* @__PURE__ */ jsxs19(
     "div",
     {
@@ -12629,6 +12768,16 @@ var entry_default = {
         label: "Odin's Throne: Configure upstream",
         keywords: ["odin", "throne", "token", "url", "bifrost"],
         run: () => settingsUi.open()
+      }
+    });
+    ctx2.register({
+      id: "find-session",
+      area: PALETTE_AREA,
+      data: {
+        id: "odins-throne.find-session",
+        label: "Odin's Throne: Find session",
+        keywords: ["odin", "throne", "find", "search", "filter", "session", "hlidskjalf"],
+        run: () => findSessionUi.focus()
       }
     });
   }

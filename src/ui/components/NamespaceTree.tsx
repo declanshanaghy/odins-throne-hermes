@@ -57,6 +57,7 @@ import { TreeIcon } from "./TreeIcon";
 import { VineCard, isCancellable } from "./VineCard";
 import { WorldTitle } from "./WorldTitle";
 import type { DisplayMode } from "./Sidebar";
+import { matchesQuery } from "../lib/matchesQuery";
 
 interface Props {
   namespace: string;
@@ -73,6 +74,10 @@ interface Props {
   pinnedSessionIds?: Set<string>;
   onCancelJob?: (sessionId: string, job: DisplayJob) => void;
   terminatingSessionIds?: Set<string>;
+  /** Filter query from the sidebar search input (issue #117). */
+  query?: string;
+  /** Clears the filter query — called by the empty-state "clear filter" link. */
+  onClearQuery?: () => void;
 }
 
 /**
@@ -131,6 +136,8 @@ export function NamespaceTree({
   pinnedSessionIds,
   onCancelJob,
   terminatingSessionIds,
+  query = "",
+  onClearQuery,
 }: Props) {
   const isCompact = displayMode === "compact";
   // Painting-% seats assigned at runtime; projectSeat() maps to scene % before use.
@@ -192,6 +199,25 @@ export function NamespaceTree({
   const openTasks = useMemo(() => tasksOf(openSummary?.jobs), [openSummary]);
   const openPaintSeat = openWorld ? seats.get(openWorld.id) : undefined;
 
+  // issue #117: filter the open world's vine cards by the query.
+  const q = query.trim();
+  const filteredTasks = useMemo(
+    () => (q ? openTasks.filter((j) => matchesQuery(j, q)) : openTasks),
+    [openTasks, q],
+  );
+
+  // Returns true if the namespace id or any of its non-purged jobs match the query.
+  const nsMatchesQuery = useMemo(() => {
+    if (!q) return (_nsId: string) => true;
+    const lower = q.toLowerCase();
+    return (nsId: string): boolean => {
+      if (nsId.toLowerCase().includes(lower)) return true;
+      const summary = summaries[nsId];
+      if (!summary || summary.error) return false;
+      return tasksOf(summary.jobs).some((j) => matchesQuery(j, q));
+    };
+  }, [q, summaries]);
+
   // v3.10.7: empty-world auto-rest after 2s
   useEffect(() => {
     const summaryLoaded = openSummary !== undefined;
@@ -235,8 +261,8 @@ export function NamespaceTree({
       x: (anchorScene.x / 100) * W,
       y: (anchorScene.y / 100) * H,
     };
-    return vineFor(lanternPx, anchorPx, openTasks.length, vineMode, W);
-  }, [openWorld, openSeat, openTasks.length, sceneSize.w, sceneSize.h, vineMode, summaryFailed]);
+    return vineFor(lanternPx, anchorPx, filteredTasks.length, vineMode, W);
+  }, [openWorld, openSeat, filteredTasks.length, sceneSize.w, sceneSize.h, vineMode, summaryFailed]);
 
   const canvasHeight = vine ? vineCanvasHeight(vine, sceneSize.h) : 0;
 
@@ -358,7 +384,8 @@ export function NamespaceTree({
                   const nsId = nsForSeat.get(i);
                   const isFull = nsId != null && openNs === nsId;
                   const hasWork = nsId != null && (summaries[nsId]?.total ?? 0) > 0;
-                  const lseatState = nsId == null ? "off" : isFull ? "full" : hasWork ? "mid" : "empty";
+                  const queryMatch = nsId == null || !q || nsMatchesQuery(nsId);
+                  const lseatState = nsId == null ? "off" : !queryMatch ? "off" : isFull ? "full" : hasWork ? "mid" : "empty";
                   const isHovered = nsId != null && hoveredNs === nsId;
                   const p = projectSeat(seat, sceneSize.w, sceneSize.h);
                   const px = (p.x / 100) * sceneSize.w;
@@ -400,8 +427,10 @@ export function NamespaceTree({
                 const total = summary?.total ?? 0;
                 // v3.10: FULL = clicked world with vine open; stone → opaque while full
                 const isFull = isActive && isOpen;
+                // issue #117: dim non-matching lanterns using the existing empty tier
+                const isNsMatch = !q || nsMatchesQuery(ns.id);
                 // v3.15: stone tier follows the four-tier ladder
-                const stoneTier = isFull ? "is-full" : total > 0 ? "is-mid" : "is-empty";
+                const stoneTier = !isNsMatch ? "is-empty" : isFull ? "is-full" : total > 0 ? "is-mid" : "is-empty";
                 const lanternClass = [
                   "ns-tree__select",
                   "ns-tree__lantern",
@@ -566,9 +595,22 @@ export function NamespaceTree({
                 summary unavailable
               </div>
             )}
+            {/* issue #117: empty-filter state — query active but no matches in this world */}
+            {openWorld && openSeat && summaryLoaded && !summaryFailed && openTasks.length > 0 && filteredTasks.length === 0 && (
+              <div className="ns-tree__note" style={{ ...notePos(openSeat, -90), pointerEvents: "auto" }}>
+                No session matches —{" "}
+                <button
+                  type="button"
+                  onClick={onClearQuery}
+                  style={{ background: "none", border: "none", color: "inherit", cursor: "pointer", padding: 0, font: "inherit", textDecoration: "underline" }}
+                >
+                  clear filter
+                </button>
+              </div>
+            )}
             {/* vine's cards + anchor icons */}
             {vine &&
-              openTasks.map((job, i) => {
+              filteredTasks.map((job, i) => {
                 const isTaskActive = job.sessionId === activeSessionId;
                 const anchor = vine.points[i];
                 if (!anchor) return null;
