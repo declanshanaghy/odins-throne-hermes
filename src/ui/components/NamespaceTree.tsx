@@ -117,7 +117,7 @@ interface FallingCard {
 
 /** Interactive element selectors — dead-space clicks on these never deselect. */
 const INTERACTIVE_SELECTORS =
-  "button, .jcard, .jact, .anchor-ic, .ns-tree__counts, .ns-tree__note, .piprow, .wtitle__kin-pill";
+  "button, .jcard, .jact, .anchor-ic, .ns-tree__counts, .ns-tree__note, .piprow, .wtitle__kin-pill, .wtitle";
 
 export function NamespaceTree({
   namespace,
@@ -529,7 +529,6 @@ export function NamespaceTree({
               namespaces={namespaces}
               summaries={summaries}
               titleWorldSeatIdx={titleWorldSeat?.seatIdx}
-              onSelectWorld={selectWorld}
               compact={isCompact}
             />
 

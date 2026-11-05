@@ -104,6 +104,12 @@ export async function load(url, context, next) {
     const { code } = await transform(source, { loader, format: "esm", target: "es2022", jsx: "automatic" });
     return { format: "module", source: code, shortCircuit: true };
   }
+  // JSON files imported from src/ — inline as an ESM default export so the
+  // test runner can resolve `import data from "…/realm-knowledge.json"` etc.
+  if (url.startsWith("file:") && url.includes("/src/") && url.endsWith(".json")) {
+    const source = readFileSync(fileURLToPath(url), "utf8");
+    return { format: "module", source: `export default ${source};\n`, shortCircuit: true };
+  }
   // PNG imports inside transpiled modules (the plugin adapter's portraits):
   // stand in the module URL for the bundled data URL — enough for the seam
   // test to assert the adapter resolves portraits, without inlining bytes.

@@ -478,7 +478,7 @@ body {
 /* ── world title section (v3.13, issue #95) ───────────────────────────────────
  * Glass panel riding on the painting's upper sky — ~90% scene width, above the
  * topmost lanterns. Dims to 50% on deactivation; brightens to 100% on select.
- * pointer-events: none on the pane; only kin pills catch clicks. */
+ * Clicking anywhere in the title area never deselects the world (issue #99). */
 .wtitle {
   position: absolute;
   z-index: 30;
@@ -494,7 +494,7 @@ body {
   -webkit-backdrop-filter: blur(6px);
   opacity: 0.5;
   transition: opacity 0.6s ease;
-  pointer-events: none;
+  pointer-events: auto;
 }
 .wtitle.is-live { opacity: 1; }
 .wtitle__row { display: flex; align-items: center; gap: 8px; }
@@ -511,6 +511,22 @@ body {
   white-space: nowrap;
 }
 .wtitle.is-live .wtitle__name { color: #15b8a6; }
+.wtitle__name-link {
+  color: inherit;
+  text-decoration: none;
+}
+.wtitle__name-link:hover { text-decoration: underline; }
+.wtitle__name-link::after {
+  content: " \2197";
+  color: #15b8a6;
+  font-size: 0.75em;
+}
+.wtitle__lore-link {
+  color: #15b8a6;
+  text-decoration: underline dotted;
+  text-underline-offset: 2px;
+}
+.wtitle__lore-link:hover { text-decoration: underline; }
 .wtitle__state {
   display: block;
   font-size: 9.5px;
@@ -595,11 +611,13 @@ body {
   margin-top: 5px;
 }
 .wtitle__kin-pill {
+  display: inline-block;
   pointer-events: auto;
   font: inherit;
   font-size: 9.5px;
   color: rgba(126, 148, 154, 0.9);
   background: none;
+  text-decoration: none;
   border: 1px solid rgba(176, 196, 201, 0.14);
   border-radius: 999px;
   padding: 1px 8px;
