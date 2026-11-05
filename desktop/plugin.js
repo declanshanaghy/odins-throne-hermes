@@ -428,15 +428,16 @@ var styles_default = `.odins-throne-root .odins-throne-root {
   -webkit-mask-image: linear-gradient(180deg, #000 90%, transparent 100%);
           mask-image: linear-gradient(180deg, #000 90%, transparent 100%);
 }
-/* \u2500\u2500 lantern-shaped light states (v3.10, issue #95) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+/* \u2500\u2500 lantern-shaped light states (v3.15 four-tier dim ladder, issue #97) \u2500\u2500\u2500\u2500\u2500\u2500
  * One SVG (.lshapes) under the lantern buttons, one <g class="lseat"> per
  * SEAT_POOL entry (all 11 \u2014 seated or not), each holding three stacked copies
  * of LANTERN_PATH (the teardrop silhouette traced off the backdrop's bright
- * cores). Three states:
+ * cores). FOUR states \u2014 the veil opacity IS the decree's dim %:
  *   lseat--off   no namespace: dark veil (multiply) dims the painted glow pool
- *   lseat--mid   namespace seated, list collapsed: soft cool screen-blend glow
+ *   lseat--empty seated, ZERO tasks, not selected: veil .50, stone .65 + desaturated
+ *   lseat--mid   namespace seated with tasks, list collapsed: veil .25 + glow
  *   lseat--full  the clicked world (list showing): fully lit + teal ring
- * is-hover lifts a mid seat's light toward full on hover/focus. */
+ * is-hover lifts a seated lantern toward full (empty hover stays below mid). */
 .odins-throne-root .lshapes {
   position: absolute;
   left: 0;
@@ -460,8 +461,15 @@ var styles_default = `.odins-throne-root .odins-throne-root {
 .odins-throne-root .lseat--off .lseat__veil { opacity: 0.75; }
 .odins-throne-root .lseat--off .lseat__halo { opacity: 0.5; }
 .odins-throne-root .lseat--off .lseat__glow { opacity: 0; }
-/* MID: intermediately lit */
-.odins-throne-root .lseat--mid .lseat__veil { opacity: 0.34; }
+/* EMPTY: seated with zero tasks \u2014 50% dim, no glow; stone .65 + desaturated */
+.odins-throne-root .lseat--empty .lseat__veil { opacity: 0.5; }
+.odins-throne-root .lseat--empty .lseat__halo { opacity: 0; }
+.odins-throne-root .lseat--empty .lseat__glow { opacity: 0; }
+/* hover lifts EMPTY one rung below mid */
+.odins-throne-root .lseat--empty.is-hover .lseat__veil { opacity: 0.2; }
+.odins-throne-root .lseat--empty.is-hover .lseat__glow { opacity: 0.3; }
+/* MID: seated with tasks, deactivated \u2014 25% dim (was .34) + soft glow */
+.odins-throne-root .lseat--mid .lseat__veil { opacity: 0.25; }
 .odins-throne-root .lseat--mid .lseat__glow { opacity: 0.5; }
 /* hover lifts MID toward full */
 .odins-throne-root .lseat--mid.is-hover .lseat__veil { opacity: 0.12; }
@@ -751,6 +759,15 @@ var styles_default = `.odins-throne-root .odins-throne-root {
 }
 .odins-throne-root .ns-tree__lantern--inactive:hover .ns-tree__icon--lantern {
   opacity: 0.9;
+  filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.95));
+}
+/* EMPTY tier stone: dims to .65 + desaturates (overrides --inactive's .5 rule) */
+.odins-throne-root .ns-tree__lantern.is-empty .ns-tree__icon--lantern {
+  opacity: 0.65;
+  filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.95)) saturate(0.7);
+}
+.odins-throne-root .ns-tree__lantern.is-empty:hover .ns-tree__icon--lantern {
+  opacity: 0.85;
   filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.95));
 }
 /* summary unavailable \u2014 the dimmed seat */
@@ -9395,7 +9412,8 @@ function NamespaceTree({
                       SEAT_POOL.map((seat, i) => {
                         const nsId = nsForSeat.get(i);
                         const isFull = nsId != null && openNs === nsId;
-                        const lseatState = nsId == null ? "off" : isFull ? "full" : "mid";
+                        const hasWork = nsId != null && (summaries[nsId]?.total ?? 0) > 0;
+                        const lseatState = nsId == null ? "off" : isFull ? "full" : hasWork ? "mid" : "empty";
                         const isHovered = nsId != null && hoveredNs === nsId;
                         const p = projectSeat(seat, sceneSize.w, sceneSize.h);
                         const px = p.x / 100 * sceneSize.w;
@@ -9437,10 +9455,12 @@ function NamespaceTree({
                       const failed = summary?.counts.failed ?? 0;
                       const total = summary?.total ?? 0;
                       const isFull = isActive && isOpen;
+                      const stoneTier = isFull ? "is-full" : total > 0 ? "is-mid" : "is-empty";
                       const lanternClass = [
                         "ns-tree__select",
                         "ns-tree__lantern",
                         isFull ? "ns-tree__lantern--full" : isActive ? "ns-tree__lantern--active" : "ns-tree__lantern--inactive",
+                        stoneTier,
                         summary?.error ? "ns-tree__lantern--dim" : "",
                         failed > 0 ? "ns-tree__lantern--failed" : total > 0 ? "ns-tree__lantern--ok" : ""
                       ].filter(Boolean).join(" ");
