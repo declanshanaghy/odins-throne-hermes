@@ -61,10 +61,31 @@ export const SEAT_POOL: readonly PaintedSeat[] = [
 ];
 
 /**
+ * The parchment painting's eleven amber lantern seats — VERBATIM from the
+ * prototype's SEAT_POOL_LIGHT (v3.17, round 25, commit 1dbbe8a). Pixel-detected
+ * on the CLEAN ground backdrop-parchment.jpg by detect-lanterns-parchment.py
+ * (warm amber-core mask + glow-blob local contrast, left-half bounded per the
+ * composition contract), cross-checked by ONE Gemini clean-ground pass —
+ * PIXELS WIN (the oracle's absolute centers run biased; it contributed count +
+ * x-extent sanity). Painting % — the SAME projectSeat() cover LEFT-anchored
+ * crop carries them, no new math. Pixel provenance (painting px, centroid):
+ *   0:(333,894); 1:(252,836); 2:(364,835); 3:(271,697); 4:(130,681);
+ *   5:(331,622); 6:(369,577); 7:(447,550); 8:(148,484); 9:(387,414); 10:(234,322)
+ */
+export const SEAT_POOL_LIGHT: readonly PaintedSeat[] = [
+  { x: 37.15, y: 74.51 }, { x: 28.07, y: 69.63 }, { x: 40.65, y: 69.61 },
+  { x: 30.2, y: 58.12 }, { x: 14.51, y: 56.75 }, { x: 36.92, y: 51.86 },
+  { x: 41.14, y: 48.06 }, { x: 49.88, y: 45.82 }, { x: 16.47, y: 40.35 },
+  { x: 43.21, y: 34.53 }, { x: 26.13, y: 26.87 },
+];
+
+/**
  * Curated namespace id → painted seat index (VERBATIM from the prototype's
  * CURATED_SEATS, commit 99abad7). Claimed FIRST at runtime so a namespace
  * appearing later in the API list — or an unknown one hashing into the same
- * index — can never steal a curated world's painted lantern.
+ * index — can never steal a curated world's painted lantern. Seat indices are
+ * shared by BOTH pools (a realm keeps its seat INDEX when the theme flips —
+ * it re-seats onto the active painting's own lantern).
  */
 export const CURATED_SEATS: Record<string, number> = {
   "fenrir-agents": 9,               // 40,37
@@ -91,6 +112,19 @@ export const LANTERN_ANCHOR: readonly PaintedSeat[] = [
 ];
 
 /**
+ * Per-lantern popup pin for the LIGHT pool in PAINTING % — VERBATIM from the
+ * prototype's LANTERN_ANCHOR_LIGHT (v3.17, round 25). Each parchment bulb's
+ * right edge (centroid + core half-width + 12px stem gap, y = centroid + 3),
+ * same derivation as LANTERN_ANCHOR.
+ */
+export const LANTERN_ANCHOR_LIGHT: readonly PaintedSeat[] = [
+  { x: 40.3, y: 74.8 }, { x: 32.1, y: 69.9 }, { x: 44.3, y: 69.9 },
+  { x: 33.2, y: 58.4 }, { x: 18.5, y: 57.0 }, { x: 41.1, y: 52.1 },
+  { x: 44.2, y: 48.3 }, { x: 53.3, y: 46.1 }, { x: 19.5, y: 40.6 },
+  { x: 46.8, y: 34.8 }, { x: 29.3, y: 27.1 },
+];
+
+/**
  * Per-seat measured lantern sizes in painting px, bright-core w/h from
  * scripts/detect-lanterns.py on the CURRENT backdrop, mapped to SEAT_POOL
  * index order. Each veil/glow/ring scales to its own lantern's shape.
@@ -101,6 +135,35 @@ export const LANTERN_SIZE: readonly { w: number; h: number }[] = [
   { w: 34, h: 68 }, { w: 39, h: 76 }, { w: 35, h: 71 }, { w: 36, h: 71 },
   { w: 38, h: 71 }, { w: 40, h: 76 }, { w: 34, h: 70 },
 ];
+
+/**
+ * Per-seat measured silhouettes for the parchment lanterns — VERBATIM from the
+ * prototype's LANTERN_SIZE_LIGHT (v3.17, round 25): core-extent w/h clamped to
+ * the teardrop's sane range, mapped to SEAT_POOL_LIGHT index order.
+ */
+export const LANTERN_SIZE_LIGHT: readonly { w: number; h: number }[] = [
+  { w: 28, h: 50 }, { w: 41, h: 53 }, { w: 36, h: 51 }, { w: 26, h: 50 },
+  { w: 41, h: 54 }, { w: 44, h: 68 }, { w: 26, h: 50 }, { w: 32, h: 54 },
+  { w: 26, h: 54 }, { w: 34, h: 50 }, { w: 28, h: 51 },
+];
+
+/** Which painting's lanterns seat the realms — dark = the moonlit tree, light = the parchment tree. */
+export type SeatTheme = "dark" | "light";
+
+/** The ACTIVE seat pool for a theme (v3.17: dark SEAT_POOL or light SEAT_POOL_LIGHT). */
+export function seatPoolFor(theme: SeatTheme): readonly PaintedSeat[] {
+  return theme === "light" ? SEAT_POOL_LIGHT : SEAT_POOL;
+}
+
+/** The ACTIVE popup anchors for a theme. */
+export function lanternAnchorsFor(theme: SeatTheme): readonly PaintedSeat[] {
+  return theme === "light" ? LANTERN_ANCHOR_LIGHT : LANTERN_ANCHOR;
+}
+
+/** The ACTIVE per-seat silhouettes for a theme. */
+export function lanternSizesFor(theme: SeatTheme): readonly { w: number; h: number }[] {
+  return theme === "light" ? LANTERN_SIZE_LIGHT : LANTERN_SIZE;
+}
 
 /**
  * SVG path tracing the painted lantern silhouette — a teardrop with neck/cap
@@ -134,10 +197,19 @@ function hashKey(key: string): number {
  *
  * All vines curl rightward (dir: 1). A namespace added in the backend config
  * simply appears here with a seat — zero code changes.
+ *
+ * Theme (v3.17, issue #123): every realm keeps its seat INDEX across themes
+ * but re-seats onto the ACTIVE painting's own lantern — pass "light" to seat
+ * on SEAT_POOL_LIGHT (the parchment tree), omit / "dark" for SEAT_POOL. The
+ * projection downstream is the SAME projectSeat() in both themes.
  */
-export function assignSeats(nsIds: readonly string[]): Map<string, LanternSeat> {
+export function assignSeats(
+  nsIds: readonly string[],
+  theme: SeatTheme = "dark",
+): Map<string, LanternSeat> {
+  const pool = seatPoolFor(theme);
   const taken = new Set<number>();
-  const poolLen = SEAT_POOL.length;
+  const poolLen = pool.length;
   const seats = new Map<string, LanternSeat>();
 
   // Pass 1 — curated claims (first claimant in API order wins; two namespaces
@@ -147,7 +219,7 @@ export function assignSeats(nsIds: readonly string[]): Map<string, LanternSeat> 
     const idx = CURATED_SEATS[id];
     if (idx != null && !Number.isNaN(idx) && !taken.has(idx)) {
       taken.add(idx);
-      const p = SEAT_POOL[idx]!;
+      const p = pool[idx]!;
       seats.set(id, { x: p.x, y: p.y, dir: 1, seatIdx: idx });
     }
   }
@@ -161,7 +233,7 @@ export function assignSeats(nsIds: readonly string[]): Map<string, LanternSeat> 
     while (taken.has(i) && guard++ < poolLen) i = (i + 1) % poolLen;
     if (taken.has(i)) i = poolLen - 1; // tree full — share the last lantern
     taken.add(i);
-    const p = SEAT_POOL[i]!;
+    const p = pool[i]!;
     seats.set(id, { x: p.x, y: p.y, dir: 1, seatIdx: i });
   }
 
@@ -220,6 +292,6 @@ export function projectSeat(
  * guarantees curated claims and collision-walked hash seats across the whole
  * list. A curated id gets its painted lantern either way.
  */
-export function namespaceSeat(nsId: string): LanternSeat {
-  return assignSeats([nsId]).get(nsId)!;
+export function namespaceSeat(nsId: string, theme: SeatTheme = "dark"): LanternSeat {
+  return assignSeats([nsId], theme).get(nsId)!;
 }

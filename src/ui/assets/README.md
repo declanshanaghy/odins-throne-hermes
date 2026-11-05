@@ -11,7 +11,15 @@ issue #10 — this directory + `src/ui/lib/treeSeats.ts`.
   portrait). Extracted byte-identical from the v3.9 approved prototype
   (`design/tree-display/tree-backdrop-tall.jpg` on the `design-tree-display`
   branch — commit 99abad7). This is the **tall vertical composition** (see
-  below).
+  below). The DARK painting — never edited or re-exported; dark mode renders
+  it byte-for-byte.
+- `tree-backdrop-light.jpg` — the parchment tree-of-life painting (the
+  Parchment & Mead Hall light theme, v3.17 prototype round 25 — issue #123).
+  896x1200 (~3:4 portrait), byte-identical copy of
+  `design/tree-display/backdrop-parchment.jpg` on the `design-tree-display`
+  branch (prompt sidecar `backdrop-parchment.prompt.md` beside it). Selected
+  by `NamespaceTree.tsx` when the theme is light; the dark painting stays
+  byte-identical.
 - `README.md` — this regeneration guide.
 
 ## How the assets are wired
@@ -108,3 +116,22 @@ Dark theme ships first; a light variant must exist before #7 closes. Path:
    `--tree-backdrop` accordingly.
 4. Update `src/externals.d.ts` only if a new extension is added (`.jpg` is
    already declared).
+
+## Light-theme variant
+
+The light (Parchment & Mead Hall) painting is a SEPARATE asset, not a filter
+on the dark one: `tree-backdrop-light.jpg`, byte-copied from
+`design/tree-display/backdrop-parchment.jpg` on the `design-tree-display`
+branch. The generation prompt lives beside the source as
+`backdrop-parchment.prompt.md` — warm golden parchment light, illuminated-
+manuscript tree, eleven glowing leaf-shaped lanterns ALL within the left 50%
+of the frame, small pale moon low on the right horizon.
+
+Seat re-map is MANDATORY after any repaint of EITHER painting: the light
+pool (`SEAT_POOL_LIGHT`, `LANTERN_ANCHOR_LIGHT`, `LANTERN_SIZE_LIGHT` in
+`src/ui/lib/treeSeats.ts`) was pixel-detected from THIS painting's amber
+lantern cores (detect-lanterns-parchment.py, Gemini clean-ground cross-check
+— pixels win). Never re-detect lanterns by eye and never reuse the dark
+pool's coordinates for the light painting: every realm keeps its seat INDEX
+across themes but re-seats onto the active painting's own lantern through the
+same `projectSeat()` projection.

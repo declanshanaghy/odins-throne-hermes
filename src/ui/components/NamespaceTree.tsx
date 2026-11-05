@@ -39,11 +39,13 @@ import {
 import {
   assignSeats,
   projectSeat,
-  SEAT_POOL,
-  LANTERN_ANCHOR,
-  LANTERN_SIZE,
+  seatPoolFor,
+  lanternAnchorsFor,
+  lanternSizesFor,
   LANTERN_PATH,
 } from "../lib/treeSeats";
+import { STATUS_COLORS, STATUS_COLORS_LIGHT } from "../lib/constants";
+import { useTheme } from "../hooks/useTheme";
 import { taskPips, pipStripLeft, pipStripWidth } from "../lib/taskPips";
 import {
   vineFor,
@@ -53,6 +55,7 @@ import {
   type VineMode,
 } from "../lib/vineGeometry";
 import treeBackdrop from "../assets/tree-backdrop.jpg";
+import treeBackdropLight from "../assets/tree-backdrop-light.jpg";
 import { TreeIcon } from "./TreeIcon";
 import { VineCard, isCancellable } from "./VineCard";
 import { WorldTitle } from "./WorldTitle";
@@ -140,11 +143,19 @@ export function NamespaceTree({
   onClearQuery,
 }: Props) {
   const isCompact = displayMode === "compact";
+  // v3.17 (issue #123): the ☀ toggle re-seats every realm onto the ACTIVE
+  // painting's own lanterns — same seatIdx, SEAT_POOL (dark) or SEAT_POOL_LIGHT
+  // (light), through the SAME projectSeat() projection.
+  const { theme } = useTheme();
   // Painting-% seats assigned at runtime; projectSeat() maps to scene % before use.
   const seats = useMemo(
-    () => assignSeats(namespaces.map((ns) => ns.id)),
-    [namespaces],
+    () => assignSeats(namespaces.map((ns) => ns.id), theme),
+    [namespaces, theme],
   );
+  const seatPool = seatPoolFor(theme);
+  const lanternAnchors = lanternAnchorsFor(theme);
+  const lanternSizes = lanternSizesFor(theme);
+  const statusColors = theme === "light" ? STATUS_COLORS_LIGHT : STATUS_COLORS;
   // Strict accordion: the one world whose vine is open (null = collapsed).
   const [openNs, setOpenNs] = useState<string | null>(namespace);
   const [hoveredNs, setHoveredNs] = useState<string | null>(null);
@@ -245,7 +256,7 @@ export function NamespaceTree({
   const vine = useMemo(() => {
     if (!openWorld || !openSeat || summaryFailed) return null;
     const seatIdx = openSeat.seatIdx;
-    const anchorPaint = LANTERN_ANCHOR[seatIdx];
+    const anchorPaint = lanternAnchors[seatIdx];
     if (!anchorPaint) return null;
     // When sceneSize is unmeasured (ResizeObserver pending), treat painting %
     // as px directly — produces valid geometry without layout (positions are
@@ -349,10 +360,12 @@ export function NamespaceTree({
             className="ns-tree__canvas"
             style={{ height: effectiveCanvasHeight > 0 ? `${effectiveCanvasHeight}px` : undefined }}
           >
-            {/* backdrop img: pinned to scene height so it stays rooted */}
+            {/* backdrop img: pinned to scene height so it stays rooted.
+                v3.17 (issue #123): the painting follows the theme — the
+                moonlit tree in dark, the parchment tree in light. */}
             <img
               className="ns-tree__backdrop"
-              src={treeBackdrop}
+              src={theme === "light" ? treeBackdropLight : treeBackdrop}
               alt=""
               aria-hidden="true"
               style={sceneSize.h > 0 ? { height: `${sceneSize.h}px` } : undefined}
@@ -379,8 +392,15 @@ export function NamespaceTree({
                     <stop offset="0.5" stopColor="#a8dcec" stopOpacity="0.5" />
                     <stop offset="1" stopColor="#a8dcec" stopOpacity="0" />
                   </radialGradient>
+                  {/* v3.17 (issue #123): the mead-gold SUN radial — the light
+                      ladder's glow (moonlight in dark, candle-honey in light) */}
+                  <radialGradient id="lglowg-sun" cx="50%" cy="55%" r="68%">
+                    <stop offset="0" stopColor="#FFF3C9" stopOpacity="0.95" />
+                    <stop offset="0.5" stopColor="#F2C14E" stopOpacity="0.55" />
+                    <stop offset="1" stopColor="#E8B54A" stopOpacity="0" />
+                  </radialGradient>
                 </defs>
-                {SEAT_POOL.map((seat, i) => {
+                {seatPool.map((seat, i) => {
                   const nsId = nsForSeat.get(i);
                   const isFull = nsId != null && openNs === nsId;
                   const hasWork = nsId != null && (summaries[nsId]?.total ?? 0) > 0;
@@ -390,7 +410,7 @@ export function NamespaceTree({
                   const p = projectSeat(seat, sceneSize.w, sceneSize.h);
                   const px = (p.x / 100) * sceneSize.w;
                   const py = (p.y / 100) * sceneSize.h;
-                  const size = LANTERN_SIZE[i]!;
+                  const size = lanternSizes[i]!;
                   const mx = kStd * (size.w / 38);
                   const my = kStd * (size.h / 73);
                   return (
@@ -508,13 +528,13 @@ export function NamespaceTree({
                         />
                         <span className="ns-tree__counts__nums">
                           {summary.counts.succeeded > 0 && (
-                            <i style={{ color: "#79b356" }}>{summary.counts.succeeded}</i>
+                            <i style={{ color: statusColors.succeeded }}>{summary.counts.succeeded}</i>
                           )}
                           {summary.counts.running > 0 && (
-                            <i style={{ color: "#6fb7d8" }}>{summary.counts.running}</i>
+                            <i style={{ color: statusColors.running }}>{summary.counts.running}</i>
                           )}
                           {summary.counts.failed > 0 && (
-                            <i style={{ color: "#e07a3f" }}>{summary.counts.failed}</i>
+                            <i style={{ color: statusColors.failed }}>{summary.counts.failed}</i>
                           )}
                         </span>
                       </div>
@@ -582,12 +602,12 @@ export function NamespaceTree({
                 style={notePos(openSeat, -70)}
                 aria-live="polite"
               >
-                fetching the world's work…
+                fetching the realm's work…
               </div>
             )}
             {openWorld && openSeat && summaryLoaded && !summaryFailed && openTasks.length === 0 && (
               <div className="ns-tree__note" style={notePos(openSeat, -90)}>
-                no tasks in this world — its lantern rests
+                no tasks in this realm — its lantern rests
               </div>
             )}
             {openWorld && openSeat && summaryFailed && (
