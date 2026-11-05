@@ -7924,6 +7924,10 @@ var DURATION_RE = /\s{2,}(?:\d+m\s*)?\d+(?:\.\d+)?s$/;
 var READ_RE = /^📖\s*Read\s+(\S.*)$/u;
 var TOOL_DETAILS_RE = /^📖\s*Reading tool details\s*·\s*(\S.*)$/u;
 var TOOL_SEARCH_RE = /^🔎\s*Searching tools\s*·\s*(.+)$/u;
+var GREP_RE = /^🔎\s*Grep\s+(\S.*)$/u;
+var PROC_RE = /^⚙\uFE0F?\s*Proc\s+(\S+)\s+(\S.*?)\s*$/u;
+var THOUGHT_RE = /^∴\s*Thought for\s+(\S.*)$/;
+var PROSE_LEAD_RE = /^[\x20-\x7E]/;
 var WRITE_RE = /^✍\uFE0F?\s*Write\s+(\S.*)$/u;
 var PATCH_RE = /^🔧\s*Patch\s+(\S.*)$/u;
 var PLAN_RE = /^📋\s*Plan\s+(\S.*)$/u;
@@ -7978,7 +7982,7 @@ var HermesLogParser = class {
    */
   processLine(line) {
     if (!this.active) {
-      if (ASSISTANT_RE.test(line) || QUERY_RE.test(line)) this.active = true;
+      if (ASSISTANT_RE.test(line) || QUERY_RE.test(line) || THOUGHT_RE.test(line)) this.active = true;
       else return null;
     }
     if (this.inEcho) {
@@ -7999,6 +8003,13 @@ var HermesLogParser = class {
     if (this.assistant !== null) {
       this.assistant.push(line);
       return {};
+    }
+    const thought = THOUGHT_RE.exec(line);
+    if (thought) {
+      const step = this.assistant !== null ? this.flushAssistant() : this.completeBatch();
+      return mergeSteps(step, {
+        append: [{ id: this.allocId(), type: "assistant-text", text: `Thought for ${thought[1].trim()}`, detail: "thinking" }]
+      });
     }
     if (QUERY_RE.test(line)) {
       this.inEcho = true;
@@ -8068,6 +8079,22 @@ var HermesLogParser = class {
         diffable: true
       });
     }
+    const grep = GREP_RE.exec(line);
+    if (grep) {
+      const pattern = (grep[1] ?? "").replace(DURATION_RE, "").trim();
+      return this.pushTool({
+        toolName: "grep",
+        toolInput: JSON.stringify({ pattern }).slice(0, INPUT_MAX)
+      });
+    }
+    const proc = PROC_RE.exec(line);
+    if (proc) {
+      const procId = (proc[2] ?? "").replace(DURATION_RE, "").trim();
+      return this.pushTool({
+        toolName: "proc",
+        toolInput: JSON.stringify({ op: proc[1].trim(), id: procId }).slice(0, INPUT_MAX)
+      });
+    }
     const plan = PLAN_RE.exec(line);
     if (plan) {
       return this.pushTool({
@@ -8085,6 +8112,10 @@ var HermesLogParser = class {
       return {
         append: [{ id: this.allocId(), type: "entrypoint-info", detail: kv[1], text: kv[2].trim() }]
       };
+    }
+    if (this.sawDivider && PROSE_LEAD_RE.test(line)) {
+      this.assistant = [line];
+      return {};
     }
     return { append: [this.raw(line)] };
   }
