@@ -805,8 +805,8 @@ assert.equal(
 document.querySelector('.ns-tree__item[data-namespace="shanaghy-com-agents"] .ns-tree__lantern').click();
 await flush();
 assert.ok(
-  document.getElementById("pane").innerHTML.includes("No tasks in this realm"),
-  "empty namespace shows the no-tasks leaf",
+  document.getElementById("pane").innerHTML.includes("no tasks in this world"),
+  "empty namespace shows the no-tasks leaf (v3.13.2 message)",
 );
 
 // Summary-unavailable world drills into its dimmed empty state.
@@ -834,8 +834,8 @@ assert.equal(
 document.querySelector('.ns-tree__item[data-namespace="shanaghy-com-agents"] .ns-tree__lantern').click();
 await flush();
 assert.ok(
-  document.getElementById("pane").innerHTML.includes("No tasks in this realm"),
-  "reopening a world regrows its branch",
+  document.getElementById("pane").innerHTML.includes("no tasks in this world"),
+  "reopening a world regrows its branch (v3.13.2 message)",
 );
 assert.equal(
   document.querySelector('.ns-tree__item[data-namespace="shanaghy-com-agents"] .ns-tree__lantern').getAttribute("aria-expanded"),

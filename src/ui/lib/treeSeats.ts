@@ -22,10 +22,12 @@ export interface LanternSeat {
   /** Vertical position, % from the painting's top edge (lantern center). */
   y: number;
   /**
-   * Which way the world's vine hangs. All vines curl rightward to the branch
-   * rail (dir: 1) in the v3.9 layout; kept for interface stability.
+   * Which way the world's vine hangs. All vines curl rightward in the v3.13
+   * layout; kept for interface stability.
    */
   dir: 1 | -1;
+  /** Index into SEAT_POOL (0–10). Used to look up LANTERN_ANCHOR and LANTERN_SIZE. */
+  seatIdx: number;
 }
 
 /** Scene geometry the painting and its overlays are sized against. */
@@ -72,6 +74,46 @@ export const CURATED_SEATS: Record<string, number> = {
   "re-goatmower-agents": 4,         // 30,55
 };
 
+/**
+ * Per-lantern popup pin in PAINTING % — the top-left corner of the job list
+ * pins here when a world expands (v3.10.5, round 13 of the prototype).
+ * Derived: anchor = bright-spot centroid + belly half-width (22*(w/38) path
+ * units scaled per LANTERN_SIZE) + 12px stem gap; y = belly center.
+ * Provenance (painting px, from detect-lanterns.py centroids):
+ *   0:(391,883) 1:(179,836) 2:(438,821) 3:(122,777) 4:(298,665)
+ *   5:(362,598) 6:(133,599) 7:(193,488) 8:(239,363) 9:(390,445) 10:(456,396)
+ */
+export const LANTERN_ANCHOR: readonly PaintedSeat[] = [
+  { x: 43.7, y: 73.5 }, { x: 20.0, y: 69.7 }, { x: 48.9, y: 68.4 },
+  { x: 13.6, y: 64.7 }, { x: 33.2, y: 55.4 }, { x: 40.4, y: 49.8 },
+  { x: 14.9, y: 49.9 }, { x: 21.5, y: 40.7 }, { x: 26.7, y: 30.2 },
+  { x: 43.5, y: 37.1 }, { x: 50.9, y: 33.0 },
+];
+
+/**
+ * Per-seat measured lantern sizes in painting px, bright-core w/h from
+ * scripts/detect-lanterns.py on the CURRENT backdrop, mapped to SEAT_POOL
+ * index order. Each veil/glow/ring scales to its own lantern's shape.
+ * Base path is a 38×73-core teardrop (LANTERN_PATH).
+ */
+export const LANTERN_SIZE: readonly { w: number; h: number }[] = [
+  { w: 40, h: 79 }, { w: 38, h: 74 }, { w: 32, h: 68 }, { w: 31, h: 66 },
+  { w: 34, h: 68 }, { w: 39, h: 76 }, { w: 35, h: 71 }, { w: 36, h: 71 },
+  { w: 38, h: 71 }, { w: 40, h: 76 }, { w: 34, h: 70 },
+];
+
+/**
+ * SVG path tracing the painted lantern silhouette — a teardrop with neck/cap
+ * and drop tip, measured off the backdrop's bright cores (54×83 core,
+ * ~62×111 silhouette in painting px). Centered at 0,0; scale per LANTERN_SIZE
+ * before positioning. All three light shapes (veil, glow, ring) use this path.
+ */
+export const LANTERN_PATH =
+  "M0,-42 C4,-42 6,-40 6,-37 C6,-35 5,-33 4,-31 C11,-28 19,-20 21,-11 "
+  + "C22,-4 22,7 19,18 C16,27 10,35 6,39 C4,41 2,42 0,42 C-2,42 -4,41 -6,39 "
+  + "C-10,35 -16,27 -19,18 C-22,7 -22,-4 -21,-11 C-19,-20 -11,-28 -4,-31 "
+  + "C-5,-33 -6,-35 -6,-37 C-6,-40 -4,-42 0,-42 Z";
+
 /** djb2 — same hash as namespaceIcons.ts: small, fast, stable across runs. */
 function hashKey(key: string): number {
   let h = 5381;
@@ -90,8 +132,8 @@ function hashKey(key: string): number {
  *   3. When all 11 lanterns are claimed every additional world shares the
  *      last painted lantern (tree full, guard against infinite loop).
  *
- * All vines curl rightward to the branch rail (dir: 1). A namespace added
- * in the backend config simply appears here with a seat — zero code changes.
+ * All vines curl rightward (dir: 1). A namespace added in the backend config
+ * simply appears here with a seat — zero code changes.
  */
 export function assignSeats(nsIds: readonly string[]): Map<string, LanternSeat> {
   const taken = new Set<number>();
@@ -106,7 +148,7 @@ export function assignSeats(nsIds: readonly string[]): Map<string, LanternSeat> 
     if (idx != null && !Number.isNaN(idx) && !taken.has(idx)) {
       taken.add(idx);
       const p = SEAT_POOL[idx]!;
-      seats.set(id, { x: p.x, y: p.y, dir: 1 });
+      seats.set(id, { x: p.x, y: p.y, dir: 1, seatIdx: idx });
     }
   }
 
@@ -120,7 +162,7 @@ export function assignSeats(nsIds: readonly string[]): Map<string, LanternSeat> 
     if (taken.has(i)) i = poolLen - 1; // tree full — share the last lantern
     taken.add(i);
     const p = SEAT_POOL[i]!;
-    seats.set(id, { x: p.x, y: p.y, dir: 1 });
+    seats.set(id, { x: p.x, y: p.y, dir: 1, seatIdx: i });
   }
 
   return seats;

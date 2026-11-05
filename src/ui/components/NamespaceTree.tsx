@@ -1,31 +1,26 @@
-// Namespace lantern tree (issues #11, #12, #39, #59, #69, #90) — v3.9.3
+// Namespace lantern tree (issues #11, #12, #39, #59, #69, #90, #95) — v3.13.2
 //
-// v3.9.3 (issue #90): the painted lantern is the HOLDER OF THE NAMESPACE'S SPIRIT.
-// No disc or stone sits on top — the namespace icon floats directly on the painting.
-// The ACTIVE lantern glows via a screen-blend halo (::before); every INACTIVE
-// lantern is dimmed with a multiply-blend radial mask (::after) so it reads unlit.
-// The lantern button is fully transparent (no border, no background, no radius).
+// v3.13.2 (issue #95): full port of the approved prototype.
 //
-// v3.9 (issue #69): the tree becomes a vertical painted tree scene.
-// The whole scene — backdrop + lanterns + vine + cards — scrolls TOGETHER
-// in one canvas so the task list is ALWAYS attached to its lantern.
+// Light states (v3.10): one .lshapes SVG under the buttons, one <g class="lseat">
+// per SEAT_POOL index (all 11 — seated or not). Three states:
+//   OFF  — no namespace seated: dark veil + halo multiply
+//   MID  — seated, list closed: soft screen-blend glow
+//   FULL — clicked world, vine showing: glow 1.0 + teal ring; stone → opaque
 //
-// Key layout points:
-//   - `<img class="ns-tree__backdrop">` replaces the CSS background-image
-//     (height pinned to scene by JS so it roots above the extended canvas)
-//   - `ns-tree__roots` lives INSIDE the scrolling canvas (scroll-together)
-//   - Lanterns carry `--inactive` / `--active` classes (not just `--active`)
-//   - Seats are in PAINTING %; `projectSeat()` maps to scene % before use
-//   - All summaries preload at boot (useNamespaceSummaries already does this)
-//   - Vine curls to branch rail at 44% sceneW, then descends (vineGeometry v3.9)
+// Vine (v3.10.5): job list pins to its lantern's LANTERN_ANCHOR bulb. The vine
+// emerges from the lantern, curls to the recorded anchor pin, then descends
+// straight down at 57px pitch (standard) / 34px (compact).
 //
-//    o   Fenrir Ledger Agents        ← icon on painted lantern (role=treeitem)
-//  ⚒⚒✖⏳ 12 tasks · 2 running · …    ← task pips (+N) + hover label
-//   ╰─────────╮                       ← vine to branch rail at 44%
-//              [jcard s-run-1 RUNNING] ← full cards on the strand
-//              [jcard s-fail-1 FAILED] ← each: sigil · title · meta · actions
+// World title (v3.13): glass panel above the topmost lanterns showing the last-
+// seated world's name, stats, garden band (opaque stone + ringfort lore), and
+// kin pills. Deactivation fades to 50%; next selection repaints at 100%.
 //
-// STRICT ACCORDION: one world's vine is open at a time.
+// Dead space (v3.10.9): click anywhere in the scene that isn't an interactive
+// element deactivates the active lantern immediately.
+//
+// Empty-world rest (v3.10.7): a taskless world holds FULL state for 2s, then
+// deactivates itself. Any click cancels the timer.
 
 import { useEffect, useMemo, useRef, useState, useLayoutEffect } from "react";
 import type { CSSProperties } from "react";
@@ -39,7 +34,14 @@ import {
   taskIcon,
   taskIconFallback,
 } from "../lib/namespaceIcons";
-import { assignSeats, projectSeat } from "../lib/treeSeats";
+import {
+  assignSeats,
+  projectSeat,
+  SEAT_POOL,
+  LANTERN_ANCHOR,
+  LANTERN_SIZE,
+  LANTERN_PATH,
+} from "../lib/treeSeats";
 import { taskPips, pipStripLeft, pipStripWidth } from "../lib/taskPips";
 import {
   vineFor,
@@ -51,6 +53,7 @@ import {
 import treeBackdrop from "../assets/tree-backdrop.jpg";
 import { TreeIcon } from "./TreeIcon";
 import { VineCard, isCancellable } from "./VineCard";
+import { WorldTitle } from "./WorldTitle";
 import type { DisplayMode } from "./Sidebar";
 
 interface Props {
@@ -110,6 +113,10 @@ interface FallingCard {
   side: "right" | "left";
 }
 
+/** Interactive element selectors — dead-space clicks on these never deselect. */
+const INTERACTIVE_SELECTORS =
+  "button, .jcard, .jact, .anchor-ic, .ns-tree__counts, .ns-tree__note, .piprow, .wtitle__kin-pill";
+
 export function NamespaceTree({
   namespace,
   namespaces,
@@ -132,6 +139,8 @@ export function NamespaceTree({
   // Strict accordion: the one world whose vine is open (null = collapsed).
   const [openNs, setOpenNs] = useState<string | null>(namespace);
   const [hoveredNs, setHoveredNs] = useState<string | null>(null);
+  // v3.13: last-seated world — survives deactivation (dims to 50%, never wiped)
+  const [titleWorldId, setTitleWorldId] = useState<string | null>(null);
 
   // ── scene measurement: vine geometry + projectSeat need the scene box in px ──
   const sceneRef = useRef<HTMLDivElement | null>(null);
@@ -152,6 +161,11 @@ export function NamespaceTree({
     setOpenNs((prev) => (prev && namespaces.some((ns) => ns.id === prev) ? prev : null));
   }, [namespaces]);
 
+  // v3.13: update titleWorld whenever a world is selected (never on deselect)
+  useEffect(() => {
+    if (openNs) setTitleWorldId(openNs);
+  }, [openNs]);
+
   /**
    * Clicking a stone SELECTS the world (same as the old dropdown) and toggles
    * the accordion: the open world collapses, any other world grows its vine.
@@ -163,25 +177,65 @@ export function NamespaceTree({
     if (opening) scrollerRef.current?.scrollTo?.({ top: 0 });
   };
 
+  // v3.10.9: dead-space click deactivates the active lantern
+  const handleSceneClick = (e: React.MouseEvent) => {
+    if (openNs === null) return;
+    const target = e.target as Element;
+    if (target.closest(INTERACTIVE_SELECTORS)) return;
+    setOpenNs(null);
+  };
+
   const openWorld = namespaces.find((ns) => ns.id === openNs) ?? null;
   const openSummary = openNs ? summaries[openNs] : undefined;
   const openTasks = useMemo(() => tasksOf(openSummary?.jobs), [openSummary]);
   const openPaintSeat = openWorld ? seats.get(openWorld.id) : undefined;
+
+  // v3.10.7: empty-world auto-rest after 2s
+  useEffect(() => {
+    const summaryLoaded = openSummary !== undefined;
+    const summaryFailed = openSummary?.error != null;
+    if (openNs && summaryLoaded && !summaryFailed && openTasks.length === 0) {
+      const t = setTimeout(() => setOpenNs(null), 2000);
+      return () => clearTimeout(t);
+    }
+    return undefined;
+  }, [openNs, openSummary, openTasks.length]);
+
   // Project the open world's seat for vine geometry (scene % from painting %)
   const openSeat = useMemo(() => {
     if (!openPaintSeat || sceneSize.w === 0 || sceneSize.h === 0) return openPaintSeat;
     const p = projectSeat(openPaintSeat, sceneSize.w, sceneSize.h);
-    return { x: p.x, y: p.y, dir: openPaintSeat.dir };
+    return { x: p.x, y: p.y, dir: openPaintSeat.dir, seatIdx: openPaintSeat.seatIdx };
   }, [openPaintSeat, sceneSize.w, sceneSize.h]);
+
   const summaryLoaded = openSummary !== undefined;
   const summaryFailed = openSummary?.error != null;
 
-  // ── the vine: geometry from the open lantern's projected seat ──
+  // ── the vine: geometry from the open lantern's projected seat + LANTERN_ANCHOR ──
   const vineMode: VineMode = displayMode === "compact" ? "compact" : displayMode === "normal" ? "normal" : "extended";
+
   const vine = useMemo(() => {
     if (!openWorld || !openSeat || summaryFailed) return null;
-    return vineFor(openSeat, openTasks.length, sceneSize.w, sceneSize.h, vineMode);
+    const seatIdx = openSeat.seatIdx;
+    const anchorPaint = LANTERN_ANCHOR[seatIdx];
+    if (!anchorPaint) return null;
+    // When sceneSize is unmeasured (ResizeObserver pending), treat painting %
+    // as px directly — produces valid geometry without layout (positions are
+    // small but structurally correct until the first resize fires).
+    const W = sceneSize.w > 0 ? sceneSize.w : 100;
+    const H = sceneSize.h > 0 ? sceneSize.h : 100;
+    const anchorScene = projectSeat(anchorPaint, W, H);
+    const lanternPx = {
+      x: (openSeat.x / 100) * W,
+      y: (openSeat.y / 100) * H,
+    };
+    const anchorPx = {
+      x: (anchorScene.x / 100) * W,
+      y: (anchorScene.y / 100) * H,
+    };
+    return vineFor(lanternPx, anchorPx, openTasks.length, vineMode, W);
   }, [openWorld, openSeat, openTasks.length, sceneSize.w, sceneSize.h, vineMode, summaryFailed]);
+
   const canvasHeight = vine ? vineCanvasHeight(vine, sceneSize.h) : 0;
 
   // ── falling ghosts: a cancelled card's purge plays the fall ──
@@ -229,9 +283,24 @@ export function NamespaceTree({
   ].filter(Boolean).join(" ");
 
   // Determine actual canvas height for the scrolling canvas
-  // The backdrop and roots overlay are pinned to the scene height; the canvas
-  // grows below for long vines so the vine + cards extend beyond the scene.
   const effectiveCanvasHeight = Math.max(canvasHeight, sceneSize.h);
+
+  // ── lantern-shaped light state SVG layer ──
+  // One <g class="lseat"> per SEAT_POOL index; state = off/mid/full.
+  const kStd = sceneSize.w > 0 && sceneSize.h > 0
+    ? Math.max(sceneSize.w / 896, sceneSize.h / 1200)
+    : 1;
+  // Build a reverse-map: seatIdx → nsId (for state determination)
+  const nsForSeat = useMemo(() => {
+    const m = new Map<number, string>();
+    for (const ns of namespaces) {
+      const seat = seats.get(ns.id);
+      if (seat != null) m.set(seat.seatIdx, ns.id);
+    }
+    return m;
+  }, [namespaces, seats]);
+
+  const titleWorldSeat = titleWorldId ? seats.get(titleWorldId) : undefined;
 
   return (
     <div
@@ -240,7 +309,7 @@ export function NamespaceTree({
       aria-label="Namespace tree"
     >
       {/* ── the painted scene ── */}
-      <div className="ns-tree__scene" ref={sceneRef}>
+      <div className="ns-tree__scene" ref={sceneRef} onClick={handleSceneClick}>
         <div
           className="ns-tree__scroller"
           ref={scrollerRef}
@@ -261,6 +330,56 @@ export function NamespaceTree({
               style={sceneSize.h > 0 ? { height: `${sceneSize.h}px` } : undefined}
             />
 
+            {/* v3.10 — lantern-shaped light states SVG (z-index: 1, under the stone buttons) */}
+            {sceneSize.w > 0 && sceneSize.h > 0 && (
+              <svg
+                className="lshapes"
+                width={sceneSize.w}
+                height={sceneSize.h}
+                aria-hidden="true"
+              >
+                <defs>
+                  <path id="ldrop" d={LANTERN_PATH} />
+                  <filter id="lsoft" x="-60%" y="-60%" width="220%" height="220%">
+                    <feGaussianBlur stdDeviation="4" />
+                  </filter>
+                  <filter id="lwide" x="-80%" y="-80%" width="260%" height="260%">
+                    <feGaussianBlur stdDeviation="7" />
+                  </filter>
+                  <radialGradient id="lglowg" cx="50%" cy="55%" r="68%">
+                    <stop offset="0" stopColor="#eaf9ff" stopOpacity="0.95" />
+                    <stop offset="0.5" stopColor="#a8dcec" stopOpacity="0.5" />
+                    <stop offset="1" stopColor="#a8dcec" stopOpacity="0" />
+                  </radialGradient>
+                </defs>
+                {SEAT_POOL.map((seat, i) => {
+                  const nsId = nsForSeat.get(i);
+                  const isFull = nsId != null && openNs === nsId;
+                  const lseatState = nsId == null ? "off" : isFull ? "full" : "mid";
+                  const isHovered = nsId != null && hoveredNs === nsId;
+                  const p = projectSeat(seat, sceneSize.w, sceneSize.h);
+                  const px = (p.x / 100) * sceneSize.w;
+                  const py = (p.y / 100) * sceneSize.h;
+                  const size = LANTERN_SIZE[i]!;
+                  const mx = kStd * (size.w / 38);
+                  const my = kStd * (size.h / 73);
+                  return (
+                    <g
+                      key={i}
+                      className={`lseat lseat--${lseatState}${isHovered ? " is-hover" : ""}`}
+                      data-seat={i}
+                      transform={`translate(${px.toFixed(1)},${py.toFixed(1)}) scale(${mx.toFixed(4)},${my.toFixed(4)})`}
+                    >
+                      <use href="#ldrop" className="lseat__halo" filter="url(#lwide)" transform="scale(1.7)" />
+                      <use href="#ldrop" className="lseat__veil" filter="url(#lsoft)" transform="scale(1.16)" />
+                      <use href="#ldrop" className="lseat__glow" transform="scale(1.22)" />
+                      <use href="#ldrop" className="lseat__ring" transform="scale(1.05)" />
+                    </g>
+                  );
+                })}
+              </svg>
+            )}
+
             {/* stones overlay: pinned to scene height, lives inside canvas (scroll-together) */}
             <ul
               className="ns-tree__roots"
@@ -276,10 +395,12 @@ export function NamespaceTree({
                 const line = labelLineOf(summary);
                 const failed = summary?.counts.failed ?? 0;
                 const total = summary?.total ?? 0;
+                // v3.10: FULL = clicked world with vine open; stone → opaque while full
+                const isFull = isActive && isOpen;
                 const lanternClass = [
                   "ns-tree__select",
                   "ns-tree__lantern",
-                  isActive ? "ns-tree__lantern--active" : "ns-tree__lantern--inactive",
+                  isFull ? "ns-tree__lantern--full" : isActive ? "ns-tree__lantern--active" : "ns-tree__lantern--inactive",
                   summary?.error ? "ns-tree__lantern--dim" : "",
                   failed > 0 ? "ns-tree__lantern--failed" : total > 0 ? "ns-tree__lantern--ok" : "",
                 ]
@@ -301,7 +422,7 @@ export function NamespaceTree({
                 const stripWidth = pipRow && pipRow.count > 0 ? pipStripWidth(pipRow) : 0;
                 const stripLeft = pipRow && pipRow.count > 0
                   ? pipStripLeft(
-                      { x: projected.x, y: projected.y, dir: paintSeat.dir },
+                      { x: projected.x, dir: paintSeat.dir },
                       sceneSize.w,
                       stripWidth,
                     )
@@ -325,13 +446,18 @@ export function NamespaceTree({
                       aria-selected={isActive}
                       aria-label={`${ns.label} — ${line}`}
                       title={`${ns.label} — ${line}`}
-                      onClick={() => selectWorld(ns.id)}
+                      onClick={(e) => { e.stopPropagation(); selectWorld(ns.id); }}
                       onMouseEnter={() => setHoveredNs(ns.id)}
                       onMouseLeave={() => setHoveredNs((prev) => (prev === ns.id ? null : prev))}
                       onFocus={() => setHoveredNs(ns.id)}
                       onBlur={() => setHoveredNs((prev) => (prev === ns.id ? null : prev))}
                     >
-                      <TreeIcon src={namespaceIcon(ns.id)} fallback={NAMESPACE_ICON_FALLBACK} size="lantern" />
+                      {/* stone answers the light: transparent overlay (mid) or opaque profile-card (full) */}
+                      <TreeIcon
+                        src={namespaceIcon(ns.id, isFull)}
+                        fallback={NAMESPACE_ICON_FALLBACK}
+                        size="lantern"
+                      />
                     </button>
                     {/* status-counts row: orbs beneath COLLAPSED lanterns */}
                     {!isOpen && summary && !summary.error && summary.total > 0 && (
@@ -390,6 +516,17 @@ export function NamespaceTree({
               })}
             </ul>
 
+            {/* v3.13 — world title section: glass panel above the topmost lanterns */}
+            <WorldTitle
+              titleWorldId={titleWorldId}
+              activeWorldId={openNs}
+              namespaces={namespaces}
+              summaries={summaries}
+              titleWorldSeatIdx={titleWorldSeat?.seatIdx}
+              onSelectWorld={selectWorld}
+              compact={isCompact}
+            />
+
             {/* vine SVG */}
             {vine && (
               <svg
@@ -416,7 +553,7 @@ export function NamespaceTree({
             )}
             {openWorld && openSeat && summaryLoaded && !summaryFailed && openTasks.length === 0 && (
               <div className="ns-tree__note" style={notePos(openSeat, -90)}>
-                No tasks in this realm
+                no tasks in this world — its lantern rests
               </div>
             )}
             {openWorld && openSeat && summaryFailed && (

@@ -6,17 +6,19 @@ first-class plugin — and deployed as a live web hall at
 [odins-throne.shanaghy.com](https://odins-throne.shanaghy.com):
 
 - **Right pane** — the job list as a painted tree scene (the "namespace
-  lantern tree"): each namespace seated on one of the painting's own
-  lanterns (its icon in the painted lantern, which lights up when active,
-  and a row of small task icons beneath it — one per task), the
-  open world's work hanging from it as vine-strand job cards (one-open
-  accordion), plus the session count, the single light/dark theme toggle,
-  the compact-view toggle, the WSS badge, and Odin himself — all in one
-  right-aligned header row — docked
-  beside the conversation. Clicking a
-  job card opens the log terminal in a new workspace tab (or focuses it if
-  it is already open). The tree is fully keyboard-operable and
-  screen-reader-labelled — see
+  lantern tree", v3.13.2): each namespace seated on one of the painting's own
+  lanterns; a teardrop-shaped light state (off / mid / full) overlays each
+  lantern; the open world's vine curls from its lantern to its LANTERN_ANCHOR
+  pin and descends as vine-strand job cards (one-open accordion, 57px pitch);
+  a WorldTitle glass panel tracks the last-seated world's name, stats,
+  ringfort lore, and kin pills; dead-space click and 2-second empty-world rest
+  auto-close the vine; task-pip strips under collapsed worlds show up to 8
+  icons + "+N" overflow; stone icons swap overlay→opaque on full-open; plus
+  the session count, the single light/dark theme toggle, the compact-view
+  toggle, the WSS badge, and Odin himself — all in one right-aligned header
+  row — docked beside the conversation. Clicking a job card opens the log
+  terminal in a new workspace tab (or focuses it if it is already open). The
+  tree is fully keyboard-operable and screen-reader-labelled — see
   [`knowledge/tech-designs/tree-display.md`](knowledge/tech-designs/tree-display.md).
 - **Middle pane** — the log terminal (Claude Code JSONL **and** Hermes
   pretty-format streams, tool blocks, Norse tablets, verdict inscriptions) as

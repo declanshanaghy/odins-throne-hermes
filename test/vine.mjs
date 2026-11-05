@@ -39,7 +39,7 @@ const {
   vinePitch,
   VINE,
 } = await compileTs("../src/ui/lib/vineGeometry.ts", "vineGeometry.mjs");
-const { assignSeats, SEAT_POOL } = await compileTs("../src/ui/lib/treeSeats.ts", "treeSeats.mjs");
+const { assignSeats, SEAT_POOL, LANTERN_ANCHOR } = await compileTs("../src/ui/lib/treeSeats.ts", "treeSeats.mjs");
 const { taskIcon, taskIconFallback, ICON_BASE } = await compileTs(
   "../src/ui/lib/namespaceIcons.ts",
   "namespaceIcons.mjs",
@@ -65,12 +65,19 @@ const MODES = ["extended", "normal", "compact"];
 const SCENE = { w: 432, h: 576 }; // the prototype sidebar's painted box (3:4)
 const seats = assignSeats(["fenrir-agents", "say-so-agents", "a-new-world-x"]);
 const seat = seats.get("fenrir-agents");
+// scene-px helpers for the new vineFor(lanternPx, anchorPx, count, mode, sceneW) API
+function seatToLanternPx(s, W, H) { return { x: (s.x/100)*W, y: (s.y/100)*H }; }
+function anchorPxFor(seatIdx, W, H) {
+  const ap = LANTERN_ANCHOR[seatIdx];
+  return { x: (ap.x/100)*W, y: (ap.y/100)*H };
+}
+const L = seatToLanternPx(seat, SCENE.w, SCENE.h);
+const A = anchorPxFor(seat.seatIdx, SCENE.w, SCENE.h);
 
 // ── 1. the strand starts at the lantern's seat and cascades downward ──────
 for (const mode of MODES) {
   const n = 5;
-  const v = vineFor(seat, n, SCENE.w, SCENE.h, mode);
-  const L = { x: (seat.x / 100) * SCENE.w, y: (seat.y / 100) * SCENE.h };
+  const v = vineFor(L, A, n, mode, SCENE.w);
   assert.ok(v.d.startsWith(`M${L.x.toFixed(1)},${L.y.toFixed(1)}`), `${mode}: the vine extends FROM the lantern's seat`);
   assert.equal(v.points.length, n, `${mode}: one anchor per hung card`);
   assert.ok(v.d.includes("C"), `${mode}: the strand is a bezier cascade`);
@@ -79,14 +86,14 @@ for (const mode of MODES) {
   for (const p of v.points) {
     assert.ok(p.y >= L.y - 0.5, `${mode}: no card hangs above its lantern`);
   }
-  assert.equal(v.dir, seat.dir, `${mode}: the strand leans off the seat's dir`);
+  assert.equal(v.dir, 1, `${mode}: vineFor always returns dir=1 (all vines curl rightward)`);
 }
 
 // ── 2. cards never overlap at ANY job count, in every mode ───────────────
 for (const mode of MODES) {
   const minSpacing = mode === "compact" ? VINE.minCenterSpacingCompact : VINE.minCenterSpacing;
   for (let n = 1; n <= 64; n++) {
-    const v = vineFor(seat, n, SCENE.w, SCENE.h, mode);
+    const v = vineFor(L, A, n, mode, SCENE.w);
     let prevY = -Infinity;
     for (let i = 0; i < v.points.length; i++) {
       const p = v.points[i];
@@ -104,30 +111,30 @@ for (const mode of MODES) {
 }
 
 // ── 3. the vine EXTENDS with the job count ─────────────────────────────────
-const v5 = vineFor(seat, 5, SCENE.w, SCENE.h, "extended");
-const v6 = vineFor(seat, 6, SCENE.w, SCENE.h, "extended");
+const v5 = vineFor(L, A, 5, "extended", SCENE.w);
+const v6 = vineFor(L, A, 6, "extended", SCENE.w);
 assert.ok(
   v6.bottom > v5.bottom + vinePitch("extended") - 1,
   "one more job grows the strand by ~one pitch (it extends with the job count)",
 );
-const v1 = vineFor(seat, 1, SCENE.w, SCENE.h, "extended");
+const v1 = vineFor(L, A, 1, "extended", SCENE.w);
 assert.equal(v1.points.length, 1, "a lone card hangs alone");
-assert.equal(vineFor(seat, 0, SCENE.w, SCENE.h, "extended").points.length, 0, "an empty world hangs nothing");
-assert.ok(v1.points[0].y > (seat.y / 100) * SCENE.h, "a lone card hangs below its lantern");
+assert.equal(vineFor(L, A, 0, "extended", SCENE.w).points.length, 0, "an empty world hangs nothing");
+assert.ok(v1.points[0].y > L.y, "a lone card hangs below its lantern");
 assert.ok(
-  vineFor(seat, 24, SCENE.w, SCENE.h, "extended").bottom >
-    vineFor(seat, 12, SCENE.w, SCENE.h, "extended").bottom,
+  vineFor(L, A, 24, "extended", SCENE.w).bottom >
+    vineFor(L, A, 12, "extended", SCENE.w).bottom,
   "a longer strand reaches deeper",
 );
 
 // ── 4. the canvas scrolls when the strand outgrows the panel ──────────────
-const vShort = vineFor(seat, 3, SCENE.w, SCENE.h, "extended");
+const vShort = vineFor(L, A, 3, "extended", SCENE.w);
 assert.equal(
   vineCanvasHeight(vShort, SCENE.h),
   SCENE.h,
   "a short strand fits the scene — no scroll",
 );
-const vLong = vineFor(seat, 64, SCENE.w, SCENE.h, "extended");
+const vLong = vineFor(L, A, 64, "extended", SCENE.w);
 assert.ok(
   vineCanvasHeight(vLong, SCENE.h) > SCENE.h,
   "a strand that outgrows the panel grows the canvas (the scene scrolls)",
@@ -141,8 +148,11 @@ assert.equal(
 // ── 5. every hung card stays clamped inside the scene box, in every mode ──
 for (const mode of MODES) {
   const cardW = vineCardWidth(mode);
-  for (const s of SEAT_POOL) {
-    const v = vineFor({ x: s.x, y: s.y, dir: s.x > 66 ? -1 : 1 }, 9, SCENE.w, SCENE.h, mode);
+  for (let si = 0; si < SEAT_POOL.length; si++) {
+    const s = SEAT_POOL[si];
+    const lPx = { x: (s.x/100)*SCENE.w, y: (s.y/100)*SCENE.h };
+    const aPx = anchorPxFor(si, SCENE.w, SCENE.h);
+    const v = vineFor(lPx, aPx, 9, mode, SCENE.w);
     for (const p of v.points) {
       const box = vineCardBox(p, v.dir, cardW, SCENE.w);
       assert.ok(
@@ -150,15 +160,15 @@ for (const mode of MODES) {
         `${mode} seat ${s.x},${s.y}: card stays inside the scene (left=${box.left.toFixed(1)})`,
       );
       assert.ok(box.top >= 0, `${mode} seat ${s.x},${s.y}: card top in-scene`);
-      assert.equal(box.side, v.dir === 1 ? "right" : "left", "side follows the hang direction");
+      assert.equal(box.side, "right", "vineFor always returns dir=1, side always right");
     }
   }
 }
 
 // ── 5b. compact mode: 34px pitch, 142px cards, denser than normal ──────────
 {
-  const vc = vineFor(seat, 2, SCENE.w, SCENE.h, "compact");
-  const vn = vineFor(seat, 2, SCENE.w, SCENE.h, "normal");
+  const vc = vineFor(L, A, 2, "compact", SCENE.w);
+  const vn = vineFor(L, A, 2, "normal", SCENE.w);
   assert.ok(vc.bottom < vn.bottom, "compact strand is shorter (tighter pitch) than normal at same count");
   assert.equal(vineCardWidth("compact"), VINE.cardWidthCompact, "compact card width is the dense value");
   assert.equal(vinePitch("compact"), VINE.pitchCompact, "compact pitch is 34px");
@@ -220,5 +230,5 @@ for (const s of ["running", "pending", "failed", "succeeded", "cached", "purged"
   assert.ok(taskIconFallback(s).length > 0, `inline fallback exists for ${s}`);
 }
 
-console.log("VINE PASS — strand geometry (seat-anchored bezier, extends with job count, never-overlapping at any count in all three modes incl. compact 34px pitch, clamped in-scene, canvas scrolls), hang order (running → failed → pending → succeeded), status sigils (hammer/dice/raven/ring + fallbacks)");
+console.log("VINE PASS — strand geometry (LANTERN_ANCHOR-pinned bezier v3.13.2, extends with job count, never-overlapping at any count in all three modes incl. compact 34px pitch, clamped in-scene, canvas scrolls), hang order (running → failed → pending → succeeded), status sigils (hammer/dice/raven/ring + fallbacks)");
 process.exit(0);
