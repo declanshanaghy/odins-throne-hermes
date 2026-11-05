@@ -30,7 +30,7 @@ const src = readFileSync(new URL("../src/ui/lib/treeSeats.ts", import.meta.url),
 const { code } = transformSync(src, { loader: "ts", format: "esm" });
 const tmp = mkdtempSync(join(tmpdir(), "tree-seats-"));
 writeFileSync(join(tmp, "treeSeats.mjs"), code);
-const { TREE_SCENE, SEAT_POOL, CURATED_SEATS, LANTERN_ANCHOR, assignSeats, namespaceSeat, projectSeat } = await import(
+const { TREE_SCENE, SEAT_POOL, CURATED_SEATS, LANTERN_ANCHOR, SEAT_POOL_LIGHT, LANTERN_ANCHOR_LIGHT, LANTERN_SIZE_LIGHT, seatPoolFor, lanternAnchorsFor, lanternSizesFor, assignSeats, namespaceSeat, projectSeat } = await import(
   pathToFileURL(join(tmp, "treeSeats.mjs")).href
 );
 
@@ -61,6 +61,67 @@ assert.ok(
   `scene ratio ~3:4 (got ${TREE_SCENE.aspectRatio.toFixed(4)})`,
 );
 assert.equal(TREE_SCENE.sidebarWidthPx, 432, "prototype sidebar scene width");
+
+// ── the LIGHT painting ships as its own backdrop asset (issue #123) ─────────
+const jpgLight = readFileSync(new URL("../src/ui/assets/tree-backdrop-light.jpg", import.meta.url));
+assert.equal(jpgLight[0], 0xff, "light backdrop magic byte 0 (JPEG SOI)");
+assert.equal(jpgLight[1], 0xd8, "light backdrop magic byte 1 (JPEG SOI)");
+const dimsLight = jpegDims(jpgLight);
+assert.ok(dimsLight, "light backdrop JPEG has a parseable SOF frame header");
+assert.equal(dimsLight.w, TREE_SCENE.backdropWidthPx, "light backdrop width matches TREE_SCENE (896)");
+assert.equal(dimsLight.h, TREE_SCENE.backdropHeightPx, "light backdrop height matches TREE_SCENE (1200)");
+assert.ok(
+  Buffer.compare(jpg, jpgLight) !== 0,
+  "light painting is a SEPARATE asset from the dark painting (byte-distinct)",
+);
+
+// ── SEAT_POOL_LIGHT + anchors/silhouettes match the v3.17 prototype VERBATIM ─
+// Values from design/tree-display/tree-display-prototype.html (v3.17, round
+// 25, commit 1dbbe8a — pixel-detected amber lantern cores, PIXELS WIN).
+const PROTOTYPE_SEAT_POOL_LIGHT = [
+  { x: 37.15, y: 74.51 }, { x: 28.07, y: 69.63 }, { x: 40.65, y: 69.61 },
+  { x: 30.2, y: 58.12 }, { x: 14.51, y: 56.75 }, { x: 36.92, y: 51.86 },
+  { x: 41.14, y: 48.06 }, { x: 49.88, y: 45.82 }, { x: 16.47, y: 40.35 },
+  { x: 43.21, y: 34.53 }, { x: 26.13, y: 26.87 },
+];
+assert.equal(SEAT_POOL_LIGHT.length, 11, "light pool has one lantern per painted seat (11)");
+for (let i = 0; i < PROTOTYPE_SEAT_POOL_LIGHT.length; i++) {
+  assert.deepEqual(SEAT_POOL_LIGHT[i], PROTOTYPE_SEAT_POOL_LIGHT[i], `light painted seat ${i} matches the v3.17 prototype`);
+}
+// every light seat is a valid painting % and sits in the left half (composition contract)
+for (const s of SEAT_POOL_LIGHT) {
+  assert.ok(s.x > 0 && s.x < 50, `light seat x in (0,50) — lanterns live in the left half (${s.x})`);
+  assert.ok(s.y > 0 && s.y <= 100, `light seat y in (0,100] (${s.y})`);
+}
+const PROTOTYPE_LANTERN_ANCHOR_LIGHT = [
+  { x: 40.3, y: 74.8 }, { x: 32.1, y: 69.9 }, { x: 44.3, y: 69.9 },
+  { x: 33.2, y: 58.4 }, { x: 18.5, y: 57.0 }, { x: 41.1, y: 52.1 },
+  { x: 44.2, y: 48.3 }, { x: 53.3, y: 46.1 }, { x: 19.5, y: 40.6 },
+  { x: 46.8, y: 34.8 }, { x: 29.3, y: 27.1 },
+];
+assert.equal(LANTERN_ANCHOR_LIGHT.length, 11, "LANTERN_ANCHOR_LIGHT has one entry per seat (11)");
+for (let i = 0; i < 11; i++) {
+  assert.deepEqual(LANTERN_ANCHOR_LIGHT[i], PROTOTYPE_LANTERN_ANCHOR_LIGHT[i], `light anchor ${i} matches the v3.17 prototype`);
+  assert.ok(Math.abs(LANTERN_ANCHOR_LIGHT[i].x - SEAT_POOL_LIGHT[i].x) < 15, `light anchor ${i}.x near its seat`);
+  assert.ok(Math.abs(LANTERN_ANCHOR_LIGHT[i].y - SEAT_POOL_LIGHT[i].y) < 15, `light anchor ${i}.y near its seat`);
+}
+const PROTOTYPE_LANTERN_SIZE_LIGHT = [
+  { w: 28, h: 50 }, { w: 41, h: 53 }, { w: 36, h: 51 }, { w: 26, h: 50 },
+  { w: 41, h: 54 }, { w: 44, h: 68 }, { w: 26, h: 50 }, { w: 32, h: 54 },
+  { w: 26, h: 54 }, { w: 34, h: 50 }, { w: 28, h: 51 },
+];
+assert.equal(LANTERN_SIZE_LIGHT.length, 11, "LANTERN_SIZE_LIGHT has one entry per seat (11)");
+for (let i = 0; i < 11; i++) {
+  assert.deepEqual(LANTERN_SIZE_LIGHT[i], PROTOTYPE_LANTERN_SIZE_LIGHT[i], `light silhouette ${i} matches the v3.17 prototype`);
+}
+
+// theme-selectors return the ACTIVE pool / anchors / silhouettes
+assert.equal(seatPoolFor("dark"), SEAT_POOL, "seatPoolFor(dark) === SEAT_POOL");
+assert.equal(seatPoolFor("light"), SEAT_POOL_LIGHT, "seatPoolFor(light) === SEAT_POOL_LIGHT");
+assert.equal(lanternAnchorsFor("dark"), LANTERN_ANCHOR, "lanternAnchorsFor(dark) === LANTERN_ANCHOR");
+assert.equal(lanternAnchorsFor("light"), LANTERN_ANCHOR_LIGHT, "lanternAnchorsFor(light) === LANTERN_ANCHOR_LIGHT");
+assert.equal(lanternSizesFor("dark").length, 11, "lanternSizesFor(dark) has 11 entries");
+assert.equal(lanternSizesFor("light"), LANTERN_SIZE_LIGHT, "lanternSizesFor(light) === LANTERN_SIZE_LIGHT");
 
 // ── seat pool + curated claims match the v3.9.2 prototype VERBATIM ──
 // Values from design/tree-display/tree-display-prototype.html (commit
@@ -137,6 +198,54 @@ for (const [id, seat] of seats) {
 
 // Deterministic: the same list seats identically across runs.
 assert.deepEqual(assignSeats(LIVE_LIST), seats, "seating is deterministic for a given list");
+
+// ── theme-selected seating (issue #123): same seat INDEX, its own painting's
+// lantern — the light pool seats the SAME realms on SEAT_POOL_LIGHT through
+// the SAME assignSeats()/projectSeat() machinery, no new projection math.
+const seatsLight = assignSeats(LIVE_LIST, "light");
+assert.equal(seatsLight.size, LIVE_LIST.length, "light seating seats every namespace");
+for (const [id, darkSeat] of seats) {
+  const lightSeat = seatsLight.get(id);
+  assert.ok(lightSeat, `light seat exists for ${id}`);
+  assert.equal(lightSeat.seatIdx, darkSeat.seatIdx, `${id} keeps its seat INDEX across themes`);
+  assert.equal(lightSeat.dir, 1, `${id} light seat dir = 1`);
+  assert.equal(lightSeat.x, SEAT_POOL_LIGHT[lightSeat.seatIdx].x, `${id} light seat.x from SEAT_POOL_LIGHT`);
+  assert.equal(lightSeat.y, SEAT_POOL_LIGHT[lightSeat.seatIdx].y, `${id} light seat.y from SEAT_POOL_LIGHT`);
+  assert.notDeepEqual([lightSeat.x, lightSeat.y], [darkSeat.x, darkSeat.y], `${id} re-seats onto the parchment painting's own lantern`);
+}
+// curated claims keep their indices in light too
+assert.equal(seatsLight.get("fenrir-agents").seatIdx, 9, "fenrir-agents keeps curated seat index 9 in light");
+assert.equal(seatsLight.get("say-so-agents").seatIdx, 6, "say-so-agents keeps curated seat index 6 in light");
+// determinism in light as well
+assert.deepEqual(assignSeats(LIVE_LIST, "light"), seatsLight, "light seating is deterministic");
+// the SAME projectSeat() carries the light pool on-canvas wherever the
+// painting's left-50% composition stays inside the cover crop. The narrowest
+// dock scroller (268x746) crops the painting at scene x = 268/557 ≈ 48.1%,
+// past light seat 7 (x 49.88%) — the projection is still EXACT there (the
+// stone tracks its lantern; the lantern itself is cropped out with the
+// painting, the same limitation the dark pool's anchor 10 at x 50.9 has).
+for (const [W, H] of [[432, 640], [500, 800], [800, 600], [668, 443]]) {
+  for (const p of SEAT_POOL_LIGHT) {
+    const r = projectSeat(p, W, H);
+    assert.ok(r.x >= 0 && r.x <= 100, `light seat (${p.x},${p.y}) on-canvas at ${W}x${H}: scene x ${r.x.toFixed(2)}`);
+    assert.ok(r.y >= 0 && r.y <= 100, `light seat (${p.x},${p.y}) scene y in range at ${W}x${H}: ${r.y.toFixed(2)}`);
+  }
+}
+// formula-exactness at the narrowest dock: the light seat maps through the
+// SAME left-anchored + vertically-centered crop math as the dark pool
+{
+  const [W, H] = [268, 746];
+  const k = Math.max(W / 896, H / 1200);
+  const dw = 896 * k, dh = 1200 * k;
+  const fl = 0, ft = (H - dh) / 2;
+  for (const p of SEAT_POOL_LIGHT) {
+    const r = projectSeat(p, W, H);
+    const expectedX = (p.x / 100 * dw + fl) / W * 100;
+    const expectedY = (p.y / 100 * dh + ft) / H * 100;
+    assert.ok(Math.abs(r.x - expectedX) < 0.01, `narrow dock: light seat (${p.x},${p.y}) x is formula-exact`);
+    assert.ok(Math.abs(r.y - expectedY) < 0.01, `narrow dock: light seat (${p.x},${p.y}) y is formula-exact`);
+  }
+}
 
 // ── curated seats are never stealable ─────────────────────────────────────────
 const laterList = ["brand-new-world", ...LIVE_LIST];
@@ -331,11 +440,22 @@ assert.deepEqual(
   "dir -1 (vine leans left) → the row sits right of the lantern",
 );
 
-// ── the build inlines the painting into the shipped bundle ───────────────────
+// ── the build inlines BOTH paintings into the shipped bundle ────────────────
 const bundle = readFileSync(new URL("../desktop/plugin.js", import.meta.url), "utf8");
 assert.ok(
   bundle.includes("data:image/jpeg;base64,"),
   "painted backdrop is bundled into desktop/plugin.js as an inlined data URL",
+);
+assert.ok(
+  (bundle.match(/data:image\/jpeg;base64,/g) ?? []).length >= 2,
+  "BOTH paintings (dark moonlit + light parchment) are bundled into desktop/plugin.js",
+);
+// the tree picks the painting by theme (issue #123)
+const treeSrc = readFileSync(new URL("../src/ui/components/NamespaceTree.tsx", import.meta.url), "utf8");
+assert.ok(treeSrc.includes("tree-backdrop-light.jpg"), "NamespaceTree imports the light painting");
+assert.ok(
+  treeSrc.includes('theme === "light" ? treeBackdropLight : treeBackdrop'),
+  "NamespaceTree picks the painting by theme",
 );
 
 // ── single-row pip strip left anchor (issue #54) ──────────────────────────────
@@ -381,4 +501,4 @@ assert.equal(
 const rowWith7Visible = taskPips(tasksN(12));
 assert.ok(pipStripWidth(rowWith7Visible) > 7 * TASK_PIPS.sizePx + 6 * TASK_PIPS.gapPx, "overflow row: strip width includes the chip");
 
-console.log("tree-seats: painting (v3.9 tall) + 11 painted-% seat pool + LANTERN_ANCHOR (v3.13.2) + runtime seating (seatIdx) + projectSeat + task pip rows + single-row strip (issues #10, #11, #39, #54, #69, #95) verified");
+console.log("tree-seats: paintings (dark v3.9 tall + light v3.17 parchment) + BOTH painted-% seat pools + LANTERN_ANCHOR(_LIGHT) + theme-selected seating + projectSeat + task pip rows + single-row strip (issues #10, #11, #39, #54, #69, #95, #123) verified");

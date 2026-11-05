@@ -190,6 +190,22 @@ const css = document.getElementById("odins-throne-hermes-style").textContent;
 assert.ok(css.includes(".odins-throne-root .sidebar"), "CSS selectors scoped to the plugin root");
 assert.ok(css.includes('.odins-throne-root[data-theme="light"]'), "light theme scoped to the plugin root");
 assert.ok(!/^\[data-theme/.test(css), "no unscoped [data-theme] leakage");
+// ── Parchment & Mead Hall (issue #123): the light theme ships in the bundle ──
+// Token contract (proposal #2's measured AA table, prototype v3.17): vellum
+// #FBF5E6, iron-gall ink #2B1D12, ember #B4451B, bronze rules #C3A87A,
+// verdigris #0B6B5C, mead glow — nothing white, nothing pure black.
+for (const token of ["#FBF5E6", "#2B1D12", "#B4451B", "#C3A87A", "#0B6B5C", "#E8B54A"]) {
+  assert.ok(css.includes(token), `light theme token ${token} ships in the scoped CSS`);
+}
+assert.ok(!css.includes("#ffffff") && !css.includes("#FFFFFF"), "no white cards anywhere in the light theme");
+const lightJcard = css.match(/\.odins-throne-root\[data-theme="light"\] \.jcard\s*\{[^}]*\}/)?.[0] ?? "";
+assert.ok(lightJcard.includes("#FBF5E6"), "light vine card is OPAQUE vellum (#FBF5E6)");
+const lightWtitle = css.match(/\.odins-throne-root\[data-theme="light"\] \.wtitle\s*\{[^}]*\}/)?.[0] ?? "";
+assert.ok(lightWtitle.includes("backdrop-filter: none"), "light world-title strikes the frost (opaque decree)");
+const lightOffVeil = css.match(/\.odins-throne-root\[data-theme="light"\] \.lseat--off\s+\.lseat__veil\s*\{[^}]*\}/)?.[0] ?? "";
+assert.ok(lightOffVeil.includes("opacity: 0.55") || lightOffVeil.includes("opacity: .55"), "light ladder rung off = .55 wash");
+const lightFullRing = css.match(/\.odins-throne-root\[data-theme="light"\] \.lseat--full\s+\.lseat__ring\s*\{[^}]*\}/)?.[0] ?? "";
+assert.ok(lightFullRing.includes("#0B6B5C"), "light FULL ring is verdigris #0B6B5C");
 assert.ok(document.getElementById("odins-throne-hermes-fonts"), "fonts link injected");
 
 // ── render both surfaces ────────────────────────────────────────────────────
@@ -865,8 +881,8 @@ assert.equal(
 document.querySelector('.ns-tree__item[data-namespace="shanaghy-com-agents"] .ns-tree__lantern').click();
 await flush();
 assert.ok(
-  document.getElementById("pane").innerHTML.includes("no tasks in this world"),
-  "empty namespace shows the no-tasks leaf (v3.13.2 message)",
+  document.getElementById("pane").innerHTML.includes("no tasks in this realm"),
+  "empty namespace shows the no-tasks leaf (v3.13.2 message; issue #123 copy rule: realm, never world)",
 );
 
 // Summary-unavailable world drills into its dimmed empty state.
@@ -894,7 +910,7 @@ assert.equal(
 document.querySelector('.ns-tree__item[data-namespace="shanaghy-com-agents"] .ns-tree__lantern').click();
 await flush();
 assert.ok(
-  document.getElementById("pane").innerHTML.includes("no tasks in this world"),
+  document.getElementById("pane").innerHTML.includes("no tasks in this realm"),
   "reopening a world regrows its branch (v3.13.2 message)",
 );
 assert.equal(
