@@ -9219,6 +9219,20 @@ function TreeIcon({ src, fallback, size = "ns" }) {
   );
 }
 
+// src/ui/lib/formatAge.ts
+function formatAge(startTime, now = Date.now()) {
+  if (startTime == null) return "?";
+  const ms = Math.max(0, now - startTime);
+  const seconds = Math.floor(ms / 1e3);
+  if (seconds < 60) return `${Math.max(1, seconds)}s`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h`;
+  const days = Math.floor(hours / 24);
+  return `${days}d`;
+}
+
 // src/ui/components/VineCard.tsx
 import { jsx as jsx14, jsxs as jsxs9 } from "react/jsx-runtime";
 function isCancellable(status) {
@@ -9286,6 +9300,8 @@ function VineCard({
             job.issue,
             " \xB7 ",
             job.agentName,
+            " \xB7 ",
+            /* @__PURE__ */ jsx14("span", { className: "jcard__age", "aria-label": `age: ${formatAge(job.startTime)}`, children: formatAge(job.startTime) }),
             isPinned2 ? " \xB7 \u{1F4CC}" : ""
           ] }) })
         ] }),
