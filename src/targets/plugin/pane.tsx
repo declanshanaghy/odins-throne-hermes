@@ -3,13 +3,14 @@
 // window-level overlays (modals, toasts, banners) and plugin chrome (pairing
 // card, settings dialog).
 
-import { useMemo, useState, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { ErrorBoundary } from "../../ui/components/ErrorBoundary";
 import { Sidebar } from "../../ui/components/Sidebar";
 import { ThroneOverlays } from "../../ui/components/Overlays";
 import { App } from "../../ui/App";
 import { useThrone } from "../../ui/store";
 import { useTheme } from "../../ui/hooks/useTheme";
+import { useExternalLinkRouter } from "./externalLinks";
 import {
   acceptPairingKey,
   clearSession,
@@ -143,6 +144,10 @@ export function ThronePane() {
   // Re-render when the session changes (pair/unpair) so the card toggles.
   useSyncExternalStore(subscribeSession, sessionSnapshot, sessionSnapshot);
   const { theme } = useTheme();
+  // Title-box / lore / kin / decree / wiki anchors: the app denies
+  // window.open, so route external link clicks to the real browser.
+  const rootRef = useRef<HTMLDivElement>(null);
+  useExternalLinkRouter(rootRef);
   // The bridge must NOT re-render when this pane re-renders: every store
   // publish re-renders ThronePane, a fresh <App/> element would re-render the
   // bridge, and its publish-effect would publish again — an infinite loop.
@@ -150,6 +155,7 @@ export function ThronePane() {
   const bridge = useMemo(() => <App />, []);
   return (
     <div
+      ref={rootRef}
       className="odins-throne-root"
       data-theme={theme === "light" ? "light" : undefined}
       style={{ width: "100%", height: "100%", position: "relative", overflow: "hidden" }}

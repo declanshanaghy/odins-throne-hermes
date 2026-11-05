@@ -132,6 +132,12 @@ dom.window.fetch = globalThis.fetch;
 // bundle imports it below): __stubWorkspaceOpens (newly stacked tabs),
 // __stubWorkspaceFocuses (fronted already-open tabs), __stubWorkspaceTabs
 // (open tabs by id — the disposer is under .close).
+//
+// __stubOpenExternal records every ctx.os.openExternal call (issue #103:
+// raw anchors are click-dead in-app, the pane routes them to the real
+// browser through this door).
+
+globalThis.__stubOpenExternal = [];
 
 // ── load the built plugin through the loader (stub SDK + real React) ───────
 const plugin = (await import("../desktop/plugin.js")).default;
@@ -151,6 +157,12 @@ const ctx = {
     get: () => null,
     set: () => {},
     remove: () => {},
+  },
+  os: {
+    openExternal: (url) => {
+      globalThis.__stubOpenExternal.push(url);
+      return true;
+    },
   },
   runAction: async () => ({ ok: false, reason: "unknown" }),
 };
@@ -790,6 +802,31 @@ assert.equal(
   8,
   "selecting a lantern drills into its tasks",
 );
+
+// ── external anchor routing (issue #103) ─────────────────────────────────────
+// The desktop app's setWindowOpenHandler denies window.open, so raw
+// target=_blank anchors are click-dead in the plugin. The pane routes them
+// through ctx.os.openExternal (the real browser): clicking the title box's
+// world-name link must be default-prevented and land on the full absolute
+// shanaghy.com URL — the same URL the web hall would open in a new tab.
+{
+  const nameLink = document.querySelector(".wtitle__name-link");
+  assert.ok(nameLink, "title box renders the seated world's name as a link (v3.16)");
+  const href = nameLink.getAttribute("href");
+  assert.match(href, /^https:\/\/www\.shanaghy\.com\//,
+    "title-box name link carries an absolute shanaghy.com URL");
+  const routedBefore = globalThis.__stubOpenExternal.length;
+  const clickEv = new dom.window.MouseEvent("click", { bubbles: true, cancelable: true });
+  nameLink.dispatchEvent(clickEv);
+  assert.ok(clickEv.defaultPrevented,
+    "raw anchor click is cancelled (window.open is denied in-app — issue #103)");
+  await flush();
+  assert.equal(globalThis.__stubOpenExternal.length, routedBefore + 1,
+    "anchor click routed through ctx.os.openExternal (issue #103)");
+  assert.equal(globalThis.__stubOpenExternal.at(-1), href,
+    "openExternal received the link's full href");
+}
+
 
 // Cross-world task click: a task in a non-active namespace switches the
 // namespace, keeps that session selected (pending-select flow in App) AND
