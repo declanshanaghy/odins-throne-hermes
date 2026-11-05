@@ -7,8 +7,9 @@ first-class plugin — and deployed as a live web hall at
 
 - **Right pane** — the job list as a painted tree scene (the "namespace
   lantern tree", v3.13.2): each namespace seated on one of the painting's own
-  lanterns; a teardrop-shaped light state (off / mid / full) overlays each
-  lantern; the open world's vine curls from its lantern to its LANTERN_ANCHOR
+  lanterns; a four-tier lantern dim ladder (full / mid / empty / off, veil
+  opacity 75/50/25/0) overlays each lantern; the open world's vine curls from
+  its lantern to its LANTERN_ANCHOR
   pin and descends as vine-strand job cards (one-open accordion, 57px pitch);
   a WorldTitle glass panel tracks the last-seated world's name, stats,
   ringfort lore, and kin pills; dead-space click and 2-second empty-world rest
@@ -20,6 +21,18 @@ first-class plugin — and deployed as a live web hall at
   terminal in a new workspace tab (or focuses it if it is already open). The
   tree is fully keyboard-operable and screen-reader-labelled — see
   [`knowledge/tech-designs/tree-display.md`](knowledge/tech-designs/tree-display.md).
+- **Realm knowledge db** (v3.16): the title box's ringfort lore and kin pills
+  are backed by a knowledge db (`src/ui/lib/realmKnowledge.ts`, served through
+  `worldLore.ts` and `linkifyLore.ts`): the garden's 98 pages crawled into
+  `src/ui/data/realm-knowledge.json`, embedded in the bundle. Realm titles and
+  kin names link out to their shanaghy.com pages on both surfaces (plugin pane
+  and web hall); see "Links open in your real browser" for the click routing.
+- **WSS tooltip portal**: the live-badge tooltip is portaled to `document.body`
+  with viewport clamping (`src/ui/components/StatusBadge.tsx`), so it never
+  clips at pane edges or stacks under app chrome.
+- **Seat projection**: `projectSeat` (`src/ui/lib/treeSeats.ts`) maps each
+  lantern seat's y through the vertically-centered cover crop, so seats stay
+  aligned with the painting when it is cropped to fill the pane.
 - **Middle pane** — the log terminal (Claude Code JSONL **and** Hermes
   pretty-format streams, tool blocks, Norse tablets, verdict inscriptions) as
   a workspace page at `/odins-throne`.
