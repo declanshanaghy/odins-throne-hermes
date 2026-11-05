@@ -1,48 +1,22 @@
 // Icons for the namespace drilldown tree — pulled from shanaghy.com's live
-// icon library at https://www.shanaghy.com/assets/icons/ (verified 200s).
+// icon library (the source of truth; shipped code always points at the live site).
 //
-// Namespaces get a curated icon where the fit is obvious; anything unknown
-// still gets a deterministic icon by hashing the namespace id into the pool,
-// so the tree is never icon-less and never flickers between refreshes.
-// Task nodes get a small per-status icon (hammer while running, raven for
-// failure, …). The <img> tags load remotely; TreeIcon swaps in an inline
-// glyph via onError so an offline panel never shows broken images.
+// Curated namespaces get a fitting sigil. Unrecognized namespaces carry the
+// generic "?" unknown stone — never a borrowed entity's face.
+// `namespaceIcon(nsId, opaque)` returns the transparent overlay set (mid state)
+// or the opaque profile-card set (full state); the stone answers the light.
+// Task nodes get a small per-status icon (hammer/dice/raven/ring).
+// TreeIcon swaps in an inline glyph via onError so an offline panel stays legible.
 
 import type { JobStatus } from "../hooks/useNamespaceSummaries";
 
+/** Opaque (profile-card) icon set — `/assets/icons/` on shanaghy.com. */
 export const ICON_BASE = "https://www.shanaghy.com/assets/icons/";
+/** Transparent overlay icon set — `/assets/icons/overlay/` on shanaghy.com. */
+export const OVERLAY_ICON_BASE = "https://www.shanaghy.com/assets/icons/overlay/";
 
-/** The root icon library on shanaghy.com — the fallback hash pool. */
-export const ICON_POOL: readonly string[] = [
-  "raven.png",
-  "scroll.png",
-  "horn.png",
-  "moon.png",
-  "ring.png",
-  "hammer.png",
-  "cauldron.png",
-  "dice.png",
-  "octopi.png",
-  "wolf-coins.png",
-  "fianna-watch.png",
-  "fionn-salmon.png",
-  "gleipnir.png",
-  "moss-quiet.png",
-  "mossiah.png",
-  "moinin.png",
-  "sean-chai.png",
-  "hal9005.png",
-  "the-daykeeper.png",
-  "candle.png",
-  "smith-odin.png",
-  "forge-logo.png",
-  "webknot.png",
-  "backup-keeper.png",
-  "deco.png",
-  "zigbee2mqtt.png",
-  "cyclone-vacuum.png",
-  "front-doorbell.png",
-];
+/** Generic unknown-stone icon filename — used for any unrecognized namespace. */
+export const UNKNOWN_STONE = "unknown-stone.png";
 
 /** Curated namespace → icon file (known worlds get a fitting sigil). */
 const NAMESPACE_CURATED: Record<string, string> = {
@@ -56,22 +30,20 @@ const NAMESPACE_CURATED: Record<string, string> = {
   "shanaghy-com-agents": "webknot.png",
   // the mown moss of the goatmower's rounds
   "re-goatmower-agents": "mossiah.png",
+  // Odin's Throne Hermes agents — the candle on the throne hill
+  "odins-throne-hermes-agents": "candle.png",
 };
 
-/** djb2 — small, fast, stable across runs. */
-function hashKey(key: string): number {
-  let h = 5381;
-  for (let i = 0; i < key.length; i++) {
-    h = ((h << 5) + h + key.charCodeAt(i)) | 0;
-  }
-  return Math.abs(h);
-}
-
-/** Icon URL for a namespace — curated map first, deterministic hash fallback. */
-export function namespaceIcon(nsId: string): string {
-  const curated = NAMESPACE_CURATED[nsId];
-  if (curated) return ICON_BASE + curated;
-  return ICON_BASE + ICON_POOL[hashKey(nsId) % ICON_POOL.length]!;
+/**
+ * Icon URL for a namespace.
+ * - Curated namespaces return their fitting sigil from NAMESPACE_CURATED.
+ * - Unrecognized namespaces return the generic "?" unknown stone.
+ * - `opaque = true` returns the opaque profile-card set (full/active state);
+ *   `opaque = false` (default) returns the transparent overlay set (mid state).
+ */
+export function namespaceIcon(nsId: string, opaque = false): string {
+  const file = NAMESPACE_CURATED[nsId] ?? UNKNOWN_STONE;
+  return (opaque ? ICON_BASE : OVERLAY_ICON_BASE) + file;
 }
 
 /** Small per-status icon for task nodes — the task's "sigil of state". */
