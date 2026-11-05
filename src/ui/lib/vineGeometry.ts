@@ -111,7 +111,7 @@ export function vineFor(
   anchorPx: Pt,
   count: number,
   mode: VineMode,
-  sceneW: number,
+  _sceneW: number,
 ): VineGeometry {
   const pitch = vinePitch(mode);
   const cardH = mode === "compact" ? VINE.cardHeightCompact : VINE.cardHeightStandard;

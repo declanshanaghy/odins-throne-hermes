@@ -428,6 +428,193 @@ var styles_default = `.odins-throne-root .odins-throne-root {
   -webkit-mask-image: linear-gradient(180deg, #000 90%, transparent 100%);
           mask-image: linear-gradient(180deg, #000 90%, transparent 100%);
 }
+/* \u2500\u2500 lantern-shaped light states (v3.10, issue #95) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+ * One SVG (.lshapes) under the lantern buttons, one <g class="lseat"> per
+ * SEAT_POOL entry (all 11 \u2014 seated or not), each holding three stacked copies
+ * of LANTERN_PATH (the teardrop silhouette traced off the backdrop's bright
+ * cores). Three states:
+ *   lseat--off   no namespace: dark veil (multiply) dims the painted glow pool
+ *   lseat--mid   namespace seated, list collapsed: soft cool screen-blend glow
+ *   lseat--full  the clicked world (list showing): fully lit + teal ring
+ * is-hover lifts a mid seat's light toward full on hover/focus. */
+.odins-throne-root .lshapes {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+.odins-throne-root .lseat__veil,
+.odins-throne-root .lseat__glow,
+.odins-throne-root .lseat__ring,
+.odins-throne-root .lseat__halo { transition: opacity 0.25s; }
+/* veil: dark fill, multiply \u2014 dims the painted lantern */
+.odins-throne-root .lseat__veil { fill: #04070a; mix-blend-mode: multiply; opacity: 0.93; }
+/* halo: second wider veil (1.7x) swallows the whole glow pool for OFF seats */
+.odins-throne-root .lseat__halo { fill: #04070a; mix-blend-mode: multiply; opacity: 0; }
+/* glow: cool moonlit radial, screen-blend \u2014 lights a seated lantern */
+.odins-throne-root .lseat__glow { fill: url(#lglowg); mix-blend-mode: screen; opacity: 0; }
+/* ring: teal outline, only visible in FULL state */
+.odins-throne-root .lseat__ring { fill: none; stroke: transparent; stroke-width: 2.4; }
+/* OFF: veiled dark (outline stays visible at ~35 lum) */
+.odins-throne-root .lseat--off .lseat__veil { opacity: 0.75; }
+.odins-throne-root .lseat--off .lseat__halo { opacity: 0.5; }
+.odins-throne-root .lseat--off .lseat__glow { opacity: 0; }
+/* MID: intermediately lit */
+.odins-throne-root .lseat--mid .lseat__veil { opacity: 0.34; }
+.odins-throne-root .lseat--mid .lseat__glow { opacity: 0.5; }
+/* hover lifts MID toward full */
+.odins-throne-root .lseat--mid.is-hover .lseat__veil { opacity: 0.12; }
+.odins-throne-root .lseat--mid.is-hover .lseat__glow { opacity: 0.78; }
+/* FULL: fully lit + teal ring */
+.odins-throne-root .lseat--full .lseat__veil { opacity: 0; }
+.odins-throne-root .lseat--full .lseat__glow { opacity: 1; }
+.odins-throne-root .lseat--full .lseat__ring {
+  stroke: #15b8a6;
+  filter: drop-shadow(0 0 5px rgba(21, 184, 166, 0.8));
+}
+@media (prefers-reduced-motion: reduce) {
+  .odins-throne-root .lseat__veil, .odins-throne-root .lseat__glow, .odins-throne-root .lseat__ring, .odins-throne-root .lseat__halo { transition: none; }
+}
+
+/* \u2500\u2500 world title section (v3.13, issue #95) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+ * Glass panel riding on the painting's upper sky \u2014 ~90% scene width, above the
+ * topmost lanterns. Dims to 50% on deactivation; brightens to 100% on select.
+ * pointer-events: none on the pane; only kin pills catch clicks. */
+.odins-throne-root .wtitle {
+  position: absolute;
+  z-index: 30;
+  left: 5%;
+  top: 2.5%;
+  width: 90%;
+  padding: 8px 12px 8px;
+  border: 1px solid rgba(176, 196, 201, 0.14);
+  border-left: 3px solid #15b8a6;
+  border-radius: 12px;
+  background: rgba(6, 10, 14, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  opacity: 0.5;
+  transition: opacity 0.6s ease;
+  pointer-events: none;
+}
+.odins-throne-root .wtitle.is-live { opacity: 1; }
+.odins-throne-root .wtitle__row { display: flex; align-items: center; gap: 8px; }
+.odins-throne-root .wtitle__id { min-width: 0; }
+.odins-throne-root .wtitle__name {
+  font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  font-size: 14px;
+  line-height: 1.15;
+  letter-spacing: 0.4px;
+  color: rgba(176, 196, 201, 0.9);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.odins-throne-root .wtitle.is-live .wtitle__name { color: #15b8a6; }
+.odins-throne-root .wtitle__state {
+  display: block;
+  font-size: 9.5px;
+  line-height: 1.2;
+  margin-top: 1px;
+  color: rgba(126, 148, 154, 0.9);
+  font-style: italic;
+  letter-spacing: 0.3px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.odins-throne-root .wtitle__stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 8px;
+  margin: 5px 0 6px;
+  font-size: 10px;
+  color: rgba(126, 148, 154, 0.9);
+}
+.odins-throne-root .wtitle__stats .st {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.odins-throne-root .wtitle__stats .st i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+  flex: none;
+}
+/* garden band \u2014 left 25% moss bed with the opaque stone; lore to the right */
+.odins-throne-root .wtitle__band { display: flex; gap: 10px; align-items: stretch; }
+.odins-throne-root .wtitle__garden {
+  flex: 0 0 25%;
+  min-height: 48px;
+  position: relative;
+  border: 1px solid rgba(138, 163, 86, 0.26);
+  border-radius: 8px;
+  overflow: hidden;
+  background:
+    radial-gradient(46% 34% at 74% 8%, rgba(176, 196, 201, 0.10), transparent 70%),
+    radial-gradient(90% 80% at 50% 105%, rgba(74, 93, 35, 0.45), rgba(10, 16, 20, 0.92) 78%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.odins-throne-root .wtitle__garden .ground {
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  bottom: 5px;
+  height: 9px;
+  border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+  background: linear-gradient(180deg, rgba(138, 163, 86, 0.5), rgba(74, 93, 35, 0.1));
+  filter: blur(0.4px);
+}
+.odins-throne-root .wtitle__stone {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.95)) drop-shadow(0 0 7px rgba(21, 184, 166, 0.55));
+}
+.odins-throne-root .wtitle__lore {
+  flex: 1;
+  margin: 0;
+  font-size: 10px;
+  line-height: 1.45;
+  color: rgba(126, 148, 154, 0.9);
+  font-style: italic;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.odins-throne-root .wtitle__kin {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 5px;
+  margin-top: 5px;
+}
+.odins-throne-root .wtitle__kin-pill {
+  pointer-events: auto;
+  font: inherit;
+  font-size: 9.5px;
+  color: rgba(126, 148, 154, 0.9);
+  background: none;
+  border: 1px solid rgba(176, 196, 201, 0.14);
+  border-radius: 999px;
+  padding: 1px 8px;
+  cursor: pointer;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.odins-throne-root .wtitle__kin-pill::before { content: "\\21B3 "; color: #15b8a6; }
+.odins-throne-root .wtitle__kin-pill:hover { border-color: #15b8a6; color: #15b8a6; }
+.odins-throne-root .wtitle__kin-pill:focus-visible { outline: 1.5px solid #15b8a6; outline-offset: 2px; }
+
 /* roots overlay: stones + pip strips + labels \u2014 lives INSIDE the scrolling
  * canvas (height pinned to scene by JS) so the painting and stones scroll
  * together with the vine; the task list never detaches from its stone */
@@ -755,23 +942,14 @@ var styles_default = `.odins-throne-root .odins-throne-root {
   background: linear-gradient(180deg, rgba(29, 36, 40, 0.97), rgba(10, 16, 20, 0.98));
   border: 1px solid rgba(214, 236, 240, 0.26);
   border-radius: 10px;
-  padding: 6px 8px;
+  /* v3.11 (round 18) \u2014 left pad 20px so the title clears the overlaid sigil
+   * bubble (13px onto the card's left edge + 7px breathing room). Stem struck
+   * in round 14; sigil now overlays the card edge directly. */
+  padding: 6px 8px 6px 20px;
   cursor: pointer;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5), 0 0 9px var(--card-glow, transparent);
   transition: border-color 0.18s, box-shadow 0.18s;
 }
-/* the stem tying the card to its anchor on the strand */
-.odins-throne-root .jcard::before {
-  content: "";
-  position: absolute;
-  top: 50%;
-  width: 12px;
-  height: 1.6px;
-  background: rgba(138, 163, 86, 0.85);
-  box-shadow: 0 0 3px rgba(138, 163, 86, 0.6);
-}
-.odins-throne-root .jcard[data-side="right"]::before { left: -12px; }
-.odins-throne-root .jcard[data-side="left"]::before  { right: -12px; }
 .odins-throne-root .jcard:hover {
   border-color: var(--teal-asgard);
   box-shadow: 0 0 0 1.5px rgba(78, 205, 196, 0.35), 0 4px 12px rgba(0, 0, 0, 0.5);
@@ -882,8 +1060,8 @@ var styles_default = `.odins-throne-root .odins-throne-root {
 .odins-throne-root .jact--cancel:hover { border-color: #e07a3f; color: #f0a279; }
 .odins-throne-root .jact:focus-visible { outline: 1.5px solid var(--teal-asgard); outline-offset: 1px; }
 
-/* normal (non-extended) sidebar: tighter cards, same strand */
-.odins-throne-root .ns-tree--lanterns:not(.ns-tree--extended):not(.ns-tree--compact) .jcard { width: 190px; padding: 4px 7px; }
+/* normal (non-extended) sidebar: tighter cards, same strand; left-pad 20px kept for sigil clearance */
+.odins-throne-root .ns-tree--lanterns:not(.ns-tree--extended):not(.ns-tree--compact) .jcard { width: 190px; padding: 4px 7px 4px 20px; }
 .odins-throne-root .ns-tree--lanterns:not(.ns-tree--extended):not(.ns-tree--compact) .jcard__title { font-size: 10.5px; }
 .odins-throne-root .ns-tree--lanterns:not(.ns-tree--extended):not(.ns-tree--compact) .jcard__meta { font-size: 8.5px; }
 
@@ -892,8 +1070,8 @@ var styles_default = `.odins-throne-root .odins-throne-root {
    same painted tree (backdrop, seat positions, lantern sizes all unchanged).
    Only the vine card list densifies. Cards squash to ONE line (compact prop
    strikes meta row and clasps at the JSX level). */
-/* compact jcards: 142px wide, 3px 7px padding, title 9.5px */
-.odins-throne-root .jcard--compact { width: 142px !important; padding: 3px 7px !important; }
+/* compact jcards: 142px wide, left-pad 17px (sigil clears 13px + 4px gap), title 9.5px */
+.odins-throne-root .jcard--compact { width: 142px !important; padding: 3px 7px 3px 17px !important; }
 
 @keyframes vine-pulse   { 50% { transform: scale(1.35); } }
 @keyframes vine-flicker { 50% { opacity: 0.55; } }
@@ -8376,36 +8554,8 @@ function useJobs() {
 
 // src/ui/lib/namespaceIcons.ts
 var ICON_BASE = "https://www.shanaghy.com/assets/icons/";
-var ICON_POOL = [
-  "raven.png",
-  "scroll.png",
-  "horn.png",
-  "moon.png",
-  "ring.png",
-  "hammer.png",
-  "cauldron.png",
-  "dice.png",
-  "octopi.png",
-  "wolf-coins.png",
-  "fianna-watch.png",
-  "fionn-salmon.png",
-  "gleipnir.png",
-  "moss-quiet.png",
-  "mossiah.png",
-  "moinin.png",
-  "sean-chai.png",
-  "hal9005.png",
-  "the-daykeeper.png",
-  "candle.png",
-  "smith-odin.png",
-  "forge-logo.png",
-  "webknot.png",
-  "backup-keeper.png",
-  "deco.png",
-  "zigbee2mqtt.png",
-  "cyclone-vacuum.png",
-  "front-doorbell.png"
-];
+var OVERLAY_ICON_BASE = "https://www.shanaghy.com/assets/icons/overlay/";
+var UNKNOWN_STONE = "unknown-stone.png";
 var NAMESPACE_CURATED = {
   // Fenrir the wolf, guarder of the ledger
   "fenrir-agents": "wolf-coins.png",
@@ -8416,19 +8566,13 @@ var NAMESPACE_CURATED = {
   // the knot of sites the web hands are tied with
   "shanaghy-com-agents": "webknot.png",
   // the mown moss of the goatmower's rounds
-  "re-goatmower-agents": "mossiah.png"
+  "re-goatmower-agents": "mossiah.png",
+  // Odin's Throne Hermes agents — the candle on the throne hill
+  "odins-throne-hermes-agents": "candle.png"
 };
-function hashKey(key) {
-  let h = 5381;
-  for (let i = 0; i < key.length; i++) {
-    h = (h << 5) + h + key.charCodeAt(i) | 0;
-  }
-  return Math.abs(h);
-}
-function namespaceIcon(nsId) {
-  const curated = NAMESPACE_CURATED[nsId];
-  if (curated) return ICON_BASE + curated;
-  return ICON_BASE + ICON_POOL[hashKey(nsId) % ICON_POOL.length];
+function namespaceIcon(nsId, opaque = false) {
+  const file = NAMESPACE_CURATED[nsId] ?? UNKNOWN_STONE;
+  return (opaque ? ICON_BASE : OVERLAY_ICON_BASE) + file;
 }
 var TASK_STATUS_ICONS = {
   running: "hammer.png",
@@ -8509,7 +8653,34 @@ var CURATED_SEATS = {
   "re-goatmower-agents": 4
   // 30,55
 };
-function hashKey2(key) {
+var LANTERN_ANCHOR = [
+  { x: 43.7, y: 73.5 },
+  { x: 20, y: 69.7 },
+  { x: 48.9, y: 68.4 },
+  { x: 13.6, y: 64.7 },
+  { x: 33.2, y: 55.4 },
+  { x: 40.4, y: 49.8 },
+  { x: 14.9, y: 49.9 },
+  { x: 21.5, y: 40.7 },
+  { x: 26.7, y: 30.2 },
+  { x: 43.5, y: 37.1 },
+  { x: 50.9, y: 33 }
+];
+var LANTERN_SIZE = [
+  { w: 40, h: 79 },
+  { w: 38, h: 74 },
+  { w: 32, h: 68 },
+  { w: 31, h: 66 },
+  { w: 34, h: 68 },
+  { w: 39, h: 76 },
+  { w: 35, h: 71 },
+  { w: 36, h: 71 },
+  { w: 38, h: 71 },
+  { w: 40, h: 76 },
+  { w: 34, h: 70 }
+];
+var LANTERN_PATH = "M0,-42 C4,-42 6,-40 6,-37 C6,-35 5,-33 4,-31 C11,-28 19,-20 21,-11 C22,-4 22,7 19,18 C16,27 10,35 6,39 C4,41 2,42 0,42 C-2,42 -4,41 -6,39 C-10,35 -16,27 -19,18 C-22,7 -22,-4 -21,-11 C-19,-20 -11,-28 -4,-31 C-5,-33 -6,-35 -6,-37 C-6,-40 -4,-42 0,-42 Z";
+function hashKey(key) {
   let h = 5381;
   for (let i = 0; i < key.length; i++) {
     h = (h << 5) + h + key.charCodeAt(i) | 0;
@@ -8525,18 +8696,18 @@ function assignSeats(nsIds) {
     if (idx != null && !Number.isNaN(idx) && !taken.has(idx)) {
       taken.add(idx);
       const p = SEAT_POOL[idx];
-      seats.set(id, { x: p.x, y: p.y, dir: 1 });
+      seats.set(id, { x: p.x, y: p.y, dir: 1, seatIdx: idx });
     }
   }
   for (const id of nsIds) {
     if (seats.has(id)) continue;
-    let i = hashKey2(id) % poolLen;
+    let i = hashKey(id) % poolLen;
     let guard = 0;
     while (taken.has(i) && guard++ < poolLen) i = (i + 1) % poolLen;
     if (taken.has(i)) i = poolLen - 1;
     taken.add(i);
     const p = SEAT_POOL[i];
-    seats.set(id, { x: p.x, y: p.y, dir: 1 });
+    seats.set(id, { x: p.x, y: p.y, dir: 1, seatIdx: i });
   }
   return seats;
 }
@@ -8599,43 +8770,35 @@ function pipStripLeft(seat, sceneW, rowWidth) {
 
 // src/ui/lib/vineGeometry.ts
 var VINE = {
-  /** px between card centers — extended sidebar. */
+  /** px between card centers — extended sidebar (same as standard). */
   pitchExtended: 57,
-  /** px between card centers — normal sidebar. */
-  pitchNormal: 56,
+  /** px between card centers — normal sidebar (same as standard). */
+  pitchNormal: 57,
   /** px between card centers — compact (dense) mode. */
   pitchCompact: 34,
-  /** Branch rail x as a fraction of scene width (44%). */
-  railFrac: 0.44,
-  /** px below the lantern where the first bezier reaches the rail. */
-  railJoinDrop: 36,
-  /** Vertical arc (second bezier) base: arc = base + (count - 1) * pitch. */
-  arcBase: 40,
-  /** Vertical arc for a lone card. */
-  singleArc: 54,
-  /** t-start for card sampling on the second bezier segment. */
-  tStart: 0.05,
-  /** t-span for card sampling: cards are spread from tStart to tStart + tSpan. */
-  tSpan: 0.93,
-  /** Card width — extended. */
-  cardWidthExtended: 212,
-  /** Card width — normal. */
-  cardWidthNormal: 190,
-  /** Card width — compact (dense) mode. */
-  cardWidthCompact: 142,
-  /** Card offset past its anchor point (toward the hang side, px). */
-  cardOffset: 14,
+  /** Card height in px — standard (measured from the prototype). */
+  cardHeightStandard: 47,
+  /** Card height in px — compact one-line card. */
+  cardHeightCompact: 20,
+  /** Column offset: anchor.x - this value = vine descent column. */
+  columnOffset: 14,
   /** Px kept clear of the scene's left edge when clamping. */
   edgeMarginLeft: 8,
   /** Px kept clear of the scene's right edge when clamping. */
   edgeMarginRight: 6,
   /** Canvas room below the vine's tip so the last card never clips. */
   bottomPadding: 90,
+  /** Card width — extended. */
+  cardWidthExtended: 212,
+  /** Card width — normal. */
+  cardWidthNormal: 190,
+  /** Card width — compact (dense) mode. */
+  cardWidthCompact: 142,
   /**
-   * Guaranteed minimum px between consecutive card centers — larger than a
-   * card's height in normal/extended mode, so cards never overlap.
+   * Minimum px between consecutive card centers — matches the compact pitch
+   * so cards never overlap even when the arc is very short.
    */
-  minCenterSpacing: 24,
+  minCenterSpacing: 34,
   /** Minimum px between card centers in compact mode. */
   minCenterSpacingCompact: 14
 };
@@ -8647,48 +8810,29 @@ function vineCardWidth(mode) {
   if (mode === "compact") return VINE.cardWidthCompact;
   return mode === "normal" ? VINE.cardWidthNormal : VINE.cardWidthExtended;
 }
-function bez4(t, P0, C1, C2, P3) {
-  const u = 1 - t;
-  return {
-    x: u * u * u * P0.x + 3 * u * u * t * C1.x + 3 * u * t * t * C2.x + t * t * t * P3.x,
-    y: u * u * u * P0.y + 3 * u * u * t * C1.y + 3 * u * t * t * C2.y + t * t * t * P3.y
-  };
-}
-function vineFor(seat, count, sceneW, sceneH, mode) {
-  const L = { x: seat.x / 100 * sceneW, y: seat.y / 100 * sceneH };
-  const dir = seat.dir;
+function vineFor(lanternPx, anchorPx, count, mode, _sceneW) {
   const pitch = vinePitch(mode);
-  const arc = count <= 1 ? VINE.singleArc : VINE.arcBase + (count - 1) * pitch;
-  const railX = sceneW * VINE.railFrac;
-  const J = { x: railX, y: L.y + VINE.railJoinDrop };
-  const C1 = { x: railX, y: L.y + 14 };
-  const seg1 = `M${L.x.toFixed(1)},${L.y.toFixed(1)} C${C1.x.toFixed(1)},${C1.y.toFixed(1)} ${railX.toFixed(1)},${(J.y - 16).toFixed(1)} ${J.x.toFixed(1)},${J.y.toFixed(1)}`;
-  const D1 = { x: railX, y: J.y + arc * 0.34 };
-  const D2 = { x: railX + 10 * dir, y: J.y + arc * 0.68 };
-  const P3 = { x: railX + 6 * dir, y: J.y + arc };
-  const seg2 = ` C${D1.x.toFixed(1)},${D1.y.toFixed(1)} ${D2.x.toFixed(1)},${D2.y.toFixed(1)} ${P3.x.toFixed(1)},${P3.y.toFixed(1)}`;
-  const n = Math.max(count, 0);
+  const cardH = mode === "compact" ? VINE.cardHeightCompact : VINE.cardHeightStandard;
+  const column = Math.max(VINE.edgeMarginLeft, anchorPx.x - VINE.columnOffset);
+  const firstCenterY = anchorPx.y + cardH / 2;
+  const lastCenterY = count > 0 ? firstCenterY + (count - 1) * pitch : anchorPx.y + 46;
+  const midX = (lanternPx.x + anchorPx.x) / 2;
+  const d = `M${lanternPx.x.toFixed(1)},${lanternPx.y.toFixed(1)} C${midX.toFixed(1)},${(lanternPx.y - 10).toFixed(1)} ${(column - 4).toFixed(1)},${(anchorPx.y - 14).toFixed(1)} ${column.toFixed(1)},${anchorPx.y.toFixed(1)} L${column.toFixed(1)},${lastCenterY.toFixed(1)}`;
   const points = [];
-  if (n === 1) {
-    points.push(bez4(0.5, J, D1, D2, P3));
-  } else if (n > 1) {
-    for (let i = 0; i < n; i++) {
-      const t = VINE.tStart + VINE.tSpan * (i / (n - 1));
-      points.push(bez4(t, J, D1, D2, P3));
-    }
+  for (let i = 0; i < count; i++) {
+    points.push({ x: column, y: firstCenterY + i * pitch });
   }
   return {
-    d: seg1 + seg2,
+    d,
     points,
-    dir,
-    bottom: P3.y
+    dir: 1,
+    bottom: lastCenterY
   };
 }
 function vineCardBox(point, dir, cardWidth, sceneW) {
-  const raw = dir === 1 ? point.x + VINE.cardOffset : point.x - VINE.cardOffset - cardWidth;
   const left = Math.max(
     VINE.edgeMarginLeft,
-    Math.min(Math.max(sceneW - cardWidth - VINE.edgeMarginRight, VINE.edgeMarginLeft), raw)
+    Math.min(sceneW - cardWidth - VINE.edgeMarginRight, point.x)
   );
   return { left, top: point.y, side: dir === 1 ? "right" : "left" };
 }
@@ -8843,8 +8987,203 @@ function VineCard({
   );
 }
 
+// src/ui/lib/worldLore.ts
+var WORLDS_LORE = {
+  "fenrir-agents": {
+    lore: "the wolf's ledger \u2014 a ringfort of account-books, Loki's third cub chained to the enterprise since the beginning. Every coin the band moves passes along Fenrir's chain.",
+    kin: [
+      { id: "shanaghy-com-agents", why: "the ballads it earns" },
+      { id: "mytruthfinder-agents", why: "runs in its hills" }
+    ]
+  },
+  "say-so-agents": {
+    lore: "the speaking ringfort \u2014 every say-so and utterance given a room of its own, where the sprites learn to speak before they sing.",
+    kin: [
+      { id: "shanaghy-com-agents", why: "the ballads it earns" },
+      { id: "fenrir-agents", why: "the hall's books" }
+    ]
+  },
+  "mytruthfinder-agents": {
+    lore: "the salmon-pool ringfort \u2014 Fionn's salmon of knowledge, the truth-finder that cooks every catch of the net into a meal worth eating.",
+    kin: [
+      { id: "fenrir-agents", why: "its summer hills" },
+      { id: "shanaghy-com-agents", why: "its bed in the hub" }
+    ]
+  },
+  "shanaghy-com-agents": {
+    lore: "the seancha\xED's ringfort \u2014 descended of the fox (Sionnach), the family storytellers; the living garden where every ballad hangs, each session a bed in the hub.",
+    kin: [
+      { id: "odins-throne-hermes-agents", why: "the throne that watches it" },
+      { id: "re-goatmower-agents", why: "the garden's mower" }
+    ]
+  },
+  "re-goatmower-agents": {
+    lore: "the west-field ringfort \u2014 the Mossiah's mower, the goat that grazes the overgrown again and again. What the goat grazed grows back; the pasture keeps its word.",
+    kin: [
+      { id: "shanaghy-com-agents", why: "the garden it mows" },
+      { id: "fenrir-agents", why: "the hall's books" }
+    ]
+  },
+  "odins-throne-hermes-agents": {
+    lore: "the throne-hill ringfort \u2014 Hlidskjalf, the high seat from which the One-Eye watches all the worlds at once. This hall IS that throne; its agents keep the lanterns lit.",
+    kin: [
+      { id: "shanaghy-com-agents", why: "its ballads in the hub" },
+      { id: "fenrir-agents", why: "the hills it stands on" }
+    ]
+  }
+};
+var GENERIC_WORLD_LORE = "an uncharted ringfort \u2014 the seancha\xED has not yet told its story";
+
+// src/ui/components/WorldTitle.tsx
+import { Fragment as Fragment4, jsx as jsx15, jsxs as jsxs10 } from "react/jsx-runtime";
+var STATUS_COLOR = {
+  running: "#6fb7d8",
+  succeeded: "#79b356",
+  failed: "#e07a3f",
+  pending: "#5b6a5f"
+};
+function opaqueIconUrl(nsId) {
+  const CURATED = {
+    "fenrir-agents": "wolf-coins.png",
+    "say-so-agents": "horn.png",
+    "mytruthfinder-agents": "fionn-salmon.png",
+    "shanaghy-com-agents": "webknot.png",
+    "re-goatmower-agents": "mossiah.png",
+    "odins-throne-hermes-agents": "candle.png"
+  };
+  return ICON_BASE + (CURATED[nsId] ?? UNKNOWN_STONE);
+}
+function WorldTitle({
+  titleWorldId,
+  activeWorldId,
+  namespaces,
+  summaries,
+  titleWorldSeatIdx,
+  onSelectWorld,
+  compact = false
+}) {
+  const isLive = activeWorldId !== null && activeWorldId === titleWorldId;
+  const world = titleWorldId ? namespaces.find((ns) => ns.id === titleWorldId) : null;
+  const summary = titleWorldId ? summaries[titleWorldId] : void 0;
+  const jobs = summary?.jobs ?? [];
+  const counts = {
+    total: jobs.length,
+    running: jobs.filter((j) => j.status === "running").length,
+    pending: jobs.filter((j) => j.status === "pending").length,
+    failed: jobs.filter((j) => j.status === "failed").length,
+    succeeded: jobs.filter((j) => j.status === "succeeded").length
+  };
+  const agents = new Set(jobs.map((j) => j.agent ?? "")).size;
+  const loreEntry = titleWorldId ? WORLDS_LORE[titleWorldId] ?? null : null;
+  const loreText = loreEntry ? loreEntry.lore : GENERIC_WORLD_LORE;
+  const kin = loreEntry?.kin ?? [];
+  const cls = ["wtitle", isLive ? "is-live" : ""].filter(Boolean).join(" ");
+  const compactStyle = compact ? { padding: "6px 8px 6px", borderRadius: "10px" } : {};
+  return /* @__PURE__ */ jsxs10("div", { className: cls, "aria-live": "polite", style: compactStyle, children: [
+    /* @__PURE__ */ jsx15("div", { className: "wtitle__row", children: /* @__PURE__ */ jsxs10("div", { className: "wtitle__id", children: [
+      /* @__PURE__ */ jsx15("h2", { className: "wtitle__name", style: compact ? { fontSize: "12px" } : void 0, children: world ? world.label : "no world seated" }),
+      /* @__PURE__ */ jsx15("span", { className: "wtitle__state", style: compact ? { fontSize: "8.5px" } : void 0, children: !world ? "the throne rests \u2014 click a lantern" : isLive ? "seated \u2014 its vine hangs open" : "resting \u2014 its lantern dims, its deeds remain" })
+    ] }) }),
+    world && /* @__PURE__ */ jsxs10(Fragment4, { children: [
+      /* @__PURE__ */ jsxs10(
+        "div",
+        {
+          className: "wtitle__stats",
+          style: compact ? { gap: "2px 6px", margin: "4px 0 4px", fontSize: "9px" } : void 0,
+          children: [
+            /* @__PURE__ */ jsxs10("span", { className: "st", children: [
+              /* @__PURE__ */ jsx15("i", { style: { background: "rgba(176,196,201,0.4)" } }),
+              counts.total,
+              " on the vine"
+            ] }),
+            counts.running > 0 && /* @__PURE__ */ jsxs10("span", { className: "st", children: [
+              /* @__PURE__ */ jsx15("i", { style: { background: STATUS_COLOR.running } }),
+              counts.running,
+              " running"
+            ] }),
+            counts.pending > 0 && /* @__PURE__ */ jsxs10("span", { className: "st", children: [
+              /* @__PURE__ */ jsx15("i", { style: { background: STATUS_COLOR.pending } }),
+              counts.pending,
+              " pending"
+            ] }),
+            counts.failed > 0 && /* @__PURE__ */ jsxs10("span", { className: "st", children: [
+              /* @__PURE__ */ jsx15("i", { style: { background: STATUS_COLOR.failed } }),
+              counts.failed,
+              " failed"
+            ] }),
+            counts.succeeded > 0 && /* @__PURE__ */ jsxs10("span", { className: "st", children: [
+              /* @__PURE__ */ jsx15("i", { style: { background: STATUS_COLOR.succeeded } }),
+              counts.succeeded,
+              " succeeded"
+            ] }),
+            agents > 0 && /* @__PURE__ */ jsxs10("span", { className: "st", children: [
+              /* @__PURE__ */ jsx15("i", { style: { background: "rgba(176,196,201,0.25)" } }),
+              agents,
+              " agents"
+            ] }),
+            titleWorldSeatIdx != null && /* @__PURE__ */ jsxs10("span", { className: "st", children: [
+              /* @__PURE__ */ jsx15("i", { style: { background: "rgba(176,196,201,0.14)" } }),
+              "lantern ",
+              titleWorldSeatIdx + 1,
+              " of ",
+              SEAT_POOL.length
+            ] })
+          ]
+        }
+      ),
+      /* @__PURE__ */ jsxs10("div", { className: "wtitle__band", children: [
+        /* @__PURE__ */ jsxs10("div", { className: "wtitle__garden", style: compact ? { minHeight: "44px" } : void 0, children: [
+          /* @__PURE__ */ jsx15("span", { className: "ground", "aria-hidden": "true" }),
+          /* @__PURE__ */ jsx15(
+            "img",
+            {
+              className: "wtitle__stone",
+              src: opaqueIconUrl(titleWorldId),
+              alt: "",
+              "aria-hidden": "true",
+              style: compact ? { width: "26px", height: "26px" } : void 0
+            }
+          )
+        ] }),
+        /* @__PURE__ */ jsx15(
+          "p",
+          {
+            className: "wtitle__lore",
+            style: compact ? { fontSize: "8.5px", lineHeight: "1.4", WebkitLineClamp: 3 } : void 0,
+            children: loreText
+          }
+        )
+      ] }),
+      kin.length > 0 && /* @__PURE__ */ jsx15(
+        "div",
+        {
+          className: "wtitle__kin",
+          style: compact ? { gap: "3px 4px", marginTop: "4px" } : void 0,
+          children: kin.map((k) => {
+            const kinWorld = namespaces.find((ns) => ns.id === k.id);
+            if (!kinWorld) return null;
+            return /* @__PURE__ */ jsx15(
+              "button",
+              {
+                type: "button",
+                className: "wtitle__kin-pill",
+                title: `${kinWorld.label} \u2014 ${k.why}`,
+                "aria-label": `Go to ${kinWorld.label}`,
+                style: compact ? { fontSize: "8.5px", padding: "1px 6px" } : void 0,
+                onClick: () => onSelectWorld(k.id),
+                children: kinWorld.label
+              },
+              k.id
+            );
+          })
+        }
+      )
+    ] })
+  ] });
+}
+
 // src/ui/components/NamespaceTree.tsx
-import { jsx as jsx15, jsxs as jsxs10 } from "react/jsx-runtime";
+import { jsx as jsx16, jsxs as jsxs11 } from "react/jsx-runtime";
 function tasksOf(summaryJobs) {
   if (!summaryJobs) return [];
   return summaryJobs.filter((job) => job.status !== "purged").map(parseJob).sort(sortJobs);
@@ -8863,6 +9202,7 @@ function notePos(seat, angleDeg) {
   };
 }
 var FALL_MS = 900;
+var INTERACTIVE_SELECTORS = "button, .jcard, .jact, .anchor-ic, .ns-tree__counts, .ns-tree__note, .piprow, .wtitle__kin-pill";
 function NamespaceTree({
   namespace,
   namespaces,
@@ -8883,6 +9223,7 @@ function NamespaceTree({
   );
   const [openNs, setOpenNs] = useState11(namespace);
   const [hoveredNs, setHoveredNs] = useState11(null);
+  const [titleWorldId, setTitleWorldId] = useState11(null);
   const sceneRef = useRef7(null);
   const scrollerRef = useRef7(null);
   const [sceneSize, setSceneSize] = useState11({ w: 0, h: 0 });
@@ -8898,27 +9239,59 @@ function NamespaceTree({
   useEffect6(() => {
     setOpenNs((prev) => prev && namespaces.some((ns) => ns.id === prev) ? prev : null);
   }, [namespaces]);
+  useEffect6(() => {
+    if (openNs) setTitleWorldId(openNs);
+  }, [openNs]);
   const selectWorld = (nsId) => {
     onNamespaceChange(nsId);
     const opening = openNs !== nsId;
     setOpenNs((prev) => prev === nsId ? null : nsId);
     if (opening) scrollerRef.current?.scrollTo?.({ top: 0 });
   };
+  const handleSceneClick = (e) => {
+    if (openNs === null) return;
+    const target = e.target;
+    if (target.closest(INTERACTIVE_SELECTORS)) return;
+    setOpenNs(null);
+  };
   const openWorld = namespaces.find((ns) => ns.id === openNs) ?? null;
   const openSummary = openNs ? summaries[openNs] : void 0;
   const openTasks = useMemo2(() => tasksOf(openSummary?.jobs), [openSummary]);
   const openPaintSeat = openWorld ? seats.get(openWorld.id) : void 0;
+  useEffect6(() => {
+    const summaryLoaded2 = openSummary !== void 0;
+    const summaryFailed2 = openSummary?.error != null;
+    if (openNs && summaryLoaded2 && !summaryFailed2 && openTasks.length === 0) {
+      const t = setTimeout(() => setOpenNs(null), 2e3);
+      return () => clearTimeout(t);
+    }
+    return void 0;
+  }, [openNs, openSummary, openTasks.length]);
   const openSeat = useMemo2(() => {
     if (!openPaintSeat || sceneSize.w === 0 || sceneSize.h === 0) return openPaintSeat;
     const p = projectSeat(openPaintSeat, sceneSize.w, sceneSize.h);
-    return { x: p.x, y: p.y, dir: openPaintSeat.dir };
+    return { x: p.x, y: p.y, dir: openPaintSeat.dir, seatIdx: openPaintSeat.seatIdx };
   }, [openPaintSeat, sceneSize.w, sceneSize.h]);
   const summaryLoaded = openSummary !== void 0;
   const summaryFailed = openSummary?.error != null;
   const vineMode = displayMode === "compact" ? "compact" : displayMode === "normal" ? "normal" : "extended";
   const vine = useMemo2(() => {
     if (!openWorld || !openSeat || summaryFailed) return null;
-    return vineFor(openSeat, openTasks.length, sceneSize.w, sceneSize.h, vineMode);
+    const seatIdx = openSeat.seatIdx;
+    const anchorPaint = LANTERN_ANCHOR[seatIdx];
+    if (!anchorPaint) return null;
+    const W = sceneSize.w > 0 ? sceneSize.w : 100;
+    const H = sceneSize.h > 0 ? sceneSize.h : 100;
+    const anchorScene = projectSeat(anchorPaint, W, H);
+    const lanternPx = {
+      x: openSeat.x / 100 * W,
+      y: openSeat.y / 100 * H
+    };
+    const anchorPx = {
+      x: anchorScene.x / 100 * W,
+      y: anchorScene.y / 100 * H
+    };
+    return vineFor(lanternPx, anchorPx, openTasks.length, vineMode, W);
   }, [openWorld, openSeat, openTasks.length, sceneSize.w, sceneSize.h, vineMode, summaryFailed]);
   const canvasHeight = vine ? vineCanvasHeight(vine, sceneSize.h) : 0;
   const [falling, setFalling] = useState11([]);
@@ -8962,26 +9335,36 @@ function NamespaceTree({
     displayMode === "compact" ? "ns-tree--compact" : ""
   ].filter(Boolean).join(" ");
   const effectiveCanvasHeight = Math.max(canvasHeight, sceneSize.h);
-  return /* @__PURE__ */ jsx15(
+  const kStd = sceneSize.w > 0 && sceneSize.h > 0 ? Math.max(sceneSize.w / 896, sceneSize.h / 1200) : 1;
+  const nsForSeat = useMemo2(() => {
+    const m = /* @__PURE__ */ new Map();
+    for (const ns of namespaces) {
+      const seat = seats.get(ns.id);
+      if (seat != null) m.set(seat.seatIdx, ns.id);
+    }
+    return m;
+  }, [namespaces, seats]);
+  const titleWorldSeat = titleWorldId ? seats.get(titleWorldId) : void 0;
+  return /* @__PURE__ */ jsx16(
     "div",
     {
       className: rootClass,
       role: "tree",
       "aria-label": "Namespace tree",
-      children: /* @__PURE__ */ jsx15("div", { className: "ns-tree__scene", ref: sceneRef, children: /* @__PURE__ */ jsx15(
+      children: /* @__PURE__ */ jsx16("div", { className: "ns-tree__scene", ref: sceneRef, onClick: handleSceneClick, children: /* @__PURE__ */ jsx16(
         "div",
         {
           className: "ns-tree__scroller",
           ref: scrollerRef,
           role: openWorld ? "group" : void 0,
           "aria-label": openWorld ? `${openWorld.label} tasks` : void 0,
-          children: /* @__PURE__ */ jsxs10(
+          children: /* @__PURE__ */ jsxs11(
             "div",
             {
               className: "ns-tree__canvas",
               style: { height: effectiveCanvasHeight > 0 ? `${effectiveCanvasHeight}px` : void 0 },
               children: [
-                /* @__PURE__ */ jsx15(
+                /* @__PURE__ */ jsx16(
                   "img",
                   {
                     className: "ns-tree__backdrop",
@@ -8991,7 +9374,55 @@ function NamespaceTree({
                     style: sceneSize.h > 0 ? { height: `${sceneSize.h}px` } : void 0
                   }
                 ),
-                /* @__PURE__ */ jsx15(
+                sceneSize.w > 0 && sceneSize.h > 0 && /* @__PURE__ */ jsxs11(
+                  "svg",
+                  {
+                    className: "lshapes",
+                    width: sceneSize.w,
+                    height: sceneSize.h,
+                    "aria-hidden": "true",
+                    children: [
+                      /* @__PURE__ */ jsxs11("defs", { children: [
+                        /* @__PURE__ */ jsx16("path", { id: "ldrop", d: LANTERN_PATH }),
+                        /* @__PURE__ */ jsx16("filter", { id: "lsoft", x: "-60%", y: "-60%", width: "220%", height: "220%", children: /* @__PURE__ */ jsx16("feGaussianBlur", { stdDeviation: "4" }) }),
+                        /* @__PURE__ */ jsx16("filter", { id: "lwide", x: "-80%", y: "-80%", width: "260%", height: "260%", children: /* @__PURE__ */ jsx16("feGaussianBlur", { stdDeviation: "7" }) }),
+                        /* @__PURE__ */ jsxs11("radialGradient", { id: "lglowg", cx: "50%", cy: "55%", r: "68%", children: [
+                          /* @__PURE__ */ jsx16("stop", { offset: "0", stopColor: "#eaf9ff", stopOpacity: "0.95" }),
+                          /* @__PURE__ */ jsx16("stop", { offset: "0.5", stopColor: "#a8dcec", stopOpacity: "0.5" }),
+                          /* @__PURE__ */ jsx16("stop", { offset: "1", stopColor: "#a8dcec", stopOpacity: "0" })
+                        ] })
+                      ] }),
+                      SEAT_POOL.map((seat, i) => {
+                        const nsId = nsForSeat.get(i);
+                        const isFull = nsId != null && openNs === nsId;
+                        const lseatState = nsId == null ? "off" : isFull ? "full" : "mid";
+                        const isHovered = nsId != null && hoveredNs === nsId;
+                        const p = projectSeat(seat, sceneSize.w, sceneSize.h);
+                        const px = p.x / 100 * sceneSize.w;
+                        const py = p.y / 100 * sceneSize.h;
+                        const size = LANTERN_SIZE[i];
+                        const mx = kStd * (size.w / 38);
+                        const my = kStd * (size.h / 73);
+                        return /* @__PURE__ */ jsxs11(
+                          "g",
+                          {
+                            className: `lseat lseat--${lseatState}${isHovered ? " is-hover" : ""}`,
+                            "data-seat": i,
+                            transform: `translate(${px.toFixed(1)},${py.toFixed(1)}) scale(${mx.toFixed(4)},${my.toFixed(4)})`,
+                            children: [
+                              /* @__PURE__ */ jsx16("use", { href: "#ldrop", className: "lseat__halo", filter: "url(#lwide)", transform: "scale(1.7)" }),
+                              /* @__PURE__ */ jsx16("use", { href: "#ldrop", className: "lseat__veil", filter: "url(#lsoft)", transform: "scale(1.16)" }),
+                              /* @__PURE__ */ jsx16("use", { href: "#ldrop", className: "lseat__glow", transform: "scale(1.22)" }),
+                              /* @__PURE__ */ jsx16("use", { href: "#ldrop", className: "lseat__ring", transform: "scale(1.05)" })
+                            ]
+                          },
+                          i
+                        );
+                      })
+                    ]
+                  }
+                ),
+                /* @__PURE__ */ jsx16(
                   "ul",
                   {
                     className: "ns-tree__roots",
@@ -9005,10 +9436,11 @@ function NamespaceTree({
                       const line = labelLineOf(summary);
                       const failed = summary?.counts.failed ?? 0;
                       const total = summary?.total ?? 0;
+                      const isFull = isActive && isOpen;
                       const lanternClass = [
                         "ns-tree__select",
                         "ns-tree__lantern",
-                        isActive ? "ns-tree__lantern--active" : "ns-tree__lantern--inactive",
+                        isFull ? "ns-tree__lantern--full" : isActive ? "ns-tree__lantern--active" : "ns-tree__lantern--inactive",
                         summary?.error ? "ns-tree__lantern--dim" : "",
                         failed > 0 ? "ns-tree__lantern--failed" : total > 0 ? "ns-tree__lantern--ok" : ""
                       ].filter(Boolean).join(" ");
@@ -9021,11 +9453,11 @@ function NamespaceTree({
                       const pipRow = !isOpen && summary && !summary.error ? taskPips(tasksOf(summary.jobs)) : null;
                       const stripWidth = pipRow && pipRow.count > 0 ? pipStripWidth(pipRow) : 0;
                       const stripLeft = pipRow && pipRow.count > 0 ? pipStripLeft(
-                        { x: projected.x, y: projected.y, dir: paintSeat.dir },
+                        { x: projected.x, dir: paintSeat.dir },
                         sceneSize.w,
                         stripWidth
                       ) : 0;
-                      return /* @__PURE__ */ jsxs10(
+                      return /* @__PURE__ */ jsxs11(
                         "li",
                         {
                           "data-namespace": ns.id,
@@ -9035,7 +9467,7 @@ function NamespaceTree({
                           className: isActive ? "ns-tree__item ns-tree__item--active" : "ns-tree__item",
                           style: { left: `${projected.x}%`, top: `${projected.y}%` },
                           children: [
-                            /* @__PURE__ */ jsx15(
+                            /* @__PURE__ */ jsx16(
                               "button",
                               {
                                 type: "button",
@@ -9045,40 +9477,50 @@ function NamespaceTree({
                                 "aria-selected": isActive,
                                 "aria-label": `${ns.label} \u2014 ${line}`,
                                 title: `${ns.label} \u2014 ${line}`,
-                                onClick: () => selectWorld(ns.id),
+                                onClick: (e) => {
+                                  e.stopPropagation();
+                                  selectWorld(ns.id);
+                                },
                                 onMouseEnter: () => setHoveredNs(ns.id),
                                 onMouseLeave: () => setHoveredNs((prev) => prev === ns.id ? null : prev),
                                 onFocus: () => setHoveredNs(ns.id),
                                 onBlur: () => setHoveredNs((prev) => prev === ns.id ? null : prev),
-                                children: /* @__PURE__ */ jsx15(TreeIcon, { src: namespaceIcon(ns.id), fallback: NAMESPACE_ICON_FALLBACK, size: "lantern" })
+                                children: /* @__PURE__ */ jsx16(
+                                  TreeIcon,
+                                  {
+                                    src: namespaceIcon(ns.id, isFull),
+                                    fallback: NAMESPACE_ICON_FALLBACK,
+                                    size: "lantern"
+                                  }
+                                )
                               }
                             ),
-                            !isOpen && summary && !summary.error && summary.total > 0 && /* @__PURE__ */ jsxs10("div", { className: "ns-tree__counts", "aria-hidden": "true", children: [
-                              /* @__PURE__ */ jsx15(
+                            !isOpen && summary && !summary.error && summary.total > 0 && /* @__PURE__ */ jsxs11("div", { className: "ns-tree__counts", "aria-hidden": "true", children: [
+                              /* @__PURE__ */ jsx16(
                                 "span",
                                 {
                                   className: `ns-tree__counts__orb ns-tree__counts__orb--succeeded${summary.counts.succeeded > 0 ? "" : " ns-tree__counts__orb--dim"}`
                                 }
                               ),
-                              /* @__PURE__ */ jsx15(
+                              /* @__PURE__ */ jsx16(
                                 "span",
                                 {
                                   className: `ns-tree__counts__orb ns-tree__counts__orb--running${summary.counts.running > 0 ? "" : " ns-tree__counts__orb--dim"}`
                                 }
                               ),
-                              /* @__PURE__ */ jsx15(
+                              /* @__PURE__ */ jsx16(
                                 "span",
                                 {
                                   className: `ns-tree__counts__orb ns-tree__counts__orb--failed${summary.counts.failed > 0 ? "" : " ns-tree__counts__orb--dim"}`
                                 }
                               ),
-                              /* @__PURE__ */ jsxs10("span", { className: "ns-tree__counts__nums", children: [
-                                summary.counts.succeeded > 0 && /* @__PURE__ */ jsx15("i", { style: { color: "#79b356" }, children: summary.counts.succeeded }),
-                                summary.counts.running > 0 && /* @__PURE__ */ jsx15("i", { style: { color: "#6fb7d8" }, children: summary.counts.running }),
-                                summary.counts.failed > 0 && /* @__PURE__ */ jsx15("i", { style: { color: "#e07a3f" }, children: summary.counts.failed })
+                              /* @__PURE__ */ jsxs11("span", { className: "ns-tree__counts__nums", children: [
+                                summary.counts.succeeded > 0 && /* @__PURE__ */ jsx16("i", { style: { color: "#79b356" }, children: summary.counts.succeeded }),
+                                summary.counts.running > 0 && /* @__PURE__ */ jsx16("i", { style: { color: "#6fb7d8" }, children: summary.counts.running }),
+                                summary.counts.failed > 0 && /* @__PURE__ */ jsx16("i", { style: { color: "#e07a3f" }, children: summary.counts.failed })
                               ] })
                             ] }),
-                            pipRow && pipRow.count > 0 && /* @__PURE__ */ jsxs10(
+                            pipRow && pipRow.count > 0 && /* @__PURE__ */ jsxs11(
                               "div",
                               {
                                 className: "piprow",
@@ -9086,25 +9528,25 @@ function NamespaceTree({
                                 "data-count": pipRow.count,
                                 style: { left: `${stripLeft}px` },
                                 children: [
-                                  pipRow.pips.map((pip) => /* @__PURE__ */ jsx15(
+                                  pipRow.pips.map((pip) => /* @__PURE__ */ jsx16(
                                     "span",
                                     {
                                       className: `pip-slot pip-slot--${pip.status}`,
                                       "data-status": pip.status,
-                                      children: /* @__PURE__ */ jsx15(TreeIcon, { src: taskIcon(pip.status), fallback: taskIconFallback(pip.status), size: "pip" })
+                                      children: /* @__PURE__ */ jsx16(TreeIcon, { src: taskIcon(pip.status), fallback: taskIconFallback(pip.status), size: "pip" })
                                     },
                                     pip.sessionId
                                   )),
-                                  pipRow.overflow > 0 && /* @__PURE__ */ jsxs10("span", { className: "piprow__more", children: [
+                                  pipRow.overflow > 0 && /* @__PURE__ */ jsxs11("span", { className: "piprow__more", children: [
                                     "+",
                                     pipRow.overflow
                                   ] })
                                 ]
                               }
                             ),
-                            /* @__PURE__ */ jsxs10("div", { className: glabelClass, "aria-hidden": "true", children: [
-                              /* @__PURE__ */ jsx15("b", { className: "ns-tree__glabel-name", children: ns.label }),
-                              /* @__PURE__ */ jsx15("span", { className: "ns-tree__glabel-line", children: line })
+                            /* @__PURE__ */ jsxs11("div", { className: glabelClass, "aria-hidden": "true", children: [
+                              /* @__PURE__ */ jsx16("b", { className: "ns-tree__glabel-name", children: ns.label }),
+                              /* @__PURE__ */ jsx16("span", { className: "ns-tree__glabel-line", children: line })
                             ] })
                           ]
                         },
@@ -9113,14 +9555,26 @@ function NamespaceTree({
                     })
                   }
                 ),
-                vine && /* @__PURE__ */ jsx15(
+                /* @__PURE__ */ jsx16(
+                  WorldTitle,
+                  {
+                    titleWorldId,
+                    activeWorldId: openNs,
+                    namespaces,
+                    summaries,
+                    titleWorldSeatIdx: titleWorldSeat?.seatIdx,
+                    onSelectWorld: selectWorld,
+                    compact: isCompact
+                  }
+                ),
+                vine && /* @__PURE__ */ jsx16(
                   "svg",
                   {
                     className: "ns-tree__shoots",
                     width: Math.max(1, sceneSize.w),
                     height: Math.max(1, effectiveCanvasHeight),
                     "aria-hidden": "true",
-                    children: /* @__PURE__ */ jsx15(
+                    children: /* @__PURE__ */ jsx16(
                       "path",
                       {
                         className: `ns-tree__vine${openTasks.length === 0 ? " ns-tree__vine--bare" : ""}`,
@@ -9129,7 +9583,7 @@ function NamespaceTree({
                     )
                   }
                 ),
-                openWorld && openSeat && !summaryLoaded && /* @__PURE__ */ jsx15(
+                openWorld && openSeat && !summaryLoaded && /* @__PURE__ */ jsx16(
                   "div",
                   {
                     className: "ns-tree__note",
@@ -9138,8 +9592,8 @@ function NamespaceTree({
                     children: "fetching the world's work\u2026"
                   }
                 ),
-                openWorld && openSeat && summaryLoaded && !summaryFailed && openTasks.length === 0 && /* @__PURE__ */ jsx15("div", { className: "ns-tree__note", style: notePos(openSeat, -90), children: "No tasks in this realm" }),
-                openWorld && openSeat && summaryFailed && /* @__PURE__ */ jsx15("div", { className: "ns-tree__note ns-tree__note--err", style: notePos(openSeat, -90), children: "summary unavailable" }),
+                openWorld && openSeat && summaryLoaded && !summaryFailed && openTasks.length === 0 && /* @__PURE__ */ jsx16("div", { className: "ns-tree__note", style: notePos(openSeat, -90), children: "no tasks in this world \u2014 its lantern rests" }),
+                openWorld && openSeat && summaryFailed && /* @__PURE__ */ jsx16("div", { className: "ns-tree__note ns-tree__note--err", style: notePos(openSeat, -90), children: "summary unavailable" }),
                 vine && openTasks.map((job, i) => {
                   const isTaskActive = job.sessionId === activeSessionId;
                   const anchor = vine.points[i];
@@ -9152,7 +9606,7 @@ function NamespaceTree({
                     "pop-in"
                   ].join(" ");
                   return [
-                    /* @__PURE__ */ jsx15(
+                    /* @__PURE__ */ jsx16(
                       "div",
                       {
                         className: anchorCls,
@@ -9162,11 +9616,11 @@ function NamespaceTree({
                           animationDelay: `${60 + i * 50}ms`
                         },
                         "aria-hidden": "true",
-                        children: /* @__PURE__ */ jsx15(TreeIcon, { src: taskIcon(job.status), fallback: taskIconFallback(job.status), size: "task" })
+                        children: /* @__PURE__ */ jsx16(TreeIcon, { src: taskIcon(job.status), fallback: taskIconFallback(job.status), size: "task" })
                       },
                       `anc-${job.sessionId}`
                     ),
-                    /* @__PURE__ */ jsx15(
+                    /* @__PURE__ */ jsx16(
                       VineCard,
                       {
                         job,
@@ -9190,7 +9644,7 @@ function NamespaceTree({
                     )
                   ];
                 }),
-                falling.map((g) => /* @__PURE__ */ jsx15(
+                falling.map((g) => /* @__PURE__ */ jsx16(
                   VineCard,
                   {
                     job: g.job,
@@ -9220,7 +9674,7 @@ function NamespaceTree({
 }
 
 // src/ui/components/Sidebar.tsx
-import { jsx as jsx16, jsxs as jsxs11 } from "react/jsx-runtime";
+import { jsx as jsx17, jsxs as jsxs12 } from "react/jsx-runtime";
 var DEFAULT_WIDTH = 300;
 function getDisplayMode(width) {
   if (width < 240) return "compact";
@@ -9263,7 +9717,7 @@ function Sidebar({ jobs, activeSessionId, quote, wsState, onAvatarClick, onOdinC
     } catch {
     }
   };
-  return /* @__PURE__ */ jsxs11(
+  return /* @__PURE__ */ jsxs12(
     "nav",
     {
       ref: navRef,
@@ -9271,16 +9725,16 @@ function Sidebar({ jobs, activeSessionId, quote, wsState, onAvatarClick, onOdinC
       "aria-label": "Agent sessions",
       style: { width: sizingMode === "fixed" ? externalWidth ?? DEFAULT_WIDTH : "100%", height: "100%" },
       children: [
-        /* @__PURE__ */ jsxs11("div", { className: "sidebar-header", children: [
-          /* @__PURE__ */ jsxs11("div", { className: "brand", children: [
-            /* @__PURE__ */ jsx16(
+        /* @__PURE__ */ jsxs12("div", { className: "sidebar-header", children: [
+          /* @__PURE__ */ jsxs12("div", { className: "brand", children: [
+            /* @__PURE__ */ jsx17(
               "button",
               {
                 className: "odin-avatar-btn",
                 onClick: onOdinClick,
                 "aria-label": "View Odin profile",
                 title: "View Odin profile",
-                children: /* @__PURE__ */ jsx16(
+                children: /* @__PURE__ */ jsx17(
                   "img",
                   {
                     src: avatarUrl("odin", theme === "light" ? "light" : "dark") ?? "",
@@ -9289,13 +9743,13 @@ function Sidebar({ jobs, activeSessionId, quote, wsState, onAvatarClick, onOdinC
                 )
               }
             ),
-            !isWidthCompact && /* @__PURE__ */ jsx16("h1", { children: "Hlidskjalf" }),
-            !isWidthCompact && /* @__PURE__ */ jsxs11("div", { className: "count", "aria-live": "polite", children: [
+            !isWidthCompact && /* @__PURE__ */ jsx17("h1", { children: "Hlidskjalf" }),
+            !isWidthCompact && /* @__PURE__ */ jsxs12("div", { className: "count", "aria-live": "polite", children: [
               jobs.length,
               " session",
               jobs.length !== 1 ? "s" : ""
             ] }),
-            /* @__PURE__ */ jsx16(
+            /* @__PURE__ */ jsx17(
               "button",
               {
                 type: "button",
@@ -9307,15 +9761,15 @@ function Sidebar({ jobs, activeSessionId, quote, wsState, onAvatarClick, onOdinC
                 children: compactOverride === "compact" ? "\xBB" : "\xAB"
               }
             ),
-            /* @__PURE__ */ jsx16(ThemeSwitcher, { theme, setTheme: setTheme2 }),
-            /* @__PURE__ */ jsx16("span", { className: "brand-wss-badge", children: /* @__PURE__ */ jsx16(StatusBadge, { state: wsState }) })
+            /* @__PURE__ */ jsx17(ThemeSwitcher, { theme, setTheme: setTheme2 }),
+            /* @__PURE__ */ jsx17("span", { className: "brand-wss-badge", children: /* @__PURE__ */ jsx17(StatusBadge, { state: wsState }) })
           ] }),
-          !isWidthCompact && /* @__PURE__ */ jsxs11("div", { className: "quote", role: "note", children: [
+          !isWidthCompact && /* @__PURE__ */ jsxs12("div", { className: "quote", role: "note", children: [
             "\u201C",
             quote,
             "\u201D"
           ] }),
-          /* @__PURE__ */ jsx16(
+          /* @__PURE__ */ jsx17(
             NamespaceTree,
             {
               namespace,
@@ -9333,7 +9787,7 @@ function Sidebar({ jobs, activeSessionId, quote, wsState, onAvatarClick, onOdinC
             }
           )
         ] }),
-        sizingMode === "fixed" && /* @__PURE__ */ jsx16(
+        sizingMode === "fixed" && /* @__PURE__ */ jsx17(
           "div",
           {
             className: "sidebar-resize-handle",
@@ -9352,7 +9806,7 @@ function Sidebar({ jobs, activeSessionId, quote, wsState, onAvatarClick, onOdinC
 
 // src/ui/components/AgentProfileModal.tsx
 import { useEffect as useEffect8, useRef as useRef9 } from "react";
-import { jsx as jsx17, jsxs as jsxs12 } from "react/jsx-runtime";
+import { jsx as jsx18, jsxs as jsxs13 } from "react/jsx-runtime";
 var ELDER_FUTHARK = "\u16A0 \u16A2 \u16A6 \u16A8 \u16B1 \u16B2 \u16B7 \u16B9 \u16BA \u16BE \u16C1 \u16C3 \u16C7 \u16C8 \u16C9 \u16CA \u16CF \u16D2 \u16D6 \u16D7 \u16DA \u16DC \u16DE \u16DF";
 function AgentProfileModal({ agentKey, theme, onClose }) {
   const closeButtonRef = useRef9(null);
@@ -9390,14 +9844,14 @@ function AgentProfileModal({ agentKey, theme, onClose }) {
       closeButtonRef.current?.focus();
     }
   }
-  return /* @__PURE__ */ jsx17(
+  return /* @__PURE__ */ jsx18(
     "div",
     {
       className: "apm-backdrop",
       ref: backdropRef,
       onClick: handleBackdropClick,
       "aria-label": "Agent profile backdrop",
-      children: /* @__PURE__ */ jsxs12(
+      children: /* @__PURE__ */ jsxs13(
         "div",
         {
           className: "apm-shell",
@@ -9407,7 +9861,7 @@ function AgentProfileModal({ agentKey, theme, onClose }) {
           onKeyDown: handleModalKeyDown,
           style: { "--agent-accent": accent },
           children: [
-            /* @__PURE__ */ jsx17(
+            /* @__PURE__ */ jsx18(
               "button",
               {
                 ref: closeButtonRef,
@@ -9417,18 +9871,18 @@ function AgentProfileModal({ agentKey, theme, onClose }) {
                 children: "\u2715"
               }
             ),
-            /* @__PURE__ */ jsxs12("div", { className: "apm-body", children: [
-              /* @__PURE__ */ jsx17("div", { className: "apm-rune-band", "aria-hidden": "true", children: ELDER_FUTHARK }),
-              /* @__PURE__ */ jsx17("div", { className: "apm-portrait-zone", children: portrait ? /* @__PURE__ */ jsx17(
+            /* @__PURE__ */ jsxs13("div", { className: "apm-body", children: [
+              /* @__PURE__ */ jsx18("div", { className: "apm-rune-band", "aria-hidden": "true", children: ELDER_FUTHARK }),
+              /* @__PURE__ */ jsx18("div", { className: "apm-portrait-zone", children: portrait ? /* @__PURE__ */ jsx18(
                 "img",
                 {
                   className: "apm-portrait",
                   src: portrait,
                   alt: name
                 }
-              ) : /* @__PURE__ */ jsx17("div", { className: "apm-portrait apm-portrait-placeholder", "aria-label": name, children: name.charAt(0) }) }),
-              /* @__PURE__ */ jsxs12("div", { className: "apm-identity", children: [
-                /* @__PURE__ */ jsx17(
+              ) : /* @__PURE__ */ jsx18("div", { className: "apm-portrait apm-portrait-placeholder", "aria-label": name, children: name.charAt(0) }) }),
+              /* @__PURE__ */ jsxs13("div", { className: "apm-identity", children: [
+                /* @__PURE__ */ jsx18(
                   "div",
                   {
                     className: "apm-agent-name",
@@ -9437,8 +9891,8 @@ function AgentProfileModal({ agentKey, theme, onClose }) {
                     children: name
                   }
                 ),
-                /* @__PURE__ */ jsx17("div", { className: "apm-agent-title", children: title }),
-                runes && /* @__PURE__ */ jsx17(
+                /* @__PURE__ */ jsx18("div", { className: "apm-agent-title", children: title }),
+                runes && /* @__PURE__ */ jsx18(
                   "div",
                   {
                     className: "apm-rune-sig",
@@ -9447,13 +9901,13 @@ function AgentProfileModal({ agentKey, theme, onClose }) {
                   }
                 )
               ] }),
-              quote && /* @__PURE__ */ jsx17("div", { className: "apm-quote", children: /* @__PURE__ */ jsxs12("p", { children: [
+              quote && /* @__PURE__ */ jsx18("div", { className: "apm-quote", children: /* @__PURE__ */ jsxs13("p", { children: [
                 "\u201C",
                 quote,
                 "\u201D"
               ] }) }),
-              description && /* @__PURE__ */ jsx17("div", { className: "apm-description", children: /* @__PURE__ */ jsx17("p", { children: description }) }),
-              /* @__PURE__ */ jsx17("div", { className: "apm-rune-band apm-rune-band--bottom", "aria-hidden": "true", children: ELDER_FUTHARK })
+              description && /* @__PURE__ */ jsx18("div", { className: "apm-description", children: /* @__PURE__ */ jsx18("p", { children: description }) }),
+              /* @__PURE__ */ jsx18("div", { className: "apm-rune-band apm-rune-band--bottom", "aria-hidden": "true", children: ELDER_FUTHARK })
             ] })
           ]
         }
@@ -9464,7 +9918,7 @@ function AgentProfileModal({ agentKey, theme, onClose }) {
 
 // src/ui/components/RagnarokDialog.tsx
 import { useEffect as useEffect9, useRef as useRef10, useState as useState13 } from "react";
-import { jsx as jsx18, jsxs as jsxs13 } from "react/jsx-runtime";
+import { jsx as jsx19, jsxs as jsxs14 } from "react/jsx-runtime";
 function RagnarokDialog({ sessionId, jobTitle, onConfirm, onCancel }) {
   const [isLoading, setIsLoading] = useState13(false);
   const [error, setError] = useState13(null);
@@ -9490,7 +9944,7 @@ function RagnarokDialog({ sessionId, jobTitle, onConfirm, onCancel }) {
       setIsLoading(false);
     }
   };
-  return /* @__PURE__ */ jsx18(
+  return /* @__PURE__ */ jsx19(
     "div",
     {
       className: "rdk-backdrop",
@@ -9501,27 +9955,27 @@ function RagnarokDialog({ sessionId, jobTitle, onConfirm, onCancel }) {
       onClick: (e) => {
         if (e.target === e.currentTarget && !isLoading) onCancel();
       },
-      children: /* @__PURE__ */ jsxs13("div", { className: "rdk-shell", children: [
-        /* @__PURE__ */ jsx18("div", { className: "rdk-rune-band", "aria-hidden": "true", children: "\u16B1\u16A8\u16B7\u16BE\u16A8\u16B1\u16DF\u16B2 \u16CA\u16A2\u16D7\u16D7\u16A2\u16BE\u16CA \u16C1\u16CA \u16BE\u16C1\u16B7\u16BA" }),
-        /* @__PURE__ */ jsxs13("div", { className: "rdk-header", children: [
-          /* @__PURE__ */ jsx18("span", { className: "rdk-sword-icon", "aria-hidden": "true", children: "\u2694\uFE0F" }),
-          /* @__PURE__ */ jsx18("h2", { id: "rdk-title", className: "rdk-title", children: "Invoke Ragnar\xF6k?" })
+      children: /* @__PURE__ */ jsxs14("div", { className: "rdk-shell", children: [
+        /* @__PURE__ */ jsx19("div", { className: "rdk-rune-band", "aria-hidden": "true", children: "\u16B1\u16A8\u16B7\u16BE\u16A8\u16B1\u16DF\u16B2 \u16CA\u16A2\u16D7\u16D7\u16A2\u16BE\u16CA \u16C1\u16CA \u16BE\u16C1\u16B7\u16BA" }),
+        /* @__PURE__ */ jsxs14("div", { className: "rdk-header", children: [
+          /* @__PURE__ */ jsx19("span", { className: "rdk-sword-icon", "aria-hidden": "true", children: "\u2694\uFE0F" }),
+          /* @__PURE__ */ jsx19("h2", { id: "rdk-title", className: "rdk-title", children: "Invoke Ragnar\xF6k?" })
         ] }),
-        /* @__PURE__ */ jsxs13("div", { className: "rdk-body", id: "rdk-body", children: [
-          /* @__PURE__ */ jsx18("p", { className: "rdk-body-text", children: "You are about to sever this thread from the Nornir's loom. This agent's saga will end \u2014 no Valhalla awaits a cancelled job. This cannot be undone." }),
-          /* @__PURE__ */ jsxs13("div", { className: "rdk-job-label", "aria-label": "Job to be cancelled", children: [
-            /* @__PURE__ */ jsx18("span", { className: "rdk-job-label-icon", "aria-hidden": "true", children: "\u263D" }),
-            /* @__PURE__ */ jsx18("span", { className: "rdk-job-label-text", children: jobTitle })
+        /* @__PURE__ */ jsxs14("div", { className: "rdk-body", id: "rdk-body", children: [
+          /* @__PURE__ */ jsx19("p", { className: "rdk-body-text", children: "You are about to sever this thread from the Nornir's loom. This agent's saga will end \u2014 no Valhalla awaits a cancelled job. This cannot be undone." }),
+          /* @__PURE__ */ jsxs14("div", { className: "rdk-job-label", "aria-label": "Job to be cancelled", children: [
+            /* @__PURE__ */ jsx19("span", { className: "rdk-job-label-icon", "aria-hidden": "true", children: "\u263D" }),
+            /* @__PURE__ */ jsx19("span", { className: "rdk-job-label-text", children: jobTitle })
           ] }),
-          /* @__PURE__ */ jsx18("div", { className: "rdk-session-id", "aria-label": "Session ID", children: sessionId })
+          /* @__PURE__ */ jsx19("div", { className: "rdk-session-id", "aria-label": "Session ID", children: sessionId })
         ] }),
-        error && /* @__PURE__ */ jsxs13("div", { className: "rdk-error", role: "alert", children: [
-          /* @__PURE__ */ jsx18("span", { "aria-hidden": "true", children: "\u2715" }),
+        error && /* @__PURE__ */ jsxs14("div", { className: "rdk-error", role: "alert", children: [
+          /* @__PURE__ */ jsx19("span", { "aria-hidden": "true", children: "\u2715" }),
           " ",
           error
         ] }),
-        /* @__PURE__ */ jsxs13("div", { className: "rdk-actions", children: [
-          /* @__PURE__ */ jsx18(
+        /* @__PURE__ */ jsxs14("div", { className: "rdk-actions", children: [
+          /* @__PURE__ */ jsx19(
             "button",
             {
               ref: cancelRef,
@@ -9532,7 +9986,7 @@ function RagnarokDialog({ sessionId, jobTitle, onConfirm, onCancel }) {
               children: "Stay the Hand of Fate"
             }
           ),
-          /* @__PURE__ */ jsx18(
+          /* @__PURE__ */ jsx19(
             "button",
             {
               ref: confirmRef,
@@ -9540,14 +9994,14 @@ function RagnarokDialog({ sessionId, jobTitle, onConfirm, onCancel }) {
               onClick: handleConfirm,
               disabled: isLoading,
               "aria-label": "Unleash Ragnar\xF6k \u2014 permanently cancel this job",
-              children: isLoading ? /* @__PURE__ */ jsxs13("span", { className: "rdk-loading-text", children: [
-                /* @__PURE__ */ jsx18("span", { className: "rdk-spinner", "aria-hidden": "true" }),
+              children: isLoading ? /* @__PURE__ */ jsxs14("span", { className: "rdk-loading-text", children: [
+                /* @__PURE__ */ jsx19("span", { className: "rdk-spinner", "aria-hidden": "true" }),
                 "Severing the thread\u2026"
               ] }) : "Unleash Ragnar\xF6k"
             }
           )
         ] }),
-        /* @__PURE__ */ jsx18("div", { className: "rdk-rune-band rdk-rune-band--bottom", "aria-hidden": "true", children: "\u16A0\u16D6\u16BE\u16B1\u16C1\u16B1 \u16B9\u16A8\u16CF\u16B2\u16BA\u16D6\u16CA \u16A6\u16D6 \u16B9\u16DF\u16DA\u16A0 \u16B9\u16A8\u16CF\u16B2\u16BA\u16D6\u16CA" })
+        /* @__PURE__ */ jsx19("div", { className: "rdk-rune-band rdk-rune-band--bottom", "aria-hidden": "true", children: "\u16A0\u16D6\u16BE\u16B1\u16C1\u16B1 \u16B9\u16A8\u16CF\u16B2\u16BA\u16D6\u16CA \u16A6\u16D6 \u16B9\u16DF\u16DA\u16A0 \u16B9\u16A8\u16CF\u16B2\u16BA\u16D6\u16CA" })
       ] })
     }
   );
@@ -9555,7 +10009,7 @@ function RagnarokDialog({ sessionId, jobTitle, onConfirm, onCancel }) {
 
 // src/ui/components/Toast.tsx
 import { useEffect as useEffect10, useState as useState14 } from "react";
-import { jsx as jsx19, jsxs as jsxs14 } from "react/jsx-runtime";
+import { jsx as jsx20, jsxs as jsxs15 } from "react/jsx-runtime";
 function Toast({ message, onDismiss, duration = 4e3 }) {
   const [exiting, setExiting] = useState14(false);
   useEffect10(() => {
@@ -9566,7 +10020,7 @@ function Toast({ message, onDismiss, duration = 4e3 }) {
       clearTimeout(dismissTimer);
     };
   }, [duration, onDismiss]);
-  return /* @__PURE__ */ jsxs14(
+  return /* @__PURE__ */ jsxs15(
     "div",
     {
       className: `toast${exiting ? " toast--exit" : ""}`,
@@ -9574,9 +10028,9 @@ function Toast({ message, onDismiss, duration = 4e3 }) {
       "aria-live": "polite",
       "aria-atomic": "true",
       children: [
-        /* @__PURE__ */ jsx19("span", { className: "toast-rune", "aria-hidden": "true", children: "\u2694\uFE0F" }),
-        /* @__PURE__ */ jsx19("span", { className: "toast-message", children: message }),
-        /* @__PURE__ */ jsx19(
+        /* @__PURE__ */ jsx20("span", { className: "toast-rune", "aria-hidden": "true", children: "\u2694\uFE0F" }),
+        /* @__PURE__ */ jsx20("span", { className: "toast-message", children: message }),
+        /* @__PURE__ */ jsx20(
           "button",
           {
             className: "toast-close",
@@ -9594,10 +10048,10 @@ function Toast({ message, onDismiss, duration = 4e3 }) {
 }
 
 // src/ui/components/ErrorBanner.tsx
-import { jsxs as jsxs15 } from "react/jsx-runtime";
+import { jsxs as jsxs16 } from "react/jsx-runtime";
 function ErrorBanner({ message }) {
   if (!message) return null;
-  return /* @__PURE__ */ jsxs15("div", { className: `error-banner visible`, role: "alert", "aria-live": "assertive", children: [
+  return /* @__PURE__ */ jsxs16("div", { className: `error-banner visible`, role: "alert", "aria-live": "assertive", children: [
     "\u26A0",
     " ",
     message
@@ -9605,14 +10059,14 @@ function ErrorBanner({ message }) {
 }
 
 // src/ui/components/Overlays.tsx
-import { Fragment as Fragment4, jsx as jsx20, jsxs as jsxs16 } from "react/jsx-runtime";
+import { Fragment as Fragment5, jsx as jsx21, jsxs as jsxs17 } from "react/jsx-runtime";
 function ThroneOverlays() {
   const snap = useThrone();
   if (!snap) return null;
-  return /* @__PURE__ */ jsxs16(Fragment4, { children: [
-    /* @__PURE__ */ jsx20(ErrorBanner, { message: snap.wsError }),
-    snap.storageWarning && /* @__PURE__ */ jsx20(ErrorBanner, { message: snap.storageWarning }),
-    snap.profileAgent && /* @__PURE__ */ jsx20(
+  return /* @__PURE__ */ jsxs17(Fragment5, { children: [
+    /* @__PURE__ */ jsx21(ErrorBanner, { message: snap.wsError }),
+    snap.storageWarning && /* @__PURE__ */ jsx21(ErrorBanner, { message: snap.storageWarning }),
+    snap.profileAgent && /* @__PURE__ */ jsx21(
       AgentProfileModal,
       {
         agentKey: snap.profileAgent,
@@ -9620,7 +10074,7 @@ function ThroneOverlays() {
         onClose: () => snap.setProfileAgent(null)
       }
     ),
-    snap.cancelTarget && /* @__PURE__ */ jsx20(
+    snap.cancelTarget && /* @__PURE__ */ jsx21(
       RagnarokDialog,
       {
         sessionId: snap.cancelTarget.sessionId,
@@ -9629,7 +10083,7 @@ function ThroneOverlays() {
         onCancel: () => snap.setCancelTarget(null)
       }
     ),
-    snap.toast && /* @__PURE__ */ jsx20(
+    snap.toast && /* @__PURE__ */ jsx21(
       Toast,
       {
         message: snap.toast.message,
@@ -9878,7 +10332,7 @@ function openThroneTab(sessionId) {
 // src/targets/plugin/settings.tsx
 import { useState as useState17, useSyncExternalStore as useSyncExternalStore3 } from "react";
 import { host as host3 } from "@hermes/plugin-sdk";
-import { jsx as jsx21, jsxs as jsxs17 } from "react/jsx-runtime";
+import { jsx as jsx22, jsxs as jsxs18 } from "react/jsx-runtime";
 var open = false;
 var listeners3 = /* @__PURE__ */ new Set();
 var settingsUi = {
@@ -9931,7 +10385,7 @@ function ThroneSettings() {
     settingsUi.close();
     setSaving(false);
   }
-  return /* @__PURE__ */ jsx21(
+  return /* @__PURE__ */ jsx22(
     "div",
     {
       className: "apm-backdrop",
@@ -9941,19 +10395,19 @@ function ThroneSettings() {
       onClick: (e) => {
         if (e.target === e.currentTarget) settingsUi.close();
       },
-      children: /* @__PURE__ */ jsxs17("div", { className: "throne-settings", style: { maxWidth: 440 }, children: [
-        /* @__PURE__ */ jsx21("h2", { children: "Bind the Bifr\xF6st" }),
-        /* @__PURE__ */ jsxs17("p", { className: "throne-settings-hint", children: [
-          /* @__PURE__ */ jsx21("strong", { children: "Google OAuth is the only way in" }),
+      children: /* @__PURE__ */ jsxs18("div", { className: "throne-settings", style: { maxWidth: 440 }, children: [
+        /* @__PURE__ */ jsx22("h2", { children: "Bind the Bifr\xF6st" }),
+        /* @__PURE__ */ jsxs18("p", { className: "throne-settings-hint", children: [
+          /* @__PURE__ */ jsx22("strong", { children: "Google OAuth is the only way in" }),
           " \u2014 the same login the web version uses, completed in your browser via a one-time pairing code. No session, no data. The only setting is the upstream URL, overridden for a local dev monitor (which runs without oauth2-proxy)."
         ] }),
-        /* @__PURE__ */ jsxs17("p", { className: "throne-settings-hint", children: [
+        /* @__PURE__ */ jsxs18("p", { className: "throne-settings-hint", children: [
           "Session: ",
-          /* @__PURE__ */ jsx21("strong", { children: paired ? "paired \u2713" : "not paired" })
+          /* @__PURE__ */ jsx22("strong", { children: paired ? "paired \u2713" : "not paired" })
         ] }),
-        /* @__PURE__ */ jsxs17("label", { children: [
+        /* @__PURE__ */ jsxs18("label", { children: [
           "Upstream URL",
-          /* @__PURE__ */ jsx21(
+          /* @__PURE__ */ jsx22(
             "input",
             {
               style: inputStyle,
@@ -9963,9 +10417,9 @@ function ThroneSettings() {
             }
           )
         ] }),
-        /* @__PURE__ */ jsxs17("div", { className: "throne-settings-row", children: [
-          /* @__PURE__ */ jsx21("button", { className: "throne-settings-btn", onClick: () => settingsUi.close(), children: "Cancel" }),
-          /* @__PURE__ */ jsx21(
+        /* @__PURE__ */ jsxs18("div", { className: "throne-settings-row", children: [
+          /* @__PURE__ */ jsx22("button", { className: "throne-settings-btn", onClick: () => settingsUi.close(), children: "Cancel" }),
+          /* @__PURE__ */ jsx22(
             "button",
             {
               className: "throne-settings-btn primary",
@@ -9981,10 +10435,10 @@ function ThroneSettings() {
 }
 
 // src/targets/plugin/pane.tsx
-import { Fragment as Fragment5, jsx as jsx22, jsxs as jsxs18 } from "react/jsx-runtime";
+import { Fragment as Fragment6, jsx as jsx23, jsxs as jsxs19 } from "react/jsx-runtime";
 function SidebarConnected() {
   const snap = useThrone();
-  return /* @__PURE__ */ jsx22(
+  return /* @__PURE__ */ jsx23(
     Sidebar,
     {
       jobs: snap.jobs,
@@ -10026,12 +10480,12 @@ function PairingCard() {
     if (!result.ok) setError(result.error ?? "Pairing failed");
     setBusy(false);
   }
-  return /* @__PURE__ */ jsxs18("div", { className: "throne-connect-card", children: [
-    /* @__PURE__ */ jsx22("p", { children: "The Throne is sealed \u2014 sign in with Google to open the Bifr\xF6st (the same login the web version uses)." }),
-    /* @__PURE__ */ jsx22("button", { className: "throne-settings-btn primary", onClick: () => void openBrowser(), children: "Sign in with Google" }),
-    opened && /* @__PURE__ */ jsxs18(Fragment5, { children: [
-      /* @__PURE__ */ jsx22("p", { children: "The pairing page is open in your browser \u2014 click the key to copy it, then paste it here:" }),
-      /* @__PURE__ */ jsx22(
+  return /* @__PURE__ */ jsxs19("div", { className: "throne-connect-card", children: [
+    /* @__PURE__ */ jsx23("p", { children: "The Throne is sealed \u2014 sign in with Google to open the Bifr\xF6st (the same login the web version uses)." }),
+    /* @__PURE__ */ jsx23("button", { className: "throne-settings-btn primary", onClick: () => void openBrowser(), children: "Sign in with Google" }),
+    opened && /* @__PURE__ */ jsxs19(Fragment6, { children: [
+      /* @__PURE__ */ jsx23("p", { children: "The pairing page is open in your browser \u2014 click the key to copy it, then paste it here:" }),
+      /* @__PURE__ */ jsx23(
         "input",
         {
           className: "throne-code-input",
@@ -10056,10 +10510,10 @@ function PairingCard() {
           }
         }
       ),
-      /* @__PURE__ */ jsx22("button", { className: "throne-settings-btn", disabled: busy, onClick: () => void pair(), children: busy ? "Binding\u2026" : "Pair" })
+      /* @__PURE__ */ jsx23("button", { className: "throne-settings-btn", disabled: busy, onClick: () => void pair(), children: busy ? "Binding\u2026" : "Pair" })
     ] }),
-    error && /* @__PURE__ */ jsx22("p", { style: { color: "var(--error-text)" }, children: error }),
-    /* @__PURE__ */ jsx22(
+    error && /* @__PURE__ */ jsx23("p", { style: { color: "var(--error-text)" }, children: error }),
+    /* @__PURE__ */ jsx23(
       "button",
       {
         className: "throne-settings-btn",
@@ -10078,8 +10532,8 @@ function ThronePane() {
   const settingsOpen = useSettingsOpen();
   useSyncExternalStore4(subscribeSession, sessionSnapshot, sessionSnapshot);
   const { theme } = useTheme();
-  const bridge = useMemo4(() => /* @__PURE__ */ jsx22(App, {}), []);
-  return /* @__PURE__ */ jsxs18(
+  const bridge = useMemo4(() => /* @__PURE__ */ jsx23(App, {}), []);
+  return /* @__PURE__ */ jsxs19(
     "div",
     {
       className: "odins-throne-root",
@@ -10087,17 +10541,17 @@ function ThronePane() {
       style: { width: "100%", height: "100%", position: "relative", overflow: "hidden" },
       children: [
         bridge,
-        snap ? /* @__PURE__ */ jsx22(ErrorBoundary, { children: /* @__PURE__ */ jsx22(SidebarConnected, {}) }) : /* @__PURE__ */ jsx22("div", { className: "throne-boot", children: "Awakening the Allfather\u2026" }),
-        !isConfigured() && /* @__PURE__ */ jsx22(PairingCard, {}),
-        /* @__PURE__ */ jsx22(ThroneOverlays, {}),
-        settingsOpen && /* @__PURE__ */ jsx22(ThroneSettings, {})
+        snap ? /* @__PURE__ */ jsx23(ErrorBoundary, { children: /* @__PURE__ */ jsx23(SidebarConnected, {}) }) : /* @__PURE__ */ jsx23("div", { className: "throne-boot", children: "Awakening the Allfather\u2026" }),
+        !isConfigured() && /* @__PURE__ */ jsx23(PairingCard, {}),
+        /* @__PURE__ */ jsx23(ThroneOverlays, {}),
+        settingsOpen && /* @__PURE__ */ jsx23(ThroneSettings, {})
       ]
     }
   );
 }
 
 // src/targets/plugin/entry.tsx
-import { jsx as jsx23 } from "react/jsx-runtime";
+import { jsx as jsx24 } from "react/jsx-runtime";
 var FONTS_HREF = "https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Cinzel+Decorative:wght@400;700;900&family=Source+Serif+4:wght@300;400;600&family=JetBrains+Mono:wght@400;500;600&display=swap";
 setPlatform(pluginPlatform);
 var STYLE_ID = "odins-throne-hermes-style";
@@ -10183,13 +10637,13 @@ var entry_default = {
         dock: { pane: "workspace", pos: "right", enforce: true },
         width: "300px"
       },
-      render: () => /* @__PURE__ */ jsx23(ThronePane, {})
+      render: () => /* @__PURE__ */ jsx24(ThronePane, {})
     });
     ctx2.register({
       id: "page",
       area: ROUTES_AREA2,
       data: { path: "/odins-throne" },
-      render: () => /* @__PURE__ */ jsx23(ThronePage, {})
+      render: () => /* @__PURE__ */ jsx24(ThronePage, {})
     });
     ctx2.register({
       id: "nav",

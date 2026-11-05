@@ -14,7 +14,11 @@
 // the count/overflow and placement contracts. All layout constants live
 // HERE, never in JSX (same rule as treeSeats.ts / vineGeometry.ts).
 
-import type { LanternSeat } from "./treeSeats";
+/** Minimal seat position needed for pip-strip layout (scene % + vine direction). */
+interface SeatPos {
+  x: number;
+  dir: 1 | -1;
+}
 
 /** Task-pip row sizing. */
 export const TASK_PIPS = {
@@ -100,7 +104,7 @@ export interface PipRowLayout {
  * when not even one column fits does the row clamp back inside the scene.
  * An unmeasured scene (sceneW 0) lays out at full width without clamping.
  */
-export function pipRowLayout(seat: LanternSeat, sceneW: number, slots: number): PipRowLayout {
+export function pipRowLayout(seat: SeatPos, sceneW: number, slots: number): PipRowLayout {
   const want = Math.min(Math.max(Math.floor(slots), 1), TASK_PIPS.columns);
   const awayLeft = (width: number): number =>
     seat.dir === 1 ? -TASK_PIPS.clearPx - width : TASK_PIPS.clearPx;
@@ -137,7 +141,7 @@ export function pipStripWidth(row: TaskPipRow): number {
  * and is clamped so it never clips the scene.
  * Returns 0 when the scene is unmeasured (sceneW = 0).
  */
-export function pipStripLeft(seat: LanternSeat, sceneW: number, rowWidth: number): number {
+export function pipStripLeft(seat: SeatPos, sceneW: number, rowWidth: number): number {
   if (!(sceneW > 0) || rowWidth <= 0) return 0;
   const seatPx = (seat.x / 100) * sceneW;
   // strip starts at li's left edge, which is the lantern's left edge

@@ -30,7 +30,7 @@ const src = readFileSync(new URL("../src/ui/lib/treeSeats.ts", import.meta.url),
 const { code } = transformSync(src, { loader: "ts", format: "esm" });
 const tmp = mkdtempSync(join(tmpdir(), "tree-seats-"));
 writeFileSync(join(tmp, "treeSeats.mjs"), code);
-const { TREE_SCENE, SEAT_POOL, CURATED_SEATS, assignSeats, namespaceSeat, projectSeat } = await import(
+const { TREE_SCENE, SEAT_POOL, CURATED_SEATS, LANTERN_ANCHOR, assignSeats, namespaceSeat, projectSeat } = await import(
   pathToFileURL(join(tmp, "treeSeats.mjs")).href
 );
 
@@ -74,6 +74,20 @@ assert.equal(SEAT_POOL.length, PROTOTYPE_SEAT_POOL.length, "painted seat pool si
 for (let i = 0; i < PROTOTYPE_SEAT_POOL.length; i++) {
   assert.deepEqual(SEAT_POOL[i], PROTOTYPE_SEAT_POOL[i], `painted seat ${i} matches the prototype`);
 }
+
+// ── LANTERN_ANCHOR: per-seat popup pins verbatim from v3.13.2 prototype ───────
+assert.equal(LANTERN_ANCHOR.length, 11, "LANTERN_ANCHOR has one entry per seat (11)");
+assert.ok(Math.abs(LANTERN_ANCHOR[0].x - 43.7) < 0.01, "LANTERN_ANCHOR[0].x ≈ 43.7");
+assert.ok(Math.abs(LANTERN_ANCHOR[0].y - 73.5) < 0.01, "LANTERN_ANCHOR[0].y ≈ 73.5");
+assert.ok(Math.abs(LANTERN_ANCHOR[10].x - 50.9) < 0.01, "LANTERN_ANCHOR[10].x ≈ 50.9");
+assert.ok(Math.abs(LANTERN_ANCHOR[10].y - 33.0) < 0.01, "LANTERN_ANCHOR[10].y ≈ 33.0");
+// every anchor is a small offset from its painted lantern
+for (let i = 0; i < SEAT_POOL.length; i++) {
+  const s = SEAT_POOL[i];
+  const a = LANTERN_ANCHOR[i];
+  assert.ok(Math.abs(a.x - s.x) < 15, `LANTERN_ANCHOR[${i}].x is near SEAT_POOL[${i}].x`);
+  assert.ok(Math.abs(a.y - s.y) < 15, `LANTERN_ANCHOR[${i}].y is near SEAT_POOL[${i}].y`);
+}
 const PROTOTYPE_CURATED = {
   "fenrir-agents": 9,
   "odins-throne-hermes-agents": 8,
@@ -102,12 +116,12 @@ const LIVE_LIST = [
 const seats = assignSeats(LIVE_LIST);
 assert.equal(seats.size, LIVE_LIST.length, "every API namespace gets exactly one seat");
 // Curated painted lanterns are claimed with their v3.9 painting % coordinates.
-assert.deepEqual(seats.get("fenrir-agents"), { x: 40, y: 37, dir: 1 }, "fenrir-agents → its curated painted lantern (40,37)");
-assert.deepEqual(seats.get("say-so-agents"), { x: 11, y: 50, dir: 1 }, "say-so-agents → its curated painted lantern (11,50)");
-assert.deepEqual(seats.get("shanaghy-com-agents"), { x: 18, y: 40, dir: 1 }, "shanaghy-com-agents → its curated painted lantern (18,40)");
-assert.deepEqual(seats.get("re-goatmower-agents"), { x: 30, y: 55, dir: 1 }, "re-goatmower-agents → its curated painted lantern (30,55)");
+assert.deepEqual(seats.get("fenrir-agents"), { x: 40, y: 37, dir: 1, seatIdx: 9 }, "fenrir-agents → its curated painted lantern (40,37, idx 9)");
+assert.deepEqual(seats.get("say-so-agents"), { x: 11, y: 50, dir: 1, seatIdx: 6 }, "say-so-agents → its curated painted lantern (11,50, idx 6)");
+assert.deepEqual(seats.get("shanaghy-com-agents"), { x: 18, y: 40, dir: 1, seatIdx: 7 }, "shanaghy-com-agents → its curated painted lantern (18,40, idx 7)");
+assert.deepEqual(seats.get("re-goatmower-agents"), { x: 30, y: 55, dir: 1, seatIdx: 4 }, "re-goatmower-agents → its curated painted lantern (30,55, idx 4)");
 
-// No two worlds share a seat; every seat is a valid painting % with dir 1.
+// No two worlds share a seat; every seat is a valid painting % with dir 1 and a valid seatIdx.
 const claimed = new Set();
 for (const [id, seat] of seats) {
   const key = `${seat.x},${seat.y}`;
@@ -116,6 +130,9 @@ for (const [id, seat] of seats) {
   assert.ok(seat.x > 0 && seat.x <= 100, `seat x in (0,100] for ${id} (got ${seat.x})`);
   assert.ok(seat.y > 0 && seat.y <= 100, `seat y in (0,100] for ${id} (got ${seat.y})`);
   assert.equal(seat.dir, 1, `seat dir = 1 (all vines go right to branch rail) for ${id}`);
+  assert.ok(seat.seatIdx >= 0 && seat.seatIdx < SEAT_POOL.length, `seatIdx in [0,10] for ${id} (got ${seat.seatIdx})`);
+  assert.equal(seat.x, SEAT_POOL[seat.seatIdx].x, `seat.x matches SEAT_POOL[seatIdx].x for ${id}`);
+  assert.equal(seat.y, SEAT_POOL[seat.seatIdx].y, `seat.y matches SEAT_POOL[seatIdx].y for ${id}`);
 }
 
 // Deterministic: the same list seats identically across runs.
@@ -126,7 +143,7 @@ const laterList = ["brand-new-world", ...LIVE_LIST];
 const laterSeats = assignSeats(laterList);
 assert.deepEqual(
   laterSeats.get("fenrir-agents"),
-  { x: 40, y: 37, dir: 1 },
+  { x: 40, y: 37, dir: 1, seatIdx: 9 },
   "a namespace appearing later in the API list keeps its curated seat",
 );
 // An unknown world whose djb2 hash lands ON a curated seat walks past it.
@@ -231,8 +248,8 @@ assert.deepEqual(assignSeats(fullList), fullSeats, "overflow seating is determin
 }
 
 // ── single-id convenience ────────────────────────────────────────────────────
-assert.deepEqual(namespaceSeat("fenrir-agents"), { x: 40, y: 37, dir: 1 }, "namespaceSeat singleton → curated lantern");
-for (const ns of ["mytruthfinder-agents", "brand-new-world", "odins-throne-hermes-agents"]) {
+assert.deepEqual(namespaceSeat("fenrir-agents"), { x: 40, y: 37, dir: 1, seatIdx: 9 }, "namespaceSeat singleton → curated lantern with seatIdx 9");
+for (const ns of ["mytruthfinder-agents", "brand-new-world", "odins-throne-plugin"]) {
   const a = namespaceSeat(ns);
   assert.deepEqual(a, namespaceSeat(ns), `namespaceSeat is deterministic for "${ns}"`);
   assert.ok(a.x > 0 && a.x <= 100 && a.y > 0 && a.y <= 100, `namespaceSeat in-scene for "${ns}"`);
@@ -333,4 +350,4 @@ assert.equal(
 const rowWith7Visible = taskPips(tasksN(12));
 assert.ok(pipStripWidth(rowWith7Visible) > 7 * TASK_PIPS.sizePx + 6 * TASK_PIPS.gapPx, "overflow row: strip width includes the chip");
 
-console.log("tree-seats: painting (v3.9 tall) + 11 painted-% seat pool + runtime seating + projectSeat + task pip rows + single-row strip (issues #10, #11, #39, #54, #69) verified");
+console.log("tree-seats: painting (v3.9 tall) + 11 painted-% seat pool + LANTERN_ANCHOR (v3.13.2) + runtime seating (seatIdx) + projectSeat + task pip rows + single-row strip (issues #10, #11, #39, #54, #69, #95) verified");

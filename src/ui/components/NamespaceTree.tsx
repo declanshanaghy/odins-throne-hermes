@@ -215,20 +215,25 @@ export function NamespaceTree({
   const vineMode: VineMode = displayMode === "compact" ? "compact" : displayMode === "normal" ? "normal" : "extended";
 
   const vine = useMemo(() => {
-    if (!openWorld || !openSeat || summaryFailed || sceneSize.w === 0 || sceneSize.h === 0) return null;
+    if (!openWorld || !openSeat || summaryFailed) return null;
     const seatIdx = openSeat.seatIdx;
     const anchorPaint = LANTERN_ANCHOR[seatIdx];
     if (!anchorPaint) return null;
-    const anchorScene = projectSeat(anchorPaint, sceneSize.w, sceneSize.h);
+    // When sceneSize is unmeasured (ResizeObserver pending), treat painting %
+    // as px directly — produces valid geometry without layout (positions are
+    // small but structurally correct until the first resize fires).
+    const W = sceneSize.w > 0 ? sceneSize.w : 100;
+    const H = sceneSize.h > 0 ? sceneSize.h : 100;
+    const anchorScene = projectSeat(anchorPaint, W, H);
     const lanternPx = {
-      x: (openSeat.x / 100) * sceneSize.w,
-      y: (openSeat.y / 100) * sceneSize.h,
+      x: (openSeat.x / 100) * W,
+      y: (openSeat.y / 100) * H,
     };
     const anchorPx = {
-      x: (anchorScene.x / 100) * sceneSize.w,
-      y: (anchorScene.y / 100) * sceneSize.h,
+      x: (anchorScene.x / 100) * W,
+      y: (anchorScene.y / 100) * H,
     };
-    return vineFor(lanternPx, anchorPx, openTasks.length, vineMode, sceneSize.w);
+    return vineFor(lanternPx, anchorPx, openTasks.length, vineMode, W);
   }, [openWorld, openSeat, openTasks.length, sceneSize.w, sceneSize.h, vineMode, summaryFailed]);
 
   const canvasHeight = vine ? vineCanvasHeight(vine, sceneSize.h) : 0;
@@ -417,7 +422,7 @@ export function NamespaceTree({
                 const stripWidth = pipRow && pipRow.count > 0 ? pipStripWidth(pipRow) : 0;
                 const stripLeft = pipRow && pipRow.count > 0
                   ? pipStripLeft(
-                      { x: projected.x, y: projected.y, dir: paintSeat.dir },
+                      { x: projected.x, dir: paintSeat.dir },
                       sceneSize.w,
                       stripWidth,
                     )
