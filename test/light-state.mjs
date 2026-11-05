@@ -158,4 +158,49 @@ assert.ok(
   "CSS: lseat--mid veil is no longer .34 (old three-tier value replaced by .25)",
 );
 
-console.log("light-state: four-tier dim ladder (off .75 / empty .50 / mid .25 / full 0) + stone .65 + berry guard verified — issue #97");
+// ── 10. the LIGHT ladder INVERTS (issue #123, prototype v3.17 round 25) ─────
+// In Parchment & Mead Hall, BRIGHT = lit, WASHED = dim: the multiply veils
+// become a warm vellum wash at normal blend, glow flips to the mead sun
+// radial, the FULL ring is verdigris. Four tiers, same rungs, inverted
+// polarity: off .55 / empty .40 / mid .18 / full 0.
+const LT = "[data-theme=\"light\"]";
+const lightVeilFill = extractRule(css, `${LT} .lseat__veil`);
+assert.ok(lightVeilFill, "CSS: light veil rule exists");
+assert.ok(lightVeilFill.includes("#EFE6D2"), "light veil fill is the warm vellum wash #EFE6D2");
+assert.ok(lightVeilFill.includes("normal"), "light veil drops multiply for normal blend");
+const lightGlow = extractRule(css, `${LT} .lseat__glow`);
+assert.ok(lightGlow.includes("url(#lglowg-sun)"), "light glow is the mead-gold sun radial (#lglowg-sun)");
+assert.ok(lightGlow.includes("normal"), "light glow drops screen blend for normal blend");
+
+const lightOffVeil = extractRule(css, `${LT} .lseat--off .lseat__veil`);
+const lightEmptyVeil = extractRule(css, `${LT} .lseat--empty .lseat__veil`);
+const lightMidVeil = extractRule(css, `${LT} .lseat--mid .lseat__veil`);
+const lightFullVeil = extractRule(css, `${LT} .lseat--full .lseat__veil`);
+assert.ok(lightOffVeil && lightEmptyVeil && lightMidVeil && lightFullVeil, "CSS: all four light veil rungs exist");
+assert.equal(extractOpacity(lightOffVeil), 0.55, "light off veil .55 (the most washed)");
+assert.equal(extractOpacity(lightEmptyVeil), 0.4, "light empty veil .40");
+assert.equal(extractOpacity(lightMidVeil), 0.18, "light mid veil .18");
+assert.equal(extractOpacity(lightFullVeil), 0, "light full veil 0 (the brightest — INVERTED)");
+// inverted monotonic: off > empty > mid > full (wash fades as the lantern lights)
+assert.ok(
+  extractOpacity(lightOffVeil) > extractOpacity(lightEmptyVeil)
+    && extractOpacity(lightEmptyVeil) > extractOpacity(lightMidVeil)
+    && extractOpacity(lightMidVeil) > extractOpacity(lightFullVeil),
+  "light ladder is monotonic in the same direction (off > empty > mid > full)",
+);
+assert.equal(extractOpacity(extractRule(css, `${LT} .lseat--off .lseat__halo`)), 0.35, "light off halo wash .35");
+assert.equal(extractOpacity(extractRule(css, `${LT} .lseat--empty .lseat__halo`)), 0, "light empty halo 0");
+assert.equal(extractOpacity(extractRule(css, `${LT} .lseat--mid .lseat__glow`)), 0.45, "light mid glow .45 (+ mead glow)");
+assert.equal(extractOpacity(extractRule(css, `${LT} .lseat--full .lseat__glow`)), 1, "light full glow 1");
+const lightFullRing = extractRule(css, `${LT} .lseat--full .lseat__ring`);
+assert.ok(lightFullRing, "CSS: light full ring rule exists");
+assert.ok(lightFullRing.includes("#0B6B5C"), "light FULL ring is verdigris #0B6B5C");
+assert.ok(lightFullRing.includes("232, 181, 74"), "light FULL ring carries the mead drop-shadow");
+
+// the bundle ships the inverted ladder too
+const bundleLightVeil = extractRule(plugin, `${LT} .lseat__veil`);
+assert.ok(bundleLightVeil && bundleLightVeil.includes("#EFE6D2"), "bundle: light vellum wash veil ships");
+assert.equal(extractOpacity(extractRule(plugin, `${LT} .lseat--off .lseat__veil`)), 0.55, "bundle: light off veil .55");
+assert.equal(extractOpacity(extractRule(plugin, `${LT} .lseat--full .lseat__veil`)), 0, "bundle: light full veil 0");
+
+console.log("light-state: four-tier dim ladder (off .75 / empty .50 / mid .25 / full 0) + stone .65 + berry guard + INVERTED light ladder (off .55 / empty .40 / mid .18 / full 0, verdigris ring) verified — issues #97, #123");
