@@ -252,7 +252,7 @@
      the title box CATCHES its own clicks (pointer-events auto +
      .wtitle in the dead-space exempt list): a click anywhere in the
      title area NEVER deactivates the world — only the links inside act.
-     v3.16 (round 24, 2026-11-05): PARCHMENT & MEAD HALL — the APPROVED
+     v3.17 (round 25, 2026-11-05): PARCHMENT & MEAD HALL — the APPROVED
      light theme (proposal #2, Declan signed the mockup) joins the
      prototype: a ☀ toggle in the tree panel header (far-right order:
      count · compact · theme · status) flips data-theme="light" on the
@@ -848,7 +848,7 @@
     .spore, .jcard__dot, .jcard--failed .jcard__dot, .jcard--terminating { animation: none; }
   }
 
-  /* ── SPEC: LIGHT THEME (PARCHMENT & MEAD HALL) (v3.16, round 24) ──
+  /* ── SPEC: LIGHT THEME (PARCHMENT & MEAD HALL) (v3.17, round 25) ──
      Rules, verbatim:
      • toggle seat: the ☀ button in the tree panel header — far-right
        order: count · compact · theme · status. Flips data-theme="light"
@@ -1036,7 +1036,7 @@
                text-transform: uppercase; letter-spacing: 1px; text-align: right; }
   .swatch { display: inline-block; width: 9px; height: 9px; border-radius: 50% 50% 50% 2px; rotate: 45deg; margin-right: 6px; }
 
-  /* ═══ v3.16 — PARCHMENT & MEAD HALL light theme (proposal #2, round 24) ═══
+  /* ═══ v3.17 — PARCHMENT & MEAD HALL light theme (proposal #2, round 25) ═══
      Tokens re-target the existing names so the whole chrome re-skins:
      vellum surfaces, iron-gall ink, bronze rules, ember/verdigris status.
      Every interactive surface below is OPAQUE (decree). */
@@ -1209,7 +1209,7 @@
 
 <!-- ═══ prototype furniture ═══ -->
 <div class="deck">
-  <span class="deck__title"><b>ᛟ</b> Odin's Throne — tree display redesign · issue #7 prototype · <b>v3.16</b></span>
+  <span class="deck__title"><b>ᛟ</b> Odin's Throne — tree display redesign · issue #7 prototype · <b>v3.17</b></span>
   <span class="deck__note">the lantern is the holder of the spirit — no discs, no circles; every veil, glow and outline traces the painted lantern's own teardrop silhouette (SVG) · four light states — the dim ladder 75/50/25/0 (round 23): OFF (no namespace seated — veiled dark, 75% dim) · EMPTY (namespace seated, no tasks — 50% dim) · MID (namespace with tasks, deactivated — 25% dim + soft glow) · FULL (clicked world, task list showing — 0% dim, fully lit + teal outline, brighter than everything) · hover lifts a seated lantern toward full · the whole scene scrolls together, vine out to the 44% rail · «/» compact toggle · ☀ parchment light theme (round 24) — proposal-2 Parchment &amp; Mead Hall: vellum surfaces, iron-gall ink, bronze rules, mead glow; the dim ladder INVERTS (bright = lit, washed = dim) and the seats re-calculate onto the parchment painting's own amber lanterns</span>
   <span class="deck__sep"></span>
   <div class="deck__group">
@@ -1511,7 +1511,7 @@ const LANTERN_ANCHOR = [
   { x: 14.9, y: 49.9 }, { x: 21.5, y: 40.7 }, { x: 26.7, y: 30.2 },
   { x: 43.5, y: 37.1 }, { x: 50.9, y: 33.0 },
 ];
-/* v3.16 (round 24, 2026-11-05) — SEAT_POOL_LIGHT: the parchment
+/* v3.17 (round 25, 2026-11-05) — SEAT_POOL_LIGHT: the parchment
    painting's OWN amber lanterns, pixel-detected on the CLEAN ground
    (backdrop-parchment.jpg) by detect-lanterns-parchment.py (warm
    amber-core mask + glow-blob local contrast, left-half bounded per the
@@ -1535,7 +1535,7 @@ const LANTERN_ANCHOR_LIGHT = [
 const LANTERN_SIZE_LIGHT = [
   { w: 28, h: 50 }, { w: 41, h: 53 }, { w: 36, h: 51 }, { w: 26, h: 50 }, { w: 41, h: 54 }, { w: 44, h: 68 }, { w: 26, h: 50 }, { w: 32, h: 54 }, { w: 26, h: 54 }, { w: 34, h: 50 }, { w: 28, h: 51 }
 ];
-/* the dark pool's per-seat measured sizes — global since v3.16
+/* the dark pool's per-seat measured sizes — global since v3.17
    (was renderScene-local; same verbatim values) */
 const LANTERN_SIZE = [
   { w: 40, h: 79 }, { w: 38, h: 74 }, { w: 32, h: 68 }, { w: 31, h: 66 },
@@ -1640,7 +1640,7 @@ function buildWorlds(namespaces) {
   }
   return namespaces.map(ns => {
     let seatIdx = seated.get(ns.id);
-    const pool = seatPool();   /* v3.16: the ACTIVE pool — dark SEAT_POOL or light SEAT_POOL_LIGHT */
+    const pool = seatPool();   /* v3.17: the ACTIVE pool — dark SEAT_POOL or light SEAT_POOL_LIGHT */
     if (seatIdx == null) {
       let i = hashKey(ns.id) % pool.length, guard = 0;
       while (taken.has(i) && guard++ < pool.length) i = (i + 1) % pool.length;
@@ -1662,7 +1662,7 @@ function buildWorlds(namespaces) {
 /* ═══ state ═══ */
 let state = {
   mode: "standard",
-  theme: "dark",   /* v3.16: ☀ parchment light — in-memory for the session (prototype) */
+  theme: "dark",   /* v3.17: ☀ parchment light — in-memory for the session (prototype) */
   worlds: [],          // built from the backend API — never hardcoded
   summariesLoaded: new Set(),
   expanded: new Set(),
@@ -1684,7 +1684,7 @@ const canvas = $("#canvas"), scroller = $("#scroller");
 const backdropImg = $("#backdrop"), mapdbgEl = $("#mapdbg");
 const STATUS_LABEL = { running: "running", succeeded: "succeeded", failed: "failed", pending: "pending", terminating: "terminating" };
 const STATUS_COLOR_DARK = { running: "#6fb7d8", succeeded: "#79b356", failed: "#e07a3f", pending: "#5b6a5f", terminating: "#7e949a" };
-/* v3.16 — proposal #2's measured light status palette (≥3:1 on vellum) */
+/* v3.17 — proposal #2's measured light status palette (≥3:1 on vellum) */
 const STATUS_COLOR_LIGHT = { running: "#0F6B7A", succeeded: "#2E6B34", failed: "#A32318", pending: "#8A5A0B", terminating: "#6B5340" };
 const statusColor = () => state.theme === "light" ? STATUS_COLOR_LIGHT : STATUS_COLOR_DARK;
 
@@ -1792,7 +1792,7 @@ function vineFor(w, n) {
      every list now seats at ITS OWN lantern's right edge, wherever that
      lantern hangs. The stem clamp in the card placement still guards the
      scene's right edge for the rightmost seats. */
-  const A = px(projectSeat(lanternAnchor(w.seatIdx)));   /* v3.16: the ACTIVE pool's recorded pin */   // the popup pin — bulb right edge
+  const A = px(projectSeat(lanternAnchor(w.seatIdx)));   /* v3.17: the ACTIVE pool's recorded pin */   // the popup pin — bulb right edge
   const ch = state.mode === "compact" ? 20 : 47;           // card height, MEASURED (standard 47; compact one-line 20)
   const column = A.x - 14;                                 // the vine descends here; card stems tie on
   const firstY = A.y + ch / 2;                             // first card CENTER — its TOP sits at the pin
@@ -1859,7 +1859,7 @@ function renderScene() {
   /* per-seat measured lantern sizes (painting px, bright-core w/h from the
      repo's scripts/detect-lanterns.py on the CURRENT backdrop, mapped to
      SEAT_POOL index order) — each veil/glow/ring scales to its own lantern */
-  /* LANTERN_SIZE hoisted to global scope (v3.16) — same values */
+  /* LANTERN_SIZE hoisted to global scope (v3.17) — same values */
   const svgNS = "http://www.w3.org/2000/svg";
   const lsvg = document.createElementNS(svgNS, "svg");
   lsvg.setAttribute("class", "lshapes");
@@ -1871,7 +1871,7 @@ function renderScene() {
      same as projectSeat). The tree never changes aspect between modes. */
   const KS = { x: kStd, y: kStd };
   let lseats = "";
-  seatPool().forEach((seat, i) => {   /* v3.16: the ACTIVE pool's lanterns get ladder shapes */
+  seatPool().forEach((seat, i) => {   /* v3.17: the ACTIVE pool's lanterns get ladder shapes */
     const w = state.worlds.find(x => x.seatIdx === i);
     /* v3.15 (round 23) — THE FOUR-TIER DIM LADDER: the veil opacity is the
        decree's dim %. off (no namespace seated) 75% · empty (seated, ZERO
@@ -1883,7 +1883,7 @@ function renderScene() {
     const p = px(projectSeat(seat));
     /* each seat's shape scales to its OWN measured lantern (base path is a
        38x73-core teardrop; LANTERN_SIZE carries the per-lantern w/h) */
-    const LS = lanternSize(i);   /* v3.16: per-seat silhouette from the ACTIVE pool */
+    const LS = lanternSize(i);   /* v3.17: per-seat silhouette from the ACTIVE pool */
     const mx = KS.x * (LS.w / 38), my = KS.y * (LS.h / 73);
     lseats += `<g class="lseat lseat--${st}" data-seat="${i}" `
       + `transform="translate(${p.x.toFixed(1)},${p.y.toFixed(1)}) scale(${mx.toFixed(4)},${my.toFixed(4)})">`
@@ -1902,7 +1902,7 @@ function renderScene() {
     + `<stop offset=".5" stop-color="#a8dcec" stop-opacity=".5"/>`
     + `<stop offset="1" stop-color="#a8dcec" stop-opacity="0"/>`
     + `</radialGradient>`
-    /* v3.16 — the mead-gold SUN radial for the light ladder's glow */
+    /* v3.17 — the mead-gold SUN radial for the light ladder's glow */
     + `<radialGradient id="lglowg-sun" cx="50%" cy="55%" r="68%">`
     + `<stop offset="0" stop-color="#FFF3C9" stop-opacity=".95"/>`
     + `<stop offset=".5" stop-color="#F2C14E" stop-opacity=".55"/>`
@@ -1963,7 +1963,7 @@ function renderScene() {
       fruit.className = "fruit";
       fruit.style.left = LP.x + "%"; fruit.style.top = (LP.y + 4) + "%";
       fruit.style.opacity = isActive ? "1" : ".55";   /* v3.8: dimmed stones dim their fruit */
-      const SC = statusColor();   /* v3.16: berries follow the ACTIVE palette */
+      const SC = statusColor();   /* v3.17: berries follow the ACTIVE palette */
       const bc = (c, on) => `<b style="background:${c};color:${c};${on ? "" : "opacity:.28"}"></b>`;
       fruit.innerHTML = bc(SC.succeeded, s.succeeded > 0) + bc(SC.running, s.running > 0) + bc(SC.failed, s.failed > 0)
         + `<span class="fruit__counts">`
@@ -2387,7 +2387,7 @@ compactBtn.addEventListener("click", () => {
 });
 syncCompactToggle();
 
-/* ═══ v3.16 — the PARCHMENT LIGHT THEME (proposal #2, round 24) ═══
+/* ═══ v3.17 — the PARCHMENT LIGHT THEME (proposal #2, round 25) ═══
    The ☀ button flips data-theme="light" on the root (in-memory for the
    session — prototype). The dark painting keeps its embedded base64;
    light references the sibling backdrop-parchment.jpg. Seats swap to

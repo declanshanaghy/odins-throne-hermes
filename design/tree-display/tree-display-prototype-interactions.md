@@ -1,6 +1,6 @@
 # Odin's Throne — Tree Display Interaction Spec
 
-**Prototype:** `tree-display-prototype.html` (v3.16) · **This file:** the behavioral contract for the port.
+**Prototype:** `tree-display-prototype.html` (v3.17) · **This file:** the behavioral contract for the port.
 **Division of truth:** the HTML is the *reference implementation* — its code holds the exact values
 (geometry, opacities, sizes, colors) and its inline comments are the *minimum* documentation; THIS md
 sits *above* the code and states the behavior that must hold no matter the implementation. Every
@@ -14,7 +14,7 @@ change to the prototype updates the HTML, its comments, and this file in the sam
 - ONE painted tree per theme (896×1200 backdrops — never regenerate without re-mapping seats):
   **dark** = the moonlit tree (inline base64), **light** = the parchment tree (`backdrop-parchment.jpg`,
   sibling file, prompt beside it). The ☀ header toggle flips `data-theme="light"` on the root and swaps
-  painting + seat pool (v3.16).
+  painting + seat pool (v3.17).
 - **Eleven painted leaf-lanterns = eleven seats, per painting.** `SEAT_POOL` (dark) and
   `SEAT_POOL_LIGHT` (parchment) are each in painting %; seat indices are theme-stable — curated
   namespaces claim their seats first, the rest seat deterministically (djb2 hash, forward-walk past
@@ -54,7 +54,7 @@ deactivated / active are never confusable:
 - An empty world that gains work **climbs the ladder live**: empty → full while selected, resting
   at mid when deactivated. A world whose work drains to zero falls back to empty.
 
-### 2b. The light theme (PARCHMENT & MEAD HALL, v3.16 round 24)
+### 2b. The light theme (PARCHMENT & MEAD HALL, v3.17 round 25)
 
 - **Toggle**: the ☀ button in the tree panel header (far-right order: count · compact · theme · status).
   Flips `data-theme="light"` on the root; in-memory persistence for the session (prototype). The button
@@ -178,7 +178,7 @@ deactivated / active are never confusable:
 - [ ] Cluster hides on expand, returns on collapse; pip strip single-row, +N past 8
 - [ ] **Title section**: active world → box 100% + teal name (a **LINK to the world's own page** on shanaghy.com — REALM db `worlds[].profile`) + per-state stats sigils + the GARDEN BAND (opaque stone in full glory in the left-25% moss bed, ringfort lore naming the world's ringfort to its right, **entity mentions linkified**) + kin entity links; deactivate → 50% fade with SAME content; next selection → back to 100% with new info; kin click opens the entity's profile page in a new tab (selection unchanged); **clicks anywhere in the title box NEVER deactivate the world** (round 24); unknown world → generic ringfort lore + plain-text name
 - [ ] A11y: treeitem roles, aria-expanded/selected, focus-visible ring
-- [ ] **Light theme (v3.16)**: ☀ flips `data-theme="light"` + swaps painting and seat pool; every
+- [ ] **Light theme (v3.17)**: ☀ flips `data-theme="light"` + swaps painting and seat pool; every
       stone still lands on ITS pool's lantern through the same `projectSeat()` (exp == act for all
       worlds, dark AND light, standard AND compact); light ladder is the inverted wash (off .55 /
       empty .40 / mid .18 / full 0 + mead glow + verdigris ring — verify via computed styles); every
