@@ -2601,6 +2601,41 @@ body {
   color: var(--text-rune);
   margin: 0.2rem 0;
 }
+.decree-card-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.decree-card-copy-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.4rem;
+  height: 1.4rem;
+  padding: 0;
+  background: transparent;
+  border: 1px solid var(--rune-border);
+  border-radius: 3px;
+  color: var(--text-void);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+  flex-shrink: 0;
+}
+.decree-card-copy-btn:hover { color: var(--gold); border-color: var(--gold); }
+.decree-card-copy-btn.copied { color: var(--teal-asgard); border-color: var(--teal-asgard); }
+[data-theme="light"] .decree-card-copy-btn { color: var(--text-rune); }
+.decree-card-format-badge {
+  font-size: 9px;
+  color: var(--text-void);
+  background: rgba(42, 42, 62, 0.6);
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-family: monospace;
+  letter-spacing: 0.5px;
+}
+[data-theme="light"] .decree-card-format-badge { background: rgba(100, 80, 45, 0.12); }
 @media (max-width: 600px) {
   .decree-card-avatar { width: 30px; height: 30px; }
   .decree-card-verdict-value { font-size: 0.75rem; }
