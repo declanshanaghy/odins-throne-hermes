@@ -8933,9 +8933,12 @@ function projectSeat(p, sceneW, sceneH) {
   }
   const k = Math.max(sceneW / 896, sceneH / 1200);
   const dw = 896 * k;
+  const dh = 1200 * k;
   const fl = 0;
+  const ft = (sceneH - dh) / 2;
   const x = (p.x / 100 * dw + fl) / sceneW * 100;
-  return { x, y: p.y };
+  const y = (p.y / 100 * dh + ft) / sceneH * 100;
+  return { x, y };
 }
 
 // src/ui/lib/taskPips.ts

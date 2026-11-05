@@ -196,11 +196,22 @@ export function projectSeat(
   }
   const k = Math.max(sceneW / 896, sceneH / 1200);
   const dw = 896 * k;
+  const dh = 1200 * k;
   // LEFT-ANCHORED crop: the CSS pins the painting's left edge to the scene's
   // left edge (object-position: 0% 50%), so painting x 0 == scene x 0.
   const fl = 0;
+  // VERTICALLY-CENTERED crop (the same object-position's 50% y): in a
+  // WIDTH-limited scene (k = W/896) the painting overhangs the scene top AND
+  // bottom, and the crop centers it — y maps through dh with offset
+  // ft = (H - dh)/2, NOT passthrough. The v3.9 port dropped this half
+  // (prototype v3.9.1 carried it), so every top seat rendered low by
+  // (py% - 50%)·(H - dh) in wide/short scenes — odins-throne, fenrir and the
+  // top-right lantern sat ~50-100px under their painted lanterns. In a
+  // height-limited scene dh == H, ft == 0 and y passes through unchanged.
+  const ft = (sceneH - dh) / 2;
   const x = (p.x / 100 * dw + fl) / sceneW * 100;
-  return { x, y: p.y };
+  const y = (p.y / 100 * dh + ft) / sceneH * 100;
+  return { x, y };
 }
 
 /**

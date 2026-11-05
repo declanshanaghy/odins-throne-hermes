@@ -217,9 +217,11 @@ assert.deepEqual(assignSeats(fullList), fullSeats, "overflow seating is determin
 // Mode-independent: compact and standard produce identical results for every seat
 {
   const cases = [
-    [268, 746], // shipped dock scroller (300px pane)
-    [432, 640], // design reference sidebar (TREE_SCENE.sidebarWidthPx)
-    [500, 800], // web hall sidebar
+    [268, 746], // shipped dock scroller (300px pane) — height-limited
+    [432, 640], // design reference sidebar (TREE_SCENE.sidebarWidthPx) — height-limited
+    [500, 800], // web hall sidebar — height-limited
+    [800, 600], // wide/short pane (resizable sidebar dragged wide) — WIDTH-limited
+    [668, 443], // the reported misalignment ratio — WIDTH-limited
   ];
   for (const [W, H] of cases) {
     for (const p of SEAT_POOL) {
@@ -232,6 +234,35 @@ assert.deepEqual(assignSeats(fullList), fullSeats, "overflow seating is determin
         r.y >= 0 && r.y <= 100,
         `seat (${p.x},${p.y}) scene y in range at ${W}x${H}: ${r.y.toFixed(2)}`,
       );
+    }
+  }
+}
+// Width-limited scenes: y maps through the VERTICALLY-CENTERED cover crop
+// (object-position 50% y — ft = (H - dh)/2), NOT passthrough. The v3.9 port
+// dropped this half from prototype v3.9.1; top seats rendered low by
+// (py% - 50%)·(H - dh) — the reported odins-throne/fenrir/top-right drift.
+{
+  const cases = [
+    [800, 600], // k = 800/896 — width-limited
+    [668, 443], // k = 668/896 — width-limited (reported ratio)
+  ];
+  for (const [W, H] of cases) {
+    const k = Math.max(W / 896, H / 1200);
+    assert.ok(k > H / 1200 + 1e-9, `case ${W}x${H} is width-limited`);
+    const dw = 896 * k, dh = 1200 * k;
+    const fl = 0, ft = (H - dh) / 2;
+    for (const p of SEAT_POOL) {
+      const r = projectSeat(p, W, H);
+      const expectedX = (p.x / 100 * dw + fl) / W * 100;
+      const expectedY = (p.y / 100 * dh + ft) / H * 100;
+      assert.ok(Math.abs(r.x - expectedX) < 0.01, `width-limited ${W}x${H} x for (${p.x},${p.y})`);
+      assert.ok(Math.abs(r.y - expectedY) < 0.01,
+        `width-limited ${W}x${H} y for (${p.x},${p.y}): expected ~${expectedY.toFixed(2)}, got ${r.y.toFixed(2)}`);
+      // the stone (projected seat) must land ON the painted lantern's client y
+      const stoneY = r.y / 100 * H;
+      const lanternY = p.y / 100 * dh + ft;
+      assert.ok(Math.abs(stoneY - lanternY) < 0.01,
+        `width-limited ${W}x${H}: stone on lantern y for (${p.x},${p.y}) — Δ ${Math.abs(stoneY - lanternY).toFixed(2)}px`);
     }
   }
 }
