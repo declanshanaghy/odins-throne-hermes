@@ -241,6 +241,21 @@ Regression guard: `test/hermes-stream.mjs` replays a synthetic Hermes session
 through the real hook (from the built bundle, same bytes the desktop loads)
 and asserts the structured entries end to end.
 
+## Message markdown
+
+Assistant messages (agent bubbles and thinking blocks) render **markdown**,
+not raw text — the handcrafted parser in `src/ui/lib/markdown.tsx` (zero
+dependencies: the plugin runtime may only import `react` +
+`@hermes/plugin-sdk`) turns message content into typed tokens and React
+nodes. Supported: `#`–`######` headings, nested `-`/`1.` lists, fenced code,
+`|` tables with column alignment, `>` quotes, `---` rules, and inline
+`**bold**` / `*em*` / `` `code` `` / `~~del~~` / links + bare-URL autolinks.
+Output is built from tokens — agent text can never inject HTML (guarded by
+`test/markdown.mjs`, which also renders a kitchen-sink message through the
+built bundle and asserts the DOM). Styles live in the
+`Markdown-in-messages` section of `src/ui/styles/index.css` and follow the
+opaque-surface decree, theming via the palette vars.
+
 ## Deliberate deviations from the SPA
 
 - **Compact-view toggle** — the header bar carries a `«`/`»` button that
