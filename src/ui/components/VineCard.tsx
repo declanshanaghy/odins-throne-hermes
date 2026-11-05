@@ -30,6 +30,7 @@ import type { CSSProperties } from "react";
 import type { DisplayJob } from "../lib/types";
 import { resolveSessionTitle } from "../lib/resolveSessionTitle";
 import { STATUS_LABELS } from "../lib/constants";
+import { formatAge } from "../lib/formatAge";
 
 interface Props {
   job: DisplayJob;
@@ -136,6 +137,8 @@ export function VineCard({
               {job.issue}
               {" · "}
               {job.agentName}
+              {" · "}
+              <span className="jcard__age" aria-label={`age: ${formatAge(job.startTime)}`}>{formatAge(job.startTime)}</span>
               {isPinned ? " · 📌" : ""}
             </span>
           </div>
