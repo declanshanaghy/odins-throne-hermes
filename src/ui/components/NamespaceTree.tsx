@@ -1,12 +1,14 @@
-// Namespace lantern tree (issues #11, #12, #39, #59, #69, #90, #95) — v3.13.2
+// Namespace lantern tree (issues #11, #12, #39, #59, #69, #90, #95, #97) — v3.15
 //
+// v3.15 (issue #97): four-tier dim ladder — the veil opacity IS the decree's dim %.
 // v3.13.2 (issue #95): full port of the approved prototype.
 //
-// Light states (v3.10): one .lshapes SVG under the buttons, one <g class="lseat">
-// per SEAT_POOL index (all 11 — seated or not). Three states:
-//   OFF  — no namespace seated: dark veil + halo multiply
-//   MID  — seated, list closed: soft screen-blend glow
-//   FULL — clicked world, vine showing: glow 1.0 + teal ring; stone → opaque
+// Light states: one .lshapes SVG under the buttons, one <g class="lseat">
+// per SEAT_POOL index (all 11 — seated or not). FOUR states:
+//   OFF   — no namespace seated: dark veil .75 + halo multiply .5
+//   EMPTY — seated, zero tasks, not selected: veil .50, stone .65 + desaturated, no berries
+//   MID   — seated with tasks, list closed: veil .25 + soft screen-blend glow
+//   FULL  — clicked world, vine showing: veil 0 + glow 1.0 + teal ring; stone → opaque
 //
 // Vine (v3.10.5): job list pins to its lantern's LANTERN_ANCHOR bulb. The vine
 // emerges from the lantern, curls to the recorded anchor pin, then descends
@@ -355,7 +357,8 @@ export function NamespaceTree({
                 {SEAT_POOL.map((seat, i) => {
                   const nsId = nsForSeat.get(i);
                   const isFull = nsId != null && openNs === nsId;
-                  const lseatState = nsId == null ? "off" : isFull ? "full" : "mid";
+                  const hasWork = nsId != null && (summaries[nsId]?.total ?? 0) > 0;
+                  const lseatState = nsId == null ? "off" : isFull ? "full" : hasWork ? "mid" : "empty";
                   const isHovered = nsId != null && hoveredNs === nsId;
                   const p = projectSeat(seat, sceneSize.w, sceneSize.h);
                   const px = (p.x / 100) * sceneSize.w;
@@ -397,10 +400,13 @@ export function NamespaceTree({
                 const total = summary?.total ?? 0;
                 // v3.10: FULL = clicked world with vine open; stone → opaque while full
                 const isFull = isActive && isOpen;
+                // v3.15: stone tier follows the four-tier ladder
+                const stoneTier = isFull ? "is-full" : total > 0 ? "is-mid" : "is-empty";
                 const lanternClass = [
                   "ns-tree__select",
                   "ns-tree__lantern",
                   isFull ? "ns-tree__lantern--full" : isActive ? "ns-tree__lantern--active" : "ns-tree__lantern--inactive",
+                  stoneTier,
                   summary?.error ? "ns-tree__lantern--dim" : "",
                   failed > 0 ? "ns-tree__lantern--failed" : total > 0 ? "ns-tree__lantern--ok" : "",
                 ]
