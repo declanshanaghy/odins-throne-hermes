@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import type { DisplayJob } from "../lib/types";
 import { useTheme } from "../hooks/useTheme";
 import type { NamespaceOption } from "../hooks/useNamespace";
@@ -7,6 +7,24 @@ import { ThemeSwitcher } from "./ThemeSwitcher";
 import { StatusBadge } from "./StatusBadge";
 import { NamespaceTree } from "./NamespaceTree";
 import { avatarUrl } from "../lib/constants";
+import { matchesQuery } from "../lib/matchesQuery";
+import { parseJob } from "../hooks/useJobs";
+
+// ── findSessionUi seam (issue #117) ──────────────────────────────────────────
+// Module-scope registration so the ⌘K palette command can focus the filter
+// input from outside the React tree (mirrors the settingsUi seam pattern).
+let _focusFn: (() => void) | null = null;
+export const findSessionUi = {
+  register(fn: () => void): void {
+    _focusFn = fn;
+  },
+  unregister(): void {
+    _focusFn = null;
+  },
+  focus(): void {
+    _focusFn?.();
+  },
+};
 
 // Desktop port: the host pane sash resizes this sidebar; the browser's in-app
 // drag handle is gone. Width is measured via ResizeObserver so the
@@ -71,7 +89,16 @@ export function Sidebar({ jobs, activeSessionId, quote, wsState, onAvatarClick, 
   const { theme, setTheme } = useTheme();
   const [width, setWidth] = useState<number>(DEFAULT_WIDTH);
   const [compactOverride, setCompactOverride] = useState<"auto" | "compact">(() => readCompactPref());
+  const [query, setQuery] = useState<string>("");
+  const filterInputRef = useRef<HTMLInputElement | null>(null);
   const navRef = useRef<HTMLElement | null>(null);
+
+  // Register this instance's focus fn with the module-scope seam so the
+  // ⌘K "Find session" command can focus the input imperatively.
+  useEffect(() => {
+    findSessionUi.register(() => filterInputRef.current?.focus());
+    return () => findSessionUi.unregister();
+  }, []);
 
   useEffect(() => {
     const nav = navRef.current;
@@ -92,6 +119,24 @@ export function Sidebar({ jobs, activeSessionId, quote, wsState, onAvatarClick, 
   const displayMode: DisplayMode = compactOverride === "compact" ? "compact" : widthMode;
   // h1/count/quote hide only when the pane is physically narrow (not on manual compact).
   const isWidthCompact = widthMode === "compact";
+
+  // Session count: total and matching across all worlds (issue #117).
+  const { totalSessions, matchingSessions } = useMemo(() => {
+    const q = query.trim();
+    if (!q) return { totalSessions: jobs.length, matchingSessions: jobs.length };
+    let total = 0;
+    let matching = 0;
+    for (const ns of namespaces) {
+      const summary = namespaceSummaries[ns.id];
+      if (!summary || summary.error) continue;
+      const tasks = summary.jobs
+        .filter((j) => j.status !== "purged")
+        .map(parseJob);
+      total += tasks.length;
+      matching += tasks.filter((j) => matchesQuery(j, q)).length;
+    }
+    return { totalSessions: total, matchingSessions: matching };
+  }, [query, namespaces, namespaceSummaries, jobs.length]);
 
   const toggleCompact = () => {
     const next: "auto" | "compact" = compactOverride === "compact" ? "auto" : "compact";
@@ -126,7 +171,9 @@ export function Sidebar({ jobs, activeSessionId, quote, wsState, onAvatarClick, 
           {!isWidthCompact && <h1>Hlidskjalf</h1>}
           {!isWidthCompact && (
             <div className="count" aria-live="polite">
-              {jobs.length} session{jobs.length !== 1 ? "s" : ""}
+              {query.trim()
+                ? `${matchingSessions} of ${totalSessions} session${totalSessions !== 1 ? "s" : ""}`
+                : `${jobs.length} session${jobs.length !== 1 ? "s" : ""}`}
             </div>
           )}
           <button
@@ -149,6 +196,34 @@ export function Sidebar({ jobs, activeSessionId, quote, wsState, onAvatarClick, 
             &ldquo;{quote}&rdquo;
           </div>
         )}
+        {/* Session filter (issue #117): visible when pane is not width-compact */}
+        {!isWidthCompact && (
+          <div className="sidebar-filter">
+            <input
+              ref={filterInputRef}
+              className="sidebar-filter__input"
+              type="search"
+              placeholder="filter sessions…"
+              aria-label="Filter sessions"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Escape") setQuery(""); }}
+              autoComplete="off"
+              spellCheck={false}
+            />
+            {query && (
+              <button
+                type="button"
+                className="sidebar-filter__clear"
+                aria-label="Clear filter"
+                title="Clear filter"
+                onClick={() => { setQuery(""); filterInputRef.current?.focus(); }}
+              >
+                ×
+              </button>
+            )}
+          </div>
+        )}
         <NamespaceTree
           namespace={namespace}
           namespaces={namespaces}
@@ -162,6 +237,8 @@ export function Sidebar({ jobs, activeSessionId, quote, wsState, onAvatarClick, 
           pinnedSessionIds={pinnedSessionIds}
           onCancelJob={onCancelJob}
           terminatingSessionIds={terminatingSessionIds}
+          query={query}
+          onClearQuery={() => setQuery("")}
         />
       </div>
       {/* Desktop port: the old flat job list is gone — jobs now live as job

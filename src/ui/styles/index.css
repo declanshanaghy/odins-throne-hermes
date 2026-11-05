@@ -330,6 +330,41 @@ body {
   white-space: nowrap; flex-shrink: 0;
 }
 
+/* ── Session filter input (issue #117) ──────────────
+   Sits below the quote / brand row, above the namespace tree.
+   Reuses the same monospace tokens as the settings inputs. */
+.sidebar-filter {
+  display: flex; align-items: center; gap: 6px;
+  margin-bottom: 0.5rem;
+}
+.sidebar-filter__input {
+  flex: 1; min-width: 0;
+  padding: 0.3rem 0.6rem;
+  border-radius: 5px;
+  border: 1px solid var(--rune-border);
+  background: var(--void);
+  color: var(--text-saga);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.sidebar-filter__input:focus {
+  border-color: var(--teal-asgard);
+}
+.sidebar-filter__input::placeholder {
+  color: var(--text-rune); opacity: 0.6;
+}
+.sidebar-filter__clear {
+  flex: none;
+  padding: 0 6px; height: 24px;
+  border: 1px solid var(--rune-border); border-radius: 4px;
+  background: transparent; color: var(--text-rune);
+  font-family: 'JetBrains Mono', monospace; font-size: 0.7rem;
+  cursor: pointer; transition: color 0.15s, border-color 0.15s;
+}
+.sidebar-filter__clear:hover { color: var(--text-saga); border-color: var(--text-rune); }
+
 /* ── Theme toggle (single button, issue #47) ─────── */
 .theme-btn {
   font-family: 'JetBrains Mono', monospace;

@@ -17,6 +17,7 @@ import { pluginPlatform } from "./platform";
 import { ThronePane } from "./pane";
 import { ThronePage } from "./page";
 import { settingsUi } from "./settings";
+import { findSessionUi } from "../../ui/components/Sidebar";
 import { setCtx, setThroneTabOpener } from "./pluginCtx";
 import { initSessionTabs, openSessionTab } from "./sessionTabs";
 import { throneStore } from "../../ui/store";
@@ -179,6 +180,16 @@ export default {
         label: "Odin's Throne: Configure upstream",
         keywords: ["odin", "throne", "token", "url", "bifrost"],
         run: () => settingsUi.open(),
+      },
+    });
+    ctx.register({
+      id: "find-session",
+      area: PALETTE_AREA,
+      data: {
+        id: "odins-throne.find-session",
+        label: "Odin's Throne: Find session",
+        keywords: ["odin", "throne", "find", "search", "filter", "session", "hlidskjalf"],
+        run: () => findSessionUi.focus(),
       },
     });
   },
