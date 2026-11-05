@@ -1,22 +1,25 @@
-// Namespace stone tree (issues #11, #12, #39, #59, #69) — v3.9
+// Namespace lantern tree (issues #11, #12, #39, #59, #69, #90) — v3.9.3
 //
-// v3.9 (issue #69): the tree becomes a vertical painted tree where each
-// namespace is a visible dark-slate STONE overlaying a painted leaf-lantern.
-// The active (selected) world's stone OPENS (teal ring, translucent, z7);
-// every other stone FADES into the background (ghost-transparent, opacity .5,
-// z4). The whole scene — backdrop + stones + vine + cards — scrolls TOGETHER
-// in one canvas so the task list is ALWAYS attached to its stone.
+// v3.9.3 (issue #90): the painted lantern is the HOLDER OF THE NAMESPACE'S SPIRIT.
+// No disc or stone sits on top — the namespace icon floats directly on the painting.
+// The ACTIVE lantern glows via a screen-blend halo (::before); every INACTIVE
+// lantern is dimmed with a multiply-blend radial mask (::after) so it reads unlit.
+// The lantern button is fully transparent (no border, no background, no radius).
 //
-// Key changes from v3.8:
+// v3.9 (issue #69): the tree becomes a vertical painted tree scene.
+// The whole scene — backdrop + lanterns + vine + cards — scrolls TOGETHER
+// in one canvas so the task list is ALWAYS attached to its lantern.
+//
+// Key layout points:
 //   - `<img class="ns-tree__backdrop">` replaces the CSS background-image
 //     (height pinned to scene by JS so it roots above the extended canvas)
 //   - `ns-tree__roots` lives INSIDE the scrolling canvas (scroll-together)
-//   - Stones carry `--inactive` / `--active` classes (not just `--active`)
+//   - Lanterns carry `--inactive` / `--active` classes (not just `--active`)
 //   - Seats are in PAINTING %; `projectSeat()` maps to scene % before use
 //   - All summaries preload at boot (useNamespaceSummaries already does this)
 //   - Vine curls to branch rail at 44% sceneW, then descends (vineGeometry v3.9)
 //
-//    o   Fenrir Ledger Agents        ← stone overlaying painted lantern (role=treeitem)
+//    o   Fenrir Ledger Agents        ← icon on painted lantern (role=treeitem)
 //  ⚒⚒✖⏳ 12 tasks · 2 running · …    ← task pips (+N) + hover label
 //   ╰─────────╮                       ← vine to branch rail at 44%
 //              [jcard s-run-1 RUNNING] ← full cards on the strand
@@ -313,7 +316,7 @@ export function NamespaceTree({
                     className={isActive ? "ns-tree__item ns-tree__item--active" : "ns-tree__item"}
                     style={{ left: `${projected.x}%`, top: `${projected.y}%` }}
                   >
-                    {/* stone: visible dark-slate disc overlaying the painted lantern */}
+                    {/* lantern button: transparent hit target — the painted lantern holds the spirit */}
                     <button
                       type="button"
                       className={lanternClass}
