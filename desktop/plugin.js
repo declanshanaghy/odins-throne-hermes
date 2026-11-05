@@ -234,6 +234,20 @@ var styles_default = `.odins-throne-root .odins-throne-root {
 }
 
 /* \u2500\u2500 WSS Tooltip \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+/* Body-level portal host for the tooltip (issue #101): fixed, full-viewport,
+ * zero-footprint (no hits, no paint) and above every layer. StatusBadge
+ * creates it imperatively with these same properties inline \u2014 this rule is
+ * the declarative mirror. */
+.odins-throne-root .wss-tooltip-portal {
+  position: fixed;
+  inset: 0;
+  height: auto;
+  overflow: visible;
+  display: block;
+  pointer-events: none;
+  z-index: 2147483000;
+  background: none;
+}
 .odins-throne-root .wss-tooltip-wrapper {
   position: relative;
   display: flex;
@@ -241,16 +255,21 @@ var styles_default = `.odins-throne-root .odins-throne-root {
   justify-content: center;
 }
 .odins-throne-root .wss-tooltip {
-  position: absolute;
-  top: calc(100% + 6px);
-  right: 0;
-  left: auto;
+  /* issue #101: fixed + body portal \u2014 no ancestor overflow (pane root's
+   * inline overflow:hidden, the sidebar scroller, the collapsed 72px rail)
+   * can clip it, and the max-safe z-index keeps it above all chrome. Real
+   * left/top are set inline by StatusBadge's viewport clamp (8px padding). */
+  position: fixed;
+  top: 0;
+  left: 0;
   transform: none;
-  z-index: 200;
+  z-index: 2147483000;
   padding: 0.3rem 0.5rem;
   font-size: 0.7rem;
-  min-width: 140px;
-  max-width: 220px;
+  /* never wider than the padded viewport, even on the narrowest dock pane */
+  min-width: min(140px, calc(100vw - 16px));
+  max-width: min(220px, calc(100vw - 16px));
+  --wss-arrow-x: 17px;
   white-space: normal;
   text-align: center;
   pointer-events: none;
@@ -266,16 +285,27 @@ var styles_default = `.odins-throne-root .odins-throne-root {
 .odins-throne-root .wss-tooltip.wss-tooltip--visible {
   opacity: 1;
 }
+/* Arrow rides the badge's centre-x (set by StatusBadge's clamp as
+ * --wss-arrow-x) instead of a fixed offset, so it still points at the badge
+ * after the tooltip itself was clamped sideways into the padded viewport. */
 .odins-throne-root .wss-tooltip::before {
   content: "";
   position: absolute;
   top: -5px;
-  right: 17px;
-  left: auto;
+  left: var(--wss-arrow-x, 17px);
+  right: auto;
   transform: none;
   border-left: 5px solid transparent;
   border-right: 5px solid transparent;
   border-bottom: 5px solid var(--rune-border, #334155);
+}
+/* Flipped above the badge (no room below): arrow drops to the box's bottom
+ * edge and points down. */
+.odins-throne-root .wss-tooltip--above::before {
+  top: auto;
+  bottom: -5px;
+  border-bottom: none;
+  border-top: 5px solid var(--rune-border, #334155);
 }
 /* Odin's brand avatar only \u2014 the old bare \`.sidebar-header img\` selector
    (specificity 0,2,1) outranked .card-avatar (0,2,0) and .ns-tree__icon,
@@ -8189,8 +8219,11 @@ function ThemeSwitcher({ theme, setTheme: setTheme2 }) {
 }
 
 // src/ui/components/StatusBadge.tsx
-import { useCallback as useCallback5, useEffect as useEffect4, useId, useRef as useRef5, useState as useState7 } from "react";
+import { useCallback as useCallback5, useEffect as useEffect4, useId, useLayoutEffect, useRef as useRef5, useState as useState7 } from "react";
 import { jsx as jsx12, jsxs as jsxs8 } from "react/jsx-runtime";
+var VIEWPORT_PAD = 8;
+var BADGE_GAP = 6;
+var POPUP_Z = 2147483e3;
 var STATE_COLORS = {
   open: "#22c55e",
   connecting: "#eab308",
@@ -8257,6 +8290,77 @@ function StatusBadge({ state }) {
   const color = STATE_COLORS[state];
   const tooltipId = useId();
   const [visible, setVisible] = useState7(false);
+  const { theme } = useTheme();
+  const badgeRef = useRef5(null);
+  const tooltipRef = useRef5(null);
+  const wrapperRef = useRef5(null);
+  const hostRef = useRef5(null);
+  useLayoutEffect(() => {
+    const tip = tooltipRef.current;
+    const home = wrapperRef.current;
+    if (!tip || !home) return;
+    const host5 = document.createElement("div");
+    host5.className = "odins-throne-root wss-tooltip-portal";
+    if (theme === "light") host5.setAttribute("data-theme", "light");
+    host5.style.position = "fixed";
+    host5.style.inset = "0";
+    host5.style.height = "auto";
+    host5.style.overflow = "visible";
+    host5.style.display = "block";
+    host5.style.pointerEvents = "none";
+    host5.style.zIndex = String(POPUP_Z);
+    host5.style.background = "none";
+    document.body.appendChild(host5);
+    hostRef.current = host5;
+    host5.appendChild(tip);
+    return () => {
+      if (tip.parentNode === host5) home.appendChild(tip);
+      host5.remove();
+      hostRef.current = null;
+    };
+  }, []);
+  useLayoutEffect(() => {
+    const host5 = hostRef.current;
+    if (!host5) return;
+    if (theme === "light") host5.setAttribute("data-theme", "light");
+    else host5.removeAttribute("data-theme");
+  }, [theme]);
+  const place = useCallback5(() => {
+    const badge = badgeRef.current;
+    const tip = tooltipRef.current;
+    if (!badge || !tip) return;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const b = badge.getBoundingClientRect();
+    const w = tip.offsetWidth;
+    const h = tip.offsetHeight;
+    let top = b.bottom + BADGE_GAP;
+    let above = false;
+    if (top + h > vh - VIEWPORT_PAD && b.top - BADGE_GAP - h >= VIEWPORT_PAD) {
+      top = b.top - BADGE_GAP - h;
+      above = true;
+    }
+    top = Math.max(VIEWPORT_PAD, Math.min(top, vh - VIEWPORT_PAD - h));
+    const left = Math.max(VIEWPORT_PAD, Math.min(b.right - w, vw - VIEWPORT_PAD - w));
+    tip.style.left = `${Math.round(left)}px`;
+    tip.style.top = `${Math.round(top)}px`;
+    tip.classList.toggle("wss-tooltip--above", above);
+    const arrowX = Math.max(10, Math.min(b.left + b.width / 2 - left, w - 10));
+    tip.style.setProperty("--wss-arrow-x", `${Math.round(arrowX)}px`);
+  }, []);
+  useLayoutEffect(() => {
+    place();
+  }, [place, visible, state]);
+  useEffect4(() => {
+    if (!visible) return;
+    const onMove = () => place();
+    window.addEventListener("resize", onMove);
+    window.addEventListener("scroll", onMove, true);
+    return () => {
+      window.removeEventListener("resize", onMove);
+      window.removeEventListener("scroll", onMove, true);
+    };
+  }, [visible, place]);
   const showTimerRef = useRef5(null);
   const hideTimerRef = useRef5(null);
   const mobileDismissRef = useRef5(null);
@@ -8345,10 +8449,11 @@ function StatusBadge({ state }) {
   }, [clearTimers]);
   const role = roleForState(state);
   const ariaLive = role === "alert" ? "assertive" : "polite";
-  return /* @__PURE__ */ jsxs8("span", { className: "wss-tooltip-wrapper", children: [
+  return /* @__PURE__ */ jsxs8("span", { ref: wrapperRef, className: "wss-tooltip-wrapper", children: [
     /* @__PURE__ */ jsx12(
       "span",
       {
+        ref: badgeRef,
         className: `ws-badge ws-badge-icon ${state}`,
         "aria-label": ARIA_LABEL[state],
         "aria-describedby": tooltipId,
@@ -8367,6 +8472,7 @@ function StatusBadge({ state }) {
     /* @__PURE__ */ jsx12(
       "span",
       {
+        ref: tooltipRef,
         id: tooltipId,
         role: "tooltip",
         className: `wss-tooltip${visible ? " wss-tooltip--visible" : ""}`,
@@ -8377,7 +8483,7 @@ function StatusBadge({ state }) {
 }
 
 // src/ui/components/NamespaceTree.tsx
-import { useEffect as useEffect6, useMemo as useMemo2, useRef as useRef7, useState as useState11, useLayoutEffect } from "react";
+import { useEffect as useEffect6, useMemo as useMemo2, useRef as useRef7, useState as useState11, useLayoutEffect as useLayoutEffect2 } from "react";
 
 // src/ui/hooks/useNamespaceSummaries.ts
 import { useCallback as useCallback6, useEffect as useEffect5, useRef as useRef6, useState as useState8 } from "react";
@@ -11025,7 +11131,7 @@ function NamespaceTree({
   const sceneRef = useRef7(null);
   const scrollerRef = useRef7(null);
   const [sceneSize, setSceneSize] = useState11({ w: 0, h: 0 });
-  useLayoutEffect(() => {
+  useLayoutEffect2(() => {
     const el = sceneRef.current;
     if (!el || typeof ResizeObserver === "undefined") return;
     const measure = () => setSceneSize({ w: el.clientWidth, h: el.clientHeight });

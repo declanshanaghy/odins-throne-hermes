@@ -197,6 +197,26 @@ assert.ok(paneHtml.includes("Sign in with Google"), "Google OAuth is the primary
 assert.ok(document.querySelector(".sidebar"), "Hlidskjalf sidebar mounted");
 assert.ok(paneHtml.includes("Hlidskjalf"), "brand title rendered");
 assert.ok(document.querySelector(".brand-wss-badge"), "WSS status badge rendered");
+// issue #101 — the WSS tooltip portals to document.body inside the scope
+// wrapper so no pane/sidebar overflow can clip it and no pane stacking
+// context can bury it; fixed + max z-index + viewport clamp with padding.
+{
+  const tip = document.querySelector(".wss-tooltip");
+  assert.ok(tip, "WSS tooltip rendered");
+  const portal = tip.parentElement;
+  assert.ok(portal && portal.classList.contains("wss-tooltip-portal"), "tooltip lives in the body portal wrapper");
+  assert.ok(portal && portal.classList.contains("odins-throne-root"), "portal wrapper carries the CSS scope class");
+  assert.strictEqual(portal.parentElement, document.body, "portal wrapper is a direct child of document.body");
+  const tipStyle = window.getComputedStyle(tip);
+  const portalStyle = window.getComputedStyle(portal);
+  assert.strictEqual(portalStyle.position, "fixed", "portal wrapper is fixed to the viewport");
+  assert.strictEqual(portalStyle.zIndex, "2147483000", "portal wrapper z-index is the max safe value");
+  assert.strictEqual(tipStyle.position, "fixed", "tooltip is position:fixed — no ancestor can clip it");
+  assert.strictEqual(tipStyle.zIndex, "2147483000", "tooltip z-index beats every app layer");
+  assert.strictEqual(tipStyle.pointerEvents, "none", "tooltip never blocks hits");
+  assert.strictEqual(portalStyle.pointerEvents, "none", "portal wrapper never blocks hits");
+  assert.ok(portalStyle.backgroundColor === "rgba(0, 0, 0, 0)", "portal wrapper paints no backdrop");
+}
 assert.ok(!document.querySelector(".card-list"), "old flat job list removed — jobs live in the tree");
 assert.ok(!paneHtml.includes("No agent jobs found"), "old empty-list state gone with the flat list");
 assert.ok(document.querySelector(".quote"), "Odin quote rendered");

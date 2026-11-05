@@ -224,6 +224,20 @@ body {
 }
 
 /* ── WSS Tooltip ─────────────────────────────────────────────────────────── */
+/* Body-level portal host for the tooltip (issue #101): fixed, full-viewport,
+ * zero-footprint (no hits, no paint) and above every layer. StatusBadge
+ * creates it imperatively with these same properties inline — this rule is
+ * the declarative mirror. */
+.wss-tooltip-portal {
+  position: fixed;
+  inset: 0;
+  height: auto;
+  overflow: visible;
+  display: block;
+  pointer-events: none;
+  z-index: 2147483000;
+  background: none;
+}
 .wss-tooltip-wrapper {
   position: relative;
   display: flex;
@@ -231,16 +245,21 @@ body {
   justify-content: center;
 }
 .wss-tooltip {
-  position: absolute;
-  top: calc(100% + 6px);
-  right: 0;
-  left: auto;
+  /* issue #101: fixed + body portal — no ancestor overflow (pane root's
+   * inline overflow:hidden, the sidebar scroller, the collapsed 72px rail)
+   * can clip it, and the max-safe z-index keeps it above all chrome. Real
+   * left/top are set inline by StatusBadge's viewport clamp (8px padding). */
+  position: fixed;
+  top: 0;
+  left: 0;
   transform: none;
-  z-index: 200;
+  z-index: 2147483000;
   padding: 0.3rem 0.5rem;
   font-size: 0.7rem;
-  min-width: 140px;
-  max-width: 220px;
+  /* never wider than the padded viewport, even on the narrowest dock pane */
+  min-width: min(140px, calc(100vw - 16px));
+  max-width: min(220px, calc(100vw - 16px));
+  --wss-arrow-x: 17px;
   white-space: normal;
   text-align: center;
   pointer-events: none;
@@ -256,16 +275,27 @@ body {
 .wss-tooltip.wss-tooltip--visible {
   opacity: 1;
 }
+/* Arrow rides the badge's centre-x (set by StatusBadge's clamp as
+ * --wss-arrow-x) instead of a fixed offset, so it still points at the badge
+ * after the tooltip itself was clamped sideways into the padded viewport. */
 .wss-tooltip::before {
   content: "";
   position: absolute;
   top: -5px;
-  right: 17px;
-  left: auto;
+  left: var(--wss-arrow-x, 17px);
+  right: auto;
   transform: none;
   border-left: 5px solid transparent;
   border-right: 5px solid transparent;
   border-bottom: 5px solid var(--rune-border, #334155);
+}
+/* Flipped above the badge (no room below): arrow drops to the box's bottom
+ * edge and points down. */
+.wss-tooltip--above::before {
+  top: auto;
+  bottom: -5px;
+  border-bottom: none;
+  border-top: 5px solid var(--rune-border, #334155);
 }
 /* Odin's brand avatar only — the old bare `.sidebar-header img` selector
    (specificity 0,2,1) outranked .card-avatar (0,2,0) and .ns-tree__icon,
