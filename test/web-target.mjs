@@ -157,6 +157,8 @@ class FakeWebSocket {
 }
 globalThis.WebSocket = FakeWebSocket;
 dom.window.WebSocket = FakeWebSocket;
+// RAF buffering (issue:106) requires requestAnimationFrame in the global scope.
+globalThis.requestAnimationFrame = (cb) => dom.window.requestAnimationFrame(cb);
 globalThis.fetch = async () => ({ ok: false, status: 404, json: async () => ({}) });
 dom.window.fetch = globalThis.fetch;
 

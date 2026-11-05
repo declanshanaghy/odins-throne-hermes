@@ -6143,16 +6143,23 @@ function LogViewer({ entries, activeJob, isFixture, isTtlExpired, isNodeUnreacha
   const [fixturePaused, setFixturePaused] = useState3(false);
   const [autoScroll, setAutoScroll] = useState3(true);
   const programmaticScrollRef = useRef(false);
+  const autoScrollRef = useRef(true);
+  const scrollScheduledRef = useRef(false);
+  useEffect(() => {
+    autoScrollRef.current = autoScroll;
+  }, [autoScroll]);
   const lastEntryId = entries[entries.length - 1]?.id;
   useEffect(() => {
-    if (autoScroll && termRef.current) {
-      programmaticScrollRef.current = true;
-      requestAnimationFrame(() => {
-        if (termRef.current) {
-          termRef.current.scrollTop = termRef.current.scrollHeight;
-        }
-      });
-    }
+    if (!autoScroll) return;
+    if (scrollScheduledRef.current) return;
+    scrollScheduledRef.current = true;
+    requestAnimationFrame(() => {
+      scrollScheduledRef.current = false;
+      if (autoScrollRef.current && termRef.current) {
+        programmaticScrollRef.current = true;
+        termRef.current.scrollTop = termRef.current.scrollHeight;
+      }
+    });
   }, [entries.length, lastEntryId, autoScroll]);
   useEffect(() => {
     setAutoScroll(true);
@@ -7462,6 +7469,8 @@ function useLogStream() {
   const hasEmittedTaskPrompt = useRef3(false);
   const seenAssistantTurn = useRef3(false);
   const liveSkipRef = useRef3(0);
+  const lineBufferRef = useRef3([]);
+  const flushScheduledRef = useRef3(false);
   const setIsConnecting = useCallback3((v) => {
     isConnectingRef.current = v;
     _setIsConnecting(v);
@@ -7478,6 +7487,8 @@ function useLogStream() {
     setEntries([]);
     counterRef.current.n = 0;
     liveSkipRef.current = 0;
+    lineBufferRef.current = [];
+    flushScheduledRef.current = false;
     taskPromptBuffer.current = [];
     inTaskPrompt.current = false;
     inEntrypoint.current = false;
@@ -7760,7 +7771,18 @@ function useLogStream() {
       if (activeSessionIdRef.current) {
         appendLogLine(activeSessionIdRef.current, line);
       }
-      processRawLogLine(line);
+      lineBufferRef.current.push(line);
+      if (!flushScheduledRef.current) {
+        flushScheduledRef.current = true;
+        requestAnimationFrame(() => {
+          flushScheduledRef.current = false;
+          const lines = lineBufferRef.current;
+          lineBufferRef.current = [];
+          for (const line2 of lines) {
+            processRawLogLine(line2);
+          }
+        });
+      }
     } else if (msg.type === "stream-error") {
       liveSkipRef.current = 0;
       const sessionId = activeSessionIdRef.current;
