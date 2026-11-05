@@ -179,3 +179,58 @@ jobs:
           kubectl get pods -n odins-throne >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
           kubectl rollout status deployment/odin-throne -n odins-throne --timeout=60s
+
+      - name: Live smoke check
+        run: |
+          set -euo pipefail
+          HOST="https://odins-throne.shanaghy.com"
+
+          # /healthz is exempted from oauth2-proxy (--skip-auth-route=GET=^/healthz$)
+          # and must return HTTP 200 with {"status":"ok"} within ~2 min of rollout.
+          echo "--- Checking /healthz (up to 2 min) ---"
+          RETRIES=24
+          DELAY=5
+          PASS=0
+          for i in $(seq 1 $RETRIES); do
+            HTTP_STATUS=$(curl -sf -o /tmp/healthz_body.json -w "%{http_code}" \
+              --connect-timeout 5 --max-time 10 "$HOST/healthz" 2>/dev/null || true)
+            if [ "$HTTP_STATUS" = "200" ]; then
+              BODY=$(cat /tmp/healthz_body.json)
+              if echo "$BODY" | grep -q '"status":"ok"'; then
+                echo "  attempt $i: 200 OK — $(cat /tmp/healthz_body.json)"
+                PASS=1
+                break
+              else
+                echo "  attempt $i: 200 but unexpected body: $BODY"
+              fi
+            else
+              echo "  attempt $i: HTTP ${HTTP_STATUS:-0} — retrying in ${DELAY}s..."
+            fi
+            sleep "$DELAY"
+          done
+          if [ "$PASS" != "1" ]; then
+            echo "ERROR: /healthz did not return 200+{status:ok} after ${RETRIES} attempts" >&2
+            exit 1
+          fi
+
+          # / must be gated by oauth2-proxy (302 redirect to Google, or 403)
+          echo "--- Checking OAuth gate on / ---"
+          GATE_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            --connect-timeout 5 --max-time 10 "$HOST/" 2>/dev/null || true)
+          if [ "$GATE_STATUS" = "302" ] || [ "$GATE_STATUS" = "403" ]; then
+            echo "  / returned $GATE_STATUS — OAuth gate active"
+          else
+            echo "ERROR: / returned $GATE_STATUS — expected 302 or 403 from OAuth gate" >&2
+            exit 1
+          fi
+
+          echo "### Smoke check PASSED" >> $GITHUB_STEP_SUMMARY
+          echo "- \`/healthz\` → 200 \`{\"status\":\"ok\"}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- \`/\` → $GATE_STATUS (OAuth gate active)" >> $GITHUB_STEP_SUMMARY
+
+      - name: Rollback on failure
+        if: failure()
+        run: |
+          echo "### ROLLBACK TRIGGERED — deploy verification failed" >> $GITHUB_STEP_SUMMARY
+          helm rollback odin-throne -n odins-throne --wait
+          kubectl get pods -n odins-throne
