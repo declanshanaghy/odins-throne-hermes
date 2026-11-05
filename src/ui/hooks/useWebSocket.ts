@@ -15,6 +15,8 @@ export function useWebSocket(onMessage: (msg: ServerMessage) => void, namespace 
   onMessageRef.current = onMessage;
   // Track the namespace the current WS connection was opened with
   const connectedNamespaceRef = useRef<string | null>(null);
+  // Guard: cleared in cleanup so the async close event cannot re-arm the timer
+  const shouldReconnect = useRef(true);
 
   const [state, setState] = useState<WsState>("connecting");
   const [error, setError] = useState<string | null>(null);
@@ -27,12 +29,16 @@ export function useWebSocket(onMessage: (msg: ServerMessage) => void, namespace 
         wsRef.current?.readyState === WebSocket.CONNECTING)
     ) return;
 
-    // Close existing connection when switching namespaces
+    // Close existing connection when switching namespaces.
+    // Clear shouldReconnect first so the async close event from the old socket
+    // cannot fire scheduleReconnect, then immediately re-enable it for the new
+    // socket we are about to open.
     if (wsRef.current) {
-      wsRef.current.onclose = null; // prevent scheduleReconnect
+      shouldReconnect.current = false;
       wsRef.current.close();
       wsRef.current = null;
       connectedNamespaceRef.current = null;
+      shouldReconnect.current = true;
     }
 
     // Seam 2: the platform adapter decides which socket the stream dials
@@ -57,10 +63,11 @@ export function useWebSocket(onMessage: (msg: ServerMessage) => void, namespace 
     });
 
     ws.addEventListener("close", () => {
-      if (wsRef.current === ws) {
-        wsRef.current = null;
-        connectedNamespaceRef.current = null;
-      }
+      // Identity guard: ignore events from a socket that has already been
+      // replaced (namespace switch) or torn down (unmount).
+      if (wsRef.current !== ws) return;
+      wsRef.current = null;
+      connectedNamespaceRef.current = null;
       setState("closed");
       scheduleReconnect();
     });
@@ -76,6 +83,8 @@ export function useWebSocket(onMessage: (msg: ServerMessage) => void, namespace 
   namespaceRef.current = namespace;
 
   const scheduleReconnect = useCallback(() => {
+    // Do not reconnect after teardown (unmount or namespace-switch cleanup).
+    if (!shouldReconnect.current) return;
     if (reconnectCount.current >= MAX_RECONNECT) {
       setError(`WebSocket failed after ${MAX_RECONNECT} attempts. Reload to retry.`);
       return;
@@ -97,11 +106,17 @@ export function useWebSocket(onMessage: (msg: ServerMessage) => void, namespace 
   // Connect on mount and reconnect when namespace changes
   useEffect(() => {
     reconnectCount.current = 0;
+    shouldReconnect.current = true;
     connect(namespace);
     return () => {
-      if (reconnectTimer.current) clearTimeout(reconnectTimer.current);
+      // Disable reconnects BEFORE closing so the async close event cannot
+      // re-arm the timer after cleanup completes.
+      shouldReconnect.current = false;
+      if (reconnectTimer.current) {
+        clearTimeout(reconnectTimer.current);
+        reconnectTimer.current = null;
+      }
       if (wsRef.current) {
-        wsRef.current.onclose = null;
         wsRef.current.close();
         wsRef.current = null;
         connectedNamespaceRef.current = null;
