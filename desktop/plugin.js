@@ -7059,15 +7059,17 @@ function useWebSocket(onMessage, namespace = "fenrir-agents") {
   const onMessageRef = useRef2(onMessage);
   onMessageRef.current = onMessage;
   const connectedNamespaceRef = useRef2(null);
+  const shouldReconnect = useRef2(true);
   const [state, setState] = useState4("connecting");
   const [error, setError] = useState4(null);
   const connect = useCallback2((ns) => {
     if (connectedNamespaceRef.current === ns && (wsRef.current?.readyState === WebSocket.OPEN || wsRef.current?.readyState === WebSocket.CONNECTING)) return;
     if (wsRef.current) {
-      wsRef.current.onclose = null;
+      shouldReconnect.current = false;
       wsRef.current.close();
       wsRef.current = null;
       connectedNamespaceRef.current = null;
+      shouldReconnect.current = true;
     }
     const ws = new WebSocket(getPlatform().wsUrl(ns));
     wsRef.current = ws;
@@ -7086,10 +7088,9 @@ function useWebSocket(onMessage, namespace = "fenrir-agents") {
       }
     });
     ws.addEventListener("close", () => {
-      if (wsRef.current === ws) {
-        wsRef.current = null;
-        connectedNamespaceRef.current = null;
-      }
+      if (wsRef.current !== ws) return;
+      wsRef.current = null;
+      connectedNamespaceRef.current = null;
       setState("closed");
       scheduleReconnect();
     });
@@ -7101,6 +7102,7 @@ function useWebSocket(onMessage, namespace = "fenrir-agents") {
   const namespaceRef = useRef2(namespace);
   namespaceRef.current = namespace;
   const scheduleReconnect = useCallback2(() => {
+    if (!shouldReconnect.current) return;
     if (reconnectCount.current >= MAX_RECONNECT) {
       setError(`WebSocket failed after ${MAX_RECONNECT} attempts. Reload to retry.`);
       return;
@@ -7119,11 +7121,15 @@ function useWebSocket(onMessage, namespace = "fenrir-agents") {
   }, []);
   useEffect2(() => {
     reconnectCount.current = 0;
+    shouldReconnect.current = true;
     connect(namespace);
     return () => {
-      if (reconnectTimer.current) clearTimeout(reconnectTimer.current);
+      shouldReconnect.current = false;
+      if (reconnectTimer.current) {
+        clearTimeout(reconnectTimer.current);
+        reconnectTimer.current = null;
+      }
       if (wsRef.current) {
-        wsRef.current.onclose = null;
         wsRef.current.close();
         wsRef.current = null;
         connectedNamespaceRef.current = null;
