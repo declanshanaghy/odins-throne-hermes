@@ -1092,7 +1092,16 @@ body {
 .jcard--succeeded { --card-glow: rgba(121, 179, 86, 0.28); }
 .jcard--failed    { --card-glow: rgba(224, 122, 63, 0.4); border-color: rgba(224, 122, 63, 0.5); }
 .jcard--pending   { opacity: 0.62; }
-.jcard--cached    { --card-glow: rgba(176, 196, 201, 0.22); }
+/* pinned memory card — Odin's gold, so a kept session stands out on the vine
+ * (the header counts it; the tree must show it) */
+.jcard--cached {
+  --card-glow: rgba(201, 146, 10, 0.30);
+  border-color: rgba(201, 146, 10, 0.55);
+}
+.jcard--cached .jcard__dot {
+  background: #c9920a;
+  box-shadow: 0 0 6px rgba(201, 146, 10, 0.65);
+}
 /* Ragnarök confirmed — the card trembles until the purge sweeps it */
 .jcard--terminating { animation: vine-tremble 0.5s ease-in-out infinite; }
 /* the sprout plays ON MOUNT only — a live WS update re-renders the same
@@ -1242,6 +1251,7 @@ body {
 .anchor-ic--succeeded  { --anc: rgba(121, 179, 86, 0.75); }
 .anchor-ic--failed     { --anc: rgba(224, 122, 63, 0.95); }
 .anchor-ic--pending    { --anc: rgba(217, 194, 122, 0.7); }
+.anchor-ic--cached      { --anc: rgba(201, 146, 10, 0.85); }
 .anchor-ic--terminating { --anc: rgba(176, 196, 201, 0.8); animation: vine-tremble 0.5s ease-in-out infinite; }
 .anchor-ic.pop-in { animation: vine-sprout 0.4s cubic-bezier(0.2, 1.3, 0.4, 1) backwards; }
 
@@ -1320,6 +1330,7 @@ body {
 .pip-slot--succeeded { --pipc: #79b356; }
 .pip-slot--failed    { --pipc: #e07a3f; }
 .pip-slot--pending   { --pipc: #d9c27a; }
+.pip-slot--cached    { --pipc: #c9920a; }
 .piprow__more {
   font-size: 7.5px;
   font-family: 'JetBrains Mono', monospace;
@@ -4586,6 +4597,12 @@ body {
 [data-theme="light"] .jcard--succeeded { --card-glow: rgba(46, 107, 52, 0.25); }
 [data-theme="light"] .jcard--failed    { --card-glow: rgba(163, 35, 24, 0.30); border-color: #C2563F; }
 [data-theme="light"] .jcard--pending   { opacity: 0.72; }
+/* pinned memory card — mead-gold ink on vellum, same standout as dark's Odin gold */
+[data-theme="light"] .jcard--cached {
+  --card-glow: rgba(138, 90, 11, 0.24);
+  border-color: #B98A2F;
+}
+[data-theme="light"] .jcard--cached .jcard__dot { background: #8A5A0B; }
 [data-theme="light"] .jcard__title { color: #2B1D12; }
 [data-theme="light"] .jcard__meta { color: #5A4330; }
 [data-theme="light"] .jcard__meta b { color: #8C3210; }
@@ -4637,6 +4654,7 @@ body {
 [data-theme="light"] .anchor-ic--succeeded  { --anc: rgba(46, 107, 52, 0.75); }
 [data-theme="light"] .anchor-ic--failed     { --anc: rgba(163, 35, 24, 0.95); }
 [data-theme="light"] .anchor-ic--pending    { --anc: rgba(138, 90, 11, 0.7); }
+[data-theme="light"] .anchor-ic--cached      { --anc: rgba(138, 90, 11, 0.85); }
 [data-theme="light"] .anchor-ic--terminating { --anc: rgba(107, 83, 64, 0.8); }
 [data-theme="light"] .piprow .pip-slot {
   filter: drop-shadow(0 1px 1px rgba(90, 67, 48, 0.4)) drop-shadow(0 0 2px currentColor);

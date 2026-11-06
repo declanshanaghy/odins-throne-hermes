@@ -10,8 +10,11 @@ import { batchSummary } from "./constants";
  *
  *   ────────────────────────────────────────     turn divider (U+2500 run)
  *   ☤ Hermes                                      assistant turn marker
- *   <assistant text until the next divider>
- *   ────────────────────────────────────────
+ *   <assistant text until the next divider>       ← ☤ is OPTIONAL in the live
+ *   ────────────────────────────────────────        format: any divider-
+ *                                                  delimited prose segment
+ *                                                  is an assistant turn
+ *   ∴ Thought for 3s                              thinking marker (dim)
  *
  *   💻 $ git branch --show-current  1.1s          terminal call (ok)
  *   ✗ $ npm test  2.0s [exit 1]                   terminal call (failed)
@@ -19,6 +22,8 @@ import { batchSummary } from "./constants";
  *   ✍️ Write path/to/file                          write_file (│ diff lines follow)
  *   🔧 Patch path/to/file                         patch       (│ diff lines follow)
  *   🔎 Searching tools · <query>  0.1s            tool_search
+ *   🔎 Grep <pattern>  0.4s                       grep (content search)
+ *   ⚙️ Proc wait proc_xxxx  0.5s                  process wait
  *   📖 Reading tool details · 1 tool              tool_search (describe)
  *   📋 Plan 1/10 task(s) / Plan update 5/10 ✓     plan (todo ledger)
  *   [hermes] WARNING: …                           harness warning
@@ -54,6 +59,15 @@ const DURATION_RE = /\s{2,}(?:\d+m\s*)?\d+(?:\.\d+)?s$/;
 const READ_RE = /^📖\s*Read\s+(\S.*)$/u;
 const TOOL_DETAILS_RE = /^📖\s*Reading tool details\s*·\s*(\S.*)$/u;
 const TOOL_SEARCH_RE = /^🔎\s*Searching tools\s*·\s*(.+)$/u;
+const GREP_RE = /^🔎\s*Grep\s+(\S.*)$/u;
+// ⚙️ Proc wait proc_xxxx  0.5s — verb ("wait") + target id
+const PROC_RE = /^⚙\uFE0F?\s*Proc\s+(\S+)\s+(\S.*?)\s*$/u;
+// ∴ Thought for 3s — harness thinking marker, renders dim
+const THOUGHT_RE = /^∴\s*Thought for\s+(\S.*)$/;
+// Live-harness assistant turns carry no ☤ marker: prose between dividers is
+// assistant text. Lines led by a printable-ASCII char open a prose block;
+// unrecognized non-ASCII glyph lines (future harness shapes) stay raw.
+const PROSE_LEAD_RE = /^[\x20-\x7E]/;
 const WRITE_RE = /^✍\uFE0F?\s*Write\s+(\S.*)$/u;
 const PATCH_RE = /^🔧\s*Patch\s+(\S.*)$/u;
 const PLAN_RE = /^📋\s*Plan\s+(\S.*)$/u;
@@ -117,7 +131,7 @@ export class HermesLogParser {
   processLine(line: string): HermesStep | null {
     if (!this.active) {
       // Self-activation for logs whose entrypoint header never named the harness.
-      if (ASSISTANT_RE.test(line) || QUERY_RE.test(line)) this.active = true;
+      if (ASSISTANT_RE.test(line) || QUERY_RE.test(line) || THOUGHT_RE.test(line)) this.active = true;
       else return null;
     }
 
@@ -147,6 +161,16 @@ export class HermesLogParser {
     if (this.assistant !== null) {
       this.assistant.push(line);
       return {};
+    }
+
+    // ∴ Thought for Ns — dim thinking marker; completes the open tool-batch
+    // like any other turn boundary and never renders as raw text.
+    const thought = THOUGHT_RE.exec(line);
+    if (thought) {
+      const step = this.assistant !== null ? this.flushAssistant() : this.completeBatch();
+      return mergeSteps(step, {
+        append: [{ id: this.allocId(), type: "assistant-text", text: `Thought for ${thought[1]!.trim()}`, detail: "thinking" }],
+      });
     }
 
     if (QUERY_RE.test(line)) {
@@ -228,6 +252,24 @@ export class HermesLogParser {
       });
     }
 
+    const grep = GREP_RE.exec(line);
+    if (grep) {
+      const pattern = (grep[1] ?? "").replace(DURATION_RE, "").trim();
+      return this.pushTool({
+        toolName: "grep",
+        toolInput: JSON.stringify({ pattern }).slice(0, INPUT_MAX),
+      });
+    }
+
+    const proc = PROC_RE.exec(line);
+    if (proc) {
+      const procId = (proc[2] ?? "").replace(DURATION_RE, "").trim();
+      return this.pushTool({
+        toolName: "proc",
+        toolInput: JSON.stringify({ op: proc[1]!.trim(), id: procId }).slice(0, INPUT_MAX),
+      });
+    }
+
     const plan = PLAN_RE.exec(line);
     if (plan) {
       return this.pushTool({
@@ -252,6 +294,16 @@ export class HermesLogParser {
       return {
         append: [{ id: this.allocId(), type: "entrypoint-info", detail: kv[1]!, text: kv[2]!.trim() }],
       };
+    }
+
+    // Live harness: most assistant turns carry no ☤ Hermes marker — any
+    // divider-delimited segment of prose IS the assistant turn. Open a prose
+    // block on the first printable-ASCII-led line; it flushes as a rich
+    // markdown agent bubble at the next divider. Lines led by any other
+    // (non-ASCII) glyph are unknown harness shapes and degrade to raw.
+    if (this.sawDivider && PROSE_LEAD_RE.test(line)) {
+      this.assistant = [line];
+      return {};
     }
 
     return { append: [this.raw(line)] };

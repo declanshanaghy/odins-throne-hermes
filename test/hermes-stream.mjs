@@ -234,3 +234,96 @@ assert.deepEqual(
 );
 
 console.log("HERMES STREAM PASS — Hermes pretty-format sessions parse into structured entries");
+
+// ── live harness format (issue:126) ──────────────────────────────────────────
+// The live hermes/glm-5.3 harness prints most assistant turns WITHOUT the ☤
+// Hermes marker (divider-delimited prose), plus ∴ Thought / 🔎 Grep / ⚙️ Proc
+// wait glyphs the old parser dropped to raw. Fixture verbatim-shape from job
+// agent-issue-78-step1-firemandecko-6ac25402. Zero fixture lines may land raw.
+handle.clearEntries();
+await flush();
+
+const LIVE_LINES = [
+  // Query echo activates the parser (suppressed until the first divider), as in a live session
+  "Query: You are FiremanDecko, the Principal Engineer. Fix GitHub Issue #126.",
+  DIV,
+  "∴ Thought for 3s",
+  DIV,
+  "",
+  "💻 $ git branch --show-current + 3 commands  0.9s",
+  "🔎 Grep relaunch_search|delete_search  0.4s",
+  "📖 Read api.rs L440-759",
+  "⚙️ Proc wait proc_46kgk  1.2s",
+  DIV,
+  "Now I understand the structure. `delete_search` does:",
+  "1. Get search",
+  "2. If not terminal: kill Job (best-effort)",
+  "```rust",
+  "fn delete_search(&self, id: Uuid) -> Result<()> {",
+  "```",
+  DIV,
+  "∴ Thought for 1s",
+  DIV,
+  "☤ Hermes",
+  "Branch is fresh. Reading the affected code now.",
+  DIV,
+];
+for (const line of LIVE_LINES) {
+  handle.handleMessage({ type: "log-line", ts: 0, sessionId: "s-hermes-live", line });
+}
+await flush();
+await flush();
+
+const liveEntries = handle.entries;
+assert.equal(
+  liveEntries.filter((e) => e.type === "raw").length,
+  0,
+  "live-format fixture: zero lines land as raw dim text",
+);
+
+// ∴ Thought for Ns → dim thinking-style marker, never raw
+const thoughts = liveEntries.filter((e) => e.type === "assistant-text" && e.detail === "thinking");
+assert.deepEqual(
+  thoughts.map((t) => t.text),
+  ["Thought for 3s", "Thought for 1s"],
+  "∴ Thought markers render as dim thinking entries",
+);
+
+// ☤-less prose between dividers → rich agent bubbles
+const liveBubbles = liveEntries.filter((e) => e.type === "assistant-text" && e.detail !== "thinking");
+assert.equal(liveBubbles.length, 2, "☤-less prose turn + ☤ turn both render as agent bubbles");
+assert.ok(
+  liveBubbles[0].text.includes("Now I understand the structure") && liveBubbles[0].text.includes("```rust"),
+  "prose turn keeps markdown body incl. code fence",
+);
+assert.ok(liveBubbles[1].text.includes("Branch is fresh"), "☤-headed turn still captured");
+
+// 🔎 Grep / ⚙️ Proc wait → tool-batch children
+const liveTools = liveEntries.filter((e) => e.type === "tool-batch").flatMap((b) => b.children ?? []);
+assert.deepEqual(
+  liveTools.map((t) => t.toolName),
+  ["terminal", "grep", "read_file", "proc"],
+  "live glyphs map to tool entries in the batch",
+);
+const grepInput = JSON.parse(liveTools[1].toolInput);
+assert.equal(grepInput.pattern, "relaunch_search|delete_search", "🔎 Grep pattern captured, duration stripped");
+const procInput = JSON.parse(liveTools[3].toolInput);
+assert.deepEqual(procInput, { op: "wait", id: "proc_46kgk" }, "⚙️ Proc wait op+id captured, duration stripped");
+assert.equal(
+  JSON.parse(liveTools[0].toolInput).command,
+  "git branch --show-current + 3 commands",
+  "live terminal command captured",
+);
+assert.equal(JSON.parse(liveTools[2].toolInput).file_path, "api.rs L440-759", "live read_file captured");
+
+// unknown future glyphs degrade to raw — no worse than before
+handle.handleMessage({ type: "log-line", ts: 0, sessionId: "s-hermes-live", line: "🧿 some future harness glyph" });
+await flush();
+await flush();
+assert.equal(
+  handle.entries.filter((e) => e.type === "raw").length,
+  1,
+  "unknown glyph line degrades to exactly one raw entry",
+);
+
+console.log("HERMES STREAM LIVE FORMAT PASS — ☤-less prose, ∴ Thought, 🔎 Grep, ⚙️ Proc wait all structured");

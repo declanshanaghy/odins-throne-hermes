@@ -201,6 +201,13 @@ export { HermesLogParser } from "../../ui/lib/hermesFormat";
 export { parseMarkdown, Markdown } from "../../ui/lib/markdown";
 export { useLogStream } from "../../ui/hooks/useLogStream";
 export { parseDecree, isDecreeBlock } from "../../ui/components/DecreeBlock";
+// Pinned-session overlay seam (cached-tree tests) — the pin-cache → summary
+// merge that hangs Odin's memory on the tree.
+export {
+  cachedJobFromMeta,
+  cachedOverlayEntries,
+  mergeCachedIntoSummaries,
+} from "../../ui/lib/cachedOverlay";
 // Tab-opening seam — lets smoke.mjs assert the openThroneTab→openWorkspace
 // wiring after plugin.register() has run.
 export { openThroneTab } from "./pluginCtx";
