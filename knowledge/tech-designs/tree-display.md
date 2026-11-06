@@ -32,6 +32,21 @@ ordered running → failed → pending → succeeded (`useJobs.sortJobs`). The
 painting and lanterns stay rooted; only the vine and its cards scroll
 (`.ns-tree__scroller` / `.ns-tree__canvas`).
 
+**Pinned memory cards** hang last on that order — gold, not green. A pinned
+session (the localStorage pin cache, "Odin's memory") has always been counted
+in the header's session total, but the tree rendered only the REST summaries,
+so a reaped-but-kept session was counted yet hung on no vine. `App.tsx` now
+overlays the pin cache onto the per-realm summaries
+(`src/ui/lib/cachedOverlay.ts`): each pinned session renders as a `cached`
+-status card — gold dot and border (mead-ink on vellum in light mode), the
+moon anchor sigil, no cancel clasp (its pod is reaped), pin toggle intact.
+The realm is captured in the pin metadata at pin time (the active realm for
+sidebar pins, the tab's realm for cross-world pins); legacy pins pinned
+before the field existed follow the active world — the old flat-list
+semantics. Realms holding only memory still light the MID tier, and their
+summary lines count the cached lane, so the header count and the strands
+agree.
+
 ```mermaid
 flowchart TD
     API["GET /api/namespaces<br/>(the world list)"] --> TREE["NamespaceTree<br/>role=tree"]
@@ -95,6 +110,9 @@ and asserts the seating (no glass-disc chrome on the lantern, the
 screen-blended light, task pips = task count with the `+N` chip and the
 offline glyph fallback), the accordion (one-open, collapse, regrow, orphan-closing),
 the vine (growth, hang order running → failed → pending → succeeded),
+the pinned memory cards (gold `cached` lane on the vine, realm attribution,
+gold pip on collapsed realms, moon anchor sigil; `test/cached-tree.mjs`
+locks the overlay + merge semantics),
 the tabs (open, focus dedupe, re-open after close), cancel → tremble →
 tab-close, and the full keyboard/ARIA contract above — and (issue #55) the
 hall server's SPA-entry cache-bust: `Cache-Control: no-store` on `/`,

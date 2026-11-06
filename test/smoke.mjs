@@ -1221,5 +1221,102 @@ for (const s of ["rapid-a", "rapid-b", "rapid-c"]) {
     "issue #59: standard card has meta row after exiting compact");
 }
 
-console.log("SMOKE PASS — pane + page render, namespace lantern tree (lanterns seated on the painting, vine-strand job cards hung from the open lantern: running → failed → pending → succeeded order, status sigils hammer/dice/raven/ring, panel-body click opens session tab (issue:43 — no open/focus button duplicate), icon-only pin · cancel actions with tooltips, terminating tremble, scroller + canvas beneath the rooted painting, old flat list gone), CSS scoped, theme plugin-local, overlays wired, per-session workspace tabs (issue:6: open per click, focus dedupe, cancel + strip-close teardown, cross-world capture), SPA entry Cache-Control: no-store + hashed /assets immutable (issue:55 — no stale cached bundle after a deploy), compact view option (issue:59 — chip rail struck, dense lantern tree, one-line cards, localStorage persist, toggle enters/exits compact at any pane width)");
+// ── pinned sessions on the tree — Odin's memory made visible ────────────────
+// The header's session count merges pinned sessions (useJobs.buildCachedJobs
+// reads the localStorage pin cache), but the tree used to render only the
+// REST summaries — a pinned session was counted yet hung on no vine at all.
+// Now App overlays the pin cache onto the summaries: every pinned session
+// renders as a GOLD memory card on its realm's vine (recorded realm wins;
+// legacy pins without one follow the active namespace — the old flat-list
+// semantics). Sabotage: revert the App merge and these cards vanish.
+{
+  const LEGACY_SID = "issue-9900-step1-odin-cafeba5e"; // no realm recorded
+  const MODERN_SID = "issue-9901-step2-freya-decafbad"; // realm captured at pin time
+  const seedPin = (id, extra = {}) => {
+    localStorage.setItem(`odin-throne:cache:${id}`, "2026-01-01T00:00:00Z pinned line\n");
+    localStorage.setItem(
+      `odin-throne:cache-meta:${id}`,
+      JSON.stringify({
+        sessionId: id,
+        name: `agent-${id}`,
+        issueNumber: id.includes("9900") ? 9900 : 9901,
+        agent: id.includes("9900") ? "odin" : "freya",
+        step: 1,
+        startedAt: "2026-01-01T00:00:00Z",
+        completedAt: "2026-01-01T01:00:00Z",
+        issueTitle: null,
+        branchName: null,
+        pinnedAt: Date.now(),
+        ...extra,
+      }),
+    );
+  };
+  seedPin(LEGACY_SID); // legacy pin — follows the active world
+  seedPin(MODERN_SID, { namespace: "shanaghy-com-agents" }); // its own realm
+
+  // Opening the EMPTY realm while it is active: both pins hang on its vine
+  // (the legacy pin follows the active world, the modern pin owns the realm).
+  document.querySelector('.ns-tree__item[data-namespace="shanaghy-com-agents"] .ns-tree__lantern').click();
+  await flush();
+  await flush();
+  {
+    const shanCards = document.querySelectorAll(".ns-tree__canvas .jcard[data-session]");
+    assert.equal(shanCards.length, 2, "the empty realm hangs both pins while active (legacy fallback + owned realm)");
+    for (const c of shanCards) {
+      assert.equal(c.getAttribute("data-status"), "cached", `pinned card ${c.dataset.session} carries the cached status`);
+      assert.ok(c.classList.contains("jcard--cached"), "pinned card carries the gold memory lane (jcard--cached)");
+      assert.equal(c.querySelector(".jact--cancel"), null, "a memory card is not cancellable — its pod is reaped");
+      assert.ok(c.querySelector(".jact--pin"), "a memory card keeps its pin toggle (unpin from the vine)");
+    }
+    const shanHtml = document.getElementById("pane").innerHTML;
+    assert.ok(
+      shanHtml.includes("2 tasks · 2 cached") && !shanHtml.includes("no tasks in this realm"),
+      "the realm's summary line counts its memories instead of resting empty",
+    );
+  }
+
+  // Switching the active world: the modern pin STAYS on its realm (collapsed
+  // into a gold pip); the legacy pin moves with the active world onto fenrir.
+  document.querySelector('.ns-tree__item[data-namespace="fenrir-agents"] .ns-tree__lantern').click();
+  await flush();
+  await flush();
+  {
+    const fenrirCardsAfter = document.querySelectorAll(".ns-tree__canvas .jcard[data-session]");
+    assert.equal(fenrirCardsAfter.length, 13, "fenrir's vine hangs 12 live + the legacy memory card");
+    const legacyCard = document.querySelector(`.jcard[data-session="${LEGACY_SID}"]`);
+    assert.ok(legacyCard, "the legacy pin hangs on the (now active) fenrir vine");
+    assert.ok(legacyCard.classList.contains("jcard--cached"), "the legacy memory card carries the gold lane");
+    const legacyMeta = legacyCard.querySelector(".jcard__meta").textContent;
+    assert.ok(
+      legacyMeta.includes("Issue #9900") && legacyMeta.includes("Odin"),
+      "memory card meta resolves issue + agent from the pin metadata",
+    );
+    // Hang order holds with the memory lane: cached hangs last (after succeeded).
+    const statuses = [...fenrirCardsAfter].map((c) => c.getAttribute("data-status"));
+    assert.equal(statuses[statuses.length - 1], "cached", "memory hangs last on the strand");
+    assert.equal(statuses[12], "cached", "the 13th card — the legacy pin — is the memory lane");
+    assert.equal(statuses[11], "succeeded", "the quiet green sits just above the memories");
+    // Anchor sigil: the moon — memory kept under the moon (taskIcon contract).
+    assert.equal(
+      document.querySelector(".ns-tree__canvas .anchor-ic--cached .ns-tree__icon")?.getAttribute("src"),
+      "https://www.shanaghy.com/assets/icons/moon.png",
+      "the cached anchor icon is the moon sigil",
+    );
+    // The realm-owned pin collapsed with its realm: a single GOLD pip.
+    const shanPip = document.querySelector('.ns-tree__item[data-namespace="shanaghy-com-agents"] .piprow');
+    assert.ok(shanPip, "the owned realm keeps a pip strip for its memory while collapsed");
+    assert.equal(shanPip.querySelectorAll(".pip-slot").length, 1, "exactly one pip — the memory");
+    assert.ok(shanPip.querySelector(".pip-slot--cached"), "the pip is the gold cached slot");
+    const shanLantern = document.querySelector('.ns-tree__item[data-namespace="shanaghy-com-agents"] .ns-tree__lantern');
+    assert.ok(shanLantern.classList.contains("is-mid"), "a realm holding only memory lights the MID tier");
+    // The summary line counts the memory so the label and the vine agree.
+    const paneHtmlNow = document.getElementById("pane").innerHTML;
+    assert.ok(
+      paneHtmlNow.includes("13 tasks · 2 running · 1 pending · 1 failed · 8 succeeded · 1 cached"),
+      "fenrir's summary line counts the cached memory (1 cached)",
+    );
+  }
+}
+
+console.log("SMOKE PASS — pane + page render, namespace lantern tree (lanterns seated on the painting, vine-strand job cards hung from the open lantern: running → failed → pending → succeeded order, status sigils hammer/dice/raven/ring, panel-body click opens session tab (issue:43 — no open/focus button duplicate), icon-only pin · cancel actions with tooltips, terminating tremble, scroller + canvas beneath the rooted painting, old flat list gone), pinned sessions hang as GOLD memory cards on their realm's vine (legacy pins follow the active world, owned realms keep a gold pip, moon anchor sigil, summary lines count the cached lane), CSS scoped, theme plugin-local, overlays wired, per-session workspace tabs (issue:6: open per click, focus dedupe, cancel + strip-close teardown, cross-world capture), SPA entry Cache-Control: no-store + hashed /assets immutable (issue:55 — no stale cached bundle after a deploy), compact view option (issue:59 — chip rail struck, dense lantern tree, one-line cards, localStorage persist, toggle enters/exits compact at any pane width)");
 process.exit(0);
