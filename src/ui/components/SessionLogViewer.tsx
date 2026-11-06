@@ -202,6 +202,9 @@ export function SessionLogViewer({
           issueTitle: job.issueTitle,
           branchName: job.branchName,
           pinnedAt: Date.now(),
+          // Realm captured at pin time — the tree hangs the memory card on
+          // this realm's vine (the tab's realm, not the pane's active one).
+          namespace: tabNamespace,
         };
         pinSession(sessionId, meta);
       }

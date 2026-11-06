@@ -1102,7 +1102,16 @@ var styles_default = `.odins-throne-root .odins-throne-root {
 .odins-throne-root .jcard--succeeded { --card-glow: rgba(121, 179, 86, 0.28); }
 .odins-throne-root .jcard--failed    { --card-glow: rgba(224, 122, 63, 0.4); border-color: rgba(224, 122, 63, 0.5); }
 .odins-throne-root .jcard--pending   { opacity: 0.62; }
-.odins-throne-root .jcard--cached    { --card-glow: rgba(176, 196, 201, 0.22); }
+/* pinned memory card \u2014 Odin's gold, so a kept session stands out on the vine
+ * (the header counts it; the tree must show it) */
+.odins-throne-root .jcard--cached {
+  --card-glow: rgba(201, 146, 10, 0.30);
+  border-color: rgba(201, 146, 10, 0.55);
+}
+.odins-throne-root .jcard--cached .jcard__dot {
+  background: #c9920a;
+  box-shadow: 0 0 6px rgba(201, 146, 10, 0.65);
+}
 /* Ragnar\xF6k confirmed \u2014 the card trembles until the purge sweeps it */
 .odins-throne-root .jcard--terminating { animation: vine-tremble 0.5s ease-in-out infinite; }
 /* the sprout plays ON MOUNT only \u2014 a live WS update re-renders the same
@@ -1252,6 +1261,7 @@ var styles_default = `.odins-throne-root .odins-throne-root {
 .odins-throne-root .anchor-ic--succeeded  { --anc: rgba(121, 179, 86, 0.75); }
 .odins-throne-root .anchor-ic--failed     { --anc: rgba(224, 122, 63, 0.95); }
 .odins-throne-root .anchor-ic--pending    { --anc: rgba(217, 194, 122, 0.7); }
+.odins-throne-root .anchor-ic--cached      { --anc: rgba(201, 146, 10, 0.85); }
 .odins-throne-root .anchor-ic--terminating { --anc: rgba(176, 196, 201, 0.8); animation: vine-tremble 0.5s ease-in-out infinite; }
 .odins-throne-root .anchor-ic.pop-in { animation: vine-sprout 0.4s cubic-bezier(0.2, 1.3, 0.4, 1) backwards; }
 
@@ -1330,6 +1340,7 @@ var styles_default = `.odins-throne-root .odins-throne-root {
 .odins-throne-root .pip-slot--succeeded { --pipc: #79b356; }
 .odins-throne-root .pip-slot--failed    { --pipc: #e07a3f; }
 .odins-throne-root .pip-slot--pending   { --pipc: #d9c27a; }
+.odins-throne-root .pip-slot--cached    { --pipc: #c9920a; }
 .odins-throne-root .piprow__more {
   font-size: 7.5px;
   font-family: 'JetBrains Mono', monospace;
@@ -4584,6 +4595,12 @@ var styles_default = `.odins-throne-root .odins-throne-root {
 .odins-throne-root[data-theme="light"] .jcard--succeeded { --card-glow: rgba(46, 107, 52, 0.25); }
 .odins-throne-root[data-theme="light"] .jcard--failed    { --card-glow: rgba(163, 35, 24, 0.30); border-color: #C2563F; }
 .odins-throne-root[data-theme="light"] .jcard--pending   { opacity: 0.72; }
+/* pinned memory card \u2014 mead-gold ink on vellum, same standout as dark's Odin gold */
+.odins-throne-root[data-theme="light"] .jcard--cached {
+  --card-glow: rgba(138, 90, 11, 0.24);
+  border-color: #B98A2F;
+}
+.odins-throne-root[data-theme="light"] .jcard--cached .jcard__dot { background: #8A5A0B; }
 .odins-throne-root[data-theme="light"] .jcard__title { color: #2B1D12; }
 .odins-throne-root[data-theme="light"] .jcard__meta { color: #5A4330; }
 .odins-throne-root[data-theme="light"] .jcard__meta b { color: #8C3210; }
@@ -4635,6 +4652,7 @@ var styles_default = `.odins-throne-root .odins-throne-root {
 .odins-throne-root[data-theme="light"] .anchor-ic--succeeded  { --anc: rgba(46, 107, 52, 0.75); }
 .odins-throne-root[data-theme="light"] .anchor-ic--failed     { --anc: rgba(163, 35, 24, 0.95); }
 .odins-throne-root[data-theme="light"] .anchor-ic--pending    { --anc: rgba(138, 90, 11, 0.7); }
+.odins-throne-root[data-theme="light"] .anchor-ic--cached      { --anc: rgba(138, 90, 11, 0.85); }
 .odins-throne-root[data-theme="light"] .anchor-ic--terminating { --anc: rgba(107, 83, 64, 0.8); }
 .odins-throne-root[data-theme="light"] .piprow .pip-slot {
   filter: drop-shadow(0 1px 1px rgba(90, 67, 48, 0.4)) drop-shadow(0 0 2px currentColor);
@@ -8788,7 +8806,10 @@ function SessionLogViewer({
           completedAt: job.completionTime ? new Date(job.completionTime).toISOString() : null,
           issueTitle: job.issueTitle,
           branchName: job.branchName,
-          pinnedAt: Date.now()
+          pinnedAt: Date.now(),
+          // Realm captured at pin time — the tree hangs the memory card on
+          // this realm's vine (the tab's realm, not the pane's active one).
+          namespace: tabNamespace
         };
         pinSession(sessionId, meta);
       }
@@ -13183,6 +13204,50 @@ function useNamespaceCycleKey(namespaces, namespace, setNamespace) {
   }, [namespaces, namespace, setNamespace]);
 }
 
+// src/ui/lib/cachedOverlay.ts
+function cachedJobFromMeta(meta) {
+  return {
+    sessionId: meta.sessionId,
+    name: meta.name,
+    issueNumber: meta.issueNumber,
+    agent: meta.agent,
+    step: meta.step,
+    status: "cached",
+    startedAt: meta.startedAt,
+    completedAt: meta.completedAt,
+    podName: null,
+    issueTitle: meta.issueTitle,
+    branchName: meta.branchName,
+    fixture: false
+  };
+}
+function cachedOverlayEntries(liveIds, fallbackNs) {
+  const out = [];
+  for (const id of getCachedSessionIds()) {
+    if (liveIds.has(id)) continue;
+    const meta = getCachedSessionMeta(id);
+    if (!meta) continue;
+    out.push({ ns: meta.namespace ?? fallbackNs, job: cachedJobFromMeta(meta) });
+  }
+  return out;
+}
+function mergeCachedIntoSummaries(summaries, entries) {
+  if (entries.length === 0) return summaries;
+  const next = { ...summaries };
+  for (const { ns, job } of entries) {
+    const cur = next[ns];
+    if (!cur || cur.error) continue;
+    if (cur.jobs.some((j) => j.sessionId === job.sessionId)) continue;
+    next[ns] = {
+      total: cur.total + 1,
+      counts: { ...cur.counts, cached: cur.counts.cached + 1 },
+      jobs: [...cur.jobs, job],
+      error: null
+    };
+  }
+  return next;
+}
+
 // src/ui/App.tsx
 function App() {
   const quote = useMemo4(() => randomQuote(), []);
@@ -13197,6 +13262,18 @@ function App() {
     [jobs]
   );
   const namespaceSummaries = useNamespaceSummaries(namespaces, namespace, jobsActivityKey);
+  const mergedSummaries = useMemo4(
+    () => {
+      const liveIds = new Set(
+        jobs.filter((j) => j.status !== "cached").map((j) => j.sessionId)
+      );
+      return mergeCachedIntoSummaries(
+        namespaceSummaries,
+        cachedOverlayEntries(liveIds, namespace)
+      );
+    },
+    [namespaceSummaries, jobs, namespace]
+  );
   useEffect14(() => {
     migrateRemoveDuplicateLogs();
     evictExpiredLogs();
@@ -13257,7 +13334,10 @@ function App() {
           completedAt: job.completionTime ? new Date(job.completionTime).toISOString() : null,
           issueTitle: job.issueTitle,
           branchName: job.branchName,
-          pinnedAt: Date.now()
+          pinnedAt: Date.now(),
+          // Realm captured at pin time — the tree hangs the memory card on
+          // this realm's vine after the pod is reaped.
+          namespace
         };
         const ok = pinSession(sessionId, meta);
         if (ok) {
@@ -13269,7 +13349,7 @@ function App() {
         }
       }
     },
-    [jobs, refreshCached]
+    [jobs, refreshCached, namespace]
   );
   const handleOpenCancelDialog = useCallback9(
     (sessionId, jobFromCard) => {
@@ -13310,7 +13390,8 @@ function App() {
     namespace,
     namespaces,
     setNamespace,
-    namespaceSummaries,
+    // merged: REST summaries + the pinned-session overlay (see above)
+    namespaceSummaries: mergedSummaries,
     onSelectSession: handleSelectSession,
     onSelectTask: handleSelectTask,
     onAvatarClick: setProfileAgent,
@@ -13698,8 +13779,11 @@ var entry_default = {
 export {
   HermesLogParser,
   Markdown,
+  cachedJobFromMeta,
+  cachedOverlayEntries,
   entry_default as default,
   isDecreeBlock,
+  mergeCachedIntoSummaries,
   openThroneTab,
   parseDecree,
   parseMarkdown,

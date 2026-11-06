@@ -36,6 +36,13 @@ export interface CachedSessionMeta {
   issueTitle: string | null;
   branchName: string | null;
   pinnedAt: number; // ms timestamp when pinned
+  /**
+   * The realm (K8s namespace) the session ran in — captured at pin time so
+   * the tree can hang the memory card on its own realm's vine. Absent on
+   * legacy pins (pinned before the field existed); those follow the active
+   * namespace, the same semantics the old flat job list had.
+   */
+  namespace?: string | null;
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────

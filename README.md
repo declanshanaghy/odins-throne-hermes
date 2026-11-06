@@ -14,7 +14,11 @@ first-class plugin — and deployed as a live web hall at
   a WorldTitle glass panel tracks the last-seated world's name, stats,
   ringfort lore, and kin pills; dead-space click and 2-second empty-world rest
   auto-close the vine; task-pip strips under collapsed worlds show up to 8
-  icons + "+N" overflow; stone icons swap overlay→opaque on full-open; plus
+  icons + "+N" overflow; pinned sessions hang as gold "memory" cards on their
+  realm's vine (realm captured at pin time; legacy pins follow the active
+  world), with the moon sigil at their anchor and a gold pip on collapsed
+  realms — the header's session count and the tree always agree; stone icons
+  swap overlay→opaque on full-open; plus
   the session count, the single light/dark theme toggle, the compact-view
   toggle, the WSS badge, and Odin himself — all in one right-aligned header
   row — docked beside the conversation. Clicking a job card opens the log

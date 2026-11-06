@@ -8,6 +8,7 @@ import { useNamespaceSummaries } from "./hooks/useNamespaceSummaries";
 import { useJobs } from "./hooks/useJobs";
 import { useTheme } from "./hooks/useTheme";
 import { getPlatform } from "./platform";
+import { cachedOverlayEntries, mergeCachedIntoSummaries } from "./lib/cachedOverlay";
 import { throneStore, type ThroneSnapshot } from "./store";
 import {
   isPinned as checkIsPinned,
@@ -46,6 +47,25 @@ export function App() {
     [jobs],
   );
   const namespaceSummaries = useNamespaceSummaries(namespaces, namespace, jobsActivityKey);
+
+  // Pinned sessions on the tree: overlay Odin's memory (the localStorage pin
+  // cache) onto the REST summaries so every pinned session hangs on its
+  // realm's vine as a gold memory card — the header has always counted them
+  // (useJobs merges cached pins into the jobs list), so the tree must show
+  // them or the count and the strands disagree. Legacy pins without a
+  // recorded realm follow the active namespace (old flat-list semantics).
+  const mergedSummaries = useMemo(
+    () => {
+      const liveIds = new Set(
+        jobs.filter((j) => j.status !== "cached").map((j) => j.sessionId),
+      );
+      return mergeCachedIntoSummaries(
+        namespaceSummaries,
+        cachedOverlayEntries(liveIds, namespace),
+      );
+    },
+    [namespaceSummaries, jobs, namespace],
+  );
 
   // Migrate existing duplicate log: entries for pinned sessions on mount
   // and evict non-pinned temp logs older than the 1-hour TTL
@@ -142,6 +162,9 @@ export function App() {
           issueTitle: job.issueTitle,
           branchName: job.branchName,
           pinnedAt: Date.now(),
+          // Realm captured at pin time — the tree hangs the memory card on
+          // this realm's vine after the pod is reaped.
+          namespace,
         };
         const ok = pinSession(sessionId, meta);
         if (ok) {
@@ -153,7 +176,7 @@ export function App() {
         }
       }
     },
-    [jobs, refreshCached],
+    [jobs, refreshCached, namespace],
   );
 
   /** Open Ragnarök confirmation dialog for a cancellable job (its pod still
@@ -209,7 +232,8 @@ export function App() {
     namespace,
     namespaces,
     setNamespace,
-    namespaceSummaries,
+    // merged: REST summaries + the pinned-session overlay (see above)
+    namespaceSummaries: mergedSummaries,
     onSelectSession: handleSelectSession,
     onSelectTask: handleSelectTask,
     onAvatarClick: setProfileAgent,
