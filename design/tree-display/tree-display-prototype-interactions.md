@@ -66,11 +66,16 @@ deactivated / active are never confusable:
   screen is white; all interactive surfaces are OPAQUE (title box, cards, hover labels, clasps, notes,
   chips — solid vellum; the frost is struck); glow lives in box/drop-shadows only.
 - **Ladder inversion (proposal #2's signature move)**: in light, **BRIGHT = lit, WASHED = dim**. The
-  dark multiply veils become a warm vellum wash (`#EFE6D2`, normal blend): off `.55` (+ halo wash `.35`)
-  / empty `.40` / mid `.18` (+ mead glow) / full `0` — the lit lantern is the brightest thing on the
-  page. The glow flips from screen-blend moonlight (`#lglowg`) to the mead-gold sun radial
-  (`#lglowg-sun`); the FULL ring is verdigris with a mead drop-shadow. Teardrop shapes, per-seat
-  silhouettes, and the four-tier semantics are IDENTICAL to dark.
+  dark multiply veils become a warm sepia wash (`#6B4E2B` — the painting's own umber shadow tone,
+  normal blend; v3.18): off `.55` (+ halo wash `.35`) / empty `.40` / mid `.18` (+ mead glow) / full
+  `0` — the lit lantern is the brightest thing on the page. **Never wash with a color brighter than
+  the amber cores** (~lum 190): the original vellum `#EFE6D2` (lum ~230) made the dim rungs the
+  palest, loudest blobs on the pane and inverted the rendered ladder (measured, veils painting:
+  off ~217 / empty ~211 / mid ~207 / full ~215 — the OFF tier the brightest); the sepia wash
+  restores monotonic shading (measured off ~110 / empty ~151 / mid ~189 / full ~215). The glow
+  flips from screen-blend moonlight (`#lglowg`) to
+  the mead-gold sun radial (`#lglowg-sun`); the FULL ring is verdigris with a mead drop-shadow.
+  Teardrop shapes, per-seat silhouettes, and the four-tier semantics are IDENTICAL to dark.
 - **Seats**: flipping the theme swaps the backdrop (dark keeps the embedded base64; light references
   the sibling `backdrop-parchment.jpg`) and the pool — every world keeps its seat INDEX but re-seats
   onto the parchment painting's own lanterns (`SEAT_POOL_LIGHT`, painting %, same `projectSeat()`
@@ -180,8 +185,10 @@ deactivated / active are never confusable:
 - [ ] A11y: treeitem roles, aria-expanded/selected, focus-visible ring
 - [ ] **Light theme (v3.17)**: ☀ flips `data-theme="light"` + swaps painting and seat pool; every
       stone still lands on ITS pool's lantern through the same `projectSeat()` (exp == act for all
-      worlds, dark AND light, standard AND compact); light ladder is the inverted wash (off .55 /
-      empty .40 / mid .18 / full 0 + mead glow + verdigris ring — verify via computed styles); every
+      worlds, dark AND light, standard AND compact); light ladder is the sepia wash (off .55 /
+      empty .40 / mid .18 / full 0 + mead glow + verdigris ring — verify via computed styles AND a
+      chrome-hidden pixel probe: full > mid > empty > off core luminance, strictly monotonic, the
+      lit lantern the brightest thing on the page); every
       interactive surface opaque (wtitle, jcard, glabel, jact, branch-note); no horizontal overflow
       beyond the pre-existing hover-glabel class; dark theme + geometry byte-identical to v3.15
       behavior (regression: same seat projections, clearances, ladder opacities)

@@ -277,6 +277,20 @@
      interactive surface (title box, cards, hover labels, clasps,
      notes, chips) is solid vellum in light — no frosted glass on
      anything the user reads or clicks; glow lives in shadows only.
+     v3.18 (2026-11-05): LIGHT LADDER SHADING FIX — Declan: "lightmode
+     lantern shading is wrong". Measured on the rendered pane (chrome
+     hidden): the vellum wash (#EFE6D2, lum ~230) is BRIGHTER than the
+     amber cores it washes (~lum 190), so the dim rungs read the
+     palest and loudest — measured, veils painting: off ~217 / empty
+     ~211 / mid ~207 / full ~215: the OFF tier was the BRIGHTEST
+     thing on the page, the spec's own 2b invariant broken. The wash
+     now carries the painting's own umber shadow tone (#6B4E2B,
+     lum ~70): off ~110 / empty ~151 / mid ~189 / full ~215 —
+     monotonic, bright = lit restored, and the OFF halo swallows
+     glow pools without smudging
+     dark foliage (sepia ≈ the umber ambient). Opacities UNTOUCHED
+     (off .55 + halo .35 / empty .40 / mid .18 / full 0 — the decree's
+     rungs), mead sun glow + verdigris ring unchanged, dark untouched.
      ───────────────────────────────────────────────────────────── */
   :root {
     --night-0: #05070a;
@@ -868,13 +882,18 @@
        x-extent sanity. Same projectSeat() projection as dark, both
        modes.
      • ladder inversion: dark dims by MULTIPLY near-black against the
-       night painting; light WASHES with vellum #EFE6D2 at normal blend
-       against the parchment painting — bright = lit, washed = dim. The
-       four-tier semantics (OFF/EMPTY/MID/FULL, decree round 23) keep
-       their rungs in inverted polarity: off .55 (+ halo wash .35) /
+       night painting; light WASHES with warm sepia #6B4E2B (the
+       painting's own umber shadow tone, v3.18) at normal blend against
+       the parchment painting — bright = lit, washed = dim. NEVER wash
+       with a color brighter than the amber cores (~lum 190): vellum
+       #EFE6D2 (lum ~230) inverted the ladder on screen (measured:
+       off ~217 / empty ~211 / mid ~207 / full ~215 — the OFF tier
+       the brightest). The four-tier semantics (OFF/EMPTY/MID/FULL,
+       decree round 23) keep their rungs: off .55 (+ halo wash .35) /
        empty .40 / mid .18 (+ mead glow) / full 0 + verdigris ring —
        the lit lantern is the brightest, the OFF lantern the most
-       washed. Oval/teardrop geometry law stands.
+       washed (measured core-lum: off ~110 / empty ~151 / mid ~189 /
+       full ~215, monotonic). Oval/teardrop geometry law stands.
      • opaque decree: no frosted glass on anything the user reads or
        clicks (title box, cards, hover labels, clasps, notes, chips all
        solid vellum in light); glow in box-shadow/drop-shadow only. */
@@ -1104,11 +1123,19 @@
     background: linear-gradient(180deg, #8E9C63, rgba(126, 143, 87, .2)); }
   [data-theme="light"] .wtitle__stone {
     filter: drop-shadow(0 1px 2px rgba(90, 67, 48, 0.35)) drop-shadow(0 0 7px rgba(232, 181, 74, 0.6)); }
-  /* THE LADDER INVERTS — washed = dim, bright = lit (proposal #2 §3.2):
-     the multiply veils become a warm vellum wash at normal blend; the
-     glow flips from screen-blend moonlight to the mead-gold sun radial */
-  [data-theme="light"] .lseat__veil { fill: #EFE6D2; mix-blend-mode: normal; }
-  [data-theme="light"] .lseat__halo { fill: #F5EFDF; mix-blend-mode: normal; }
+  /* THE LADDER INVERTS — washed = dim, bright = lit (proposal #2 §3.2).
+     v3.18: the wash is warm SEPIA #6B4E2B (the painting's own umber
+     shadow tone), NOT vellum — vellum #EFE6D2 (lum ~230) is BRIGHTER
+     than the amber cores (~lum 190), so a vellum wash made the dim
+     tiers the palest, loudest things on the page and INVERTED the
+     ladder (measured, veils painting: off ~217 / empty ~211 / mid
+     ~207 / full ~215 — the OFF tier was the BRIGHTEST, the lit
+     lantern NOT). Sepia washes the amber toward the painting's
+     shadows: off ~110 / empty ~151 / mid ~189 / full ~215,
+     monotonic, bright = lit restored. The glow stays the
+     mead-gold sun radial */
+  [data-theme="light"] .lseat__veil { fill: #6B4E2B; mix-blend-mode: normal; }
+  [data-theme="light"] .lseat__halo { fill: #6B4E2B; mix-blend-mode: normal; }
   [data-theme="light"] .lseat__glow { fill: url(#lglowg-sun); mix-blend-mode: normal; }
   [data-theme="light"] .lseat--off  .lseat__veil { opacity: .55; }
   [data-theme="light"] .lseat--off  .lseat__halo { opacity: .35; }
@@ -1209,7 +1236,7 @@
 
 <!-- ═══ prototype furniture ═══ -->
 <div class="deck">
-  <span class="deck__title"><b>ᛟ</b> Odin's Throne — tree display redesign · issue #7 prototype · <b>v3.17</b></span>
+  <span class="deck__title"><b>ᛟ</b> Odin's Throne — tree display redesign · issue #7 prototype · <b>v3.18</b></span>
   <span class="deck__note">the lantern is the holder of the spirit — no discs, no circles; every veil, glow and outline traces the painted lantern's own teardrop silhouette (SVG) · four light states — the dim ladder 75/50/25/0 (round 23): OFF (no namespace seated — veiled dark, 75% dim) · EMPTY (namespace seated, no tasks — 50% dim) · MID (namespace with tasks, deactivated — 25% dim + soft glow) · FULL (clicked world, task list showing — 0% dim, fully lit + teal outline, brighter than everything) · hover lifts a seated lantern toward full · the whole scene scrolls together, vine out to the 44% rail · «/» compact toggle · ☀ parchment light theme (round 24) — proposal-2 Parchment &amp; Mead Hall: vellum surfaces, iron-gall ink, bronze rules, mead glow; the dim ladder INVERTS (bright = lit, washed = dim) and the seats re-calculate onto the parchment painting's own amber lanterns</span>
   <span class="deck__sep"></span>
   <div class="deck__group">
