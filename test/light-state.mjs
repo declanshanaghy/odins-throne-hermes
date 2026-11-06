@@ -160,13 +160,16 @@ assert.ok(
 
 // ── 10. the LIGHT ladder INVERTS (issue #123, prototype v3.17 round 25) ─────
 // In Parchment & Mead Hall, BRIGHT = lit, WASHED = dim: the multiply veils
-// become a warm vellum wash at normal blend, glow flips to the mead sun
+// become a warm sepia wash at normal blend (v3.18: the painting's umber
+// shadow tone #6B4E2B, lum ~70 — never brighter than the amber cores
+// ~lum 190, the vellum #EFE6D2 inversion bug), glow flips to the mead sun
 // radial, the FULL ring is verdigris. Four tiers, same rungs, inverted
 // polarity: off .55 / empty .40 / mid .18 / full 0.
 const LT = "[data-theme=\"light\"]";
 const lightVeilFill = extractRule(css, `${LT} .lseat__veil`);
 assert.ok(lightVeilFill, "CSS: light veil rule exists");
-assert.ok(lightVeilFill.includes("#EFE6D2"), "light veil fill is the warm vellum wash #EFE6D2");
+assert.ok(lightVeilFill.includes("#6B4E2B"), "light veil fill is the warm sepia wash #6B4E2B (umber shadow tone)");
+assert.ok(!lightVeilFill.includes("#EFE6D2"), "light veil fill is never brighter-than-amber vellum #EFE6D2 (v3.18 inversion regression)");
 assert.ok(lightVeilFill.includes("normal"), "light veil drops multiply for normal blend");
 const lightGlow = extractRule(css, `${LT} .lseat__glow`);
 assert.ok(lightGlow.includes("url(#lglowg-sun)"), "light glow is the mead-gold sun radial (#lglowg-sun)");
@@ -199,7 +202,7 @@ assert.ok(lightFullRing.includes("232, 181, 74"), "light FULL ring carries the m
 
 // the bundle ships the inverted ladder too
 const bundleLightVeil = extractRule(plugin, `${LT} .lseat__veil`);
-assert.ok(bundleLightVeil && bundleLightVeil.includes("#EFE6D2"), "bundle: light vellum wash veil ships");
+assert.ok(bundleLightVeil && bundleLightVeil.includes("#6B4E2B"), "bundle: light sepia wash veil ships");
 assert.equal(extractOpacity(extractRule(plugin, `${LT} .lseat--off .lseat__veil`)), 0.55, "bundle: light off veil .55");
 assert.equal(extractOpacity(extractRule(plugin, `${LT} .lseat--full .lseat__veil`)), 0, "bundle: light full veil 0");
 
