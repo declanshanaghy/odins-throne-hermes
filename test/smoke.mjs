@@ -204,6 +204,13 @@ const lightWtitle = css.match(/\.odins-throne-root\[data-theme="light"\] \.wtitl
 assert.ok(lightWtitle.includes("backdrop-filter: none"), "light world-title strikes the frost (opaque decree)");
 const lightOffVeil = css.match(/\.odins-throne-root\[data-theme="light"\] \.lseat--off\s+\.lseat__veil\s*\{[^}]*\}/)?.[0] ?? "";
 assert.ok(lightOffVeil.includes("opacity: 0.55") || lightOffVeil.includes("opacity: .55"), "light ladder rung off = .55 wash");
+// v3.18 — the light wash must be DIMMER than the amber cores it washes:
+// vellum #EFE6D2 (lum ~230 > core ~190) made the OFF tier render the
+// brightest and inverted the ladder (measured off 217 > full 215). The
+// wash is the painting's own umber shadow tone instead.
+const lightVeilFill = css.match(/\.odins-throne-root\[data-theme="light"\] \.lseat__veil\s*\{[^}]*\}/)?.[0] ?? "";
+assert.ok(lightVeilFill.includes("#6B4E2B"), "light veil wash is sepia #6B4E2B (umber shadow tone, lum ~70)");
+assert.ok(!lightVeilFill.includes("#EFE6D2"), "light veil wash never uses brighter-than-amber vellum #EFE6D2 (ladder inversion regression)");
 const lightFullRing = css.match(/\.odins-throne-root\[data-theme="light"\] \.lseat--full\s+\.lseat__ring\s*\{[^}]*\}/)?.[0] ?? "";
 assert.ok(lightFullRing.includes("#0B6B5C"), "light FULL ring is verdigris #0B6B5C");
 assert.ok(document.getElementById("odins-throne-hermes-fonts"), "fonts link injected");

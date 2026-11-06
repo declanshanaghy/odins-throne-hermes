@@ -4500,13 +4500,25 @@ var styles_default = `.odins-throne-root .odins-throne-root {
 }
 
 /* \u2500\u2500 THE LADDER INVERTS (proposal #2's signature move) \u2500\u2500
- * In light, BRIGHT = lit, WASHED = dim: the dark multiply veils become a
- * warm vellum wash (#EFE6D2, normal blend) against the parchment painting,
- * and the glow flips from screen-blend moonlight (#lglowg) to the mead-gold
- * sun radial (#lglowg-sun). Four-tier semantics + teardrop shapes unchanged;
- * the lit lantern is the brightest thing on the page. */
-.odins-throne-root[data-theme="light"] .lseat__veil { fill: #EFE6D2; mix-blend-mode: normal; }
-.odins-throne-root[data-theme="light"] .lseat__halo { fill: #F5EFDF; mix-blend-mode: normal; }
+ * In light, BRIGHT = lit, WASHED = dim. The dark multiply veils become a
+ * warm sepia wash at normal blend against the parchment painting, and the
+ * glow flips from screen-blend moonlight (#lglowg) to the mead-gold sun
+ * radial (#lglowg-sun). Four-tier semantics + teardrop shapes unchanged;
+ * the lit lantern is the brightest thing on the page.
+ *
+ * Prototype v3.18: the wash color is the painting's own umber shadow tone
+ * (#6B4E2B, lum ~70) \u2014 NEVER a color brighter than the amber cores it
+ * washes (~lum 190). The original vellum #EFE6D2 (lum ~230) is brighter
+ * than the cores, so it made the dim rungs the palest, loudest blobs on
+ * the pane and inverted the rendered ladder (measured, veils painting:
+ * off ~217 / empty ~211 / mid ~207 / full ~215 \u2014 the OFF tier the
+ * brightest, the lit lantern NOT). Sepia washes the amber toward the
+ * painting's shadows and restores the four monotonic rungs (measured:
+ * off ~110 / empty ~151 / mid ~189 / full ~215). Opacities are the
+ * decree's rungs and are UNTOUCHED: off .55 (+ halo .35) / empty .40 /
+ * mid .18 / full 0. */
+.odins-throne-root[data-theme="light"] .lseat__veil { fill: #6B4E2B; mix-blend-mode: normal; }
+.odins-throne-root[data-theme="light"] .lseat__halo { fill: #6B4E2B; mix-blend-mode: normal; }
 .odins-throne-root[data-theme="light"] .lseat__glow { fill: url(#lglowg-sun); mix-blend-mode: normal; }
 .odins-throne-root[data-theme="light"] .lseat--off .lseat__veil { opacity: 0.55; }
 .odins-throne-root[data-theme="light"] .lseat--off .lseat__halo { opacity: 0.35; }
